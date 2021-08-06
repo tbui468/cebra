@@ -4,6 +4,14 @@
 #include "common.h"
 
 typedef enum {
+    PREC_NONE,
+    PREC_TERM,
+    PREC_FACTOR,
+    PREC_UNARY,
+    PREC_LITERAL,
+} Precedence;
+
+typedef enum {
     TOKEN_INT,
     TOKEN_PLUS,
     TOKEN_MINUS,

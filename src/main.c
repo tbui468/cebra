@@ -2,8 +2,9 @@
 #include "parser.h"
 
 //get the vm running with repl and files for a simple calculator
-//  group Parser (incuding lexer, and Token) into Parser.h and Parser.c
-//  instantiate them in global scope so that we don't need to pass them everywhere
+//
+//group with pratt parser not working as intended.....
+//once it works, make the pratt parser output and AST
 
 //Parser -> AST
 //  how to get AST Expr nodes passed around??? maybe google this
