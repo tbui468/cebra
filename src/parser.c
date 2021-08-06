@@ -1,8 +1,10 @@
 #include "parser.h"
+#include "ast.h"
 
 Parser parser;
 Lexer lexer;
-static void parse_precedence(Precedence prec);
+
+static Expr* expression();
 
 static bool is_numeric(char c) {
     return c <= '9' && c >= '0';
@@ -12,124 +14,150 @@ static bool is_whitespace(char c) {
     return c == ' ' || c == '\n' || c == '\t';
 }
 
-static Token next_token() {
+static char peek_char() {
+    return lexer.source[lexer.current]; 
+}
 
-    while (is_whitespace(lexer.source[lexer.start])) {
-        lexer.start++;
+static void consume_whitespace() {
+    while (is_whitespace(peek_char())) {
+        lexer.current++;
     }
+    lexer.start = lexer.current;
+}
 
-    int length = 1;
-    TokenType type;
-    switch(lexer.source[lexer.start]) {
-        case '+':   type = TOKEN_PLUS; break;
-        case '-':   type = TOKEN_MINUS; break;
-        case '*':   type = TOKEN_STAR; break;
-        case '/':   type = TOKEN_SLASH; break;
-        case '(':   type = TOKEN_LEFT_PAREN; break;
-        case ')':   type = TOKEN_RIGHT_PAREN; break;
-        case '\0':  type = TOKEN_EOF; break;
-        default:
-            type = TOKEN_INT;
-            while (is_numeric(lexer.source[lexer.start + length])) {
-                length++;
-            }
-            break;
-    }
+static char get_char() {
+    lexer.current++;
+    return lexer.source[lexer.current - 1];
+}
 
+static Token new_token(TokenType type) {
     Token token;
     token.type = type;
     token.start = &lexer.source[lexer.start];
-    token.length = length;
+    token.length = lexer.current - lexer.start;
 
-    lexer.start += length;
+    lexer.start = lexer.current;
 
     return token;
 }
 
-static void advance() {
-    parser.previous = parser.current;
-    parser.current = next_token();
+static void read_numbers() {
+    while (is_numeric(peek_char())) {
+        get_char();
+    }
+}
+
+static Token next_token() {
+
+    consume_whitespace();
+
+    switch(get_char()) { //current is now on next characters
+        case '+':   return new_token(TOKEN_PLUS);
+        case '-':   return new_token(TOKEN_MINUS);
+        case '*':   return new_token(TOKEN_STAR);
+        case '/':   return new_token(TOKEN_SLASH);
+        case '(':   return new_token(TOKEN_LEFT_PAREN);
+        case ')':   return new_token(TOKEN_RIGHT_PAREN);
+        case '.': {
+            read_numbers();
+            return new_token(TOKEN_FLOAT);
+            break;
+        }
+        case '\0':  return new_token(TOKEN_EOF);
+        default: {
+            read_numbers();
+            if (peek_char() == '.') {
+                get_char();
+            } else {
+                return new_token(TOKEN_INT);
+            }
+            read_numbers();
+            return new_token(TOKEN_FLOAT);
+            break;
+        }
+    }
+}
+
+static bool match(TokenType type) {
+    if (parser.current.type == type) {
+        parser.previous = parser.current;
+        parser.current = next_token();
+        return true;
+    }
+
+    return false;
 }
 
 static void consume(TokenType type, const char* message) {
     if (type == parser.current.type) {
-        advance();
+        parser.previous = parser.current;
+        parser.current = next_token();
         return;
     }
 
     printf("%s", message);
 }
 
-//returns a literal
-static void number() {
-    printf("number\n");
-}
-
-//returns a unary
-static void unary() {
-    printf("unary\n");
-    parse_precedence(PREC_UNARY);
-}
-
-static void binary() {
-    printf("binary\n");
-}
-
-static void grouping() {
-    printf("(");
-    parse_precedence(PREC_TERM);
-    consume(TOKEN_RIGHT_PAREN, "Expected ')' after expression.");
-    printf(")");
-}
-
-Precedence get_prec(Token token) {
-    switch(token.type) {
-        case TOKEN_INT: return PREC_LITERAL;
-        case TOKEN_PLUS: return PREC_TERM;
-        case TOKEN_MINUS: return PREC_TERM;
-        case TOKEN_STAR: return PREC_FACTOR;
-        case TOKEN_SLASH: return PREC_FACTOR;
-        case TOKEN_EOF: return PREC_NONE;
+static Expr* primary() {
+    if (match(TOKEN_INT) || match(TOKEN_FLOAT)) {
+        return make_literal(parser.previous);
+    } else if (match(TOKEN_LEFT_PAREN)) {
+        Expr* expr = expression();
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+        return expr;
     }
 }
 
-static void parse_precedence(Precedence prec) {
-    advance();
-    //prefix
-    switch(parser.previous.type) {
-        case TOKEN_LEFT_PAREN:  grouping(); break;
-        case TOKEN_INT:  number(); break;
-        case TOKEN_MINUS:   unary(); break;
-        default: printf("you fucked up\n"); break;
+static Expr* unary() {
+    if (match(TOKEN_MINUS)) {
+        Token name = parser.previous;
+        Expr* value = unary();
+        return make_unary(name, value);
     }
 
-    //infix
-    if (prec <= get_prec(parser.current)) {
-        advance();
-        switch(parser.previous.type) {
-            case TOKEN_PLUS: binary(); break;
-            case TOKEN_MINUS: binary(); break;
-            case TOKEN_STAR: binary(); break;
-            case TOKEN_SLASH: binary(); break;
-            default: printf("you fucked up again.\n"); break;
-        }
+    return primary();
+}
+
+static Expr* factor() {
+    Expr* left = unary();
+
+    while (match(TOKEN_STAR) || match(TOKEN_SLASH)) {
+        Token name = parser.previous;
+        Expr* right = unary();
+        left = make_binary(name, left, right);
     }
+
+    return left;
+}
+
+static Expr* term() {
+    Expr* left = factor();
+
+    while (match(TOKEN_PLUS) || match(TOKEN_MINUS)) {
+        Token name = parser.previous;
+        Expr* right = factor();
+        left = make_binary(name, left, right);
+    }
+
+    return left;
+}
+
+static Expr* expression() {
+    return term();
 }
 
 void parse(char* source) {
     lexer.source = source;
     lexer.start = 0;
+    lexer.current = 0;
     parser.current = next_token();
 
-/*
-    //TODO: remove later.  Here to test parsing
-    while (true) {
-        Token token = read_token();
-        print_token(token);
-        if (token.type == TOKEN_EOF) break;
-    }*/
     while (parser.current.type != TOKEN_EOF) {
-        parse_precedence(PREC_TERM);
+        Expr* expr = expression();
+
+        print_expr(expr);        
+        printf("\n");
+        type(expr);
     }
 }
 

@@ -2,16 +2,7 @@
 #include "parser.h"
 
 //get the vm running with repl and files for a simple calculator
-//
-//group with pratt parser not working as intended.....
-//once it works, make the pratt parser output and AST
-
-//Parser -> AST
-//  how to get AST Expr nodes passed around??? maybe google this
-//  practice this to make sure it works (can cast between base Expr and Literal, Binary, etc) before trying to create AST
-//  how can the visitor pattern be implemented in C?
-//print AST to check if it works
-//Typer -> AST
+//AST currently has Expr nodes, printing AST and type checking AST
 //Compiler -> Bytecode
 //VM -> execute
 
@@ -19,22 +10,6 @@ typedef enum {
     RESULT_SUCCESS,
     RESULT_FAILED
 } ResultCode;
-
-/*
-typedef enum {
-    EXPR_LITERAL,
-    EXPR_UNARY,
-    EXPR_GROUPING,
-    EXPR_BINARY,
-} ExprType;
-
-typedef struct {
-    ExprType type;
-} Expr;
-
-typedef struct {
-    Expr base;
-} Literal;*/
 
 
 typedef struct {
