@@ -1,24 +1,28 @@
 #include "common.h"
 #include "parser.h"
+#include "ast.h"
 
-//get the vm running with repl and files for a simple calculator
-//AST currently has Expr nodes, printing AST and type checking AST
+//Finish typer and parser
+//  Parser and Typer should have an array of error codes we can access if RESULT_FAILED is returned
+//  we don't need them printing out errors immediately
 //Compiler -> Bytecode
+//  Allocate memory for op codes array
 //VM -> execute
-
-typedef enum {
-    RESULT_SUCCESS,
-    RESULT_FAILED
-} ResultCode;
+//  allocate memory for vm stack
+//  print stack for debugging
+//
+//need code to free AST too since the REPL may need to keep running
 
 
 typedef struct {
 } VM;
 
 ResultCode vm_init(VM* vm) {
+    return RESULT_SUCCESS;
 }
 
 ResultCode vm_free(VM* vm) {
+    return RESULT_SUCCESS;
 }
 
 
@@ -26,15 +30,30 @@ ResultCode vm_free(VM* vm) {
 ResultCode run(VM* vm, char* source) {
 
     //create AST from source
-    parse(source);
+    Expr* ast;
+    ResultCode parse_result = parse(source, &ast);
 
-    //type check
+    if (parse_result == RESULT_FAILED) {
+        return RESULT_FAILED;
+    }
 
-    //compile to byte code
+    print_expr(ast);
+    printf("\n");
 
-    //execute code
+
+    //type check ast
+    ResultCode type_result = type_check(ast);
+
+    if (type_result == RESULT_FAILED) {
+        return RESULT_FAILED;
+    }
+
+    //compile ast to byte code
+
+    //execute code on vm
 
 
+    //free ast here
 
     return RESULT_SUCCESS;
 }

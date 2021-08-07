@@ -1,7 +1,19 @@
 #ifndef CEBRA_AST_H
 #define CEBRA_AST_H
 
-#include "parser.h"
+#include "common.h"
+#include "token.h"
+#include "result_code.h"
+
+typedef struct {
+    Token token;
+    const char* message;
+} TypeError;
+
+typedef struct {
+    TypeError errors[256];
+    int error_count; 
+} Typer;
 
 typedef enum {
     DATA_INT,
@@ -43,6 +55,8 @@ Expr* make_binary(Token name, Expr* left, Expr* right);
 void print_expr(Expr* expr);
 
 DataType type(Expr* expr);
+
+ResultCode type_check(Expr* expr);
 
 
 #endif// CEBRA_AST_H

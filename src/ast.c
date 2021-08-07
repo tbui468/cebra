@@ -1,5 +1,16 @@
+
 #include "ast.h"
 #include "memory.h"
+
+Typer typer;
+
+static void add_error(Token token, const char* message) {
+    TypeError error;
+    error.token = token;
+    error.message = message;
+    typer.errors[typer.error_count] = error;
+    typer.error_count++;
+}
 
 
 Expr* make_literal(Token name) {
@@ -66,7 +77,7 @@ static DataType type_binary(Expr* expr) {
     DataType right = type(binary->right);
 
     if (left != right) {
-        printf("data type mismatch");
+        add_error(binary->name, "Types don't match.");
     }
 
     return left;
@@ -93,4 +104,18 @@ DataType type(Expr* expr) {
         case EXPR_BINARY: return type_binary(expr);
         case EXPR_UNARY: return type_unary(expr);
     } 
+}
+
+ResultCode type_check(Expr* expr) {
+    typer.error_count = 0;
+    DataType result = type(expr);
+
+    if (typer.error_count > 0) {
+        for (int i = 0; i < typer.error_count; i++) {
+            printf("[line %d] %s\n", typer.errors[i].token.line, typer.errors[i].message);
+        }
+        return RESULT_FAILED;
+    }
+
+    return RESULT_SUCCESS;
 }

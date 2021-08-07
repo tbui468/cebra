@@ -9,6 +9,8 @@ set(Headers
     common.h
     ast.h
     memory.h
+    token.h
+    result_code.h
     )
 
 add_executable(

@@ -5,12 +5,17 @@ Parser parser;
 Lexer lexer;
 
 static Expr* expression();
+static void add_error(Token token, const char* message);
+
 
 static bool is_numeric(char c) {
     return c <= '9' && c >= '0';
 }
 
 static bool is_whitespace(char c) {
+    if (c == '\n') {
+        lexer.line++;
+    }
     return c == ' ' || c == '\n' || c == '\t';
 }
 
@@ -33,6 +38,7 @@ static char get_char() {
 static Token new_token(TokenType type) {
     Token token;
     token.type = type;
+    token.line = lexer.line;
     token.start = &lexer.source[lexer.start];
     token.length = lexer.current - lexer.start;
 
@@ -94,8 +100,8 @@ static void consume(TokenType type, const char* message) {
         parser.current = next_token();
         return;
     }
-
-    printf("%s", message);
+    
+    add_error(parser.previous, message);
 }
 
 static Expr* primary() {
@@ -106,6 +112,9 @@ static Expr* primary() {
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
         return expr;
     }
+
+    add_error(parser.previous, "Unrecognized token.");
+    return NULL;
 }
 
 static Expr* unary() {
@@ -146,19 +155,37 @@ static Expr* expression() {
     return term();
 }
 
-void parse(char* source) {
+static void add_error(Token token, const char* message) {
+    ParseError error;
+    error.token = token;
+    error.message = message;
+    parser.errors[parser.error_count] = error;
+    parser.error_count++;
+}
+
+
+
+ResultCode parse(char* source, Expr** root) {
     lexer.source = source;
     lexer.start = 0;
     lexer.current = 0;
+    lexer.line = 1;
     parser.current = next_token();
+    parser.error_count = 0;
 
-    while (parser.current.type != TOKEN_EOF) {
-        Expr* expr = expression();
+    //TODO: Allow more than an single expression
+//    while (parser.current.type != TOKEN_EOF) {
+    *root = expression();
+//    }
 
-        print_expr(expr);        
-        printf("\n");
-        type(expr);
+    if (parser.error_count > 0) {
+        for (int i = 0; i < parser.error_count; i++) {
+            printf("[line %d] %s\n", parser.errors[i].token.line, parser.errors[i].message);
+        }
+        return RESULT_FAILED;
     }
+
+    return RESULT_SUCCESS;
 }
 
 

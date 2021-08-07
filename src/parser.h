@@ -2,39 +2,32 @@
 #define CEBRA_PARSER_H
 
 #include "common.h"
-
-typedef enum {
-    TOKEN_INT,
-    TOKEN_FLOAT,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_SLASH,
-    TOKEN_STAR,
-    TOKEN_LEFT_PAREN,
-    TOKEN_RIGHT_PAREN,
-    TOKEN_EOF,
-} TokenType;
+#include "ast.h"
+#include "token.h"
+#include "result_code.h"
 
 typedef struct {
-    TokenType type;
-    char* start;
-    int length;
-} Token;
+    Token token;
+    const char* message;
+} ParseError;
 
 
 typedef struct {
     char* source;
     int start;
     int current;
+    int line;
 } Lexer;
 
 
 typedef struct {
     Token previous;
     Token current;
+    ParseError errors[256];
+    int error_count;
 } Parser;
 
-void parse(char* source);
+ResultCode parse(char* source, Expr** root);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H
