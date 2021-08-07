@@ -2,15 +2,19 @@ set(Sources
     main.c
     parser.c
     ast.c
+    compiler.c
+    #vm.c
     )
 
 set(Headers
-    parser.h
+    result_code.h
     common.h
-    ast.h
     memory.h
     token.h
-    result_code.h
+    parser.h
+    ast.h
+    compiler.h
+    #vm.h
     )
 
 add_executable(

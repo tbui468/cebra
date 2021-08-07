@@ -1,6 +1,7 @@
 #include "common.h"
 #include "parser.h"
 #include "ast.h"
+#include "compiler.h"
 
 //Finish typer and parser
 //  Parser and Typer should have an array of error codes we can access if RESULT_FAILED is returned
@@ -49,9 +50,14 @@ ResultCode run(VM* vm, char* source) {
     }
 
     //compile ast to byte code
+    Chunk chunk;
+    chunk_init(&chunk);
+    ResultCode compile_result = compile(ast, &chunk);
+
+    disassemble_chunk(&chunk);
 
     //execute code on vm
-
+    //ResultCode run_result = run(vm, chunk);
 
     //free ast here
 
