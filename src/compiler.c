@@ -37,28 +37,6 @@ static int add_constant(Value value) {
     return compiler.chunk->constants_idx - 1;
 }
 
-static Value to_float(double num) {
-    Value value;
-    value.type = VAL_FLOAT;
-    value.as.float_type = num;
-    return value;
-}
-
-static Value to_integer(int num) {
-    Value value;
-    value.type = VAL_INT;
-    value.as.integer_type = num;
-    return value;
-}
-
-static int get_int(int idx) {
-    return compiler.chunk->constants[idx].as.integer_type;
-}
-
-static float get_float(int idx) {
-    return compiler.chunk->constants[idx].as.float_type;
-}
-
 static void compile_literal(Expr* expr) {
     Literal* literal = (Literal*)expr;
     switch(literal->name.type) {
@@ -121,6 +99,14 @@ ResultCode compile(Expr* ast, Chunk* chunk) {
     add_byte(OP_RETURN);
 
     return RESULT_SUCCESS;
+}
+
+static int get_int(int idx) {
+    return compiler.chunk->constants[idx].as.integer_type;
+}
+
+static float get_float(int idx) {
+    return compiler.chunk->constants[idx].as.float_type;
 }
 
 void disassemble_chunk(Chunk* chunk) {

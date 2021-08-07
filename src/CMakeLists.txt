@@ -1,5 +1,6 @@
 set(Sources
     main.c
+    value.c
     parser.c
     ast.c
     compiler.c

@@ -4,40 +4,110 @@
 #include "compiler.h"
 #include "value.h"
 
-//will be easier to wrap all data in Value so that we can store them in same constants table
-//VM -> execute
-//  allocate memory for vm stack
-//  print stack for debugging
-//
-//need code to free AST too since the REPL may need to keep running
+//TODO:
+//move vm to different .h and .c files
+//free AST memory
+//free chunk memory
 
-//value.as.integer_type -get union 'as' and get int version
+//get running scripts working
+//get booleans working
+//get strings working
+//  when do we need the hash table????
+//  we need them for String objects
+//  what are string literals??
+
 typedef struct {
-    Value* stack[256];
+    Value stack[256];
     int stack_top;
+    int ip;
 } VM;
 
 ResultCode vm_init(VM* vm) {
     vm->stack_top = 0;
+    vm->ip = 0;
     return RESULT_SUCCESS;
 }
 
 ResultCode vm_free(VM* vm) {
     return RESULT_SUCCESS;
 }
-/*
-OpCode pop(VM* vm) {
 
+Value pop(VM* vm) {
+    vm->stack_top--;
+    return vm->stack[vm->stack_top];
 }
 
-//what do we push onto the stack?? OpCodes?
-//values are pushed onto the stack - this is tricky with types
-//wrapping all types in Value might be a good idea - it will also simplify the
-//compiling process since there will just be one table of constants
-//don't need to worry about different tables
 void push(VM* vm, Value value) {
+    vm->stack[vm->stack_top] = value;
+    vm->stack_top++;
+}
 
-}*/
+uint8_t read_byte(VM* vm, Chunk* chunk) {
+    vm->ip++;
+    return chunk->codes[vm->ip - 1]; 
+}
+
+Value get_constant(Chunk* chunk, int idx) {
+    return chunk->constants[idx];
+}
+
+ResultCode execute(VM* vm, Chunk* chunk) {
+   vm_init(vm); //TODO: need to think of better way to reset ip (but not necessarily the stack - for REPL)
+   while (vm->ip < chunk->count) {
+        switch(read_byte(vm, chunk)) {
+            case OP_INT: {
+                uint8_t idx = read_byte(vm, chunk);
+                push(vm, get_constant(chunk, idx));
+                break;
+            }
+            case OP_FLOAT: {
+                uint8_t idx = read_byte(vm, chunk);
+                push(vm, get_constant(chunk, idx));
+                break;
+            }
+            case OP_NEGATE: {
+                Value value = pop(vm);
+                push(vm, negate_value(value));
+                break;
+            }
+            case OP_ADD: {
+                Value b = pop(vm);
+                Value a = pop(vm);
+                push(vm, add_values(a, b));
+                break;
+            }
+            case OP_SUBTRACT: {
+                Value b = pop(vm);
+                Value a = pop(vm);
+                push(vm, subtract_values(a, b));
+                break;
+            }
+            case OP_MULTIPLY: {
+                Value b = pop(vm);
+                Value a = pop(vm);
+                push(vm, multiply_values(a, b));
+                break;
+            }
+            case OP_DIVIDE: {
+                Value b = pop(vm);
+                Value a = pop(vm);
+                push(vm, divide_values(a, b));
+                break;
+            }
+            case OP_RETURN: {
+                Value value = pop(vm);
+                if (value.type == VAL_INT) {
+                    printf("%d\n", value.as.integer_type);
+                } else {
+                    printf("%f\n", value.as.float_type);
+                }
+                break;
+            }
+        } 
+   } 
+
+   return RESULT_SUCCESS;
+}
 
 ResultCode run(VM* vm, char* source) {
 
@@ -68,7 +138,7 @@ ResultCode run(VM* vm, char* source) {
     disassemble_chunk(&chunk);
 
     //execute code on vm
-    //ResultCode run_result = run(vm, chunk);
+    ResultCode run_result = execute(vm, &chunk);
 
     //free chunk here
     //free ast here
