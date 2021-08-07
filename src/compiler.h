@@ -3,6 +3,7 @@
 
 #include "result_code.h"
 #include "ast.h"
+#include "value.h"
 
 typedef enum {
     OP_INT, //two bytes
@@ -19,10 +20,8 @@ typedef struct {
     OpCode* codes;
     int count; 
     int capacity;
-    int integers[256];
-    int integers_idx;
-    double floats[256];
-    int floats_idx;
+    Value constants[256];
+    int constants_idx;
 } Chunk;
 
 typedef struct {

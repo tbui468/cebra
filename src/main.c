@@ -2,31 +2,42 @@
 #include "parser.h"
 #include "ast.h"
 #include "compiler.h"
+#include "value.h"
 
-//Finish typer and parser
-//  Parser and Typer should have an array of error codes we can access if RESULT_FAILED is returned
-//  we don't need them printing out errors immediately
-//Compiler -> Bytecode
-//  Allocate memory for op codes array
+//will be easier to wrap all data in Value so that we can store them in same constants table
 //VM -> execute
 //  allocate memory for vm stack
 //  print stack for debugging
 //
 //need code to free AST too since the REPL may need to keep running
 
-
+//value.as.integer_type -get union 'as' and get int version
 typedef struct {
+    Value* stack[256];
+    int stack_top;
 } VM;
 
 ResultCode vm_init(VM* vm) {
+    vm->stack_top = 0;
     return RESULT_SUCCESS;
 }
 
 ResultCode vm_free(VM* vm) {
     return RESULT_SUCCESS;
 }
+/*
+OpCode pop(VM* vm) {
 
+}
 
+//what do we push onto the stack?? OpCodes?
+//values are pushed onto the stack - this is tricky with types
+//wrapping all types in Value might be a good idea - it will also simplify the
+//compiling process since there will just be one table of constants
+//don't need to worry about different tables
+void push(VM* vm, Value value) {
+
+}*/
 
 ResultCode run(VM* vm, char* source) {
 
@@ -59,6 +70,7 @@ ResultCode run(VM* vm, char* source) {
     //execute code on vm
     //ResultCode run_result = run(vm, chunk);
 
+    //free chunk here
     //free ast here
 
     return RESULT_SUCCESS;

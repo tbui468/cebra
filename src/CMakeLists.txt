@@ -11,6 +11,7 @@ set(Headers
     common.h
     memory.h
     token.h
+    value.h
     parser.h
     ast.h
     compiler.h

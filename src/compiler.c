@@ -30,44 +30,50 @@ static void add_bytes(uint8_t byte1, uint8_t byte2) {
     add_byte(byte2);
 }
 
-static int add_int(int num) {
-    compiler.chunk->integers[compiler.chunk->integers_idx] = num;
-    compiler.chunk->integers_idx++;
-    return compiler.chunk->integers_idx - 1;
+
+static int add_constant(Value value) {
+    compiler.chunk->constants[compiler.chunk->constants_idx] = value;
+    compiler.chunk->constants_idx++;
+    return compiler.chunk->constants_idx - 1;
 }
 
-static int add_float(double num) {
-    compiler.chunk->floats[compiler.chunk->floats_idx] = num;
-    compiler.chunk->floats_idx++;
-    return compiler.chunk->floats_idx - 1;
+static Value to_float(double num) {
+    Value value;
+    value.type = VAL_FLOAT;
+    value.as.float_type = num;
+    return value;
 }
 
-static int add_constant(Token name) {
-    switch(name.type) {
-        case TOKEN_INT: {
-            int num = (int)strtol(name.start, NULL, 10);
-            return add_int(num);
-        }
-        case TOKEN_FLOAT: {
-            double num = strtod(name.start, NULL);
-            return add_float(num);
-        }
-    }
+static Value to_integer(int num) {
+    Value value;
+    value.type = VAL_INT;
+    value.as.integer_type = num;
+    return value;
 }
 
 static int get_int(int idx) {
-    return compiler.chunk->integers[idx];
+    return compiler.chunk->constants[idx].as.integer_type;
 }
 
 static float get_float(int idx) {
-    return compiler.chunk->floats[idx];
+    return compiler.chunk->constants[idx].as.float_type;
 }
 
 static void compile_literal(Expr* expr) {
     Literal* literal = (Literal*)expr;
     switch(literal->name.type) {
-        case TOKEN_INT:     add_bytes(OP_INT, add_constant(literal->name)); break;
-        case TOKEN_FLOAT:   add_bytes(OP_FLOAT, add_constant(literal->name)); break;
+        case TOKEN_INT: {
+            int num = (int)strtol(literal->name.start, NULL, 10);
+            int idx = add_constant(to_integer(num));
+            add_bytes(OP_INT, idx); 
+            break;
+        }
+        case TOKEN_FLOAT: {
+            double num = strtod(literal->name.start, NULL);
+            int idx = add_constant(to_float(num));
+            add_bytes(OP_FLOAT, idx); 
+            break;
+        }
         //default:            add_error(literal->name, "Unrecognized token."); break;
     }
 }
@@ -104,8 +110,7 @@ void chunk_init(Chunk* chunk) {
     chunk->codes = ALLOCATE_ARRAY(OpCode);
     chunk->count = 0;
     chunk->capacity = 0;
-    chunk->integers_idx = 0;
-    chunk->floats_idx = 0;
+    chunk->constants_idx = 0;
 }
 
 ResultCode compile(Expr* ast, Chunk* chunk) {
@@ -134,6 +139,7 @@ void disassemble_chunk(Chunk* chunk) {
             case OP_SUBTRACT: printf("[OP_SUBTRACT]\n"); break;
             case OP_MULTIPLY: printf("[OP_MULTIPLY]\n"); break;
             case OP_DIVIDE: printf("[OP_DIVIDE]\n"); break;
+            case OP_NEGATE: printf("[OP_NEGATE]\n"); break;
             case OP_RETURN:
                 printf("[OP_RETURN]\n");
                 break;
