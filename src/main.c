@@ -4,18 +4,22 @@
 #include "compiler.h"
 #include "value.h"
 #include "vm.h"
+#include "statement_list.h"
 
 /*
  * Parser -> Typer -> Compiler -> VM
  */
 
 //TODO:
-//Allow multiple statements (a bunch of prints getting parsed) - array of expr??
+//test.cbr freezes right now after two print statements - what's happening?
+//
+//Integrate StatementList with the rest of the pipeline
+//
+//Make grow_capacity in chunk a terniary statement instead of it's own function 
 //
 //move ast printing to a separate print_ast or debug file
 //
 //split parser and lexer up (if it's easy to do) so that there's less murk
-//
 //
 //What we want: "this" + " dog" should output "this dog"
 //work from the beginning parse ->
@@ -29,18 +33,21 @@
 ResultCode run(VM* vm, char* source) {
 
     //create AST from source
-    Expr* ast;
-    ResultCode parse_result = parse(source, &ast);
+    StatementList sl;
+    init_statement_list(&sl);
+    //Expr* ast;
+    //ResultCode parse_result = parse(source, &ast);
+    ResultCode parse_result = parse(source, &sl);
 
     if (parse_result == RESULT_FAILED) {
-        free_expr(ast);
+        free_statement_list(&sl);
         return RESULT_FAILED;
     }
 
-    print_expr(ast);
+    print_statement_list(&sl);
     printf("\n");
 
-    
+/* 
 
     //type check ast
     ResultCode type_result = type_check(ast);
@@ -75,7 +82,8 @@ ResultCode run(VM* vm, char* source) {
     }
 
     free_chunk(&chunk);
-    free_expr(ast);
+    free_expr(ast);*/
+    free_statement_list(&sl);
 
     return RESULT_SUCCESS;
 }

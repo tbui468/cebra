@@ -1,6 +1,7 @@
 set(Sources
     main.c
     value.c
+    statement_list.c
     parser.c
     ast.c
     compiler.c
@@ -13,6 +14,7 @@ set(Headers
     memory.h
     token.h
     value.h
+    statement_list.h
     parser.h
     ast.h
     compiler.h

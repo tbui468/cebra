@@ -73,7 +73,7 @@ static bool match_string(const char* str) {
     bool same = true;
     while (is_alpha_numeric(peek_char())) {
         char c = get_char();
-        if (index < strlen(str) && str[index] != c) same = false;
+        if (index < (int)strlen(str) && str[index] != c) same = false;
         index++;
     }
 
@@ -227,8 +227,7 @@ static void add_error(Token token, const char* message) {
 }
 
 
-
-ResultCode parse(char* source, Expr** root) {
+ResultCode parse(char* source, StatementList* sl) {
     lexer.source = source;
     lexer.start = 0;
     lexer.current = 0;
@@ -236,10 +235,9 @@ ResultCode parse(char* source, Expr** root) {
     parser.current = next_token();
     parser.error_count = 0;
 
-    //TODO: Allow more than an single expression
-//    while (parser.current.type != TOKEN_EOF) {
-    *root = statement();
-//    }
+    while (parser.current.type != TOKEN_EOF) {
+        add_statement(sl, statement());
+    }
 
     if (parser.error_count > 0) {
         for (int i = 0; i < parser.error_count; i++) {

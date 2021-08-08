@@ -5,6 +5,7 @@
 #include "ast.h"
 #include "token.h"
 #include "result_code.h"
+#include "statement_list.h"
 
 typedef struct {
     Token token;
@@ -27,7 +28,7 @@ typedef struct {
     int error_count;
 } Parser;
 
-ResultCode parse(char* source, Expr** root);
+ResultCode parse(char* source, StatementList* sl);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H
