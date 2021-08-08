@@ -15,7 +15,6 @@ Value to_integer(int num) {
     return value;
 }
 
-
 Value negate_value(Value value) {
     if (value.type == VAL_INT) {
         return to_integer(-value.as.integer_type);

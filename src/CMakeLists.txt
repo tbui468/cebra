@@ -4,7 +4,7 @@ set(Sources
     parser.c
     ast.c
     compiler.c
-    #vm.c
+    vm.c
     )
 
 set(Headers
@@ -16,7 +16,7 @@ set(Headers
     parser.h
     ast.h
     compiler.h
-    #vm.h
+    vm.h
     )
 
 add_executable(

@@ -2,7 +2,7 @@
 #define CEBRA_MEMORY_H
 
 //for ast nodes
-#define ALLOCATE(type, size) ((type*)malloc(size))
+#define ALLOCATE_NODE(type) ((type*)realloc(NULL, sizeof(type)))
 
 //for arrays
 #define ALLOCATE_ARRAY(type) ((type*)realloc(NULL, 0))

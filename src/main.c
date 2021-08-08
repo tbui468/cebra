@@ -3,111 +3,28 @@
 #include "ast.h"
 #include "compiler.h"
 #include "value.h"
+#include "vm.h"
+
+/*
+ * Parser -> Typer -> Compiler -> VM
+ */
 
 //TODO:
-//move vm to different .h and .c files
-//free AST memory
-//free chunk memory
-
-//get running scripts working
-//get booleans working
+//Allow multiple statements (a bunch of prints getting parsed) - array of expr??
+//
+//move ast printing to a separate print_ast or debug file
+//
+//split parser and lexer up (if it's easy to do) so that there's less murk
+//
+//
+//What we want: "this" + " dog" should output "this dog"
+//work from the beginning parse ->
 //get strings working
 //  when do we need the hash table????
 //  we need them for String objects
 //  what are string literals??
+//
 
-typedef struct {
-    Value stack[256];
-    int stack_top;
-    int ip;
-} VM;
-
-ResultCode vm_init(VM* vm) {
-    vm->stack_top = 0;
-    vm->ip = 0;
-    return RESULT_SUCCESS;
-}
-
-ResultCode vm_free(VM* vm) {
-    return RESULT_SUCCESS;
-}
-
-Value pop(VM* vm) {
-    vm->stack_top--;
-    return vm->stack[vm->stack_top];
-}
-
-void push(VM* vm, Value value) {
-    vm->stack[vm->stack_top] = value;
-    vm->stack_top++;
-}
-
-uint8_t read_byte(VM* vm, Chunk* chunk) {
-    vm->ip++;
-    return chunk->codes[vm->ip - 1]; 
-}
-
-Value get_constant(Chunk* chunk, int idx) {
-    return chunk->constants[idx];
-}
-
-ResultCode execute(VM* vm, Chunk* chunk) {
-   vm_init(vm); //TODO: need to think of better way to reset ip (but not necessarily the stack - for REPL)
-   while (vm->ip < chunk->count) {
-        switch(read_byte(vm, chunk)) {
-            case OP_INT: {
-                uint8_t idx = read_byte(vm, chunk);
-                push(vm, get_constant(chunk, idx));
-                break;
-            }
-            case OP_FLOAT: {
-                uint8_t idx = read_byte(vm, chunk);
-                push(vm, get_constant(chunk, idx));
-                break;
-            }
-            case OP_NEGATE: {
-                Value value = pop(vm);
-                push(vm, negate_value(value));
-                break;
-            }
-            case OP_ADD: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, add_values(a, b));
-                break;
-            }
-            case OP_SUBTRACT: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, subtract_values(a, b));
-                break;
-            }
-            case OP_MULTIPLY: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, multiply_values(a, b));
-                break;
-            }
-            case OP_DIVIDE: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, divide_values(a, b));
-                break;
-            }
-            case OP_RETURN: {
-                Value value = pop(vm);
-                if (value.type == VAL_INT) {
-                    printf("%d\n", value.as.integer_type);
-                } else {
-                    printf("%f\n", value.as.float_type);
-                }
-                break;
-            }
-        } 
-   } 
-
-   return RESULT_SUCCESS;
-}
 
 ResultCode run(VM* vm, char* source) {
 
@@ -116,32 +33,49 @@ ResultCode run(VM* vm, char* source) {
     ResultCode parse_result = parse(source, &ast);
 
     if (parse_result == RESULT_FAILED) {
+        free_expr(ast);
         return RESULT_FAILED;
     }
 
     print_expr(ast);
     printf("\n");
 
+    
 
     //type check ast
     ResultCode type_result = type_check(ast);
 
     if (type_result == RESULT_FAILED) {
+        free_expr(ast);
         return RESULT_FAILED;
     }
 
+    
     //compile ast to byte code
+    //will want to compile to function object (script) later, which the vm will run
     Chunk chunk;
-    chunk_init(&chunk);
+    init_chunk(&chunk);
     ResultCode compile_result = compile(ast, &chunk);
+
+    if (compile_result == RESULT_FAILED) {
+        free_chunk(&chunk);
+        free_expr(ast);
+       return RESULT_FAILED; 
+    }
 
     disassemble_chunk(&chunk);
 
     //execute code on vm
     ResultCode run_result = execute(vm, &chunk);
 
-    //free chunk here
-    //free ast here
+    if (run_result == RESULT_FAILED) {
+        free_chunk(&chunk);
+        free_expr(ast);
+       return RESULT_FAILED; 
+    }
+
+    free_chunk(&chunk);
+    free_expr(ast);
 
     return RESULT_SUCCESS;
 }

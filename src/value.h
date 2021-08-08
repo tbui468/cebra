@@ -4,6 +4,7 @@
 typedef enum {
     VAL_INT,
     VAL_FLOAT,
+    VAL_BOOL,
 } ValueType;
 
 typedef struct {

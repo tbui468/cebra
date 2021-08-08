@@ -8,6 +8,7 @@
 typedef enum {
     OP_INT, //two bytes
     OP_FLOAT, //two bytes
+    OP_PRINT,
     OP_ADD,
     OP_SUBTRACT,
     OP_MULTIPLY,
@@ -29,7 +30,8 @@ typedef struct {
     Expr* ast;
 } Compiler;
 
-void chunk_init(Chunk* chunk);
+void init_chunk(Chunk* chunk);
+void free_chunk(Chunk* chunk);
 ResultCode compile(Expr* ast, Chunk* chunk);
 void disassemble_chunk(Chunk* chunk);
 

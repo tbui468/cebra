@@ -74,21 +74,33 @@ static void compile_binary(Expr* expr) {
     }
 }
 
+static void compile_print(Expr* expr) {
+    Print* print = (Print*)expr;
+    compile_expr(print->right);
+    add_byte(OP_PRINT);
+}
+
 static void compile_expr(Expr* expr) {
     switch(expr->type) {
         case EXPR_LITERAL:  compile_literal(expr); break;
         case EXPR_BINARY:   compile_binary(expr); break;
         case EXPR_UNARY:    compile_unary(expr); break;
+        case EXPR_PRINT:    compile_print(expr); break;
     } 
 
 }
 
 
-void chunk_init(Chunk* chunk) {
+void init_chunk(Chunk* chunk) {
     chunk->codes = ALLOCATE_ARRAY(OpCode);
     chunk->count = 0;
     chunk->capacity = 0;
     chunk->constants_idx = 0;
+}
+
+
+void free_chunk(Chunk* chunk) {
+    FREE(chunk->codes);
 }
 
 ResultCode compile(Expr* ast, Chunk* chunk) {

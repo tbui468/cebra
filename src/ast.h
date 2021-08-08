@@ -18,12 +18,14 @@ typedef struct {
 typedef enum {
     DATA_INT,
     DATA_FLOAT,
+    DATA_STRING,
 } DataType;
 
 typedef enum {
     EXPR_LITERAL,
     EXPR_UNARY,
     EXPR_BINARY,
+    EXPR_PRINT,
 } ExprType;
 
 typedef struct {
@@ -48,11 +50,19 @@ typedef struct {
     Expr* right;
 } Binary;
 
+typedef struct {
+    Expr base;
+    Token name;
+    Expr* right;
+} Print;
+
 Expr* make_literal(Token name);
 Expr* make_unary(Token name, Expr* right);
 Expr* make_binary(Token name, Expr* left, Expr* right);
+Expr* make_print(Token name, Expr* right);
 
 void print_expr(Expr* expr);
+void free_expr(Expr* expr);
 
 DataType type(Expr* expr);
 
