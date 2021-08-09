@@ -24,6 +24,9 @@
  */
 
 //TODO:
+//ObjStrings work with compiler
+//  Get them working with vm to print put string concatenations etc
+//ObjString - how should strings be stored?
 //What we want: "this" + " dog" should output "this dog"
 //get strings working
 //  work from the beginning with parsing a string literal

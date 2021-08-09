@@ -9,6 +9,7 @@
 typedef enum {
     OP_INT, //two bytes
     OP_FLOAT, //two bytes
+    OP_STRING,
     OP_PRINT,
     OP_ADD,
     OP_SUBTRACT,

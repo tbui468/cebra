@@ -1,5 +1,6 @@
 #include "compiler.h"
 #include "memory.h"
+#include "object.h"
 
 Compiler compiler;
 void compile_expr(Expr* expr);
@@ -41,6 +42,17 @@ static void add_float(uint8_t op_code, double num) {
     compiler.chunk->count += sizeof(double);
 }
 
+static void add_string(uint8_t op_code, ObjString* obj) {
+    if (compiler.chunk->count + (int)sizeof(ObjString*) + 1 > compiler.chunk->capacity) {
+        grow_capacity();
+    }
+
+    add_byte(op_code);
+
+    memcpy(&compiler.chunk->codes[compiler.chunk->count], &obj, sizeof(ObjString*));
+    compiler.chunk->count += sizeof(ObjString*);
+}
+
 static void compile_literal(Expr* expr) {
     Literal* literal = (Literal*)expr;
     switch(literal->name.type) {
@@ -50,6 +62,10 @@ static void compile_literal(Expr* expr) {
         }
         case TOKEN_FLOAT: {
             add_float(OP_FLOAT, strtod(literal->name.start, NULL));
+            break;
+        }
+        case TOKEN_STRING: {
+            add_string(OP_STRING, make_string(literal->name.start, literal->name.length));
             break;
         }
         //default:            add_error(literal->name, "Unrecognized token."); break;
@@ -122,6 +138,11 @@ static double read_float(Chunk* chunk, int offset) {
     return *ptr;
 }
 
+static ObjString* read_string(Chunk* chunk, int offset) {
+    ObjString** ptr = (ObjString**)(&chunk->codes[offset]);
+    return *ptr;
+}
+
 void disassemble_chunk(Chunk* chunk) {
     int i = 0;
     while (i < chunk->count) {
@@ -133,6 +154,11 @@ void disassemble_chunk(Chunk* chunk) {
             case OP_FLOAT: 
                 printf("[OP_FLOAT] %f\n", read_float(chunk, i + 1)); 
                 i += sizeof(double);
+                break;
+            case OP_STRING: 
+                ObjString* obj = read_string(chunk, i + 1);
+                printf("[OP_STRING] %s\n", obj->chars); 
+                i += sizeof(ObjString*);
                 break;
             case OP_ADD: printf("[OP_ADD]\n"); break;
             case OP_SUBTRACT: printf("[OP_SUBTRACT]\n"); break;

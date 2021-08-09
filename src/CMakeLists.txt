@@ -3,6 +3,7 @@ set(Sources
     token.c
     value.c
     decl_list.c
+    object.c
     lexer.c
     parser.c
     ast.c
@@ -19,6 +20,7 @@ set(Headers
     token.h
     value.h
     decl_list.h
+    object.h
     lexer.h
     parser.h
     ast.h
