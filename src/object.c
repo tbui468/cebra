@@ -12,7 +12,16 @@ ObjString* make_string(const char* start, int length) {
     ObjString* obj = ALLOCATE_OBJ(ObjString);
     obj->base.type = OBJ_STRING;
     obj->chars = chars;
-    obj->length = length + 1;
+    obj->length = length;
+
+    return obj;
+}
+
+ObjString* take_string(char* chars, int length) {
+    ObjString* obj = ALLOCATE_OBJ(ObjString);
+    obj->base.type = OBJ_STRING;
+    obj->chars = chars;
+    obj->length = length;
 
     return obj;
 }

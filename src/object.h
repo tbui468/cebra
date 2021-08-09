@@ -18,6 +18,7 @@ typedef struct {
 
 
 ObjString* make_string(const char* start, int length);
+ObjString* take_string(char* start, int length);
 
 
 #endif// CEBRA_OBJECT_H

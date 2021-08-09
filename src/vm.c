@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "object.h"
 
 
 static Value pop(VM* vm) {
@@ -39,6 +40,12 @@ static double read_float(VM* vm, Chunk* chunk) {
     return *ptr;
 }
 
+static ObjString* read_string(VM* vm, Chunk* chunk) {
+    ObjString** ptr = (ObjString**)(&chunk->codes[vm->ip]);
+    vm->ip += (int)sizeof(ObjString*);
+    return *ptr;
+}
+
 ResultCode execute(VM* vm, Chunk* chunk) {
    vm_init(vm); //TODO: need to think of better way to reset ip (but not necessarily the stack - for REPL)
    while (vm->ip < chunk->count) {
@@ -49,6 +56,10 @@ ResultCode execute(VM* vm, Chunk* chunk) {
             }
             case OP_FLOAT: {
                 push(vm, to_float(read_float(vm, chunk)));
+                break;
+            }
+            case OP_STRING: {
+                push(vm, to_string(read_string(vm, chunk)));
                 break;
             }
             case OP_NEGATE: {
@@ -84,8 +95,10 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 Value value = pop(vm);
                 if (value.type == VAL_INT) {
                     printf("%d\n", value.as.integer_type);
-                } else {
+                } else if(value.type == VAL_FLOAT) {
                     printf("%f\n", value.as.float_type);
+                } else if(value.type == VAL_STRING) {
+                    printf("%s\n", value.as.string_type->chars);
                 }
                 break;
             }
