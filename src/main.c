@@ -24,10 +24,6 @@
  */
 
 //TODO:
-//Why can't we just stuff all value into constants table as bytes?  Since we have OP_INT, OP_FLOAT, etc
-//we know how many bytes to read next
-//  stuff all constants directly into the op codes 
-//
 //What we want: "this" + " dog" should output "this dog"
 //get strings working
 //  work from the beginning with parsing a string literal

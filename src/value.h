@@ -1,6 +1,8 @@
 #ifndef CEBRA_VALUE_H
 #define CEBRA_VALUE_H
 
+#include <stdint.h>
+
 typedef enum {
     VAL_INT,
     VAL_FLOAT,
@@ -10,14 +12,14 @@ typedef enum {
 typedef struct {
     ValueType type;
     union {
-        int integer_type;
+        int32_t integer_type;
         double float_type;
     } as;
 } Value;
 
 
 Value to_float(double num);
-Value to_integer(int num);
+Value to_integer(int32_t num);
 Value negate_value(Value value);
 Value add_values(Value a, Value b);
 Value subtract_values(Value a, Value b);

@@ -8,7 +8,7 @@ Value to_float(double num) {
     return value;
 }
 
-Value to_integer(int num) {
+Value to_integer(int32_t num) {
     Value value;
     value.type = VAL_INT;
     value.as.integer_type = num;

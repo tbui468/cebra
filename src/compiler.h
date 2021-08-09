@@ -22,8 +22,6 @@ typedef struct {
     OpCode* codes;
     int count; 
     int capacity;
-    Value constants[256];
-    int constants_idx;
 } Chunk;
 
 typedef struct {

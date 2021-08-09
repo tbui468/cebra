@@ -16,10 +16,6 @@ static uint8_t read_byte(VM* vm, Chunk* chunk) {
     return chunk->codes[vm->ip - 1]; 
 }
 
-static Value get_constant(Chunk* chunk, int idx) {
-    return chunk->constants[idx];
-}
-
 ResultCode vm_init(VM* vm) {
     vm->stack_top = 0;
     vm->ip = 0;
@@ -30,18 +26,29 @@ ResultCode vm_free(VM* vm) {
     return RESULT_SUCCESS;
 }
 
+
+static int32_t read_int(VM* vm, Chunk* chunk) {
+    int32_t* ptr = (int32_t*)(&chunk->codes[vm->ip]);
+    vm->ip += (int)sizeof(int32_t);
+    return *ptr;
+}
+
+static double read_float(VM* vm, Chunk* chunk) {
+    double* ptr = (double*)(&chunk->codes[vm->ip]);
+    vm->ip += (int)sizeof(double);
+    return *ptr;
+}
+
 ResultCode execute(VM* vm, Chunk* chunk) {
    vm_init(vm); //TODO: need to think of better way to reset ip (but not necessarily the stack - for REPL)
    while (vm->ip < chunk->count) {
         switch(read_byte(vm, chunk)) {
             case OP_INT: {
-                uint8_t idx = read_byte(vm, chunk);
-                push(vm, get_constant(chunk, idx));
+                push(vm, to_integer(read_int(vm, chunk)));
                 break;
             }
             case OP_FLOAT: {
-                uint8_t idx = read_byte(vm, chunk);
-                push(vm, get_constant(chunk, idx));
+                push(vm, to_float(read_float(vm, chunk)));
                 break;
             }
             case OP_NEGATE: {

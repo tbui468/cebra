@@ -4,44 +4,52 @@
 Compiler compiler;
 void compile_expr(Expr* expr);
 
+static void grow_capacity() {
+    int new_capacity = compiler.chunk->capacity == 0 ? 8 : compiler.chunk->capacity * 2;
+    compiler.chunk->codes = GROW_ARRAY(OpCode, compiler.chunk->codes, new_capacity);
+    compiler.chunk->capacity = new_capacity;
+}
 
 static void add_byte(uint8_t byte) {
-    //expand capacity if necessary
     if (compiler.chunk->count + 1 > compiler.chunk->capacity) {
-        int new_capacity = compiler.chunk->capacity == 0 ? 8 : compiler.chunk->capacity * 2;
-        compiler.chunk->codes = GROW_ARRAY(OpCode, compiler.chunk->codes, new_capacity);
-        compiler.chunk->capacity = new_capacity;
+        grow_capacity();
     }
 
     compiler.chunk->codes[compiler.chunk->count] = byte;
     compiler.chunk->count++;
 }
 
-static void add_bytes(uint8_t byte1, uint8_t byte2) {
-    add_byte(byte1);
-    add_byte(byte2);
+static void add_int(uint8_t op_code, int32_t num) {
+    if (compiler.chunk->count + (int)sizeof(int32_t) + 1 > compiler.chunk->capacity) {
+        grow_capacity();
+    }
+
+    add_byte(op_code);
+
+    memcpy(&compiler.chunk->codes[compiler.chunk->count], &num, sizeof(int32_t));
+    compiler.chunk->count += sizeof(int32_t);
 }
 
+static void add_float(uint8_t op_code, double num) {
+    if (compiler.chunk->count + (int)sizeof(double) + 1 > compiler.chunk->capacity) {
+        grow_capacity();
+    }
 
-static int add_constant(Value value) {
-    compiler.chunk->constants[compiler.chunk->constants_idx] = value;
-    compiler.chunk->constants_idx++;
-    return compiler.chunk->constants_idx - 1;
+    add_byte(op_code);
+
+    memcpy(&compiler.chunk->codes[compiler.chunk->count], &num, sizeof(double));
+    compiler.chunk->count += sizeof(double);
 }
 
 static void compile_literal(Expr* expr) {
     Literal* literal = (Literal*)expr;
     switch(literal->name.type) {
         case TOKEN_INT: {
-            int num = (int)strtol(literal->name.start, NULL, 10);
-            int idx = add_constant(to_integer(num));
-            add_bytes(OP_INT, idx); 
+            add_int(OP_INT, (int32_t)strtol(literal->name.start, NULL, 10));
             break;
         }
         case TOKEN_FLOAT: {
-            double num = strtod(literal->name.start, NULL);
-            int idx = add_constant(to_float(num));
-            add_bytes(OP_FLOAT, idx); 
+            add_float(OP_FLOAT, strtod(literal->name.start, NULL));
             break;
         }
         //default:            add_error(literal->name, "Unrecognized token."); break;
@@ -79,7 +87,6 @@ static void compile_expr(Expr* expr) {
         case EXPR_UNARY:    compile_unary(expr); break;
         case EXPR_PRINT:    compile_print(expr); break;
     } 
-
 }
 
 
@@ -87,7 +94,6 @@ void init_chunk(Chunk* chunk) {
     chunk->codes = ALLOCATE_ARRAY(OpCode);
     chunk->count = 0;
     chunk->capacity = 0;
-    chunk->constants_idx = 0;
 }
 
 
@@ -106,12 +112,14 @@ ResultCode compile(DeclList* dl, Chunk* chunk) {
     return RESULT_SUCCESS;
 }
 
-static int get_int(int idx) {
-    return compiler.chunk->constants[idx].as.integer_type;
+static int32_t read_int(Chunk* chunk, int offset) {
+    int32_t* ptr = (int32_t*)(&chunk->codes[offset]);
+    return *ptr;
 }
 
-static float get_float(int idx) {
-    return compiler.chunk->constants[idx].as.float_type;
+static double read_float(Chunk* chunk, int offset) {
+    double* ptr = (double*)(&chunk->codes[offset]);
+    return *ptr;
 }
 
 void disassemble_chunk(Chunk* chunk) {
@@ -119,12 +127,12 @@ void disassemble_chunk(Chunk* chunk) {
     while (i < chunk->count) {
         switch(chunk->codes[i]) {
             case OP_INT: 
-                i++;
-                printf("[OP_INT] %d %d\n", chunk->codes[i], get_int(chunk->codes[i])); 
+                printf("[OP_INT] %d\n", read_int(chunk, i + 1)); 
+                i += sizeof(int32_t);
                 break;
             case OP_FLOAT: 
-                i++;
-                printf("[OP_FLOAT] %d %f\n", chunk->codes[i], get_float(chunk->codes[i])); 
+                printf("[OP_FLOAT] %f\n", read_float(chunk, i + 1)); 
+                i += sizeof(double);
                 break;
             case OP_ADD: printf("[OP_ADD]\n"); break;
             case OP_SUBTRACT: printf("[OP_SUBTRACT]\n"); break;
