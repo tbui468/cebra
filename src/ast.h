@@ -10,6 +10,7 @@ typedef enum {
     EXPR_UNARY,
     EXPR_BINARY,
     EXPR_PRINT,
+    EXPR_DECL_VAR,
 } ExprType;
 
 typedef struct {
@@ -40,10 +41,18 @@ typedef struct {
     Expr* right;
 } Print;
 
+typedef struct {
+    Expr base;
+    Token name;
+    Token type;
+    Expr* right;
+} DeclVar;
+
 Expr* make_literal(Token name);
 Expr* make_unary(Token name, Expr* right);
 Expr* make_binary(Token name, Expr* left, Expr* right);
 Expr* make_print(Token name, Expr* right);
+Expr* make_decl_var(Token name, Token type, Expr* right);
 
 void free_expr(Expr* expr);
 

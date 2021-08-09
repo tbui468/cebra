@@ -42,6 +42,17 @@ Expr* make_print(Token name, Expr* right) {
 }
 
 
+Expr* make_decl_var(Token name, Token type, Expr* right) {
+    DeclVar* decl_var = ALLOCATE_NODE(DeclVar);
+    decl_var->name = name;
+    decl_var->type = type;
+    decl_var->right = right;
+    decl_var->base.type = EXPR_DECL_VAR;
+
+    return (Expr*)decl_var;
+}
+
+
 static void free_binary(Expr* expr) {
     Binary* binary = (Binary*)expr;
     free_expr(binary->left);
@@ -66,11 +77,18 @@ static void free_print(Expr* expr) {
     FREE(print);
 }
 
+static void free_decl_var(Expr* expr) {
+    DeclVar* decl_var = (DeclVar*)expr;
+    free_expr(decl_var->right);
+    FREE(decl_var);
+}
+
 void free_expr(Expr* expr) {
     switch(expr->type) {
         case EXPR_LITERAL: free_literal(expr); break;
         case EXPR_BINARY: free_binary(expr); break;
         case EXPR_UNARY: free_unary(expr); break;
         case EXPR_PRINT: free_print(expr); break;
+        case EXPR_DECL_VAR: free_decl_var(expr); break;
     } 
 }

@@ -28,12 +28,20 @@ static void print_print(Expr* expr) {
     printf(")");
 }
 
+static void print_decl_var(Expr* expr) {
+    DeclVar* dv = (DeclVar*)expr;
+    printf("( DeclVar %.*s ", dv->name.length, dv->name.start);
+    print_expr(dv->right);
+    printf(")");
+}
+
 void print_expr(Expr* expr) {
     switch(expr->type) {
         case EXPR_LITERAL: print_literal(expr); break;
         case EXPR_BINARY: print_binary(expr); break;
         case EXPR_UNARY: print_unary(expr); break;
         case EXPR_PRINT: print_print(expr); break;
+        case EXPR_DECL_VAR: print_decl_var(expr); break;
     } 
 }
 

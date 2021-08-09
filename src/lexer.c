@@ -74,18 +74,23 @@ static bool match_string(const char* str) {
 }
 
 static Token read_keyword(char c) {
+    read_identifier();
+
     switch(c) {
         case 'p':
-            read_identifier();
-            if (match_string("rint")) {
-                return new_token(TOKEN_PRINT);
-            } else {
-                return new_token(TOKEN_IDENTIFIER);
-            }
-        default:
-            read_identifier();
-            return new_token(TOKEN_IDENTIFIER);
+            if (match_string("rint")) return new_token(TOKEN_PRINT);
+            break;
+        case 'i':
+            if (match_string("nt")) return new_token(TOKEN_INT_TYPE);
+            break;
+        case 'f':
+            if (match_string("loat")) return new_token(TOKEN_FLOAT_TYPE);
+            break;
+        case 's':
+            if (match_string("tring")) return new_token(TOKEN_STRING_TYPE);
+            break;
     }
+    return new_token(TOKEN_IDENTIFIER);
 }
 
 Token next_token() {
@@ -136,6 +141,8 @@ Token next_token() {
         case '/':   return new_token(TOKEN_SLASH);
         case '(':   return new_token(TOKEN_LEFT_PAREN);
         case ')':   return new_token(TOKEN_RIGHT_PAREN);
+        case ':':   return new_token(TOKEN_COLON);
+        case '=':   return new_token(TOKEN_EQUAL);
         case '\0':  return new_token(TOKEN_EOF);
     }
 }

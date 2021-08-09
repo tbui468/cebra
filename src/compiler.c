@@ -96,12 +96,17 @@ static void compile_print(Expr* expr) {
     add_byte(OP_PRINT);
 }
 
+static void compile_decl_var(Expr* expr) {
+    //what do I want to do here???
+}
+
 static void compile_expr(Expr* expr) {
     switch(expr->type) {
         case EXPR_LITERAL:  compile_literal(expr); break;
         case EXPR_BINARY:   compile_binary(expr); break;
         case EXPR_UNARY:    compile_unary(expr); break;
         case EXPR_PRINT:    compile_print(expr); break;
+        case EXPR_DECL_VAR: compile_decl_var(expr); break;
     } 
 }
 

@@ -24,15 +24,19 @@
  */
 
 //TODO:
-//ObjStrings work with compiler
-//  Get them working with vm to print put string concatenations etc
-//ObjString - how should strings be stored?
-//What we want: "this" + " dog" should output "this dog"
-//get strings working
-//  work from the beginning with parsing a string literal
-//  What do we want to do with string literals?
-//  when do we need the hash table???? Start with the API to the hash table: where do we call it?  What arguments need to be passed in?
+//  compile_decl_var in compiler.c needs to be implemented
+//      we could just make all variables local and on the stack
+//      we wouldn't need the hash table (yet) - it might be easier this way for now
 //
+//
+//  a: int = 5
+//  b: float = 23.23
+//  c: string = "dog" + "bird"
+//
+//  print c
+//
+//
+//Need to remember to make GC for ObjStrings
 
 
 ResultCode run(VM* vm, const char* source) {

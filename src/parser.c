@@ -27,6 +27,13 @@ static void consume(TokenType type, const char* message) {
     add_error(parser.previous, message);
 }
 
+static bool read_type() {
+    if (match(TOKEN_INT_TYPE)) return true; 
+    if (match(TOKEN_FLOAT_TYPE)) return true; 
+    if (match(TOKEN_STRING_TYPE)) return true; 
+    return false;
+}
+
 static Expr* primary() {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || match(TOKEN_STRING)) {
         return make_literal(parser.previous);
@@ -82,6 +89,16 @@ static Expr* declaration() {
     if (match(TOKEN_PRINT)) {
         Token name = parser.previous;
         return make_print(name, expression());
+    } else if (match(TOKEN_IDENTIFIER)) {
+        Token name = parser.previous;
+        consume(TOKEN_COLON, "Expect ':' after variable name.");
+        if (!read_type()) {
+            add_error(parser.previous, "Expect data type after ':'.");
+        }
+        Token type = parser.previous;
+        consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
+        Expr* value = expression();
+        return make_decl_var(name, type, value);
     }
     return expression();
 }

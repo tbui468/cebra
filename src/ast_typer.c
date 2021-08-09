@@ -1,9 +1,18 @@
 #include "ast_typer.h"
+#include "token.h"
 
 Typer typer;
 
 
 static DataType type(Expr* expr);
+
+static DataType data_type_from_token_type(TokenType type) {
+    switch(type) {
+        case TOKEN_INT_TYPE: return DATA_INT;
+        case TOKEN_FLOAT_TYPE: return DATA_FLOAT;
+        case TOKEN_STRING_TYPE: return DATA_STRING;
+    }
+}
 
 static void add_error(Token token, const char* message) {
     TypeError error;
@@ -46,12 +55,23 @@ static DataType type_print(Expr* expr) {
     return right;
 }
 
+static DataType type_decl_var(Expr* expr) {
+    DeclVar* dv = (DeclVar*)expr;
+    DataType left = data_type_from_token_type(dv->type.type);
+    DataType right = type(dv->right);
+    if (left != right) {
+        add_error(dv->name, "Declaration type must match assignment type.");
+    }
+    return right;
+}
+
 static DataType type(Expr* expr) {
     switch(expr->type) {
         case EXPR_LITERAL: return type_literal(expr);
         case EXPR_BINARY: return type_binary(expr);
         case EXPR_UNARY: return type_unary(expr);
         case EXPR_PRINT: return type_print(expr);
+        case EXPR_DECL_VAR: return type_decl_var(expr);
     } 
 }
 
