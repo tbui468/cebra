@@ -10,23 +10,24 @@
  * Parser -> Typer -> Compiler -> VM
  */
 
-//TODO:
-//need to redo lexer into something more readable
-//
+
+/*
+ * AST structure
+ *
 //StatementList should be DeclList - all programs are a list of declarations
 //  decl - classDecl | funDecl | varDecl | stmt
 //  stmt - exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
 //      stmts leave nothing on the stack when done
 //      expressions leave one new value on the stack when done
 //      what about decl??? no? - but they add to constants/globals
+ */
+
+//TODO:
+//Move printin ast code out - it's too busy
 //
 //Integrate DeclList with the rest of the pipeline
 //
 //Make grow_capacity in chunk a terniary statement instead of it's own function 
-//
-//move ast printing to a separate print_ast or debug file
-//
-//split parser and lexer up (if it's easy to do) so that there's less murk
 //
 //What we want: "this" + " dog" should output "this dog"
 //work from the beginning parse ->
@@ -39,32 +40,30 @@
 
 ResultCode run(VM* vm, const char* source) {
 
-    //create AST from source
+    //create list of declarations (AST)
     DeclList dl;
     init_decl_list(&dl);
-    //Expr* ast;
-    //ResultCode parse_result = parse(source, &ast);
-    ResultCode parse_result = parse(source, &dl);
 
+    ResultCode parse_result = parse(source, &dl);
+    
     if (parse_result == RESULT_FAILED) {
         free_decl_list(&dl);
         return RESULT_FAILED;
     }
 
     print_decl_list(&dl);
-    printf("\n");
 
-/* 
 
-    //type check ast
-    ResultCode type_result = type_check(ast);
+
+    //type check
+    ResultCode type_result = type_check(&dl);
 
     if (type_result == RESULT_FAILED) {
-        free_expr(ast);
+        free_decl_list(&dl);
         return RESULT_FAILED;
     }
 
-    
+/*    
     //compile ast to byte code
     //will want to compile to function object (script) later, which the vm will run
     Chunk chunk;

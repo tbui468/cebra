@@ -29,5 +29,6 @@ void add_decl(DeclList* sl, Expr* expr) {
 void print_decl_list(DeclList* sl) {
     for (int i = 0; i < sl->count; i++) {
         print_expr(sl->stmts[i]);
+        printf("\n");
     }
 }

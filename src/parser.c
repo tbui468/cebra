@@ -78,12 +78,12 @@ static Expr* expression() {
     return term();
 }
 
-static Expr* statement() {
+static Expr* declaration() {
     if (match(TOKEN_PRINT)) {
         Token name = parser.previous;
         return make_print(name, expression());
     }
-
+    return expression();
 }
 
 static void add_error(Token token, const char* message) {
@@ -94,35 +94,25 @@ static void add_error(Token token, const char* message) {
     parser.error_count++;
 }
 
-
-ResultCode parse(const char* source, DeclList* dl) {
+static void init_parser(const char* source) {
     init_lexer(source);
     parser.error_count = 0;
+    parser.current = next_token();
+}
+
+
+ResultCode parse(const char* source, DeclList* dl) {
+    init_parser(source);
 
     //add_statement(dl, statement());
     //add_statement(dl, statement());
     //
-    //while(!end_of_file()) {
-    while(1) {
-        /*
-        char c = next_char();
-
-        switch(c) {
-            case ' ': printf("[space]\n"); break;
-            case '\n': printf("[newline]\n"); break;
-            case '\r': printf("[return]\n"); break;
-            case '\t': printf("[tab]\n"); break;
-            case '\0': printf("[eof]\n"); break;
-            default: printf("%c\n", c);
-        }
-
-        if (c == '\0') break;*/
-
-        Token t = next_token();
-        print_token(t);
-        if (t.type == TOKEN_EOF) break;
-
+    while(parser.current.type != TOKEN_EOF) {
+        add_decl(dl, declaration());
     }
+
+    //print_expr(declaration());
+    //print_expr(declaration());
 
 
     if (parser.error_count > 0) {
