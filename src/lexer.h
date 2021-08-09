@@ -4,14 +4,16 @@
 #include "token.h"
 
 typedef struct {
-    char* source;
+    const char* source;
     int start;
     int current;
     int line;
 } Lexer;
 
-void init_lexer(char* source);
+void init_lexer(const char* source);
 Token next_token();
+char next_char();
+bool end_of_file();
 
 #endif// CEBRA_LEXER_H
 

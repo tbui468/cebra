@@ -11,9 +11,7 @@
  */
 
 //TODO:
-//test.cbr freezes right now after two print statements - what's happening?
-//  Why is parser get_next() requires advance() two times to get past double quotes?
-//  need to redo lexer into something more readable
+//need to redo lexer into something more readable
 //
 //StatementList should be DeclList - all programs are a list of declarations
 //  decl - classDecl | funDecl | varDecl | stmt
@@ -39,7 +37,7 @@
 //
 
 
-ResultCode run(VM* vm, char* source) {
+ResultCode run(VM* vm, const char* source) {
 
     //create AST from source
     DeclList dl;
@@ -120,7 +118,7 @@ ResultCode repl() {
     return RESULT_SUCCESS;
 }
 
-char* read_file(const char* path) {
+const char* read_file(const char* path) {
     FILE* file = fopen(path, "rb");
     fseek(file, 0L, SEEK_END);
     size_t file_size = ftell(file);
@@ -136,10 +134,10 @@ ResultCode run_script(const char* path) {
     VM vm;
     vm_init(&vm);
 
-    char* source = read_file(path);
+    const char* source = read_file(path);
     run(&vm, source);
 
-    free(source);
+    free((void*)source);
     vm_free(&vm);
 
     return RESULT_SUCCESS;

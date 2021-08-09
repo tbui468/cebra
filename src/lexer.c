@@ -3,6 +3,12 @@
 
 Lexer lexer;
 
+
+char next_char() {
+    return lexer.source[lexer.current++];
+}
+
+
 static bool is_numeric(char c) {
     return c <= '9' && c >= '0';
 }
@@ -20,7 +26,7 @@ static bool is_whitespace(char c) {
     if (c == '\n') {
         lexer.line++;
     }
-    return c == ' ' || c == '\n' || c == '\t';
+    return c == ' ' || c == '\n' || c == '\t' || c == '\r';
 }
 
 static char peek_char() {
@@ -28,20 +34,11 @@ static char peek_char() {
 }
 
 
-static char get_char() {
-    lexer.current++;
-    return lexer.source[lexer.current - 1];
-}
-
-static void advance() {
-    lexer.current++;
-    lexer.start = lexer.current;
-}
-
 static void consume_whitespace() {
     while (is_whitespace(peek_char())) {
-        advance();
+        lexer.current++;
     }
+    lexer.start = lexer.current;
 }
 
 static Token new_token(TokenType type) {
@@ -58,37 +55,43 @@ static Token new_token(TokenType type) {
 
 static void read_numbers() {
     while (is_numeric(peek_char())) {
-        get_char();
+        next_char();
+    }
+}
+
+static void read_identifier() {
+    while (is_alpha_numeric(peek_char())) {
+        next_char();
     }
 }
 
 static bool match_string(const char* str) {
-    int index = 0;
-    bool same = true;
-    while (is_alpha_numeric(peek_char())) {
-        char c = get_char();
-        if (index < (int)strlen(str) && str[index] != c) same = false;
-        index++;
+    if ((int)strlen(str) != lexer.current - lexer.start - 1) {
+        return false;
     }
 
-    return same;
+    return memcmp(str, lexer.source + lexer.start + 1, strlen(str)) == 0;
 }
 
 static Token read_keyword(char c) {
     switch(c) {
         case 'p':
+            read_identifier();
             if (match_string("rint")) {
                 return new_token(TOKEN_PRINT);
+            } else {
+                return new_token(TOKEN_IDENTIFIER);
             }
+        default:
+            read_identifier();
             return new_token(TOKEN_IDENTIFIER);
     }
 }
 
 Token next_token() {
-
     consume_whitespace();
 
-    char c = get_char();
+    char c = next_char();
    
     //float with leading . 
     if (c == '.' && is_numeric(peek_char())) {
@@ -100,7 +103,7 @@ Token next_token() {
     if (is_numeric(c)) {
         read_numbers();
         if (peek_char() == '.') {
-            get_char();
+            next_char();
         } else {
             return new_token(TOKEN_INT);
         }
@@ -111,12 +114,13 @@ Token next_token() {
     //string literal
     if (c == '"') {
         while (peek_char() != '"') {
-            get_char();
+            next_char();
         }
         lexer.start++; //skip first double quote
         Token token = new_token(TOKEN_STRING);
-        advance(); //read last double quote
-        advance(); //read last double quote
+        //skip lat double quote
+        lexer.start++;
+        lexer.current++;
         return token;
     }
 
@@ -136,7 +140,11 @@ Token next_token() {
     }
 }
 
-void init_lexer(char* source) {
+bool end_of_file() {
+    return peek_char() == '\0';
+}
+
+void init_lexer(const char* source) {
     lexer.source = source;
     lexer.start = 0;
     lexer.current = 0;

@@ -95,20 +95,35 @@ static void add_error(Token token, const char* message) {
 }
 
 
-ResultCode parse(char* source, DeclList* dl) {
+ResultCode parse(const char* source, DeclList* dl) {
     init_lexer(source);
     parser.error_count = 0;
 
     //add_statement(dl, statement());
     //add_statement(dl, statement());
-    int count = 0;
+    //
+    //while(!end_of_file()) {
     while(1) {
-        print_token(next_token());
-        count++;
-        if (count > 10) break;
+        /*
+        char c = next_char();
+
+        switch(c) {
+            case ' ': printf("[space]\n"); break;
+            case '\n': printf("[newline]\n"); break;
+            case '\r': printf("[return]\n"); break;
+            case '\t': printf("[tab]\n"); break;
+            case '\0': printf("[eof]\n"); break;
+            default: printf("%c\n", c);
+        }
+
+        if (c == '\0') break;*/
+
+        Token t = next_token();
+        print_token(t);
+        if (t.type == TOKEN_EOF) break;
+
     }
 
-    
 
     if (parser.error_count > 0) {
         for (int i = 0; i < parser.error_count; i++) {

@@ -19,7 +19,7 @@ typedef struct {
     int error_count;
 } Parser;
 
-ResultCode parse(char* source, DeclList* dl);
+ResultCode parse(const char* source, DeclList* dl);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H
