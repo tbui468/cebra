@@ -6,14 +6,14 @@
 
 
 typedef struct {
-    Expr** stmts;
+    Expr** decls;
     int count;
     int capacity;
 } DeclList;
 
-void init_decl_list(DeclList* sl);
-void free_decl_list(DeclList* sl);
-void add_decl(DeclList* sl, Expr* expr);
-void print_decl_list(DeclList* sl);
+void init_decl_list(DeclList* dl);
+void free_decl_list(DeclList* el);
+void add_decl(DeclList* el, Expr* decl);
+void print_decl_list(DeclList* el);
 
 #endif// CEBRA_DECL_LIST_H

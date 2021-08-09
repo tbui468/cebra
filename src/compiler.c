@@ -5,18 +5,10 @@ Compiler compiler;
 void compile_expr(Expr* expr);
 
 
-static int grow_capacity(int old_size) {
-    if (old_size == 0) {
-        return 8;
-    }
-
-    return old_size * 2;
-}
-
 static void add_byte(uint8_t byte) {
     //expand capacity if necessary
     if (compiler.chunk->count + 1 > compiler.chunk->capacity) {
-        int new_capacity = grow_capacity(compiler.chunk->capacity);
+        int new_capacity = compiler.chunk->capacity == 0 ? 8 : compiler.chunk->capacity * 2;
         compiler.chunk->codes = GROW_ARRAY(OpCode, compiler.chunk->codes, new_capacity);
         compiler.chunk->capacity = new_capacity;
     }
@@ -103,11 +95,12 @@ void free_chunk(Chunk* chunk) {
     FREE(chunk->codes);
 }
 
-ResultCode compile(Expr* ast, Chunk* chunk) {
+ResultCode compile(DeclList* dl, Chunk* chunk) {
     compiler.chunk = chunk;
-    compiler.ast = ast;
 
-    compile_expr(ast);
+    for (int i = 0; i < dl->count; i++) {
+        compile_expr(dl->decls[i]);
+    }
     add_byte(OP_RETURN);
 
     return RESULT_SUCCESS;
@@ -138,6 +131,7 @@ void disassemble_chunk(Chunk* chunk) {
             case OP_MULTIPLY: printf("[OP_MULTIPLY]\n"); break;
             case OP_DIVIDE: printf("[OP_DIVIDE]\n"); break;
             case OP_NEGATE: printf("[OP_NEGATE]\n"); break;
+            case OP_PRINT: printf("[OP_PRINT]\n"); break;
             case OP_RETURN:
                 printf("[OP_RETURN]\n");
                 break;

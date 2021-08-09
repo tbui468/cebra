@@ -5,6 +5,7 @@
 #include "value.h"
 #include "vm.h"
 #include "decl_list.h"
+#include "ast_typer.h"
 
 /*
  * Parser -> Typer -> Compiler -> VM
@@ -23,18 +24,15 @@
  */
 
 //TODO:
-//Move printin ast code out - it's too busy
-//
-//Integrate DeclList with the rest of the pipeline
-//
-//Make grow_capacity in chunk a terniary statement instead of it's own function 
+//Why can't we just stuff all value into constants table as bytes?  Since we have OP_INT, OP_FLOAT, etc
+//we know how many bytes to read next
+//  stuff all constants directly into the op codes 
 //
 //What we want: "this" + " dog" should output "this dog"
-//work from the beginning parse ->
 //get strings working
-//  when do we need the hash table????
-//  we need them for String objects
-//  what are string literals??
+//  work from the beginning with parsing a string literal
+//  What do we want to do with string literals?
+//  when do we need the hash table???? Start with the API to the hash table: where do we call it?  What arguments need to be passed in?
 //
 
 
@@ -63,16 +61,16 @@ ResultCode run(VM* vm, const char* source) {
         return RESULT_FAILED;
     }
 
-/*    
+    
     //compile ast to byte code
     //will want to compile to function object (script) later, which the vm will run
     Chunk chunk;
     init_chunk(&chunk);
-    ResultCode compile_result = compile(ast, &chunk);
+    ResultCode compile_result = compile(&dl, &chunk);
 
     if (compile_result == RESULT_FAILED) {
         free_chunk(&chunk);
-        free_expr(ast);
+        free_decl_list(&dl);
        return RESULT_FAILED; 
     }
 
@@ -83,12 +81,11 @@ ResultCode run(VM* vm, const char* source) {
 
     if (run_result == RESULT_FAILED) {
         free_chunk(&chunk);
-        free_expr(ast);
+        free_decl_list(&dl);
        return RESULT_FAILED; 
     }
 
     free_chunk(&chunk);
-    free_expr(ast);*/
     free_decl_list(&dl);
 
     return RESULT_SUCCESS;

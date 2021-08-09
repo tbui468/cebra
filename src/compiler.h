@@ -4,6 +4,7 @@
 #include "result_code.h"
 #include "ast.h"
 #include "value.h"
+#include "decl_list.h"
 
 typedef enum {
     OP_INT, //two bytes
@@ -27,12 +28,11 @@ typedef struct {
 
 typedef struct {
     Chunk* chunk;
-    Expr* ast;
 } Compiler;
 
 void init_chunk(Chunk* chunk);
 void free_chunk(Chunk* chunk);
-ResultCode compile(Expr* ast, Chunk* chunk);
+ResultCode compile(DeclList* dl, Chunk* chunk);
 void disassemble_chunk(Chunk* chunk);
 
 #endif// CEBRA_COMPILER_H
