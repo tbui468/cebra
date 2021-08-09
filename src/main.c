@@ -4,7 +4,7 @@
 #include "compiler.h"
 #include "value.h"
 #include "vm.h"
-#include "statement_list.h"
+#include "decl_list.h"
 
 /*
  * Parser -> Typer -> Compiler -> VM
@@ -12,8 +12,17 @@
 
 //TODO:
 //test.cbr freezes right now after two print statements - what's happening?
+//  Why is parser get_next() requires advance() two times to get past double quotes?
+//  need to redo lexer into something more readable
 //
-//Integrate StatementList with the rest of the pipeline
+//StatementList should be DeclList - all programs are a list of declarations
+//  decl - classDecl | funDecl | varDecl | stmt
+//  stmt - exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
+//      stmts leave nothing on the stack when done
+//      expressions leave one new value on the stack when done
+//      what about decl??? no? - but they add to constants/globals
+//
+//Integrate DeclList with the rest of the pipeline
 //
 //Make grow_capacity in chunk a terniary statement instead of it's own function 
 //
@@ -33,18 +42,18 @@
 ResultCode run(VM* vm, char* source) {
 
     //create AST from source
-    StatementList sl;
-    init_statement_list(&sl);
+    DeclList dl;
+    init_decl_list(&dl);
     //Expr* ast;
     //ResultCode parse_result = parse(source, &ast);
-    ResultCode parse_result = parse(source, &sl);
+    ResultCode parse_result = parse(source, &dl);
 
     if (parse_result == RESULT_FAILED) {
-        free_statement_list(&sl);
+        free_decl_list(&dl);
         return RESULT_FAILED;
     }
 
-    print_statement_list(&sl);
+    print_decl_list(&dl);
     printf("\n");
 
 /* 
@@ -83,7 +92,7 @@ ResultCode run(VM* vm, char* source) {
 
     free_chunk(&chunk);
     free_expr(ast);*/
-    free_statement_list(&sl);
+    free_decl_list(&dl);
 
     return RESULT_SUCCESS;
 }
@@ -128,7 +137,6 @@ ResultCode run_script(const char* path) {
     vm_init(&vm);
 
     char* source = read_file(path);
-    printf("%s", source);
     run(&vm, source);
 
     free(source);

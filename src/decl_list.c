@@ -1,20 +1,20 @@
-#include "statement_list.h"
+#include "decl_list.h"
 
 
-void init_statement_list(StatementList* sl) {
+void init_decl_list(DeclList* sl) {
     sl->stmts = ALLOCATE_ARRAY(Expr*);
     sl->count = 0;
     sl->capacity = 0;
 }
 
-void free_statement_list(StatementList* sl) {
+void free_decl_list(DeclList* sl) {
     for (int i = 0; i < sl->count; i++) {
         free_expr(sl->stmts[i]);
     }
     FREE(sl->stmts);
 }
 
-void add_statement(StatementList* sl, Expr* expr) {
+void add_decl(DeclList* sl, Expr* expr) {
     if (sl->count + 1 > sl->capacity) {
         int new_capacity = sl->capacity == 0 ? 8 : sl->capacity * 2;
         sl->stmts = GROW_ARRAY(Expr*, sl->stmts, new_capacity);
@@ -26,7 +26,7 @@ void add_statement(StatementList* sl, Expr* expr) {
 }
 
 
-void print_statement_list(StatementList* sl) {
+void print_decl_list(DeclList* sl) {
     for (int i = 0; i < sl->count; i++) {
         print_expr(sl->stmts[i]);
     }

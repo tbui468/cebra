@@ -5,21 +5,12 @@
 #include "ast.h"
 #include "token.h"
 #include "result_code.h"
-#include "statement_list.h"
+#include "decl_list.h"
 
 typedef struct {
     Token token;
     const char* message;
 } ParseError;
-
-
-typedef struct {
-    char* source;
-    int start;
-    int current;
-    int line;
-} Lexer;
-
 
 typedef struct {
     Token previous;
@@ -28,7 +19,7 @@ typedef struct {
     int error_count;
 } Parser;
 
-ResultCode parse(char* source, StatementList* sl);
+ResultCode parse(char* source, DeclList* dl);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H

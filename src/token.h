@@ -24,4 +24,7 @@ typedef struct {
 } Token;
 
 
+
+void print_token(Token token);
+
 #endif// CEBRA_TOKEN_H
