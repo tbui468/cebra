@@ -101,6 +101,10 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 vm->stack[slot] = pop(vm);
                 break;
             }
+            case OP_POP: {
+                pop(vm);
+                break;
+            }
             case OP_PRINT: {
                 Value value = pop(vm);
                 if (value.type == VAL_INT) {

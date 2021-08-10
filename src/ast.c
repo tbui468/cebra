@@ -55,10 +55,11 @@ Expr* make_get_var(Token name) {
     return (Expr*)get_var;
 }
 
-Expr* make_set_var(Token name, Expr* right) {
+Expr* make_set_var(Token name, Expr* right, bool decl) {
     SetVar* set_var = ALLOCATE_NODE(SetVar);
     set_var->name = name;
     set_var->right = right;
+    set_var->decl = decl;
     set_var->base.type = EXPR_SET_VAR;
 
     return (Expr*)set_var;

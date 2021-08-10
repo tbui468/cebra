@@ -40,7 +40,7 @@ static Expr* primary() {
     } else if (match(TOKEN_IDENTIFIER)) {
         Token name = parser.previous;
         if (match(TOKEN_EQUAL)) {
-            return make_set_var(name, expression());
+            return make_set_var(name, expression(), false);
         }
         return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
@@ -107,8 +107,7 @@ static Expr* declaration() {
             Expr* value = expression();
             return make_decl_var(name, type, value);
         } else if (match(TOKEN_EQUAL)) {
-            //either make it a statement, or give it an extre field that tells the compiler to pop the result
-            //make_set_var BUT need to pop the result while in Compiler - just put 
+            return make_set_var(name, expression(), true);
         }
     }
     return expression();
@@ -132,16 +131,9 @@ static void init_parser(const char* source) {
 ResultCode parse(const char* source, DeclList* dl) {
     init_parser(source);
 
-    //add_statement(dl, statement());
-    //add_statement(dl, statement());
-    //
     while(parser.current.type != TOKEN_EOF) {
         add_decl(dl, declaration());
     }
-
-    //print_expr(declaration());
-    //print_expr(declaration());
-
 
     if (parser.error_count > 0) {
         for (int i = 0; i < parser.error_count; i++) {

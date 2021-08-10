@@ -145,6 +145,10 @@ static void compile_decl_var(Expr* expr) {
 }
 
 static void compile_expr(Expr* expr) {
+    if (expr == NULL) {
+        printf("Node pointer is null");
+        return;
+    }
     switch(expr->type) {
         case EXPR_LITERAL:  compile_literal(expr); break;
         case EXPR_BINARY:   compile_binary(expr); break;
@@ -161,6 +165,9 @@ static void compile_expr(Expr* expr) {
             compile_expr(sv->right);
             add_byte(OP_SET_VAR);
             add_byte(find_local(sv->name));
+            if (sv->decl) {
+                add_byte(OP_POP);
+            }
             break;
         }
         case EXPR_PRINT:    compile_print(expr); break;
@@ -253,6 +260,7 @@ void disassemble_chunk(Chunk* chunk) {
                 break;
             }
             case OP_PRINT: printf("[OP_PRINT]\n"); break;
+            case OP_POP: printf("[OP_POP]\n"); break;
             case OP_RETURN:
                 printf("[OP_RETURN]\n");
                 break;

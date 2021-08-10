@@ -62,6 +62,7 @@ typedef struct {
     Expr base;
     Token name;
     Expr* right;
+    bool decl;
 } SetVar;
 
 /*
@@ -81,7 +82,7 @@ Expr* make_binary(Token name, Expr* left, Expr* right);
 Expr* make_print(Token name, Expr* right);
 Expr* make_decl_var(Token name, Token type, Expr* right);
 Expr* make_get_var(Token name);
-Expr* make_set_var(Token name, Expr* right);
+Expr* make_set_var(Token name, Expr* right, bool decl);
 
 void print_expr(Expr* expr);
 void free_expr(Expr* expr);

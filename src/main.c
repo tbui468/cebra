@@ -24,9 +24,19 @@
  */
 
 //TODO:
-//  Setting variables is not crashing (or hitting infinite loop)
-//      I think it's an issue with setting being an expression (keep result on stack) or a declaration (pop the stack)
-//      look at parser and compiler
+//Time to make better debugging tools
+//  Compiler disassemble chunk should be cleaner (and mabye in debug file)
+//  add a way to print out stack in vm (also in debug file) so I can see the stack after each operation
+//
+//This is resulting in a = 5, b = 5
+//but it should be a = 5, b = 3
+//  a: int = 0
+//  b: int = 1
+//  a = 2 + (b = 3)
+//  print a
+//  print b
+//  
+//  Braces and scopes
 //
 //  Will need a way to check variable types in type checker
 //      how to type?  Could have a hash table with variable name + datatype
