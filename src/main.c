@@ -25,8 +25,6 @@
  */
 
 //TODO:
-//  Blocks should not affect stack, but currently declared variable continue to live on...
-//
 //  If / Else
 //      since source is transformed to AST first, can probably avoid 
 //      crazy complicated code

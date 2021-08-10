@@ -135,6 +135,7 @@ static void end_scope() {
         Local* local = &compiler.locals[i];
         if (local->depth == compiler.scope_depth) {
             compiler.locals_count--;
+            add_byte(OP_POP);
         }else{
             break;
         }
