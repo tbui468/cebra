@@ -11,11 +11,17 @@ typedef enum {
     EXPR_BINARY,
     EXPR_PRINT,
     EXPR_DECL_VAR,
+    EXPR_GET_VAR,
+    EXPR_SET_VAR,
 } ExprType;
 
 typedef struct {
     ExprType type;
 } Expr;
+
+/*
+ * Basic
+ */
 
 typedef struct {
     Expr base;
@@ -35,11 +41,9 @@ typedef struct {
     Expr* right;
 } Binary;
 
-typedef struct {
-    Expr base;
-    Token name;
-    Expr* right;
-} Print;
+/*
+ * Variables
+ */
 
 typedef struct {
     Expr base;
@@ -48,13 +52,38 @@ typedef struct {
     Expr* right;
 } DeclVar;
 
+
+typedef struct {
+    Expr base;
+    Token name;
+} GetVar;
+
+typedef struct {
+    Expr base;
+    Token name;
+    Expr* right;
+} SetVar;
+
+/*
+ * Other
+ */
+
+typedef struct {
+    Expr base;
+    Token name;
+    Expr* right;
+} Print;
+
+
 Expr* make_literal(Token name);
 Expr* make_unary(Token name, Expr* right);
 Expr* make_binary(Token name, Expr* left, Expr* right);
 Expr* make_print(Token name, Expr* right);
 Expr* make_decl_var(Token name, Token type, Expr* right);
+Expr* make_get_var(Token name);
+Expr* make_set_var(Token name, Expr* right);
 
+void print_expr(Expr* expr);
 void free_expr(Expr* expr);
-
 
 #endif// CEBRA_AST_H

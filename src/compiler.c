@@ -3,7 +3,16 @@
 #include "object.h"
 
 Compiler compiler;
+
 void compile_expr(Expr* expr);
+
+static void add_error(Token token, const char* message) {
+    CompileError error;
+    error.token = token;
+    error.message = message;
+    compiler.errors[compiler.error_count] = error;
+    compiler.error_count++;
+}
 
 static void grow_capacity() {
     int new_capacity = compiler.chunk->capacity == 0 ? 8 : compiler.chunk->capacity * 2;
@@ -96,8 +105,43 @@ static void compile_print(Expr* expr) {
     add_byte(OP_PRINT);
 }
 
+
+static void add_local(Token name) {
+    Local local;
+    local.name = name;
+    local.depth = compiler.scope_depth;
+    compiler.locals[compiler.locals_count] = local;
+    compiler.locals_count++;
+}
+
+static uint8_t find_local(Token name) {
+    for (int i = compiler.locals_count - 1; i >= 0; i--) {
+        Local* local = &compiler.locals[i];
+        if (memcmp(local->name.start, name.start, name.length) == 0) {
+            return (uint8_t)i;
+        }
+    }
+
+    add_error(name, "Local variable not declared.");
+}
+
+/*
+static void start_scope() {
+    compiler.scope_depth++;
+}
+
+static void end_scope() {
+    //find all locals at current depth and discard (move array pointer)
+    int end = compiler.locals_count - 1;
+    compiler.scope_depth--;
+}*/
+
 static void compile_decl_var(Expr* expr) {
-    //what do I want to do here???
+    DeclVar* dv = (DeclVar*)expr;
+    compile_expr(dv->right);
+
+    //declared variable should be on top of vm stack at this point
+    add_local(dv->name);
 }
 
 static void compile_expr(Expr* expr) {
@@ -105,8 +149,21 @@ static void compile_expr(Expr* expr) {
         case EXPR_LITERAL:  compile_literal(expr); break;
         case EXPR_BINARY:   compile_binary(expr); break;
         case EXPR_UNARY:    compile_unary(expr); break;
-        case EXPR_PRINT:    compile_print(expr); break;
         case EXPR_DECL_VAR: compile_decl_var(expr); break;
+        case EXPR_GET_VAR: {
+            GetVar* gv = (GetVar*)expr;
+            add_byte(OP_GET_VAR);
+            add_byte(find_local(gv->name));
+            break;
+        }
+        case EXPR_SET_VAR: {
+            SetVar* sv = (SetVar*)expr;
+            compile_expr(sv->right);
+            add_byte(OP_SET_VAR);
+            add_byte(find_local(sv->name));
+            break;
+        }
+        case EXPR_PRINT:    compile_print(expr); break;
     } 
 }
 
@@ -117,18 +174,31 @@ void init_chunk(Chunk* chunk) {
     chunk->capacity = 0;
 }
 
+static void init_compiler() {
+    compiler.scope_depth = 0;
+    compiler.locals_count = 0;
+}
+
 
 void free_chunk(Chunk* chunk) {
     FREE(chunk->codes);
 }
 
 ResultCode compile(DeclList* dl, Chunk* chunk) {
+    init_compiler();
     compiler.chunk = chunk;
 
     for (int i = 0; i < dl->count; i++) {
         compile_expr(dl->decls[i]);
     }
     add_byte(OP_RETURN);
+
+    if (compiler.error_count > 0) {
+        for (int i = 0; i < compiler.error_count; i++) {
+            printf("[line %d] %s\n", compiler.errors[i].token.line, compiler.errors[i].message);
+        }
+        return RESULT_FAILED;
+    }
 
     return RESULT_SUCCESS;
 }
@@ -170,6 +240,18 @@ void disassemble_chunk(Chunk* chunk) {
             case OP_MULTIPLY: printf("[OP_MULTIPLY]\n"); break;
             case OP_DIVIDE: printf("[OP_DIVIDE]\n"); break;
             case OP_NEGATE: printf("[OP_NEGATE]\n"); break;
+            case OP_GET_VAR: {
+                i++;
+                uint8_t slot = chunk->codes[i];
+                printf("[OP_GET_VAR] [%d]\n", slot);
+                break;
+            }
+            case OP_SET_VAR: {
+                i++;
+                uint8_t slot = chunk->codes[i];
+                printf("[OP_SET_VAR] [%d]\n", slot);
+                break;
+            }
             case OP_PRINT: printf("[OP_PRINT]\n"); break;
             case OP_RETURN:
                 printf("[OP_RETURN]\n");

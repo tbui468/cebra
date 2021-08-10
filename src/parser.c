@@ -37,6 +37,12 @@ static bool read_type() {
 static Expr* primary() {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || match(TOKEN_STRING)) {
         return make_literal(parser.previous);
+    } else if (match(TOKEN_IDENTIFIER)) {
+        Token name = parser.previous;
+        if (match(TOKEN_EQUAL)) {
+            return make_set_var(name, expression());
+        }
+        return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
         Expr* expr = expression();
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
@@ -91,14 +97,19 @@ static Expr* declaration() {
         return make_print(name, expression());
     } else if (match(TOKEN_IDENTIFIER)) {
         Token name = parser.previous;
-        consume(TOKEN_COLON, "Expect ':' after variable name.");
-        if (!read_type()) {
-            add_error(parser.previous, "Expect data type after ':'.");
+        //need to see if this is declaraction (colon) or just a setter/getter
+        if (match(TOKEN_COLON)) {
+            if (!read_type()) {
+                add_error(parser.previous, "Expect data type after ':'.");
+            }
+            Token type = parser.previous;
+            consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
+            Expr* value = expression();
+            return make_decl_var(name, type, value);
+        } else if (match(TOKEN_EQUAL)) {
+            //either make it a statement, or give it an extre field that tells the compiler to pop the result
+            //make_set_var BUT need to pop the result while in Compiler - just put 
         }
-        Token type = parser.previous;
-        consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
-        Expr* value = expression();
-        return make_decl_var(name, type, value);
     }
     return expression();
 }

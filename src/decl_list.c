@@ -1,5 +1,4 @@
 #include "decl_list.h"
-#include "ast_printer.h"
 
 
 void init_decl_list(DeclList* dl) {

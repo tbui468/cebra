@@ -6,11 +6,19 @@
 #include "value.h"
 #include "decl_list.h"
 
+typedef struct {
+    Token token;
+    const char* message;
+} CompileError;
+
 typedef enum {
-    OP_INT, //two bytes
-    OP_FLOAT, //two bytes
+    OP_INT,
+    OP_FLOAT,
     OP_STRING,
     OP_PRINT,
+    //No OP_DECL_VAR since we're using stack based local variables
+    OP_SET_VAR,
+    OP_GET_VAR,
     OP_ADD,
     OP_SUBTRACT,
     OP_MULTIPLY,
@@ -26,7 +34,17 @@ typedef struct {
 } Chunk;
 
 typedef struct {
+    Token name;
+    int depth;
+} Local;
+
+typedef struct {
     Chunk* chunk;
+    int scope_depth;
+    Local locals[256];
+    int locals_count;
+    CompileError errors[256];
+    int error_count;
 } Compiler;
 
 void init_chunk(Chunk* chunk);

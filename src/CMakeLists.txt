@@ -7,7 +7,6 @@ set(Sources
     lexer.c
     parser.c
     ast.c
-    ast_printer.c
     ast_typer.c
     compiler.c
     vm.c
@@ -24,7 +23,6 @@ set(Headers
     lexer.h
     parser.h
     ast.h
-    ast_printer.h
     ast_typer.h
     compiler.h
     vm.h

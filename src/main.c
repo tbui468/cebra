@@ -24,10 +24,17 @@
  */
 
 //TODO:
-//  compile_decl_var in compiler.c needs to be implemented
-//      we could just make all variables local and on the stack
-//      we wouldn't need the hash table (yet) - it might be easier this way for now
+//  Setting variables is not crashing (or hitting infinite loop)
+//      I think it's an issue with setting being an expression (keep result on stack) or a declaration (pop the stack)
+//      look at parser and compiler
 //
+//  Will need a way to check variable types in type checker
+//      how to type?  Could have a hash table with variable name + datatype
+//      let's just skip it for now and assume all bytecode is valid and won't crash the interpreter
+//
+//  Bug with prints outputing in reverse
+//
+//  Get scopes functioning with locals
 //
 //  a: int = 5
 //  b: float = 23.23
@@ -36,7 +43,7 @@
 //  print c
 //
 //
-//Need to remember to make GC for ObjStrings
+//Need to remember to make GC for ObjStrings (all Objs)
 
 
 ResultCode run(VM* vm, const char* source) {

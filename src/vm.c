@@ -91,6 +91,16 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 push(vm, divide_values(a, b));
                 break;
             }
+            case OP_GET_VAR: {
+                uint8_t slot = read_byte(vm, chunk);
+                push(vm, vm->stack[slot]);
+                break;
+            }
+            case OP_SET_VAR: {
+                uint8_t slot = read_byte(vm, chunk);
+                vm->stack[slot] = pop(vm);
+                break;
+            }
             case OP_PRINT: {
                 Value value = pop(vm);
                 if (value.type == VAL_INT) {

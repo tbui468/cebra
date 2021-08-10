@@ -141,6 +141,8 @@ Token next_token() {
         case '/':   return new_token(TOKEN_SLASH);
         case '(':   return new_token(TOKEN_LEFT_PAREN);
         case ')':   return new_token(TOKEN_RIGHT_PAREN);
+        case '{':   return new_token(TOKEN_LEFT_BRACE);
+        case '}':   return new_token(TOKEN_RIGHT_BRACE);
         case ':':   return new_token(TOKEN_COLON);
         case '=':   return new_token(TOKEN_EQUAL);
         case '\0':  return new_token(TOKEN_EOF);

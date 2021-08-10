@@ -1,7 +1,10 @@
-
 #include "ast.h"
 #include "memory.h"
 
+
+/*
+ * Basic
+ */
 
 Expr* make_literal(Token name) {
     Literal* literal = ALLOCATE_NODE(Literal);
@@ -11,7 +14,6 @@ Expr* make_literal(Token name) {
     return (Expr*)literal;
 }
 
-
 Expr* make_unary(Token name, Expr* right) {
     Unary* unary = ALLOCATE_NODE(Unary);
     unary->name = name;
@@ -20,7 +22,6 @@ Expr* make_unary(Token name, Expr* right) {
 
     return (Expr*)unary;
 }
-
 
 Expr* make_binary(Token name, Expr* left, Expr* right) {
     Binary* binary = ALLOCATE_NODE(Binary);
@@ -32,15 +33,9 @@ Expr* make_binary(Token name, Expr* left, Expr* right) {
     return (Expr*)binary;
 }
 
-Expr* make_print(Token name, Expr* right) {
-    Print* print = ALLOCATE_NODE(Print);
-    print->name = name;
-    print->right = right;
-    print->base.type = EXPR_PRINT;
-
-    return (Expr*)print;
-}
-
+/*
+ * Variables
+ */
 
 Expr* make_decl_var(Token name, Token type, Expr* right) {
     DeclVar* decl_var = ALLOCATE_NODE(DeclVar);
@@ -52,43 +47,133 @@ Expr* make_decl_var(Token name, Token type, Expr* right) {
     return (Expr*)decl_var;
 }
 
+Expr* make_get_var(Token name) {
+    GetVar* get_var = ALLOCATE_NODE(GetVar);
+    get_var->name = name;
+    get_var->base.type = EXPR_GET_VAR;
 
-static void free_binary(Expr* expr) {
-    Binary* binary = (Binary*)expr;
-    free_expr(binary->left);
-    free_expr(binary->right);
-    FREE(binary);
+    return (Expr*)get_var;
 }
 
-static void free_literal(Expr* expr) {
-    Literal* literal = (Literal*)expr;
-    FREE(literal);
+Expr* make_set_var(Token name, Expr* right) {
+    SetVar* set_var = ALLOCATE_NODE(SetVar);
+    set_var->name = name;
+    set_var->right = right;
+    set_var->base.type = EXPR_SET_VAR;
+
+    return (Expr*)set_var;
 }
 
-static void free_unary(Expr* expr) {
-    Unary* unary = (Unary*)expr;
-    free_expr(unary->right);
-    FREE(unary);
+/*
+ * Other
+ */
+
+Expr* make_print(Token name, Expr* right) {
+    Print* print = ALLOCATE_NODE(Print);
+    print->name = name;
+    print->right = right;
+    print->base.type = EXPR_PRINT;
+
+    return (Expr*)print;
 }
 
-static void free_print(Expr* expr) {
-    Print* print = (Print*)expr;
-    free_expr(print->right);
-    FREE(print);
+/*
+ * Utility
+ */
+
+void print_expr(Expr* expr) {
+    switch(expr->type) {
+        case EXPR_LITERAL: {
+            Literal* literal = (Literal*)expr;
+            printf(" %.*s ", literal->name.length, literal->name.start);
+            break;
+        }
+        case EXPR_BINARY: {
+            Binary* binary = (Binary*)expr;
+            printf("( %.*s ", binary->name.length, binary->name.start);
+            print_expr(binary->left);
+            print_expr(binary->right);
+            printf(")");
+            break;
+        }
+        case EXPR_UNARY: {
+            Unary* unary = (Unary*)expr;
+            printf("( %.*s ", unary->name.length, unary->name.start);
+            print_expr(unary->right);
+            printf(")");
+            break;
+        }
+        case EXPR_DECL_VAR: {
+            DeclVar* dv = (DeclVar*)expr;
+            printf("( DeclVar %.*s ", dv->name.length, dv->name.start);
+            print_expr(dv->right);
+            printf(")");
+            break;
+        }
+        case EXPR_GET_VAR: {
+            //TODO: fill this in
+            printf("GetVar");
+            break;
+        }
+        case EXPR_SET_VAR: {
+            //TODO: fill this in
+            printf("SetVar");
+            break;
+        }
+        case EXPR_PRINT: {
+            Print* print = (Print*)expr;
+            printf("( %.*s ", print->name.length, print->name.start);
+            print_expr(print->right);
+            printf(")");
+            break;
+        }
+    } 
 }
 
-static void free_decl_var(Expr* expr) {
-    DeclVar* decl_var = (DeclVar*)expr;
-    free_expr(decl_var->right);
-    FREE(decl_var);
-}
 
 void free_expr(Expr* expr) {
     switch(expr->type) {
-        case EXPR_LITERAL: free_literal(expr); break;
-        case EXPR_BINARY: free_binary(expr); break;
-        case EXPR_UNARY: free_unary(expr); break;
-        case EXPR_PRINT: free_print(expr); break;
-        case EXPR_DECL_VAR: free_decl_var(expr); break;
+        case EXPR_LITERAL: {
+            Literal* literal = (Literal*)expr;
+            FREE(literal);
+            break;
+        }
+        case EXPR_BINARY: {
+            Binary* binary = (Binary*)expr;
+            free_expr(binary->left);
+            free_expr(binary->right);
+            FREE(binary);
+            break;
+        }
+        case EXPR_UNARY: {
+            Unary* unary = (Unary*)expr;
+            free_expr(unary->right);
+            FREE(unary);
+            break;
+        }
+        case EXPR_DECL_VAR: {
+            DeclVar* decl_var = (DeclVar*)expr;
+            free_expr(decl_var->right);
+            FREE(decl_var);
+            break;
+        }
+        case EXPR_GET_VAR: {
+            GetVar* gv = (GetVar*)expr;
+            FREE(gv);
+            break;
+        }
+        case EXPR_SET_VAR: {
+            SetVar* sv = (SetVar*)expr;
+            free_expr(sv->right);
+            FREE(sv);
+            break;
+        }
+        case EXPR_PRINT: {
+            Print* print = (Print*)expr;
+            free_expr(print->right);
+            FREE(print);
+            break;
+        }
     } 
 }
+
