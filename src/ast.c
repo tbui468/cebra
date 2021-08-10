@@ -3,176 +3,205 @@
 
 
 /*
- * Basic
+ * Declarations
  */
 
-Expr* make_literal(Token name) {
-    Literal* literal = ALLOCATE_NODE(Literal);
-    literal->name = name;
-    literal->base.type = EXPR_LITERAL;
-
-    return (Expr*)literal;
-}
-
-Expr* make_unary(Token name, Expr* right) {
-    Unary* unary = ALLOCATE_NODE(Unary);
-    unary->name = name;
-    unary->right = right;
-    unary->base.type = EXPR_UNARY;
-
-    return (Expr*)unary;
-}
-
-Expr* make_binary(Token name, Expr* left, Expr* right) {
-    Binary* binary = ALLOCATE_NODE(Binary);
-    binary->name = name;
-    binary->left = left;
-    binary->right = right;
-    binary->base.type = EXPR_BINARY;
-
-    return (Expr*)binary;
-}
-
-/*
- * Variables
- */
-
-Expr* make_decl_var(Token name, Token type, Expr* right) {
+struct Node* make_decl_var(Token name, Token type, struct Node* right) {
     DeclVar* decl_var = ALLOCATE_NODE(DeclVar);
     decl_var->name = name;
     decl_var->type = type;
     decl_var->right = right;
-    decl_var->base.type = EXPR_DECL_VAR;
+    decl_var->base.type = NODE_DECL_VAR;
 
-    return (Expr*)decl_var;
+    return (struct Node*)decl_var;
 }
 
-Expr* make_get_var(Token name) {
+struct Node* make_get_var(Token name) {
     GetVar* get_var = ALLOCATE_NODE(GetVar);
     get_var->name = name;
-    get_var->base.type = EXPR_GET_VAR;
+    get_var->base.type = NODE_GET_VAR;
 
-    return (Expr*)get_var;
+    return (struct Node*)get_var;
 }
 
-Expr* make_set_var(Token name, Expr* right, bool decl) {
+struct Node* make_set_var(Token name, struct Node* right, bool decl) {
     SetVar* set_var = ALLOCATE_NODE(SetVar);
     set_var->name = name;
     set_var->right = right;
     set_var->decl = decl;
-    set_var->base.type = EXPR_SET_VAR;
+    set_var->base.type = NODE_SET_VAR;
 
-    return (Expr*)set_var;
+    return (struct Node*)set_var;
 }
 
 /*
- * Other
+ * Statements
  */
 
-Expr* make_print(Token name, Expr* right) {
+struct Node* make_print(Token name, struct Node* right) {
     Print* print = ALLOCATE_NODE(Print);
     print->name = name;
     print->right = right;
-    print->base.type = EXPR_PRINT;
+    print->base.type = NODE_PRINT;
 
-    return (Expr*)print;
+    return (struct Node*)print;
 }
+
+struct Node* make_block(Token name, DeclList dl) {
+    Block* block = ALLOCATE_NODE(Block);
+    block->name = name;
+    block->decl_list = dl;
+    block->base.type = NODE_BLOCK;
+
+    return (struct Node*)block;
+}
+
+
+/*
+ * Expressions
+ */
+
+struct Node* make_literal(Token name) {
+    Literal* literal = ALLOCATE_NODE(Literal);
+    literal->name = name;
+    literal->base.type = NODE_LITERAL;
+
+    return (struct Node*)literal;
+}
+
+struct Node* make_unary(Token name, struct Node* right) {
+    Unary* unary = ALLOCATE_NODE(Unary);
+    unary->name = name;
+    unary->right = right;
+    unary->base.type = NODE_UNARY;
+
+    return (struct Node*)unary;
+}
+
+struct Node* make_binary(Token name, struct Node* left, struct Node* right) {
+    Binary* binary = ALLOCATE_NODE(Binary);
+    binary->name = name;
+    binary->left = left;
+    binary->right = right;
+    binary->base.type = NODE_BINARY;
+
+    return (struct Node*)binary;
+}
+
 
 /*
  * Utility
  */
 
-void print_expr(Expr* expr) {
-    switch(expr->type) {
-        case EXPR_LITERAL: {
-            Literal* literal = (Literal*)expr;
+void print_node(struct Node* node) {
+    switch(node->type) {
+        //Declarations
+        case NODE_DECL_VAR: {
+            DeclVar* dv = (DeclVar*)node;
+            printf("( DeclVar %.*s ", dv->name.length, dv->name.start);
+            print_node(dv->right);
+            printf(")");
+            break;
+        }
+        //Statements
+        case NODE_PRINT: {
+            Print* print = (Print*)node;
+            printf("( %.*s ", print->name.length, print->name.start);
+            print_node(print->right);
+            printf(")");
+            break;
+        }
+        case NODE_BLOCK: {
+            Block* block = (Block*)node;
+            printf("Block");
+            print_decl_list(&block->decl_list);
+            break;
+        }
+        //struct Node*essions
+        case NODE_LITERAL: {
+            Literal* literal = (Literal*)node;
             printf(" %.*s ", literal->name.length, literal->name.start);
             break;
         }
-        case EXPR_BINARY: {
-            Binary* binary = (Binary*)expr;
+        case NODE_BINARY: {
+            Binary* binary = (Binary*)node;
             printf("( %.*s ", binary->name.length, binary->name.start);
-            print_expr(binary->left);
-            print_expr(binary->right);
+            print_node(binary->left);
+            print_node(binary->right);
             printf(")");
             break;
         }
-        case EXPR_UNARY: {
-            Unary* unary = (Unary*)expr;
+        case NODE_UNARY: {
+            Unary* unary = (Unary*)node;
             printf("( %.*s ", unary->name.length, unary->name.start);
-            print_expr(unary->right);
+            print_node(unary->right);
             printf(")");
             break;
         }
-        case EXPR_DECL_VAR: {
-            DeclVar* dv = (DeclVar*)expr;
-            printf("( DeclVar %.*s ", dv->name.length, dv->name.start);
-            print_expr(dv->right);
-            printf(")");
-            break;
-        }
-        case EXPR_GET_VAR: {
+        case NODE_GET_VAR: {
             //TODO: fill this in
             printf("GetVar");
             break;
         }
-        case EXPR_SET_VAR: {
+        case NODE_SET_VAR: {
             //TODO: fill this in
             printf("SetVar");
-            break;
-        }
-        case EXPR_PRINT: {
-            Print* print = (Print*)expr;
-            printf("( %.*s ", print->name.length, print->name.start);
-            print_expr(print->right);
-            printf(")");
             break;
         }
     } 
 }
 
 
-void free_expr(Expr* expr) {
-    switch(expr->type) {
-        case EXPR_LITERAL: {
-            Literal* literal = (Literal*)expr;
-            FREE(literal);
-            break;
-        }
-        case EXPR_BINARY: {
-            Binary* binary = (Binary*)expr;
-            free_expr(binary->left);
-            free_expr(binary->right);
-            FREE(binary);
-            break;
-        }
-        case EXPR_UNARY: {
-            Unary* unary = (Unary*)expr;
-            free_expr(unary->right);
-            FREE(unary);
-            break;
-        }
-        case EXPR_DECL_VAR: {
-            DeclVar* decl_var = (DeclVar*)expr;
-            free_expr(decl_var->right);
+void free_node(struct Node* node) {
+    switch(node->type) {
+        //Declarations
+        case NODE_DECL_VAR: {
+            DeclVar* decl_var = (DeclVar*)node;
+            free_node(decl_var->right);
             FREE(decl_var);
             break;
         }
-        case EXPR_GET_VAR: {
-            GetVar* gv = (GetVar*)expr;
+        //Statements
+        case NODE_PRINT: {
+            Print* print = (Print*)node;
+            free_node(print->right);
+            FREE(print);
+            break;
+        }
+        case NODE_BLOCK: {
+            Block* block = (Block*)node;
+            free_decl_list(&block->decl_list);
+            FREE(block);
+            break;
+        }
+        //struct Node*essions
+        case NODE_LITERAL: {
+            Literal* literal = (Literal*)node;
+            FREE(literal);
+            break;
+        }
+        case NODE_BINARY: {
+            Binary* binary = (Binary*)node;
+            free_node(binary->left);
+            free_node(binary->right);
+            FREE(binary);
+            break;
+        }
+        case NODE_UNARY: {
+            Unary* unary = (Unary*)node;
+            free_node(unary->right);
+            FREE(unary);
+            break;
+        }
+        case NODE_GET_VAR: {
+            GetVar* gv = (GetVar*)node;
             FREE(gv);
             break;
         }
-        case EXPR_SET_VAR: {
-            SetVar* sv = (SetVar*)expr;
-            free_expr(sv->right);
+        case NODE_SET_VAR: {
+            SetVar* sv = (SetVar*)node;
+            free_node(sv->right);
             FREE(sv);
-            break;
-        }
-        case EXPR_PRINT: {
-            Print* print = (Print*)expr;
-            free_expr(print->right);
-            FREE(print);
             break;
         }
     } 

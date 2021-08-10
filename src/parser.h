@@ -2,7 +2,6 @@
 #define CEBRA_PARSER_H
 
 #include "common.h"
-#include "ast.h"
 #include "token.h"
 #include "result_code.h"
 #include "decl_list.h"

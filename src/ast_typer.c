@@ -1,10 +1,11 @@
 #include "ast_typer.h"
+#include "ast.h"
 #include "token.h"
 
 Typer typer;
 
 
-static DataType type(Expr* expr);
+static DataType type(struct Node* expr);
 
 static DataType data_type_from_token_type(TokenType type) {
     switch(type) {
@@ -22,7 +23,7 @@ static void add_error(Token token, const char* message) {
     typer.error_count++;
 }
 
-static DataType type_binary(Expr* expr) {
+static DataType type_binary(struct Node* expr) {
     Binary* binary = (Binary*)expr;
     DataType left = type(binary->left);
     DataType right = type(binary->right);
@@ -34,13 +35,13 @@ static DataType type_binary(Expr* expr) {
     return left;
 }
 
-static DataType type_unary(Expr* expr) {
+static DataType type_unary(struct Node* expr) {
     Unary* unary = (Unary*)expr;
     DataType right = type(unary->right);
     return right;
 }
 
-static DataType type_literal(Expr* expr) {
+static DataType type_literal(struct Node* expr) {
     Literal* literal = (Literal*)expr;
     switch(literal->name.type) {
         case TOKEN_INT: return DATA_INT;
@@ -49,13 +50,13 @@ static DataType type_literal(Expr* expr) {
     }
 }
 
-static DataType type_print(Expr* expr) {
+static DataType type_print(struct Node* expr) {
     Print* print = (Print*)expr;
     DataType right = type(print->right);
     return right;
 }
 
-static DataType type_decl_var(Expr* expr) {
+static DataType type_decl_var(struct Node* expr) {
     DeclVar* dv = (DeclVar*)expr;
     DataType left = data_type_from_token_type(dv->type.type);
     DataType right = type(dv->right);
@@ -65,13 +66,13 @@ static DataType type_decl_var(Expr* expr) {
     return right;
 }
 
-static DataType type(Expr* expr) {
+static DataType type(struct Node* expr) {
     switch(expr->type) {
-        case EXPR_LITERAL: return type_literal(expr);
-        case EXPR_BINARY: return type_binary(expr);
-        case EXPR_UNARY: return type_unary(expr);
-        case EXPR_PRINT: return type_print(expr);
-        case EXPR_DECL_VAR: return type_decl_var(expr);
+        case NODE_LITERAL: return type_literal(expr);
+        case NODE_BINARY: return type_binary(expr);
+        case NODE_UNARY: return type_unary(expr);
+        case NODE_PRINT: return type_print(expr);
+        case NODE_DECL_VAR: return type_decl_var(expr);
     } 
 }
 

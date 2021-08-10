@@ -17,16 +17,15 @@
  *
 //StatementList should be DeclList - all programs are a list of declarations
 //  decl - classDecl | funDecl | varDecl | stmt
+//      leave no effect on the stack
 //  stmt - exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
-//      exprStmts include setting variables - it leaves a value on the stack, which is then popped off
-//      stmts leave nothing on the stack when done
-//      expressions leave one new value on the stack when done
+//      exprStmt are expressions where the result is discarded (pop the stack)
+//  expr - Literal | Unary | Binary | SetVar | GetVar
+//      push one value on the stack
  */
 
 //TODO:
-//  add line comments
-//  Braces and scopes
-//      locals stack needs to be resized at as scopes are entered and popped
+//  Blocks should not affect stack, but currently declared variable continue to live on...
 //
 //  If / Else
 //      since source is transformed to AST first, can probably avoid 
@@ -66,12 +65,13 @@ ResultCode run(VM* vm, const char* source) {
 
 
     //type check
+    /*
     ResultCode type_result = type_check(&dl);
 
     if (type_result == RESULT_FAILED) {
         free_decl_list(&dl);
         return RESULT_FAILED;
-    }
+    }*/
 
     
     //compile ast to byte code

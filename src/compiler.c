@@ -4,7 +4,7 @@
 
 Compiler compiler;
 
-void compile_expr(Expr* expr);
+void compile_node(struct Node* node);
 
 static void add_error(Token token, const char* message) {
     CompileError error;
@@ -62,8 +62,8 @@ static void add_string(uint8_t op_code, ObjString* obj) {
     compiler.chunk->count += sizeof(ObjString*);
 }
 
-static void compile_literal(Expr* expr) {
-    Literal* literal = (Literal*)expr;
+static void compile_literal(struct Node* node) {
+    Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
             add_int(OP_INT, (int32_t)strtol(literal->name.start, NULL, 10));
@@ -81,16 +81,16 @@ static void compile_literal(Expr* expr) {
     }
 }
 
-static void compile_unary(Expr* expr) {
-    Unary* unary = (Unary*)expr;
-    compile_expr(unary->right);
+static void compile_unary(struct Node* node) {
+    Unary* unary = (Unary*)node;
+    compile_node(unary->right);
     add_byte(OP_NEGATE);
 }
 
-static void compile_binary(Expr* expr) {
-    Binary* binary = (Binary*)expr;
-    compile_expr(binary->left);
-    compile_expr(binary->right);
+static void compile_binary(struct Node* node) {
+    Binary* binary = (Binary*)node;
+    compile_node(binary->left);
+    compile_node(binary->right);
     switch(binary->name.type) {
         case TOKEN_PLUS: add_byte(OP_ADD); break;
         case TOKEN_MINUS: add_byte(OP_SUBTRACT); break;
@@ -99,9 +99,9 @@ static void compile_binary(Expr* expr) {
     }
 }
 
-static void compile_print(Expr* expr) {
-    Print* print = (Print*)expr;
-    compile_expr(print->right);
+static void compile_print(struct Node* node) {
+    Print* print = (Print*)node;
+    compile_node(print->right);
     add_byte(OP_PRINT);
 }
 
@@ -125,44 +125,64 @@ static uint8_t find_local(Token name) {
     add_error(name, "Local variable not declared.");
 }
 
-/*
+
 static void start_scope() {
     compiler.scope_depth++;
 }
 
 static void end_scope() {
-    //find all locals at current depth and discard (move array pointer)
-    int end = compiler.locals_count - 1;
-    compiler.scope_depth--;
-}*/
+    for (int i = compiler.locals_count - 1; i >= 0; i--) {
+        Local* local = &compiler.locals[i];
+        if (local->depth == compiler.scope_depth) {
+            compiler.locals_count--;
+        }else{
+            break;
+        }
+    }
 
-static void compile_decl_var(Expr* expr) {
-    DeclVar* dv = (DeclVar*)expr;
-    compile_expr(dv->right);
+    compiler.scope_depth--;
+}
+
+static void compile_decl_var(struct Node* node) {
+    DeclVar* dv = (DeclVar*)node;
+    compile_node(dv->right);
 
     //declared variable should be on top of vm stack at this point
     add_local(dv->name);
 }
 
-static void compile_expr(Expr* expr) {
-    if (expr == NULL) {
+static void compile_node(struct Node* node) {
+    if (node == NULL) {
         printf("Node pointer is null");
         return;
     }
-    switch(expr->type) {
-        case EXPR_LITERAL:  compile_literal(expr); break;
-        case EXPR_BINARY:   compile_binary(expr); break;
-        case EXPR_UNARY:    compile_unary(expr); break;
-        case EXPR_DECL_VAR: compile_decl_var(expr); break;
-        case EXPR_GET_VAR: {
-            GetVar* gv = (GetVar*)expr;
+    switch(node->type) {
+        //declarations
+        case NODE_DECL_VAR: compile_decl_var(node); break;
+        //statements
+        case NODE_PRINT:    compile_print(node); break;
+        case NODE_BLOCK: {
+            Block* block = (Block*)node;
+            start_scope();
+            for (int i = 0; i < block->decl_list.count; i++) {
+                compile_node(block->decl_list.decls[i]);
+            }
+            end_scope();
+            break;
+        }
+        //nodeessions
+        case NODE_LITERAL:  compile_literal(node); break;
+        case NODE_BINARY:   compile_binary(node); break;
+        case NODE_UNARY:    compile_unary(node); break;
+        case NODE_GET_VAR: {
+            GetVar* gv = (GetVar*)node;
             add_byte(OP_GET_VAR);
             add_byte(find_local(gv->name));
             break;
         }
-        case EXPR_SET_VAR: {
-            SetVar* sv = (SetVar*)expr;
-            compile_expr(sv->right);
+        case NODE_SET_VAR: {
+            SetVar* sv = (SetVar*)node;
+            compile_node(sv->right);
             add_byte(OP_SET_VAR);
             add_byte(find_local(sv->name));
             if (sv->decl) {
@@ -170,7 +190,6 @@ static void compile_expr(Expr* expr) {
             }
             break;
         }
-        case EXPR_PRINT:    compile_print(expr); break;
     } 
 }
 
@@ -196,7 +215,7 @@ ResultCode compile(DeclList* dl, Chunk* chunk) {
     compiler.chunk = chunk;
 
     for (int i = 0; i < dl->count; i++) {
-        compile_expr(dl->decls[i]);
+        compile_node(dl->decls[i]);
     }
     add_byte(OP_RETURN);
 

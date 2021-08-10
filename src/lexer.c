@@ -96,9 +96,8 @@ Token next_token() {
     consume_whitespace();
     char c = next_char();
 
-    //line comments
+    //skip line comments
     while (c == '/' && peek_char() == '/') {
-        printf("hre");
         while (next_char() != '\n') {
         }        
         consume_whitespace();

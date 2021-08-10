@@ -4,87 +4,97 @@
 #include "common.h"
 #include "token.h"
 #include "result_code.h"
+#include "decl_list.h"
 
 typedef enum {
-    EXPR_LITERAL,
-    EXPR_UNARY,
-    EXPR_BINARY,
-    EXPR_PRINT,
-    EXPR_DECL_VAR,
-    EXPR_GET_VAR,
-    EXPR_SET_VAR,
-} ExprType;
+    NODE_LITERAL,
+    NODE_UNARY,
+    NODE_BINARY,
+    NODE_PRINT,
+    NODE_DECL_VAR,
+    NODE_GET_VAR,
+    NODE_SET_VAR,
+    NODE_BLOCK,
+} NodeType;
 
-typedef struct {
-    ExprType type;
-} Expr;
+struct Node {
+    NodeType type;
+};
 
 /*
- * Basic
+ * Declarations
  */
 
 typedef struct {
-    Expr base;
-    Token name;
-} Literal;
-
-typedef struct {
-    Expr base;
-    Token name;
-    Expr* right;
-} Unary;
-
-typedef struct {
-    Expr base;
-    Token name;
-    Expr* left;
-    Expr* right;
-} Binary;
-
-/*
- * Variables
- */
-
-typedef struct {
-    Expr base;
+    struct Node base;
     Token name;
     Token type;
-    Expr* right;
+    struct Node* right;
 } DeclVar;
 
 
 typedef struct {
-    Expr base;
+    struct Node base;
     Token name;
 } GetVar;
 
 typedef struct {
-    Expr base;
+    struct Node base;
     Token name;
-    Expr* right;
+    struct Node* right;
     bool decl;
 } SetVar;
 
 /*
- * Other
+ * Statements
  */
 
 typedef struct {
-    Expr base;
+    struct Node base;
     Token name;
-    Expr* right;
+    struct Node* right;
 } Print;
 
+typedef struct {
+    struct Node base;
+    Token name;
+    DeclList decl_list;
+} Block;
 
-Expr* make_literal(Token name);
-Expr* make_unary(Token name, Expr* right);
-Expr* make_binary(Token name, Expr* left, Expr* right);
-Expr* make_print(Token name, Expr* right);
-Expr* make_decl_var(Token name, Token type, Expr* right);
-Expr* make_get_var(Token name);
-Expr* make_set_var(Token name, Expr* right, bool decl);
+/*
+ * Expressions
+ */
 
-void print_expr(Expr* expr);
-void free_expr(Expr* expr);
+typedef struct {
+    struct Node base;
+    Token name;
+} Literal;
+
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* right;
+} Unary;
+
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* left;
+    struct Node* right;
+} Binary;
+
+
+
+struct Node* make_literal(Token name);
+struct Node* make_unary(Token name, struct Node* right);
+struct Node* make_binary(Token name, struct Node* left, struct Node* right);
+struct Node* make_print(Token name, struct Node* right);
+struct Node* make_decl_var(Token name, Token type, struct Node* right);
+struct Node* make_get_var(Token name);
+struct Node* make_set_var(Token name, struct Node* right, bool decl);
+struct Node* make_block(Token name, DeclList dl);
+
+void print_node(struct Node* node);
+void free_node(struct Node* node);
 
 #endif// CEBRA_AST_H

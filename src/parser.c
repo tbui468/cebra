@@ -4,7 +4,7 @@
 
 Parser parser;
 
-static Expr* expression();
+static struct Node* expression();
 static void add_error(Token token, const char* message);
 
 static bool match(TokenType type) {
@@ -34,7 +34,7 @@ static bool read_type() {
     return false;
 }
 
-static Expr* primary() {
+static struct Node* primary() {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || match(TOKEN_STRING)) {
         return make_literal(parser.previous);
     } else if (match(TOKEN_IDENTIFIER)) {
@@ -44,7 +44,7 @@ static Expr* primary() {
         }
         return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
-        Expr* expr = expression();
+        struct Node* expr = expression();
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
         return expr;
     }
@@ -53,45 +53,45 @@ static Expr* primary() {
     return NULL;
 }
 
-static Expr* unary() {
+static struct Node* unary() {
     if (match(TOKEN_MINUS)) {
         Token name = parser.previous;
-        Expr* value = unary();
+        struct Node* value = unary();
         return make_unary(name, value);
     }
 
     return primary();
 }
 
-static Expr* factor() {
-    Expr* left = unary();
+static struct Node* factor() {
+    struct Node* left = unary();
 
     while (match(TOKEN_STAR) || match(TOKEN_SLASH)) {
         Token name = parser.previous;
-        Expr* right = unary();
+        struct Node* right = unary();
         left = make_binary(name, left, right);
     }
 
     return left;
 }
 
-static Expr* term() {
-    Expr* left = factor();
+static struct Node* term() {
+    struct Node* left = factor();
 
     while (match(TOKEN_PLUS) || match(TOKEN_MINUS)) {
         Token name = parser.previous;
-        Expr* right = factor();
+        struct Node* right = factor();
         left = make_binary(name, left, right);
     }
 
     return left;
 }
 
-static Expr* expression() {
+static struct Node* expression() {
     return term();
 }
 
-static Expr* declaration() {
+static struct Node* declaration() {
     if (match(TOKEN_PRINT)) {
         Token name = parser.previous;
         return make_print(name, expression());
@@ -104,12 +104,21 @@ static Expr* declaration() {
             }
             Token type = parser.previous;
             consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
-            Expr* value = expression();
+            struct Node* value = expression();
             return make_decl_var(name, type, value);
         } else if (match(TOKEN_EQUAL)) {
             return make_set_var(name, expression(), true);
         }
+    } else if (match(TOKEN_LEFT_BRACE)) {
+        Token name = parser.previous;
+        DeclList dl;
+        init_decl_list(&dl);
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            add_decl(&dl, declaration());
+        }
+        return make_block(name, dl);
     }
+
     return expression();
 }
 
