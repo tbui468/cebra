@@ -76,17 +76,28 @@ static Token read_keyword(char c) {
     read_identifier();
 
     switch(c) {
-        case 'p':
-            if (match_string("rint")) return new_token(TOKEN_PRINT);
+        case 'b':
+            if (match_string("ool")) return new_token(TOKEN_BOOL_TYPE);
             break;
-        case 'i':
-            if (match_string("nt")) return new_token(TOKEN_INT_TYPE);
+        case 'e':
+            if (match_string("lse")) return new_token(TOKEN_ELSE);
             break;
         case 'f':
             if (match_string("loat")) return new_token(TOKEN_FLOAT_TYPE);
+            if (match_string("alse")) return new_token(TOKEN_FALSE);
+            break;
+        case 'i':
+            if (match_string("nt")) return new_token(TOKEN_INT_TYPE);
+            if (match_string("f")) return new_token(TOKEN_IF);
+            break;
+        case 'p':
+            if (match_string("rint")) return new_token(TOKEN_PRINT);
             break;
         case 's':
             if (match_string("tring")) return new_token(TOKEN_STRING_TYPE);
+            break;
+        case 't':
+            if (match_string("rue")) return new_token(TOKEN_TRUE);
             break;
     }
     return new_token(TOKEN_IDENTIFIER);
@@ -151,6 +162,7 @@ Token next_token() {
         case '}':   return new_token(TOKEN_RIGHT_BRACE);
         case ':':   return new_token(TOKEN_COLON);
         case '=':   return new_token(TOKEN_EQUAL);
+        case '!':   return new_token(TOKEN_BANG);
         case '\0':  return new_token(TOKEN_EOF);
     }
 }

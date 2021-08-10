@@ -15,6 +15,7 @@ typedef enum {
     NODE_GET_VAR,
     NODE_SET_VAR,
     NODE_BLOCK,
+    NODE_IF_ELSE,
 } NodeType;
 
 struct Node {
@@ -61,6 +62,14 @@ typedef struct {
     DeclList decl_list;
 } Block;
 
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* condition;
+    struct Node* then_block;
+    struct Node* else_block;
+} IfElse;
+
 /*
  * Expressions
  */
@@ -93,6 +102,7 @@ struct Node* make_decl_var(Token name, Token type, struct Node* right);
 struct Node* make_get_var(Token name);
 struct Node* make_set_var(Token name, struct Node* right, bool decl);
 struct Node* make_block(Token name, DeclList dl);
+struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

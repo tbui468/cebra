@@ -2,6 +2,7 @@
 #define CEBRA_VALUE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "object.h"
 
 typedef enum {
@@ -17,6 +18,7 @@ typedef struct {
         int32_t integer_type;
         double float_type;
         ObjString* string_type;
+        bool boolean_type;
     } as;
 } Value;
 
@@ -24,6 +26,7 @@ typedef struct {
 Value to_float(double num);
 Value to_integer(int32_t num);
 Value to_string(ObjString* obj);
+Value to_boolean(bool b);
 Value negate_value(Value value);
 Value add_values(Value a, Value b);
 Value subtract_values(Value a, Value b);

@@ -56,6 +56,16 @@ struct Node* make_block(Token name, DeclList dl) {
     return (struct Node*)block;
 }
 
+struct Node* make_if_else(Token name, struct Node* condition, 
+                          struct Node* then_block, struct Node* else_block) {
+    IfElse* ie = ALLOCATE_NODE(IfElse);
+    ie->name = name;
+    ie->condition = condition;
+    ie->then_block = then_block;
+    ie->else_block = else_block; 
+
+    return (struct Node*)ie;
+}
 
 /*
  * Expressions
@@ -113,11 +123,24 @@ void print_node(struct Node* node) {
         }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
-            printf("Block");
+            printf("( Block");
             print_decl_list(&block->decl_list);
             break;
         }
-        //struct Node*essions
+        case NODE_IF_ELSE: {
+            IfElse* ie = (IfElse*)node;
+            printf("( If ");
+            print_node(ie->condition);
+            printf(" then ");
+            print_node(ie->then_block);
+            if (ie->else_block != NULL) {
+                printf(" else ");
+                print_node(ie->else_block);
+            }
+            printf(" )\n");
+            break;
+        }
+        //struct Expressions
         case NODE_LITERAL: {
             Literal* literal = (Literal*)node;
             printf(" %.*s ", literal->name.length, literal->name.start);
@@ -174,7 +197,17 @@ void free_node(struct Node* node) {
             FREE(block);
             break;
         }
-        //struct Node*essions
+        case NODE_IF_ELSE: {
+            IfElse* ie = (IfElse*)node;
+            free_node(ie->condition);
+            free_node(ie->then_block);
+            if (ie->else_block != NULL) {
+                free_node(ie->else_block);
+            }
+            FREE(ie);
+            break;
+        }
+        //struct Expressions
         case NODE_LITERAL: {
             Literal* literal = (Literal*)node;
             FREE(literal);

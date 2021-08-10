@@ -25,9 +25,15 @@
  */
 
 //TODO:
+//  ==, !=
+//  <, <=
+//  >, >=
+//
 //  If / Else
-//      since source is transformed to AST first, can probably avoid 
-//      crazy complicated code
+//      get IfElse node compiler working
+//      get IfElse working in vm (will need JUMP / JUMP_IF_FALSE)
+//
+//  and / or
 //
 //  For and While loops
 //

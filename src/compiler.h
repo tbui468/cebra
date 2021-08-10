@@ -17,6 +17,8 @@ typedef enum {
     OP_STRING,
     OP_PRINT,
     //No OP_DECL_VAR since we're using stack based local variables
+    OP_TRUE,
+    OP_FALSE,
     OP_SET_VAR,
     OP_GET_VAR,
     OP_ADD,

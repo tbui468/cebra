@@ -5,6 +5,7 @@
 Parser parser;
 
 static struct Node* expression();
+static struct Node* declaration();
 static void add_error(Token token, const char* message);
 
 static bool match(TokenType type) {
@@ -31,11 +32,14 @@ static bool read_type() {
     if (match(TOKEN_INT_TYPE)) return true; 
     if (match(TOKEN_FLOAT_TYPE)) return true; 
     if (match(TOKEN_STRING_TYPE)) return true; 
+    if (match(TOKEN_BOOL_TYPE)) return true; 
     return false;
 }
 
 static struct Node* primary() {
-    if (match(TOKEN_INT) || match(TOKEN_FLOAT) || match(TOKEN_STRING)) {
+    if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
+        match(TOKEN_STRING) || match(TOKEN_TRUE) ||
+        match(TOKEN_FALSE)) {
         return make_literal(parser.previous);
     } else if (match(TOKEN_IDENTIFIER)) {
         Token name = parser.previous;
@@ -54,7 +58,7 @@ static struct Node* primary() {
 }
 
 static struct Node* unary() {
-    if (match(TOKEN_MINUS)) {
+    if (match(TOKEN_MINUS) || match(TOKEN_BANG)) {
         Token name = parser.previous;
         struct Node* value = unary();
         return make_unary(name, value);
@@ -91,6 +95,16 @@ static struct Node* expression() {
     return term();
 }
 
+static struct Node* block() {
+    Token name = parser.previous;
+    DeclList dl;
+    init_decl_list(&dl);
+    while (!match(TOKEN_RIGHT_BRACE)) {
+        add_decl(&dl, declaration());
+    }
+    return make_block(name, dl);
+}
+
 static struct Node* declaration() {
     if (match(TOKEN_PRINT)) {
         Token name = parser.previous;
@@ -110,13 +124,18 @@ static struct Node* declaration() {
             return make_set_var(name, expression(), true);
         }
     } else if (match(TOKEN_LEFT_BRACE)) {
+        return block();
+    } else if (match(TOKEN_IF)) {
         Token name = parser.previous;
-        DeclList dl;
-        init_decl_list(&dl);
-        while (!match(TOKEN_RIGHT_BRACE)) {
-            add_decl(&dl, declaration());
+        struct Node* condition = expression();
+        consume(TOKEN_LEFT_BRACE, "Expect '{' after condition.");
+        struct Node* then_block = block();
+        struct Node* else_block = NULL;
+        if (match(TOKEN_ELSE)) {
+            else_block = block();
         }
-        return make_block(name, dl);
+
+        return make_if_else(name, condition, then_block, else_block);
     }
 
     return expression();

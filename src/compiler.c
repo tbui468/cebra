@@ -62,6 +62,7 @@ static void add_string(uint8_t op_code, ObjString* obj) {
     compiler.chunk->count += sizeof(ObjString*);
 }
 
+
 static void compile_literal(struct Node* node) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
@@ -77,7 +78,14 @@ static void compile_literal(struct Node* node) {
             add_string(OP_STRING, make_string(literal->name.start, literal->name.length));
             break;
         }
-        //default:            add_error(literal->name, "Unrecognized token."); break;
+        case TOKEN_TRUE: {
+            add_byte(OP_TRUE);
+            break;
+        }
+        case TOKEN_FALSE: {
+            add_byte(OP_FALSE);
+            break;
+        }
     }
 }
 
@@ -171,7 +179,11 @@ static void compile_node(struct Node* node) {
             end_scope();
             break;
         }
-        //nodeessions
+        case NODE_IF_ELSE: {
+            //need to have booleans working first
+            break;
+        }
+        //expressions
         case NODE_LITERAL:  compile_literal(node); break;
         case NODE_BINARY:   compile_binary(node); break;
         case NODE_UNARY:    compile_unary(node); break;
@@ -260,6 +272,8 @@ const char* op_to_string(OpCode op) {
         case OP_DIVIDE: return "OP_DIVIDE";
         case OP_NEGATE: return "OP_NEGATE";
         case OP_POP: return "OP_POP";
+        case OP_TRUE: return "OP_TRUE";
+        case OP_FALSE: return "OP_FALSE";
         case OP_RETURN: return "OP_RETURN";
         default: return "Unrecognized op";
     }

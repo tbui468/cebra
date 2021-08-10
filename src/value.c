@@ -26,11 +26,20 @@ Value to_string(ObjString* obj) {
     return value;
 }
 
+Value to_boolean(bool b) {
+    Value value;
+    value.type = VAL_BOOL;
+    value.as.boolean_type = b;
+    return value;
+}
+
 Value negate_value(Value value) {
     if (value.type == VAL_INT) {
         return to_integer(-value.as.integer_type);
-    } else {
+    } else if (value.type == VAL_FLOAT) {
         return to_float(-value.as.float_type);
+    } else if (value.type == VAL_BOOL) {
+        return to_boolean(!value.as.boolean_type);
     }
 }
 
@@ -85,6 +94,9 @@ void print_value(Value a) {
             break;
         case VAL_STRING:
             printf("%s", a.as.string_type->chars);
+            break;
+        case VAL_BOOL:
+            printf("%s", a.as.boolean_type ? "true" : "false");
             break;
     }
 }

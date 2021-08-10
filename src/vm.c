@@ -117,6 +117,14 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 push(vm, vm->stack[slot]);
                 break;
             }
+            case OP_TRUE: {
+                push(vm, to_boolean(true));
+                break;
+            }
+            case OP_FALSE: {
+                push(vm, to_boolean(false));
+                break;
+            }
             case OP_POP: {
                 pop(vm);
                 break;

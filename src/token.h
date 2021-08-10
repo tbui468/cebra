@@ -8,6 +8,10 @@ typedef enum {
     TOKEN_INT_TYPE,
     TOKEN_FLOAT_TYPE,
     TOKEN_STRING_TYPE,
+    TOKEN_BOOL_TYPE,
+    TOKEN_TRUE,
+    TOKEN_FALSE,
+    TOKEN_BANG,
     TOKEN_PRINT,
     TOKEN_IDENTIFIER,
     TOKEN_PLUS,
@@ -20,6 +24,8 @@ typedef enum {
     TOKEN_RIGHT_BRACE,
     TOKEN_COLON,
     TOKEN_EQUAL,
+    TOKEN_IF,
+    TOKEN_ELSE,
     TOKEN_EOF,
 } TokenType;
 
