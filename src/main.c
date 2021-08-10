@@ -24,34 +24,25 @@
  */
 
 //TODO:
-//Time to make better debugging tools
-//  add a way to print out stack in vm (also in debug file) so I can see the stack after each operation
-//  Compiler disassemble chunk should be cleaner (and mabye in debug file)
-//  print AST
-//
-//This is resulting in a = 5, b = 5
-//but it should be a = 5, b = 3
-//  a: int = 0
-//  b: int = 1
-//  a = 2 + (b = 3)
-//  print a
-//  print b
-//  
+//  add line comments
 //  Braces and scopes
+//      locals stack needs to be resized at as scopes are entered and popped
 //
-//  Will need a way to check variable types in type checker
-//      how to type?  Could have a hash table with variable name + datatype
-//      let's just skip it for now and assume all bytecode is valid and won't crash the interpreter
+//  If / Else
+//      since source is transformed to AST first, can probably avoid 
+//      crazy complicated code
 //
-//  Bug with prints outputing in reverse
+//  For and While loops
 //
-//  Get scopes functioning with locals
+//  Functions and Calls - will need a hash table for this
 //
-//  a: int = 5
-//  b: float = 23.23
-//  c: string = "dog" + "bird"
+//  Closures
 //
-//  print c
+//  Garbage Collection
+//
+//  Type checking - get the main features working first
+//      so that I know what to check on the AST
+//
 //
 //
 //Need to remember to make GC for ObjStrings (all Objs)

@@ -4,11 +4,6 @@
 Lexer lexer;
 
 
-char next_char() {
-    return lexer.source[lexer.current++];
-}
-
-
 static bool is_numeric(char c) {
     return c <= '9' && c >= '0';
 }
@@ -39,6 +34,10 @@ static void consume_whitespace() {
         lexer.current++;
     }
     lexer.start = lexer.current;
+}
+
+char next_char() {
+    return lexer.source[lexer.current++];
 }
 
 static Token new_token(TokenType type) {
@@ -95,8 +94,16 @@ static Token read_keyword(char c) {
 
 Token next_token() {
     consume_whitespace();
-
     char c = next_char();
+
+    //line comments
+    while (c == '/' && peek_char() == '/') {
+        printf("hre");
+        while (next_char() != '\n') {
+        }        
+        consume_whitespace();
+        c = next_char();
+    }
    
     //float with leading . 
     if (c == '.' && is_numeric(peek_char())) {
