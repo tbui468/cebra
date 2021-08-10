@@ -46,10 +46,25 @@ static ObjString* read_string(VM* vm, Chunk* chunk) {
     return *ptr;
 }
 
+static void print_trace(VM* vm, OpCode op) {
+    //print opcodes - how can the compiler and this use the same code?
+    printf("Op: %s\n", op_to_string(op));
+
+    //print vm stack
+    printf("Stack: ");
+    for (int i = 0; i < vm->stack_top; i++) {
+        printf("[ ");
+        print_value(vm->stack[i]);
+        printf(" ]");
+    }
+    printf("\n*************************\n");
+}
+
 ResultCode execute(VM* vm, Chunk* chunk) {
    vm_init(vm); //TODO: need to think of better way to reset ip (but not necessarily the stack - for REPL)
    while (vm->ip < chunk->count) {
-        switch(read_byte(vm, chunk)) {
+        uint8_t op = read_byte(vm, chunk);
+        switch(op) {
             case OP_INT: {
                 push(vm, to_integer(read_int(vm, chunk)));
                 break;
@@ -99,6 +114,7 @@ ResultCode execute(VM* vm, Chunk* chunk) {
             case OP_SET_VAR: {
                 uint8_t slot = read_byte(vm, chunk);
                 vm->stack[slot] = pop(vm);
+                push(vm, vm->stack[slot]);
                 break;
             }
             case OP_POP: {
@@ -106,20 +122,15 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 break;
             }
             case OP_PRINT: {
-                Value value = pop(vm);
-                if (value.type == VAL_INT) {
-                    printf("%d\n", value.as.integer_type);
-                } else if(value.type == VAL_FLOAT) {
-                    printf("%f\n", value.as.float_type);
-                } else if(value.type == VAL_STRING) {
-                    printf("%s\n", value.as.string_type->chars);
-                }
+                print_value(pop(vm));
+                printf("\n");
                 break;
             }
             case OP_RETURN: {
                 break;
             }
         } 
+        print_trace(vm, op);
    } 
 
    return RESULT_SUCCESS;

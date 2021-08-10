@@ -225,47 +225,59 @@ static ObjString* read_string(Chunk* chunk, int offset) {
     return *ptr;
 }
 
+
+const char* op_to_string(OpCode op) {
+    switch(op) {
+        case OP_INT: return "OP_INT";
+        case OP_FLOAT: return "OP_FLOAT";
+        case OP_STRING: return "OP_STRING";
+        case OP_PRINT: return "OP_PRINT";
+        case OP_SET_VAR: return "OP_SET_VAR";
+        case OP_GET_VAR: return "OP_GET_VAR";
+        case OP_ADD: return "OP_ADD";
+        case OP_SUBTRACT: return "OP_SUBTRACT";
+        case OP_MULTIPLY: return "OP_MULTIPLY";
+        case OP_DIVIDE: return "OP_DIVIDE";
+        case OP_NEGATE: return "OP_NEGATE";
+        case OP_POP: return "OP_POP";
+        case OP_RETURN: return "OP_RETURN";
+        default: return "Unrecognized op";
+    }
+}
+
 void disassemble_chunk(Chunk* chunk) {
     int i = 0;
     while (i < chunk->count) {
-        switch(chunk->codes[i]) {
+        OpCode op = chunk->codes[i];
+        printf("[ %s ] ", op_to_string(op));
+        switch(op) {
             case OP_INT: 
-                printf("[OP_INT] %d\n", read_int(chunk, i + 1)); 
+                printf("%d", read_int(chunk, i + 1)); 
                 i += sizeof(int32_t);
                 break;
             case OP_FLOAT: 
-                printf("[OP_FLOAT] %f\n", read_float(chunk, i + 1)); 
+                printf("%f", read_float(chunk, i + 1)); 
                 i += sizeof(double);
                 break;
             case OP_STRING: 
                 ObjString* obj = read_string(chunk, i + 1);
-                printf("[OP_STRING] %s\n", obj->chars); 
+                printf("%s", obj->chars); 
                 i += sizeof(ObjString*);
                 break;
-            case OP_ADD: printf("[OP_ADD]\n"); break;
-            case OP_SUBTRACT: printf("[OP_SUBTRACT]\n"); break;
-            case OP_MULTIPLY: printf("[OP_MULTIPLY]\n"); break;
-            case OP_DIVIDE: printf("[OP_DIVIDE]\n"); break;
-            case OP_NEGATE: printf("[OP_NEGATE]\n"); break;
             case OP_GET_VAR: {
                 i++;
                 uint8_t slot = chunk->codes[i];
-                printf("[OP_GET_VAR] [%d]\n", slot);
+                printf("[%d]", slot);
                 break;
             }
             case OP_SET_VAR: {
                 i++;
                 uint8_t slot = chunk->codes[i];
-                printf("[OP_SET_VAR] [%d]\n", slot);
+                printf("[%d]", slot);
                 break;
             }
-            case OP_PRINT: printf("[OP_PRINT]\n"); break;
-            case OP_POP: printf("[OP_POP]\n"); break;
-            case OP_RETURN:
-                printf("[OP_RETURN]\n");
-                break;
-            default: printf("other\n"); break;
         }
+        printf("\n");
         i++;
     }
 }

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "value.h"
@@ -71,5 +72,19 @@ Value divide_values(Value a, Value b) {
         return to_integer(a.as.integer_type / b.as.integer_type);
     } else {
         return to_float(a.as.float_type / b.as.float_type);
+    }
+}
+
+void print_value(Value a) {
+    switch(a.type) {
+        case VAL_INT:
+            printf("%d", a.as.integer_type);
+            break;
+        case VAL_FLOAT:
+            printf("%f", a.as.float_type);
+            break;
+        case VAL_STRING:
+            printf("%s", a.as.string_type->chars);
+            break;
     }
 }

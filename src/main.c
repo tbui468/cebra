@@ -18,15 +18,16 @@
 //StatementList should be DeclList - all programs are a list of declarations
 //  decl - classDecl | funDecl | varDecl | stmt
 //  stmt - exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
+//      exprStmts include setting variables - it leaves a value on the stack, which is then popped off
 //      stmts leave nothing on the stack when done
 //      expressions leave one new value on the stack when done
-//      what about decl??? no? - but they add to constants/globals
  */
 
 //TODO:
 //Time to make better debugging tools
-//  Compiler disassemble chunk should be cleaner (and mabye in debug file)
 //  add a way to print out stack in vm (also in debug file) so I can see the stack after each operation
+//  Compiler disassemble chunk should be cleaner (and mabye in debug file)
+//  print AST
 //
 //This is resulting in a = 5, b = 5
 //but it should be a = 5, b = 3

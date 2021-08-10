@@ -52,5 +52,6 @@ void init_chunk(Chunk* chunk);
 void free_chunk(Chunk* chunk);
 ResultCode compile(DeclList* dl, Chunk* chunk);
 void disassemble_chunk(Chunk* chunk);
+const char* op_to_string(OpCode op);
 
 #endif// CEBRA_COMPILER_H
