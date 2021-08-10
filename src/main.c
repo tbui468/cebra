@@ -25,10 +25,6 @@
  */
 
 //TODO:
-//  ==, !=
-//  <, <=
-//  >, >=
-//
 //  If / Else
 //      get IfElse node compiler working
 //      get IfElse working in vm (will need JUMP / JUMP_IF_FALSE)

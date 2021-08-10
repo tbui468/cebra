@@ -70,7 +70,7 @@ static struct Node* unary() {
 static struct Node* factor() {
     struct Node* left = unary();
 
-    while (match(TOKEN_STAR) || match(TOKEN_SLASH)) {
+    while (match(TOKEN_STAR) || match(TOKEN_SLASH) || match(TOKEN_MOD)) {
         Token name = parser.previous;
         struct Node* right = unary();
         left = make_binary(name, left, right);
@@ -91,8 +91,33 @@ static struct Node* term() {
     return left;
 }
 
+static struct Node* relation() {
+    struct Node* left = term();
+
+    while (match(TOKEN_LESS) || match(TOKEN_LESS_EQUAL) ||
+           match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
+        Token name = parser.previous;
+        struct Node* right = term();
+        left = make_binary(name, left, right);
+    }
+
+    return left;
+}
+
+static struct Node* equality() {
+    struct Node* left = relation();
+
+    while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL)) {
+        Token name = parser.previous;
+        struct Node* right = relation();
+        left = make_binary(name, left, right);
+    }
+
+    return left;
+}
+
 static struct Node* expression() {
-    return term();
+    return equality();
 }
 
 static struct Node* block() {

@@ -104,6 +104,21 @@ static void compile_binary(struct Node* node) {
         case TOKEN_MINUS: add_byte(OP_SUBTRACT); break;
         case TOKEN_STAR: add_byte(OP_MULTIPLY); break;
         case TOKEN_SLASH: add_byte(OP_DIVIDE); break;
+        case TOKEN_MOD: add_byte(OP_MOD); break;
+        case TOKEN_LESS:
+            add_byte(OP_LESS);
+            break;
+        case TOKEN_LESS_EQUAL:
+            add_byte(OP_GREATER);
+            add_byte(OP_NEGATE);
+            break;
+        case TOKEN_GREATER:
+            add_byte(OP_GREATER);
+            break;
+        case TOKEN_GREATER_EQUAL:
+            add_byte(OP_LESS);
+            add_byte(OP_NEGATE);
+            break;
     }
 }
 
@@ -270,6 +285,7 @@ const char* op_to_string(OpCode op) {
         case OP_SUBTRACT: return "OP_SUBTRACT";
         case OP_MULTIPLY: return "OP_MULTIPLY";
         case OP_DIVIDE: return "OP_DIVIDE";
+        case OP_MOD: return "OP_MOD";
         case OP_NEGATE: return "OP_NEGATE";
         case OP_POP: return "OP_POP";
         case OP_TRUE: return "OP_TRUE";

@@ -156,13 +156,36 @@ Token next_token() {
         case '-':   return new_token(TOKEN_MINUS);
         case '*':   return new_token(TOKEN_STAR);
         case '/':   return new_token(TOKEN_SLASH);
+        case '%':   return new_token(TOKEN_MOD);
         case '(':   return new_token(TOKEN_LEFT_PAREN);
         case ')':   return new_token(TOKEN_RIGHT_PAREN);
         case '{':   return new_token(TOKEN_LEFT_BRACE);
         case '}':   return new_token(TOKEN_RIGHT_BRACE);
         case ':':   return new_token(TOKEN_COLON);
-        case '=':   return new_token(TOKEN_EQUAL);
-        case '!':   return new_token(TOKEN_BANG);
+        case '=':   
+            if (peek_char() == '=') {
+                next_char();
+                return new_token(TOKEN_EQUAL_EQUAL);
+            }
+            return new_token(TOKEN_EQUAL);
+        case '!':  
+            if (peek_char() == '=') {
+                next_char();
+                return new_token(TOKEN_BANG_EQUAL);
+            }
+            return new_token(TOKEN_BANG);
+        case '<':
+            if (peek_char() == '=') {
+                next_char();
+                return new_token(TOKEN_LESS_EQUAL);
+            }
+            return new_token(TOKEN_LESS);
+        case '>':
+            if (peek_char() == '=') {
+                next_char();
+                return new_token(TOKEN_GREATER_EQUAL);
+            }
+            return new_token(TOKEN_GREATER);
         case '\0':  return new_token(TOKEN_EOF);
     }
 }

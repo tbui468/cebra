@@ -32,9 +32,10 @@ Value add_values(Value a, Value b);
 Value subtract_values(Value a, Value b);
 Value multiply_values(Value a, Value b);
 Value divide_values(Value a, Value b);
+Value less_values(Value a, Value b);
+Value greater_values(Value a, Value b);
+Value mod_values(Value a, Value b);
 void print_value(Value a);
-
-
 
 
 #endif// CEBRA_VALUE_H

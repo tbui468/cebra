@@ -19,12 +19,15 @@ typedef enum {
     //No OP_DECL_VAR since we're using stack based local variables
     OP_TRUE,
     OP_FALSE,
+    OP_LESS,
+    OP_GREATER,
     OP_SET_VAR,
     OP_GET_VAR,
     OP_ADD,
     OP_SUBTRACT,
     OP_MULTIPLY,
     OP_DIVIDE,
+    OP_MOD,
     OP_NEGATE,
     OP_POP,
     OP_RETURN

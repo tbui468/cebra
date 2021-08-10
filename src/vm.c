@@ -106,6 +106,24 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 push(vm, divide_values(a, b));
                 break;
             }
+            case OP_MOD: {
+                Value b = pop(vm);
+                Value a = pop(vm);
+                push(vm, mod_values(a, b));
+                break;
+            }
+            case OP_LESS: {
+                Value b = pop(vm);
+                Value a = pop(vm);
+                push(vm, less_values(a, b));
+                break;
+            }
+            case OP_GREATER: {
+                Value b = pop(vm);
+                Value a = pop(vm);
+                push(vm, greater_values(a, b));
+                break;
+            }
             case OP_GET_VAR: {
                 uint8_t slot = read_byte(vm, chunk);
                 push(vm, vm->stack[slot]);
