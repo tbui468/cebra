@@ -278,6 +278,30 @@ static void compile_node(struct Node* node) {
             break;
         }
         case NODE_FOR: {
+            For* fo = (For*)node;
+            if (fo->initializer != NULL) {
+                compile_node(fo->initializer); //should leave no value on stack
+            }
+
+            int condition_start = compiler.chunk->count;
+            compile_node(fo->condition);
+            int exit_jump = add_jump(OP_JUMP_IF_FALSE);
+            int body_jump = add_jump(OP_JUMP);
+
+            int update_start = compiler.chunk->count;
+            if (fo->update) {
+                compile_node(fo->update);
+                add_byte(OP_POP); //pop update
+            }
+            add_jump_by(OP_JUMP_BACK, compiler.chunk->count + 3 - condition_start);
+
+            patch_jump(body_jump);
+            add_byte(OP_POP); //pop condition if true
+            compile_node(fo->then_block);
+            add_jump_by(OP_JUMP_BACK, compiler.chunk->count + 3 - update_start);
+
+            patch_jump(exit_jump);
+            add_byte(OP_POP); //pop condition if false
             break;
         }
         //expressions
@@ -386,64 +410,59 @@ const char* op_to_string(OpCode op) {
 void disassemble_chunk(Chunk* chunk) {
     int i = 0;
     while (i < chunk->count) {
-        OpCode op = chunk->codes[i];
-        printf("%04d    [ %s ] ", i, op_to_string(op));
+        OpCode op = chunk->codes[i++];
+        printf("%04d    [ %s ] ", i - 1, op_to_string(op));
         switch(op) {
             case OP_INT: 
-                printf("%d", read_int(chunk, i + 1)); 
+                printf("%d", read_int(chunk, i)); 
                 i += sizeof(int32_t);
                 break;
             case OP_FLOAT: 
-                printf("%f", read_float(chunk, i + 1)); 
+                printf("%f", read_float(chunk, i)); 
                 i += sizeof(double);
                 break;
             case OP_STRING: 
-                ObjString* obj = read_string(chunk, i + 1);
+                ObjString* obj = read_string(chunk, i);
                 printf("%s", obj->chars); 
                 i += sizeof(ObjString*);
                 break;
             case OP_GET_VAR: {
-                i++;
                 uint8_t slot = chunk->codes[i];
+                i++;
                 printf("[%d]", slot);
                 break;
             }
             case OP_SET_VAR: {
-                i++;
                 uint8_t slot = chunk->codes[i];
+                i++;
                 printf("[%d]", slot);
                 break;
             }
             case OP_JUMP_IF_FALSE: {
-                i++;
                 uint16_t dis = (uint16_t)chunk->codes[i];
-                printf("[%d]", dis + 3); //we want the distance from the OP code, which is 3 units earlier
-                i++;
+                i += 2;
+                printf("->[%d]", dis + i); //i currently points to low bit in 'dis'
                 break;
             }
             case OP_JUMP_IF_TRUE: {
-                i++;
                 uint16_t dis = (uint16_t)chunk->codes[i];
-                printf("[%d]", dis + 3); //we want the distance from the OP code, which is 3 units earlier
-                i++;
+                i += 2;
+                printf("->[%d]", dis + i); //i points to low bit in 'dis'
                 break;
             }
             case OP_JUMP: {
-                i++;
                 uint16_t dis = (uint16_t)chunk->codes[i];
-                printf("[%d]", dis + 3);
-                i++;
+                i += 2;
+                printf("->[%d]", dis + i);
                 break;
             }
             case OP_JUMP_BACK: {
-                i++;
                 uint16_t dis = (uint16_t)chunk->codes[i];
-                printf("[%d]", dis + 3);
-                i++;
+                i += 2;
+                printf("->[%d]", i - dis);
                 break;
             }
         }
         printf("\n");
-        i++;
     }
 }

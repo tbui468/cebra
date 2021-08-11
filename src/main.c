@@ -8,7 +8,8 @@
 #include "ast_typer.h"
 
 /*
- * Parser -> Typer -> Compiler -> VM
+ * Parser -> Compiler -> VM
+ *  compiler does both type checking and code generation during one AST traversal
  */
 
 
@@ -25,12 +26,10 @@
  */
 
 //TODO:
-//  While loops
-//
-//  For loops
+//  For loops - diagram this.  It gets a little messy
 //
 //  Functions and Calls
-//      will need a hash table for this
+//      will need a hash table for this - we need to save hashed function names
 //      call frames
 //
 //  Closures
