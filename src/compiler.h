@@ -30,6 +30,8 @@ typedef enum {
     OP_MOD,
     OP_NEGATE,
     OP_POP,
+    OP_JUMP_IF_FALSE,
+    OP_JUMP,
     OP_RETURN
 } OpCode;
 

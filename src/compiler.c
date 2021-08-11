@@ -175,6 +175,18 @@ static void compile_decl_var(struct Node* node) {
     add_local(dv->name);
 }
 
+static int add_jump(OpCode op) {
+    add_byte(op);
+    add_byte(0xff);
+    add_byte(0xff);
+    return compiler.chunk->count;
+}
+
+static void patch_jump(int index) {
+    uint16_t destination = (uint16_t)(compiler.chunk->count - index);
+    memcpy(&compiler.chunk->codes[index - 2], &destination, sizeof(uint16_t));
+}
+
 static void compile_node(struct Node* node) {
     if (node == NULL) {
         printf("Node pointer is null");
@@ -195,7 +207,18 @@ static void compile_node(struct Node* node) {
             break;
         }
         case NODE_IF_ELSE: {
-            //need to have booleans working first
+            IfElse* ie = (IfElse*)node;
+            compile_node(ie->condition);
+            int jump_then = add_jump(OP_JUMP_IF_FALSE); 
+
+            add_byte(OP_POP);
+            compile_node(ie->then_block);
+            int jump_else = add_jump(OP_JUMP);
+
+            patch_jump(jump_then);
+            add_byte(OP_POP);
+            compile_node(ie->else_block);
+            patch_jump(jump_else);
             break;
         }
         //expressions
@@ -290,6 +313,10 @@ const char* op_to_string(OpCode op) {
         case OP_POP: return "OP_POP";
         case OP_TRUE: return "OP_TRUE";
         case OP_FALSE: return "OP_FALSE";
+        case OP_GREATER: return "OP_GREATER";
+        case OP_LESS: return "OP_LESS";
+        case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE";
+        case OP_JUMP: return "OP_JUMP";
         case OP_RETURN: return "OP_RETURN";
         default: return "Unrecognized op";
     }
@@ -299,7 +326,7 @@ void disassemble_chunk(Chunk* chunk) {
     int i = 0;
     while (i < chunk->count) {
         OpCode op = chunk->codes[i];
-        printf("[ %s ] ", op_to_string(op));
+        printf("%04d    [ %s ] ", i, op_to_string(op));
         switch(op) {
             case OP_INT: 
                 printf("%d", read_int(chunk, i + 1)); 
@@ -324,6 +351,20 @@ void disassemble_chunk(Chunk* chunk) {
                 i++;
                 uint8_t slot = chunk->codes[i];
                 printf("[%d]", slot);
+                break;
+            }
+            case OP_JUMP_IF_FALSE: {
+                i++;
+                uint16_t dis = (uint16_t)chunk->codes[i];
+                printf("[%d]", dis + 3); //we want the distance from the OP code, which is 3 units earlier
+                i++;
+                break;
+            }
+            case OP_JUMP: {
+                i++;
+                uint16_t dis = (uint16_t)chunk->codes[i];
+                printf("[%d]", dis + 3);
+                i++;
                 break;
             }
         }

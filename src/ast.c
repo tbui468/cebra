@@ -63,6 +63,7 @@ struct Node* make_if_else(Token name, struct Node* condition,
     ie->condition = condition;
     ie->then_block = then_block;
     ie->else_block = else_block; 
+    ie->base.type = NODE_IF_ELSE;
 
     return (struct Node*)ie;
 }
@@ -137,7 +138,7 @@ void print_node(struct Node* node) {
                 printf(" else ");
                 print_node(ie->else_block);
             }
-            printf(" )\n");
+            printf(" )");
             break;
         }
         //struct Expressions

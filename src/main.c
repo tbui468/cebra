@@ -25,22 +25,21 @@
  */
 
 //TODO:
-//  If / Else
-//      get IfElse node compiler working
-//      get IfElse working in vm (will need JUMP / JUMP_IF_FALSE)
-//
 //  and / or
 //
 //  For and While loops
 //
-//  Functions and Calls - will need a hash table for this
+//  Functions and Calls
+//      will need a hash table for this
+//      call frames
 //
 //  Closures
 //
 //  Garbage Collection
 //
-//  Type checking - get the main features working first
-//      so that I know what to check on the AST
+//  Type checking - do the type checking at the same time at comiling!
+//      since compiling returns a void anyway, use the return value to return types
+//      We only need to traverse AST once this way
 //
 //
 //
@@ -60,11 +59,12 @@ ResultCode run(VM* vm, const char* source) {
         return RESULT_FAILED;
     }
 
-    print_decl_list(&dl);
+//    print_decl_list(&dl);
 
 
 
-    //type check
+    //type check: TODO: This should be integrated with compile so that 
+    //the AST only has to be traversed once
     /*
     ResultCode type_result = type_check(&dl);
 
@@ -86,7 +86,7 @@ ResultCode run(VM* vm, const char* source) {
        return RESULT_FAILED; 
     }
 
-    disassemble_chunk(&chunk);
+//    disassemble_chunk(&chunk);
 
     //execute code on vm
     ResultCode run_result = execute(vm, &chunk);

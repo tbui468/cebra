@@ -7,6 +7,10 @@ static Value pop(VM* vm) {
     return vm->stack[vm->stack_top];
 }
 
+static Value peek(VM* vm, int depth) {
+    return vm->stack[vm->stack_top - 1 - depth];
+}
+
 static void push(VM* vm, Value value) {
     vm->stack[vm->stack_top] = value;
     vm->stack_top++;
@@ -15,6 +19,13 @@ static void push(VM* vm, Value value) {
 static uint8_t read_byte(VM* vm, Chunk* chunk) {
     vm->ip++;
     return chunk->codes[vm->ip - 1]; 
+}
+
+static uint16_t read_short(VM* vm, Chunk* chunk) {
+    uint16_t sh;
+    memcpy(&sh, &chunk->codes[vm->ip] , sizeof(uint16_t));
+    vm->ip += 2;
+    return sh;
 }
 
 ResultCode vm_init(VM* vm) {
@@ -131,10 +142,21 @@ ResultCode execute(VM* vm, Chunk* chunk) {
             }
             case OP_SET_VAR: {
                 uint8_t slot = read_byte(vm, chunk);
-                vm->stack[slot] = pop(vm);
-                push(vm, vm->stack[slot]);
+                vm->stack[slot] = peek(vm, 0);
                 break;
             }
+            case OP_JUMP_IF_FALSE: {
+                uint16_t distance = read_short(vm, chunk);
+                if (!(peek(vm, 0).as.boolean_type)) {
+                    vm->ip += distance;
+                }
+                break;
+            } 
+            case OP_JUMP: {
+                uint16_t distance = read_short(vm, chunk);
+                vm->ip += distance;
+                break;
+            } 
             case OP_TRUE: {
                 push(vm, to_boolean(true));
                 break;
@@ -156,7 +178,7 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 break;
             }
         } 
-        print_trace(vm, op);
+//        print_trace(vm, op);
    } 
 
    return RESULT_SUCCESS;

@@ -157,6 +157,7 @@ static struct Node* declaration() {
         struct Node* then_block = block();
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
+            consume(TOKEN_LEFT_BRACE, "Expect '{' after else.");
             else_block = block();
         }
 
