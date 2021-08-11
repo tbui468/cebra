@@ -86,6 +86,7 @@ static Token read_keyword(char c) {
             if (match_string("lse")) return new_token(TOKEN_ELSE);
             break;
         case 'f':
+            if (match_string("or")) return new_token(TOKEN_FOR);
             if (match_string("loat")) return new_token(TOKEN_FLOAT_TYPE);
             if (match_string("alse")) return new_token(TOKEN_FALSE);
             break;
@@ -104,6 +105,9 @@ static Token read_keyword(char c) {
             break;
         case 't':
             if (match_string("rue")) return new_token(TOKEN_TRUE);
+            break;
+        case 'w':
+            if (match_string("hile")) return new_token(TOKEN_WHILE);
             break;
     }
     return new_token(TOKEN_IDENTIFIER);
@@ -168,6 +172,7 @@ Token next_token() {
         case '{':   return new_token(TOKEN_LEFT_BRACE);
         case '}':   return new_token(TOKEN_RIGHT_BRACE);
         case ':':   return new_token(TOKEN_COLON);
+        case ',':   return new_token(TOKEN_COMMA);
         case '=':   
             if (peek_char() == '=') {
                 next_char();

@@ -35,6 +35,9 @@ typedef enum {
     TOKEN_ELSE,
     TOKEN_AND,
     TOKEN_OR,
+    TOKEN_WHILE,
+    TOKEN_FOR,
+    TOKEN_COMMA,
     TOKEN_EOF,
 } TokenType;
 

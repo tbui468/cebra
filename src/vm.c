@@ -163,6 +163,11 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 vm->ip += distance;
                 break;
             } 
+            case OP_JUMP_BACK: {
+                uint16_t distance = read_short(vm, chunk);
+                vm->ip -= distance;
+                break;
+            }
             case OP_TRUE: {
                 push(vm, to_boolean(true));
                 break;

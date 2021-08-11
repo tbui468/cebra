@@ -154,24 +154,29 @@ static struct Node* block() {
     return make_block(name, dl);
 }
 
+//TODO: this function feels kinda hacky - would more than one level
+//of token look-ahead fix this?  May need that for class/function decl too
+static struct Node* decl_or_assignment() {
+    Token name = parser.previous;
+    if (match(TOKEN_COLON)) {
+        if (!read_type()) {
+            add_error(parser.previous, "Expect data type after ':'.");
+        }
+        Token type = parser.previous;
+        consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
+        struct Node* value = expression();
+        return make_decl_var(name, type, value);
+    } else if (match(TOKEN_EQUAL)) {
+        return make_set_var(name, expression(), true);
+    }
+}
+
 static struct Node* declaration() {
     if (match(TOKEN_PRINT)) {
         Token name = parser.previous;
         return make_print(name, expression());
     } else if (match(TOKEN_IDENTIFIER)) {
-        //declaration or assignment
-        Token name = parser.previous;
-        if (match(TOKEN_COLON)) {
-            if (!read_type()) {
-                add_error(parser.previous, "Expect data type after ':'.");
-            }
-            Token type = parser.previous;
-            consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
-            struct Node* value = expression();
-            return make_decl_var(name, type, value);
-        } else if (match(TOKEN_EQUAL)) {
-            return make_set_var(name, expression(), true);
-        }
+        return decl_or_assignment();
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {
@@ -186,6 +191,33 @@ static struct Node* declaration() {
         }
 
         return make_if_else(name, condition, then_block, else_block);
+    } else if (match(TOKEN_WHILE)) {
+        Token name = parser.previous;
+        struct Node* condition = expression();
+        consume(TOKEN_LEFT_BRACE, "Expect '{' after condition.");
+        struct Node* then_block = block();
+        return make_while(name, condition, then_block);
+    } else if (match(TOKEN_FOR)) {
+        Token name = parser.previous;
+        struct Node* initializer = NULL;
+        if (!match(TOKEN_COMMA)) {
+            consume(TOKEN_IDENTIFIER, "Expect initializer or ',' after 'for'.");
+            initializer = decl_or_assignment();
+            consume(TOKEN_COMMA, "Expect ',' after initializer.");
+        }
+
+        struct Node* condition = expression();
+        consume(TOKEN_COMMA, "Expect ',' after condition.");
+
+        struct Node* update = NULL;
+        if (!match(TOKEN_LEFT_BRACE)) {
+            update = expression();
+            consume(TOKEN_LEFT_BRACE, "Expect '{' after update.");
+        }
+
+        struct Node* then_block = block();
+
+        return make_for(name, initializer, condition, update, then_block);
     }
 
     return expression();

@@ -42,6 +42,20 @@ static void patch_jump(int index) {
     memcpy(&compiler.chunk->codes[index - 2], &destination, sizeof(uint16_t));
 }
 
+static void add_short(uint16_t num) {
+    if (compiler.chunk->count + (int)sizeof(int16_t) > compiler.chunk->capacity) {
+        grow_capacity();
+    }
+
+    memcpy(&compiler.chunk->codes[compiler.chunk->count], &num, sizeof(int16_t));
+    compiler.chunk->count += sizeof(int16_t);
+}
+
+static void add_jump_by(OpCode op, int index) {
+    add_byte(op);
+    add_short((uint16_t)index);
+}
+
 static void add_int(uint8_t op_code, int32_t num) {
     if (compiler.chunk->count + (int)sizeof(int32_t) + 1 > compiler.chunk->capacity) {
         grow_capacity();
@@ -247,6 +261,25 @@ static void compile_node(struct Node* node) {
             patch_jump(jump_else);
             break;
         }
+        case NODE_WHILE: {
+            While* wh = (While*)node;
+            int start = compiler.chunk->count;
+            compile_node(wh->condition);
+            int false_jump = add_jump(OP_JUMP_IF_FALSE);
+
+            add_byte(OP_POP);
+            compile_node(wh->then_block);
+
+            //+3 to include OP_JUMP_BACK and uint16_t for jump distance
+            int from = compiler.chunk->count + 3;
+            add_jump_by(OP_JUMP_BACK, from - start);
+            patch_jump(false_jump);   
+            add_byte(OP_POP);
+            break;
+        }
+        case NODE_FOR: {
+            break;
+        }
         //expressions
         case NODE_LITERAL:  compile_literal(node); break;
         case NODE_BINARY:   compile_binary(node); break;
@@ -344,6 +377,7 @@ const char* op_to_string(OpCode op) {
         case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE";
         case OP_JUMP_IF_TRUE: return "OP_JUMP_IF_TRUE";
         case OP_JUMP: return "OP_JUMP";
+        case OP_JUMP_BACK: return "OP_JUMP_BACK";
         case OP_RETURN: return "OP_RETURN";
         default: return "Unrecognized op";
     }
@@ -395,6 +429,13 @@ void disassemble_chunk(Chunk* chunk) {
                 break;
             }
             case OP_JUMP: {
+                i++;
+                uint16_t dis = (uint16_t)chunk->codes[i];
+                printf("[%d]", dis + 3);
+                i++;
+                break;
+            }
+            case OP_JUMP_BACK: {
                 i++;
                 uint16_t dis = (uint16_t)chunk->codes[i];
                 printf("[%d]", dis + 3);

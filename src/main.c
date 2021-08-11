@@ -25,9 +25,9 @@
  */
 
 //TODO:
-//  and / or
+//  While loops
 //
-//  For and While loops
+//  For loops
 //
 //  Functions and Calls
 //      will need a hash table for this

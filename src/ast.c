@@ -68,6 +68,30 @@ struct Node* make_if_else(Token name, struct Node* condition,
     return (struct Node*)ie;
 }
 
+struct Node* make_while(Token name, struct Node* condition, 
+                        struct Node* then_block) {
+    While* wh = ALLOCATE_NODE(While);
+    wh->name = name;
+    wh->condition = condition;
+    wh->then_block = then_block;
+    wh->base.type = NODE_WHILE;
+
+    return (struct Node*)wh;
+}
+
+struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, 
+                      struct Node* update, struct Node* then_block) {
+    For* fo = ALLOCATE_NODE(For);
+    fo->name = name;
+    fo->initializer = initializer;
+    fo->condition = condition;
+    fo->update = update;
+    fo->then_block = then_block;
+    fo->base.type = NODE_FOR;
+
+    return (struct Node*)fo;
+}
+
 /*
  * Expressions
  */
@@ -141,6 +165,16 @@ void print_node(struct Node* node) {
             printf(" )");
             break;
         }
+        case NODE_WHILE: {
+            //TODO: fill this in
+            printf("While");
+            break;
+        }
+        case NODE_FOR: {
+            //TODO: fill this in
+            printf("For");
+            break;
+        }
         //struct Expressions
         case NODE_LITERAL: {
             Literal* literal = (Literal*)node;
@@ -206,6 +240,22 @@ void free_node(struct Node* node) {
                 free_node(ie->else_block);
             }
             FREE(ie);
+            break;
+        }
+        case NODE_WHILE: {
+            While* wh = (While*)node;
+            free_node(wh->condition);
+            free_node(wh->then_block);
+            FREE(wh);
+            break;
+        }
+        case NODE_FOR: {
+            For* fo = (For*)node;
+            if (fo->initializer != NULL) free_node(fo->initializer);
+            free_node(fo->condition);
+            if (fo->update != NULL) free_node(fo->update);
+            free_node(fo->then_block);
+            FREE(fo);
             break;
         }
         //struct Expressions
