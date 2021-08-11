@@ -34,6 +34,7 @@
 //      call frames
 //
 //  Closures
+//      could skip classes and just do structs if we have closures
 //
 //  Garbage Collection
 //
@@ -86,7 +87,7 @@ ResultCode run(VM* vm, const char* source) {
        return RESULT_FAILED; 
     }
 
-//    disassemble_chunk(&chunk);
+    disassemble_chunk(&chunk);
 
     //execute code on vm
     ResultCode run_result = execute(vm, &chunk);

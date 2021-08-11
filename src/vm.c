@@ -22,8 +22,7 @@ static uint8_t read_byte(VM* vm, Chunk* chunk) {
 }
 
 static uint16_t read_short(VM* vm, Chunk* chunk) {
-    uint16_t sh;
-    memcpy(&sh, &chunk->codes[vm->ip] , sizeof(uint16_t));
+    uint16_t sh = (uint16_t)chunk->codes[vm->ip];
     vm->ip += 2;
     return sh;
 }
@@ -148,6 +147,13 @@ ResultCode execute(VM* vm, Chunk* chunk) {
             case OP_JUMP_IF_FALSE: {
                 uint16_t distance = read_short(vm, chunk);
                 if (!(peek(vm, 0).as.boolean_type)) {
+                    vm->ip += distance;
+                }
+                break;
+            } 
+            case OP_JUMP_IF_TRUE: {
+                uint16_t distance = read_short(vm, chunk);
+                if ((peek(vm, 0).as.boolean_type)) {
                     vm->ip += distance;
                 }
                 break;

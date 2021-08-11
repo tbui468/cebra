@@ -29,6 +29,19 @@ static void add_byte(uint8_t byte) {
     compiler.chunk->count++;
 }
 
+
+static int add_jump(OpCode op) {
+    add_byte(op);
+    add_byte(0xff);
+    add_byte(0xff);
+    return compiler.chunk->count;
+}
+
+static void patch_jump(int index) {
+    uint16_t destination = (uint16_t)(compiler.chunk->count - index);
+    memcpy(&compiler.chunk->codes[index - 2], &destination, sizeof(uint16_t));
+}
+
 static void add_int(uint8_t op_code, int32_t num) {
     if (compiler.chunk->count + (int)sizeof(int32_t) + 1 > compiler.chunk->capacity) {
         grow_capacity();
@@ -97,6 +110,30 @@ static void compile_unary(struct Node* node) {
 
 static void compile_binary(struct Node* node) {
     Binary* binary = (Binary*)node;
+
+    //Note: compiling order is different for logical operators
+    //so pulling TOKEN_AND and TOKEN_OR out of switch statement
+    //Could make a new node type for AND and OR - maybe useful
+    //when we add static typing during the AST traversal
+    if (binary->name.type == TOKEN_AND) {
+        compile_node(binary->left);
+        int false_jump = add_jump(OP_JUMP_IF_FALSE);
+        add_byte(OP_POP);
+        compile_node(binary->right);
+        patch_jump(false_jump);
+        return;
+    }
+
+    if (binary->name.type == TOKEN_OR) {
+        compile_node(binary->left);
+        int true_jump = add_jump(OP_JUMP_IF_TRUE);
+        add_byte(OP_POP);
+        compile_node(binary->right);
+        patch_jump(true_jump);
+        return;
+    }
+
+
     compile_node(binary->left);
     compile_node(binary->right);
     switch(binary->name.type) {
@@ -175,17 +212,6 @@ static void compile_decl_var(struct Node* node) {
     add_local(dv->name);
 }
 
-static int add_jump(OpCode op) {
-    add_byte(op);
-    add_byte(0xff);
-    add_byte(0xff);
-    return compiler.chunk->count;
-}
-
-static void patch_jump(int index) {
-    uint16_t destination = (uint16_t)(compiler.chunk->count - index);
-    memcpy(&compiler.chunk->codes[index - 2], &destination, sizeof(uint16_t));
-}
 
 static void compile_node(struct Node* node) {
     if (node == NULL) {
@@ -316,6 +342,7 @@ const char* op_to_string(OpCode op) {
         case OP_GREATER: return "OP_GREATER";
         case OP_LESS: return "OP_LESS";
         case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE";
+        case OP_JUMP_IF_TRUE: return "OP_JUMP_IF_TRUE";
         case OP_JUMP: return "OP_JUMP";
         case OP_RETURN: return "OP_RETURN";
         default: return "Unrecognized op";
@@ -354,6 +381,13 @@ void disassemble_chunk(Chunk* chunk) {
                 break;
             }
             case OP_JUMP_IF_FALSE: {
+                i++;
+                uint16_t dis = (uint16_t)chunk->codes[i];
+                printf("[%d]", dis + 3); //we want the distance from the OP code, which is 3 units earlier
+                i++;
+                break;
+            }
+            case OP_JUMP_IF_TRUE: {
                 i++;
                 uint16_t dis = (uint16_t)chunk->codes[i];
                 printf("[%d]", dis + 3); //we want the distance from the OP code, which is 3 units earlier

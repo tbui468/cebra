@@ -116,8 +116,32 @@ static struct Node* equality() {
     return left;
 }
 
+static struct Node* and() {
+    struct Node* left = equality();
+
+    while (match(TOKEN_AND)) {
+        Token name = parser.previous;
+        struct Node* right = equality();
+        left = make_binary(name, left, right);
+    }
+
+    return left;
+}
+
+static struct Node* or() {
+    struct Node* left = and();
+
+    while (match(TOKEN_OR)) {
+        Token name = parser.previous;
+        struct Node* right = and();
+        left = make_binary(name, left, right);
+    }
+
+    return left;
+}
+
 static struct Node* expression() {
-    return equality();
+    return or();
 }
 
 static struct Node* block() {
@@ -135,8 +159,8 @@ static struct Node* declaration() {
         Token name = parser.previous;
         return make_print(name, expression());
     } else if (match(TOKEN_IDENTIFIER)) {
+        //declaration or assignment
         Token name = parser.previous;
-        //need to see if this is declaraction (colon) or just a setter/getter
         if (match(TOKEN_COLON)) {
             if (!read_type()) {
                 add_error(parser.previous, "Expect data type after ':'.");
