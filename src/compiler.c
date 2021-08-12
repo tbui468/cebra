@@ -87,6 +87,17 @@ static void add_string(Compiler* compiler, uint8_t op_code, ObjString* obj) {
     compiler->chunk.count += sizeof(ObjString*);
 }
 
+static void add_function(Compiler* compiler, uint8_t op_code, ObjFunction* obj) {
+    if (compiler->chunk.count + (int)sizeof(ObjFunction*) + 1 > compiler->chunk.capacity) {
+        grow_capacity(compiler);
+    }
+
+    add_byte(compiler, op_code);
+
+    memcpy(&compiler->chunk.codes[compiler->chunk.count], &obj, sizeof(ObjFunction*));
+    compiler->chunk.count += sizeof(ObjFunction*);
+}
+
 
 static void compile_literal(Compiler* compiler, struct Node* node) {
     Literal* literal = (Literal*)node;
@@ -216,24 +227,32 @@ static void end_scope(Compiler* compiler) {
     compiler->scope_depth--;
 }
 
-static void compile_decl_var(Compiler* compiler, struct Node* node) {
-    DeclVar* dv = (DeclVar*)node;
-    compile_node(compiler, dv->right);
-
-    //declared variable should be on top of vm stack at this point
-    add_local(compiler, dv->name);
-}
-
 
 static void compile_node(Compiler* compiler, struct Node* node) {
     if (node == NULL) {
-        printf("Node pointer is null");
         return;
     }
     switch(node->type) {
         //declarations
-        case NODE_DECL_VAR: compile_decl_var(compiler, node); break;
+        case NODE_DECL_VAR: {
+            DeclVar* dv = (DeclVar*)node;
+            compile_node(compiler, dv->right);
+            add_local(compiler, dv->name);
+            break;
+        }
         case NODE_DECL_FUN: {
+            DeclFun* df = (DeclFun*)node;
+            Compiler func;
+            init_compiler(&func);
+            func.enclosing = compiler;
+
+            //adding body to parameter DeclList so only one compile call is needed
+            add_decl(&df->parameters, df->body);
+            compile(&func, &df->parameters);
+
+            add_function(compiler, OP_FUN, make_function(func));
+
+            add_local(compiler, df->name);
             break;
         }
         //statements
@@ -280,9 +299,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         }
         case NODE_FOR: {
             For* fo = (For*)node;
-            if (fo->initializer != NULL) {
-                compile_node(compiler, fo->initializer); //should leave no value on stack
-            }
+            compile_node(compiler, fo->initializer); //should leave no value on stack
 
             int condition_start = compiler->chunk.count;
             compile_node(compiler, fo->condition);
@@ -307,7 +324,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         }
         case NODE_RETURN: {
             Return* ret = (Return*)node;
-            if (ret->right != NULL) compile_node(compiler, ret->right);
+            compile_node(compiler, ret->right);
             add_byte(compiler, OP_RETURN);
             break;
         }
@@ -352,6 +369,7 @@ void init_compiler(Compiler* compiler) {
     Chunk chunk;
     init_chunk(&chunk);
     compiler->chunk = chunk;
+    compiler->enclosing = NULL;
 }
 
 void free_compiler(Compiler* compiler) {
@@ -376,13 +394,6 @@ ResultCode compile(Compiler* compiler, DeclList* dl) {
     return RESULT_SUCCESS;
 }
 
-/*
-void compile_function(DeclList* dl) {
-    Chunk chunk;
-    init_chunk(&chunk);
-
-    compile(dl, &chunk);
-}*/
 
 static int32_t read_int(Chunk* chunk, int offset) {
     int32_t* ptr = (int32_t*)(&chunk->codes[offset]);
@@ -399,12 +410,17 @@ static ObjString* read_string(Chunk* chunk, int offset) {
     return *ptr;
 }
 
+static ObjFunction* read_function(Chunk* chunk, int offset) {
+    ObjFunction** ptr = (ObjFunction**)(&chunk->codes[offset]);
+    return *ptr;
+}
 
 const char* op_to_string(OpCode op) {
     switch(op) {
         case OP_INT: return "OP_INT";
         case OP_FLOAT: return "OP_FLOAT";
         case OP_STRING: return "OP_STRING";
+        case OP_FUN: return "OP_FUN";
         case OP_PRINT: return "OP_PRINT";
         case OP_SET_VAR: return "OP_SET_VAR";
         case OP_GET_VAR: return "OP_GET_VAR";
@@ -442,11 +458,18 @@ void disassemble_chunk(Chunk* chunk) {
                 printf("%f", read_float(chunk, i)); 
                 i += sizeof(double);
                 break;
-            case OP_STRING: 
+            case OP_STRING: {
                 ObjString* obj = read_string(chunk, i);
                 printf("%s", obj->chars); 
                 i += sizeof(ObjString*);
                 break;
+            }
+            case OP_FUN: {
+                ObjFunction* obj = read_function(chunk, i);
+                printf("<fun>"); 
+                i += sizeof(ObjFunction*);
+                break;
+            }
             case OP_GET_VAR: {
                 uint8_t slot = chunk->codes[i];
                 i++;

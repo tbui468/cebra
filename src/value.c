@@ -33,6 +33,13 @@ Value to_boolean(bool b) {
     return value;
 }
 
+Value to_function(ObjFunction* obj) {
+    Value value;
+    value.type = VAL_FUNCTION;
+    value.as.function_type = obj;
+    return value;
+}
+
 Value negate_value(Value value) {
     if (value.type == VAL_INT) {
         return to_integer(-value.as.integer_type);
@@ -117,6 +124,9 @@ void print_value(Value a) {
             break;
         case VAL_BOOL:
             printf("%s", a.as.boolean_type ? "true" : "false");
+            break;
+        case VAL_FUNCTION:
+            printf("%s", "<fun>");
             break;
     }
 }

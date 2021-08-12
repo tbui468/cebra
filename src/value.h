@@ -10,6 +10,7 @@ typedef enum {
     VAL_FLOAT,
     VAL_BOOL,
     VAL_STRING,
+    VAL_FUNCTION,
 } ValueType;
 
 typedef struct {
@@ -19,6 +20,7 @@ typedef struct {
         double float_type;
         ObjString* string_type;
         bool boolean_type;
+        ObjFunction* function_type;
     } as;
 } Value;
 
@@ -27,6 +29,7 @@ Value to_float(double num);
 Value to_integer(int32_t num);
 Value to_string(ObjString* obj);
 Value to_boolean(bool b);
+Value to_function(ObjFunction* obj);
 Value negate_value(Value value);
 Value add_values(Value a, Value b);
 Value subtract_values(Value a, Value b);

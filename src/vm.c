@@ -57,6 +57,12 @@ static ObjString* read_string(VM* vm, Chunk* chunk) {
     return *ptr;
 }
 
+static ObjFunction* read_function(VM* vm, Chunk* chunk) {
+    ObjFunction** ptr = (ObjFunction**)(&chunk->codes[vm->ip]);
+    vm->ip += (int)sizeof(ObjFunction*);
+    return *ptr;
+}
+
 static void print_trace(VM* vm, OpCode op) {
     //print opcodes - how can the compiler and this use the same code?
     printf("Op: %s\n", op_to_string(op));
@@ -86,6 +92,10 @@ ResultCode run(VM* vm, Chunk* chunk) {
             }
             case OP_STRING: {
                 push(vm, to_string(read_string(vm, chunk)));
+                break;
+            }
+            case OP_FUN: {
+                push(vm, to_function(read_function(vm, chunk)));
                 break;
             }
             case OP_NEGATE: {
@@ -210,10 +220,9 @@ ResultCode compile_and_run(VM* vm, DeclList* dl) {
         return RESULT_FAILED; 
     }
 
-    /*
 #ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(&chunk);
-#endif*/
+    disassemble_chunk(&root_compiler.chunk);
+#endif
     
     run(vm, &root_compiler.chunk); 
 

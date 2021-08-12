@@ -25,3 +25,12 @@ ObjString* take_string(char* chars, int length) {
 
     return obj;
 }
+
+
+ObjFunction* make_function(Compiler compiler) {
+    ObjFunction* obj = ALLOCATE_OBJ(ObjFunction);
+    obj->base.type = OBJ_FUNCTION;
+    obj->compiler = compiler;
+
+    return obj;
+}

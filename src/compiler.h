@@ -3,7 +3,6 @@
 
 #include "result_code.h"
 #include "ast.h"
-#include "value.h"
 #include "decl_list.h"
 
 typedef struct {
@@ -15,6 +14,7 @@ typedef enum {
     OP_INT,
     OP_FLOAT,
     OP_STRING,
+    OP_FUN,
     OP_PRINT,
     //No OP_DECL_VAR since we're using stack based local variables
     OP_TRUE,
@@ -55,6 +55,7 @@ typedef struct {
     int locals_count;
     CompileError errors[256];
     int error_count;
+    struct Compiler* enclosing;
 } Compiler;
 
 void init_compiler(Compiler* compiler);

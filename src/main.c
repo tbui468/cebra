@@ -1,7 +1,6 @@
 #include "common.h"
 #include "parser.h"
 #include "ast.h"
-#include "compiler.h"
 #include "value.h"
 #include "vm.h"
 #include "decl_list.h"
@@ -25,13 +24,9 @@
 //      push one value on the stack
  */
 
-//TODO: we want to get rid of the global compiler in compiler.c
-//create the top-most compiler in compile_and_run() and thread it
-//through compile() and compile_node() functions
-//When get get a NODE_DECL_FUN, create a new compiler with compiler->enclosing = compiler that is declaring the function
-//Call compile() with this new compiler as an argument - note: we're doing this because we need a separate environment
-//for locals and other stuff(?)
-//Then shove the compiler into a function object, and set it as a local variable in the declaring compiler locals list
+//TODO:
+//function names add_int, add_float, add_function is compiler is a bit unclear
+//  those are being added to the chunk opcodes (+ constants).  Could I give them a clearer name?
 //
 //When that function object is called (found on the stack using the locals in the enclosing function)
 //We grab the function object from the stack (at the given local slot)
