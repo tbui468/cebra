@@ -18,7 +18,7 @@ static void grow_capacity(Compiler* compiler) {
     compiler->chunk.capacity = new_capacity;
 }
 
-static void add_byte(Compiler* compiler, uint8_t byte) {
+static void emit_byte(Compiler* compiler, uint8_t byte) {
     if (compiler->chunk.count + 1 > compiler->chunk.capacity) {
         grow_capacity(compiler);
     }
@@ -28,10 +28,10 @@ static void add_byte(Compiler* compiler, uint8_t byte) {
 }
 
 
-static int add_jump(Compiler* compiler, OpCode op) {
-    add_byte(compiler, op);
-    add_byte(compiler, 0xff);
-    add_byte(compiler, 0xff);
+static int emit_jump(Compiler* compiler, OpCode op) {
+    emit_byte(compiler, op);
+    emit_byte(compiler, 0xff);
+    emit_byte(compiler, 0xff);
     return compiler->chunk.count;
 }
 
@@ -40,7 +40,7 @@ static void patch_jump(Compiler* compiler, int index) {
     memcpy(&compiler->chunk.codes[index - 2], &destination, sizeof(uint16_t));
 }
 
-static void add_short(Compiler* compiler, uint16_t num) {
+static void emit_short(Compiler* compiler, uint16_t num) {
     if (compiler->chunk.count + (int)sizeof(int16_t) > compiler->chunk.capacity) {
         grow_capacity(compiler);
     }
@@ -49,50 +49,50 @@ static void add_short(Compiler* compiler, uint16_t num) {
     compiler->chunk.count += sizeof(int16_t);
 }
 
-static void add_jump_by(Compiler* compiler, OpCode op, int index) {
-    add_byte(compiler, op);
-    add_short(compiler, (uint16_t)index);
+static void emit_jump_by(Compiler* compiler, OpCode op, int index) {
+    emit_byte(compiler, op);
+    emit_short(compiler, (uint16_t)index);
 }
 
-static void add_int(Compiler* compiler, uint8_t op_code, int32_t num) {
+static void emit_int(Compiler* compiler, uint8_t op_code, int32_t num) {
     if (compiler->chunk.count + (int)sizeof(int32_t) + 1 > compiler->chunk.capacity) {
         grow_capacity(compiler);
     }
 
-    add_byte(compiler, op_code);
+    emit_byte(compiler, op_code);
 
     memcpy(&compiler->chunk.codes[compiler->chunk.count], &num, sizeof(int32_t));
     compiler->chunk.count += sizeof(int32_t);
 }
 
-static void add_float(Compiler* compiler, uint8_t op_code, double num) {
+static void emit_float(Compiler* compiler, uint8_t op_code, double num) {
     if (compiler->chunk.count + (int)sizeof(double) + 1 > compiler->chunk.capacity) {
         grow_capacity(compiler);
     }
 
-    add_byte(compiler, op_code);
+    emit_byte(compiler, op_code);
 
     memcpy(&compiler->chunk.codes[compiler->chunk.count], &num, sizeof(double));
     compiler->chunk.count += sizeof(double);
 }
 
-static void add_string(Compiler* compiler, uint8_t op_code, ObjString* obj) {
+static void emit_string(Compiler* compiler, uint8_t op_code, ObjString* obj) {
     if (compiler->chunk.count + (int)sizeof(ObjString*) + 1 > compiler->chunk.capacity) {
         grow_capacity(compiler);
     }
 
-    add_byte(compiler, op_code);
+    emit_byte(compiler, op_code);
 
     memcpy(&compiler->chunk.codes[compiler->chunk.count], &obj, sizeof(ObjString*));
     compiler->chunk.count += sizeof(ObjString*);
 }
 
-static void add_function(Compiler* compiler, uint8_t op_code, ObjFunction* obj) {
+static void emit_function(Compiler* compiler, uint8_t op_code, ObjFunction* obj) {
     if (compiler->chunk.count + (int)sizeof(ObjFunction*) + 1 > compiler->chunk.capacity) {
         grow_capacity(compiler);
     }
 
-    add_byte(compiler, op_code);
+    emit_byte(compiler, op_code);
 
     memcpy(&compiler->chunk.codes[compiler->chunk.count], &obj, sizeof(ObjFunction*));
     compiler->chunk.count += sizeof(ObjFunction*);
@@ -103,23 +103,23 @@ static void compile_literal(Compiler* compiler, struct Node* node) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
-            add_int(compiler, OP_INT, (int32_t)strtol(literal->name.start, NULL, 10));
+            emit_int(compiler, OP_INT, (int32_t)strtol(literal->name.start, NULL, 10));
             break;
         }
         case TOKEN_FLOAT: {
-            add_float(compiler, OP_FLOAT, strtod(literal->name.start, NULL));
+            emit_float(compiler, OP_FLOAT, strtod(literal->name.start, NULL));
             break;
         }
         case TOKEN_STRING: {
-            add_string(compiler, OP_STRING, make_string(literal->name.start, literal->name.length));
+            emit_string(compiler, OP_STRING, make_string(literal->name.start, literal->name.length));
             break;
         }
         case TOKEN_TRUE: {
-            add_byte(compiler, OP_TRUE);
+            emit_byte(compiler, OP_TRUE);
             break;
         }
         case TOKEN_FALSE: {
-            add_byte(compiler, OP_FALSE);
+            emit_byte(compiler, OP_FALSE);
             break;
         }
     }
@@ -128,7 +128,7 @@ static void compile_literal(Compiler* compiler, struct Node* node) {
 static void compile_unary(Compiler* compiler, struct Node* node) {
     Unary* unary = (Unary*)node;
     compile_node(compiler, unary->right);
-    add_byte(compiler, OP_NEGATE);
+    emit_byte(compiler, OP_NEGATE);
 }
 
 static void compile_binary(Compiler* compiler, struct Node* node) {
@@ -140,8 +140,8 @@ static void compile_binary(Compiler* compiler, struct Node* node) {
     //when we add static typing during the AST traversal
     if (binary->name.type == TOKEN_AND) {
         compile_node(compiler, binary->left);
-        int false_jump = add_jump(compiler, OP_JUMP_IF_FALSE);
-        add_byte(compiler, OP_POP);
+        int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
+        emit_byte(compiler, OP_POP);
         compile_node(compiler, binary->right);
         patch_jump(compiler, false_jump);
         return;
@@ -149,8 +149,8 @@ static void compile_binary(Compiler* compiler, struct Node* node) {
 
     if (binary->name.type == TOKEN_OR) {
         compile_node(compiler, binary->left);
-        int true_jump = add_jump(compiler, OP_JUMP_IF_TRUE);
-        add_byte(compiler, OP_POP);
+        int true_jump = emit_jump(compiler, OP_JUMP_IF_TRUE);
+        emit_byte(compiler, OP_POP);
         compile_node(compiler, binary->right);
         patch_jump(compiler, true_jump);
         return;
@@ -160,24 +160,24 @@ static void compile_binary(Compiler* compiler, struct Node* node) {
     compile_node(compiler, binary->left);
     compile_node(compiler, binary->right);
     switch(binary->name.type) {
-        case TOKEN_PLUS: add_byte(compiler, OP_ADD); break;
-        case TOKEN_MINUS: add_byte(compiler, OP_SUBTRACT); break;
-        case TOKEN_STAR: add_byte(compiler, OP_MULTIPLY); break;
-        case TOKEN_SLASH: add_byte(compiler, OP_DIVIDE); break;
-        case TOKEN_MOD: add_byte(compiler, OP_MOD); break;
+        case TOKEN_PLUS: emit_byte(compiler, OP_ADD); break;
+        case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT); break;
+        case TOKEN_STAR: emit_byte(compiler, OP_MULTIPLY); break;
+        case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE); break;
+        case TOKEN_MOD: emit_byte(compiler, OP_MOD); break;
         case TOKEN_LESS:
-            add_byte(compiler, OP_LESS);
+            emit_byte(compiler, OP_LESS);
             break;
         case TOKEN_LESS_EQUAL:
-            add_byte(compiler, OP_GREATER);
-            add_byte(compiler, OP_NEGATE);
+            emit_byte(compiler, OP_GREATER);
+            emit_byte(compiler, OP_NEGATE);
             break;
         case TOKEN_GREATER:
-            add_byte(compiler, OP_GREATER);
+            emit_byte(compiler, OP_GREATER);
             break;
         case TOKEN_GREATER_EQUAL:
-            add_byte(compiler, OP_LESS);
-            add_byte(compiler, OP_NEGATE);
+            emit_byte(compiler, OP_LESS);
+            emit_byte(compiler, OP_NEGATE);
             break;
     }
 }
@@ -185,7 +185,7 @@ static void compile_binary(Compiler* compiler, struct Node* node) {
 static void compile_print(Compiler* compiler, struct Node* node) {
     Print* print = (Print*)node;
     compile_node(compiler, print->right);
-    add_byte(compiler, OP_PRINT);
+    emit_byte(compiler, OP_PRINT);
 }
 
 
@@ -218,7 +218,7 @@ static void end_scope(Compiler* compiler) {
         Local* local = &compiler->locals[i];
         if (local->depth == compiler->scope_depth) {
             compiler->locals_count--;
-            add_byte(compiler, OP_POP);
+            emit_byte(compiler, OP_POP);
         }else{
             break;
         }
@@ -250,7 +250,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             add_decl(&df->parameters, df->body);
             compile(&func, &df->parameters);
 
-            add_function(compiler, OP_FUN, make_function(func));
+            emit_function(compiler, OP_FUN, make_function(func));
 
             add_local(compiler, df->name);
             break;
@@ -269,14 +269,14 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
             compile_node(compiler, ie->condition);
-            int jump_then = add_jump(compiler, OP_JUMP_IF_FALSE); 
+            int jump_then = emit_jump(compiler, OP_JUMP_IF_FALSE); 
 
-            add_byte(compiler, OP_POP);
+            emit_byte(compiler, OP_POP);
             compile_node(compiler, ie->then_block);
-            int jump_else = add_jump(compiler, OP_JUMP);
+            int jump_else = emit_jump(compiler, OP_JUMP);
 
             patch_jump(compiler, jump_then);
-            add_byte(compiler, OP_POP);
+            emit_byte(compiler, OP_POP);
             compile_node(compiler, ie->else_block);
             patch_jump(compiler, jump_else);
             break;
@@ -285,16 +285,16 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             While* wh = (While*)node;
             int start = compiler->chunk.count;
             compile_node(compiler, wh->condition);
-            int false_jump = add_jump(compiler, OP_JUMP_IF_FALSE);
+            int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
 
-            add_byte(compiler, OP_POP);
+            emit_byte(compiler, OP_POP);
             compile_node(compiler, wh->then_block);
 
             //+3 to include OP_JUMP_BACK and uint16_t for jump distance
             int from = compiler->chunk.count + 3;
-            add_jump_by(compiler, OP_JUMP_BACK, from - start);
+            emit_jump_by(compiler, OP_JUMP_BACK, from - start);
             patch_jump(compiler, false_jump);   
-            add_byte(compiler, OP_POP);
+            emit_byte(compiler, OP_POP);
             break;
         }
         case NODE_FOR: {
@@ -303,29 +303,29 @@ static void compile_node(Compiler* compiler, struct Node* node) {
 
             int condition_start = compiler->chunk.count;
             compile_node(compiler, fo->condition);
-            int exit_jump = add_jump(compiler, OP_JUMP_IF_FALSE);
-            int body_jump = add_jump(compiler, OP_JUMP);
+            int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
+            int body_jump = emit_jump(compiler, OP_JUMP);
 
             int update_start = compiler->chunk.count;
             if (fo->update) {
                 compile_node(compiler, fo->update);
-                add_byte(compiler, OP_POP); //pop update
+                emit_byte(compiler, OP_POP); //pop update
             }
-            add_jump_by(compiler, OP_JUMP_BACK, compiler->chunk.count + 3 - condition_start);
+            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk.count + 3 - condition_start);
 
             patch_jump(compiler, body_jump);
-            add_byte(compiler, OP_POP); //pop condition if true
+            emit_byte(compiler, OP_POP); //pop condition if true
             compile_node(compiler, fo->then_block);
-            add_jump_by(compiler, OP_JUMP_BACK, compiler->chunk.count + 3 - update_start);
+            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk.count + 3 - update_start);
 
             patch_jump(compiler, exit_jump);
-            add_byte(compiler, OP_POP); //pop condition if false
+            emit_byte(compiler, OP_POP); //pop condition if false
             break;
         }
         case NODE_RETURN: {
             Return* ret = (Return*)node;
             compile_node(compiler, ret->right);
-            add_byte(compiler, OP_RETURN);
+            emit_byte(compiler, OP_RETURN);
             break;
         }
         //expressions
@@ -334,17 +334,17 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         case NODE_UNARY:    compile_unary(compiler, node); break;
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
-            add_byte(compiler, OP_GET_VAR);
-            add_byte(compiler, find_local(compiler, gv->name));
+            emit_byte(compiler, OP_GET_VAR);
+            emit_byte(compiler, find_local(compiler, gv->name));
             break;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             compile_node(compiler, sv->right);
-            add_byte(compiler, OP_SET_VAR);
-            add_byte(compiler, find_local(compiler, sv->name));
+            emit_byte(compiler, OP_SET_VAR);
+            emit_byte(compiler, find_local(compiler, sv->name));
             if (sv->decl) {
-                add_byte(compiler, OP_POP);
+                emit_byte(compiler, OP_POP);
             }
             break;
         }
@@ -382,7 +382,7 @@ ResultCode compile(Compiler* compiler, DeclList* dl) {
         compile_node(compiler, dl->decls[i]);
     }
 
-    add_byte(compiler, OP_RETURN);
+    emit_byte(compiler, OP_RETURN);
 
     if (compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {
