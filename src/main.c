@@ -25,14 +25,20 @@
 //      push one value on the stack
  */
 
-//TODO:
-//A new compiler needs to be created here bc
-//we need a separate list of locals and chunk of opcodes
-//then that can be wrapped in a function object that is
-//pushed onto the stack 
+//TODO: we want to get rid of the global compiler in compiler.c
+//create the top-most compiler in compile_and_run() and thread it
+//through compile() and compile_node() functions
+//When get get a NODE_DECL_FUN, create a new compiler with compiler->enclosing = compiler that is declaring the function
+//Call compile() with this new compiler as an argument - note: we're doing this because we need a separate environment
+//for locals and other stuff(?)
+//Then shove the compiler into a function object, and set it as a local variable in the declaring compiler locals list
+//
 //When that function object is called (found on the stack using the locals in the enclosing function)
 //We grab the function object from the stack (at the given local slot)
 //and then push it into the VM callframes stack
+//the callframes have an ordering (since it IS a stack) but they may overlap
+//
+//  The VM needs to maintain a callframe stack
 //  DeclFun needs to create function object on the stack
 //
 //  need to compiler DeclFun into a Value on the stack that we can instantiate later
@@ -64,7 +70,7 @@
 //Need to remember to make GC for ObjStrings (all Objs)
 
 
-ResultCode run(VM* vm, const char* source) {
+ResultCode run_source(VM* vm, const char* source) {
 
     //create list of declarations (AST)
     DeclList dl;
@@ -77,33 +83,17 @@ ResultCode run(VM* vm, const char* source) {
         return RESULT_FAILED;
     }
 
+#ifdef DEBUG_AST
     print_decl_list(&dl);
+#endif
 
-    
-    //compile ast to byte code
-    //will want to compile to function object (script) later, which the vm will run
-    Chunk chunk;
-    init_chunk(&chunk);
-    ResultCode compile_result = compile(&dl, &chunk);
-
-    if (compile_result == RESULT_FAILED) {
-        free_chunk(&chunk);
-        free_decl_list(&dl);
-       return RESULT_FAILED; 
-    }
-
-    disassemble_chunk(&chunk);
-
-    //execute code on vm
-    ResultCode run_result = execute(vm, &chunk);
+    ResultCode run_result = compile_and_run(vm, &dl);
 
     if (run_result == RESULT_FAILED) {
-        free_chunk(&chunk);
         free_decl_list(&dl);
-       return RESULT_FAILED; 
+        return RESULT_FAILED; 
     }
 
-    free_chunk(&chunk);
     free_decl_list(&dl);
 
     return RESULT_SUCCESS;
@@ -112,7 +102,7 @@ ResultCode run(VM* vm, const char* source) {
 
 ResultCode repl() {
     VM vm;
-    vm_init(&vm);
+    init_vm(&vm);
     int MAX_CHARS = 256;
     char input_line[MAX_CHARS];
     while(true) {
@@ -124,10 +114,10 @@ ResultCode repl() {
 
         //if not a complete statement expression, should keep reading
 
-        run(&vm, &input_line[0]);
+        run_source(&vm, &input_line[0]);
     }
 
-    vm_free(&vm);
+    free_vm(&vm);
 
     return RESULT_SUCCESS;
 }
@@ -146,13 +136,13 @@ const char* read_file(const char* path) {
 
 ResultCode run_script(const char* path) {
     VM vm;
-    vm_init(&vm);
+    init_vm(&vm);
 
     const char* source = read_file(path);
-    run(&vm, source);
+    run_source(&vm, source);
 
     free((void*)source);
-    vm_free(&vm);
+    free_vm(&vm);
 
     return RESULT_SUCCESS;
 }

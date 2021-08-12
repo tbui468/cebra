@@ -1,5 +1,6 @@
 #include "vm.h"
 #include "object.h"
+#include "common.h"
 
 
 static Value pop(VM* vm) {
@@ -27,13 +28,13 @@ static uint16_t read_short(VM* vm, Chunk* chunk) {
     return sh;
 }
 
-ResultCode vm_init(VM* vm) {
+ResultCode init_vm(VM* vm) {
     vm->stack_top = 0;
     vm->ip = 0;
     return RESULT_SUCCESS;
 }
 
-ResultCode vm_free(VM* vm) {
+ResultCode free_vm(VM* vm) {
     return RESULT_SUCCESS;
 }
 
@@ -70,9 +71,9 @@ static void print_trace(VM* vm, OpCode op) {
     printf("\n*************************\n");
 }
 
-ResultCode execute(VM* vm, Chunk* chunk) {
-   vm_init(vm); //TODO: need to think of better way to reset ip (but not necessarily the stack - for REPL)
-   while (vm->ip < chunk->count) {
+ResultCode run(VM* vm, Chunk* chunk) {
+
+    while (vm->ip < chunk->count) {
         uint8_t op = read_byte(vm, chunk);
         switch(op) {
             case OP_INT: {
@@ -189,8 +190,34 @@ ResultCode execute(VM* vm, Chunk* chunk) {
                 break;
             }
         } 
-//        print_trace(vm, op);
+#ifdef DEBUG_TRACE
+        print_trace(vm, op);
+#endif
    } 
 
-   return RESULT_SUCCESS;
+
+    return RESULT_SUCCESS;
+}
+
+ResultCode compile_and_run(VM* vm, DeclList* dl) {
+    Compiler root_compiler;
+    init_compiler(&root_compiler);
+
+    ResultCode compile_result = compile(&root_compiler, dl); //TODO: <-- compile is crashing
+
+    if (compile_result == RESULT_FAILED) {
+        free_compiler(&root_compiler);
+        return RESULT_FAILED; 
+    }
+
+    /*
+#ifdef DEBUG_DISASSEMBLE
+    disassemble_chunk(&chunk);
+#endif*/
+    
+    run(vm, &root_compiler.chunk); 
+
+    free_compiler(&root_compiler);
+
+    return RESULT_SUCCESS;
 }

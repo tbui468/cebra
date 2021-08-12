@@ -49,7 +49,7 @@ typedef struct {
 } Local;
 
 typedef struct {
-    Chunk* chunk;
+    Chunk chunk;
     int scope_depth;
     Local locals[256];
     int locals_count;
@@ -57,9 +57,9 @@ typedef struct {
     int error_count;
 } Compiler;
 
-void init_chunk(Chunk* chunk);
-void free_chunk(Chunk* chunk);
-ResultCode compile(DeclList* dl, Chunk* chunk);
+void init_compiler(Compiler* compiler);
+void free_compiler(Compiler* compiler);
+ResultCode compile(Compiler* compiler, DeclList* dl);
 void disassemble_chunk(Chunk* chunk);
 const char* op_to_string(OpCode op);
 
