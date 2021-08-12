@@ -163,7 +163,12 @@ Token next_token() {
 
     switch(c) { //current is now on next characters
         case '+':   return new_token(TOKEN_PLUS);
-        case '-':   return new_token(TOKEN_MINUS);
+        case '-':   
+            if (peek_char() == '>') {
+                next_char();
+                return new_token(TOKEN_RIGHT_ARROW);
+            }
+            return new_token(TOKEN_MINUS);
         case '*':   return new_token(TOKEN_STAR);
         case '/':   return new_token(TOKEN_SLASH);
         case '%':   return new_token(TOKEN_MOD);
@@ -171,8 +176,13 @@ Token next_token() {
         case ')':   return new_token(TOKEN_RIGHT_PAREN);
         case '{':   return new_token(TOKEN_LEFT_BRACE);
         case '}':   return new_token(TOKEN_RIGHT_BRACE);
-        case ':':   return new_token(TOKEN_COLON);
         case ',':   return new_token(TOKEN_COMMA);
+        case ':':   
+            if (peek_char() == ':') {
+                next_char();
+                return new_token(TOKEN_COLON_COLON);
+            }
+            return new_token(TOKEN_COLON);
         case '=':   
             if (peek_char() == '=') {
                 next_char();

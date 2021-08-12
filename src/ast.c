@@ -16,22 +16,15 @@ struct Node* make_decl_var(Token name, Token type, struct Node* right) {
     return (struct Node*)decl_var;
 }
 
-struct Node* make_get_var(Token name) {
-    GetVar* get_var = ALLOCATE_NODE(GetVar);
-    get_var->name = name;
-    get_var->base.type = NODE_GET_VAR;
+struct Node* make_decl_fun(Token name, DeclList parameters, Token ret, struct Node* body) {
+    DeclFun* df = ALLOCATE_NODE(DeclFun);
+    df->name = name;
+    df->parameters = parameters;
+    df->ret = ret;
+    df->body = body;
+    df->base.type = NODE_DECL_FUN;
 
-    return (struct Node*)get_var;
-}
-
-struct Node* make_set_var(Token name, struct Node* right, bool decl) {
-    SetVar* set_var = ALLOCATE_NODE(SetVar);
-    set_var->name = name;
-    set_var->right = right;
-    set_var->decl = decl;
-    set_var->base.type = NODE_SET_VAR;
-
-    return (struct Node*)set_var;
+    return (struct Node*)df;
 }
 
 /*
@@ -92,6 +85,16 @@ struct Node* make_for(Token name, struct Node* initializer, struct Node* conditi
     return (struct Node*)fo;
 }
 
+
+struct Node* make_return(Token name, struct Node* right) {
+    Return* ret = ALLOCATE_NODE(Return);
+    ret->name = name;
+    ret->right = right;
+    ret->base.type = NODE_RETURN;
+
+    return (struct Node*)ret;
+}
+
 /*
  * Expressions
  */
@@ -123,6 +126,23 @@ struct Node* make_binary(Token name, struct Node* left, struct Node* right) {
     return (struct Node*)binary;
 }
 
+struct Node* make_get_var(Token name) {
+    GetVar* get_var = ALLOCATE_NODE(GetVar);
+    get_var->name = name;
+    get_var->base.type = NODE_GET_VAR;
+
+    return (struct Node*)get_var;
+}
+
+struct Node* make_set_var(Token name, struct Node* right, bool decl) {
+    SetVar* set_var = ALLOCATE_NODE(SetVar);
+    set_var->name = name;
+    set_var->right = right;
+    set_var->decl = decl;
+    set_var->base.type = NODE_SET_VAR;
+
+    return (struct Node*)set_var;
+}
 
 /*
  * Utility
@@ -138,6 +158,11 @@ void print_node(struct Node* node) {
             printf(")");
             break;
         }
+        case NODE_DECL_FUN: {
+            DeclFun* df = (DeclFun*)node;
+            print_node(df->body);
+            break;
+        }
         //Statements
         case NODE_PRINT: {
             Print* print = (Print*)node;
@@ -150,6 +175,7 @@ void print_node(struct Node* node) {
             Block* block = (Block*)node;
             printf("( Block");
             print_decl_list(&block->decl_list);
+            printf(" )");
             break;
         }
         case NODE_IF_ELSE: {
@@ -173,6 +199,11 @@ void print_node(struct Node* node) {
         case NODE_FOR: {
             //TODO: fill this in
             printf("For");
+            break;
+        }
+        case NODE_RETURN: {
+            //TODO: fill this in
+            printf("Return");
             break;
         }
         //struct Expressions
@@ -215,8 +246,18 @@ void free_node(struct Node* node) {
         //Declarations
         case NODE_DECL_VAR: {
             DeclVar* decl_var = (DeclVar*)node;
-            free_node(decl_var->right);
+            //parameters have NULL for right expression
+            if (decl_var->right != NULL) {
+                free_node(decl_var->right);
+            }
             FREE(decl_var);
+            break;
+        }
+        case NODE_DECL_FUN: {
+            DeclFun* df = (DeclFun*)node;
+            free_decl_list(&df->parameters);
+            free_node(df->body);
+            FREE(df);
             break;
         }
         //Statements
@@ -256,6 +297,12 @@ void free_node(struct Node* node) {
             if (fo->update != NULL) free_node(fo->update);
             free_node(fo->then_block);
             FREE(fo);
+            break;
+        }
+        case NODE_RETURN: {
+            Return* ret = (Return*)node;
+            if (ret->right != NULL) free_node(ret->right);
+            FREE(ret);
             break;
         }
         //struct Expressions

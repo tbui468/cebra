@@ -18,6 +18,8 @@ typedef enum {
     NODE_IF_ELSE,
     NODE_WHILE,
     NODE_FOR,
+    NODE_DECL_FUN,
+    NODE_RETURN,
 } NodeType;
 
 struct Node {
@@ -35,18 +37,13 @@ typedef struct {
     struct Node* right;
 } DeclVar;
 
-
 typedef struct {
     struct Node base;
     Token name;
-} GetVar;
-
-typedef struct {
-    struct Node base;
-    Token name;
-    struct Node* right;
-    bool decl;
-} SetVar;
+    DeclList parameters;
+    Token ret;
+    struct Node* body;
+} DeclFun;
 
 /*
  * Statements
@@ -72,14 +69,14 @@ typedef struct {
     struct Node* else_block;
 } IfElse;
 
-typedef struct{
+typedef struct {
     struct Node base;
     Token name;
     struct Node* condition;
     struct Node* then_block;
 } While;
 
-typedef struct{
+typedef struct {
     struct Node base;
     Token name;
     struct Node* initializer;
@@ -87,6 +84,12 @@ typedef struct{
     struct Node* update;
     struct Node* then_block;
 } For;
+
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* right;
+} Return;
 
 /*
  * Expressions
@@ -111,6 +114,19 @@ typedef struct {
 } Binary;
 
 
+typedef struct {
+    struct Node base;
+    Token name;
+} GetVar;
+
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* right;
+    bool decl;
+} SetVar;
+
+
 
 struct Node* make_literal(Token name);
 struct Node* make_unary(Token name, struct Node* right);
@@ -123,6 +139,8 @@ struct Node* make_block(Token name, DeclList dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
+struct Node* make_decl_fun(Token name, DeclList parameters, Token ret, struct Node* body);
+struct Node* make_return(Token name, struct Node* right);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

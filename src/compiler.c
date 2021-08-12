@@ -235,6 +235,9 @@ static void compile_node(struct Node* node) {
     switch(node->type) {
         //declarations
         case NODE_DECL_VAR: compile_decl_var(node); break;
+        case NODE_DECL_FUN: {
+            break;
+        }
         //statements
         case NODE_PRINT:    compile_print(node); break;
         case NODE_BLOCK: {
@@ -304,6 +307,12 @@ static void compile_node(struct Node* node) {
             add_byte(OP_POP); //pop condition if false
             break;
         }
+        case NODE_RETURN: {
+            Return* ret = (Return*)node;
+            if (ret->right != NULL) compile_node(ret->right);
+            add_byte(OP_RETURN);
+            break;
+        }
         //expressions
         case NODE_LITERAL:  compile_literal(node); break;
         case NODE_BINARY:   compile_binary(node); break;
@@ -362,6 +371,14 @@ ResultCode compile(DeclList* dl, Chunk* chunk) {
 
     return RESULT_SUCCESS;
 }
+
+/*
+void compile_function(DeclList* dl) {
+    Chunk chunk;
+    init_chunk(&chunk);
+
+    compile(dl, &chunk);
+}*/
 
 static int32_t read_int(Chunk* chunk, int offset) {
     int32_t* ptr = (int32_t*)(&chunk->codes[offset]);

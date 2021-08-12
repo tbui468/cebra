@@ -53,7 +53,7 @@ static struct Node* primary() {
         return expr;
     }
 
-    add_error(parser.previous, "Unrecognized token.");
+//    add_error(parser.previous, "Unrecognized token.");
     return NULL;
 }
 
@@ -168,6 +168,38 @@ static struct Node* decl_or_assignment() {
         return make_decl_var(name, type, value);
     } else if (match(TOKEN_EQUAL)) {
         return make_set_var(name, expression(), true);
+    } else if (match(TOKEN_COLON_COLON)) {
+        consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
+        DeclList params;
+        init_decl_list(&params);
+        if (!match(TOKEN_RIGHT_PAREN)) {
+            do {
+                consume(TOKEN_IDENTIFIER, "Expect parameter identifier.");
+                Token name = parser.previous;
+                consume(TOKEN_COLON, "Expect ':' after identifier."); 
+                if (!read_type()) {
+                    add_error(parser.previous, "Expect data type after ':'.");
+                }
+                Token type = parser.previous;
+                add_decl(&params, make_decl_var(name, type, NULL));
+            } while (match(TOKEN_COMMA));
+        }
+
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+        consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
+        Token ret;
+        ret.type = TOKEN_NIL_TYPE;
+        ret.line = -1;
+        ret.start = NULL;
+        ret.length = 0;
+        if (read_type()) {
+            ret = parser.previous;
+        }
+
+        consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+        struct Node* body = block();
+
+        return make_decl_fun(name, params, ret, body);
     }
 }
 
@@ -218,6 +250,10 @@ static struct Node* declaration() {
         struct Node* then_block = block();
 
         return make_for(name, initializer, condition, update, then_block);
+    } else if (match(TOKEN_RIGHT_ARROW)) {
+        Token name = parser.previous;
+        struct Node* right = expression(); //NULL if '}'
+        return make_return(name, right);
     }
 
     return expression();

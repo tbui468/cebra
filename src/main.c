@@ -26,11 +26,29 @@
  */
 
 //TODO:
-//  For loops - diagram this.  It gets a little messy
+//A new compiler needs to be created here bc
+//we need a separate list of locals and chunk of opcodes
+//then that can be wrapped in a function object that is
+//pushed onto the stack 
+//When that function object is called (found on the stack using the locals in the enclosing function)
+//We grab the function object from the stack (at the given local slot)
+//and then push it into the VM callframes stack
+//  DeclFun needs to create function object on the stack
 //
-//  Functions and Calls
-//      will need a hash table for this - we need to save hashed function names
-//      call frames
+//  need to compiler DeclFun into a Value on the stack that we can instantiate later
+//  add_local
+//
+//  split compilers into linked list, where top compiler has enclosed = NULL
+//  all inner function/compilers have enclosing = outer compiler
+//
+//  finish decl_or_assignment in parser.c (making function declaration node)
+//      store function objects pointers on the stack (as locals)
+//          is a hash table really necessary???
+//
+//  Each function call is its own compiler???
+//  What's the problem we need to solve?
+//      Declare functions
+//      Call functions
 //
 //  Closures
 //      could skip classes and just do structs if we have closures
@@ -59,19 +77,7 @@ ResultCode run(VM* vm, const char* source) {
         return RESULT_FAILED;
     }
 
-//    print_decl_list(&dl);
-
-
-
-    //type check: TODO: This should be integrated with compile so that 
-    //the AST only has to be traversed once
-    /*
-    ResultCode type_result = type_check(&dl);
-
-    if (type_result == RESULT_FAILED) {
-        free_decl_list(&dl);
-        return RESULT_FAILED;
-    }*/
+    print_decl_list(&dl);
 
     
     //compile ast to byte code
