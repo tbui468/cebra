@@ -144,6 +144,15 @@ struct Node* make_set_var(Token name, struct Node* right, bool decl) {
     return (struct Node*)set_var;
 }
 
+struct Node* make_call(Token name, DeclList arguments) {
+    Call* call = ALLOCATE_NODE(Call);
+    call->name = name;
+    call->arguments = arguments;
+    call->base.type = NODE_CALL;
+
+    return (struct Node*)call;
+}
+
 /*
  * Utility
  */
@@ -160,6 +169,7 @@ void print_node(struct Node* node) {
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
+            printf("( DeclFun ");
             print_node(df->body);
             break;
         }
@@ -235,6 +245,11 @@ void print_node(struct Node* node) {
         case NODE_SET_VAR: {
             //TODO: fill this in
             printf("SetVar");
+            break;
+        }
+        case NODE_CALL: {
+            //TODO: fill this in
+            printf("Call");
             break;
         }
     } 
@@ -333,6 +348,12 @@ void free_node(struct Node* node) {
             SetVar* sv = (SetVar*)node;
             free_node(sv->right);
             FREE(sv);
+            break;
+        }
+        case NODE_CALL: {
+            Call* call = (Call*)node;
+            free_decl_list(&call->arguments);
+            FREE(call);
             break;
         }
     } 

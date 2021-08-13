@@ -17,20 +17,20 @@ static void push(VM* vm, Value value) {
     vm->stack_top++;
 }
 
-static uint8_t read_byte(VM* vm, Chunk* chunk) {
-    vm->ip++;
-    return chunk->codes[vm->ip - 1]; 
+static uint8_t read_byte(CallFrame* frame) {
+    frame->ip++;
+    return frame->function->chunk.codes[frame->ip - 1]; 
 }
 
-static uint16_t read_short(VM* vm, Chunk* chunk) {
-    uint16_t sh = (uint16_t)chunk->codes[vm->ip];
-    vm->ip += 2;
+static uint16_t read_short(CallFrame* frame) {
+    uint16_t sh = (uint16_t)frame->function->chunk.codes[frame->ip];
+    frame->ip += 2;
     return sh;
 }
 
 ResultCode init_vm(VM* vm) {
     vm->stack_top = 0;
-    vm->ip = 0;
+    vm->frame_count = 0;
     return RESULT_SUCCESS;
 }
 
@@ -38,30 +38,44 @@ ResultCode free_vm(VM* vm) {
     return RESULT_SUCCESS;
 }
 
+void add_callframe(VM* vm, ObjFunction* function) {
+    CallFrame frame;
+    frame.function = function;
+    frame.stack_offset = vm->stack_top - function->arity;
+    frame.ip = 0;
+    vm->frames[vm->frame_count] = frame;
+    vm->frame_count++;
+}
 
-static int32_t read_int(VM* vm, Chunk* chunk) {
-    int32_t* ptr = (int32_t*)(&chunk->codes[vm->ip]);
-    vm->ip += (int)sizeof(int32_t);
+//TODO: make a macro for all four of these (including reading shorts etc)
+static int32_t read_int(CallFrame* frame) {
+    int32_t* ptr = (int32_t*)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(int32_t);
     return *ptr;
 }
 
-static double read_float(VM* vm, Chunk* chunk) {
-    double* ptr = (double*)(&chunk->codes[vm->ip]);
-    vm->ip += (int)sizeof(double);
+static double read_float(CallFrame* frame) {
+    double* ptr = (double*)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(double);
     return *ptr;
 }
 
-static ObjString* read_string(VM* vm, Chunk* chunk) {
-    ObjString** ptr = (ObjString**)(&chunk->codes[vm->ip]);
-    vm->ip += (int)sizeof(ObjString*);
+static ObjString* read_string(CallFrame* frame) {
+    ObjString** ptr = (ObjString**)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(ObjString*);
     return *ptr;
 }
 
-static ObjFunction* read_function(VM* vm, Chunk* chunk) {
-    ObjFunction** ptr = (ObjFunction**)(&chunk->codes[vm->ip]);
-    vm->ip += (int)sizeof(ObjFunction*);
+static ObjFunction* read_function(CallFrame* frame) {
+    ObjFunction** ptr = (ObjFunction**)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(ObjFunction*);
     return *ptr;
 }
+
+static uint8_t read_slot(CallFrame* frame) {
+    return read_byte(frame) + frame->stack_offset;
+}
+
 
 static void print_trace(VM* vm, OpCode op) {
     //print opcodes - how can the compiler and this use the same code?
@@ -77,134 +91,141 @@ static void print_trace(VM* vm, OpCode op) {
     printf("\n*************************\n");
 }
 
-ResultCode run(VM* vm, Chunk* chunk) {
-
-    while (vm->ip < chunk->count) {
-        uint8_t op = read_byte(vm, chunk);
-        switch(op) {
-            case OP_INT: {
-                push(vm, to_integer(read_int(vm, chunk)));
-                break;
+ResultCode execute_frame(VM* vm, CallFrame* frame) {
+    uint8_t op = read_byte(frame);
+    switch(op) {
+        case OP_INT: {
+            push(vm, to_integer(read_int(frame)));
+            break;
+        }
+        case OP_FLOAT: {
+            push(vm, to_float(read_float(frame)));
+            break;
+        }
+        case OP_STRING: {
+            push(vm, to_string(read_string(frame)));
+            break;
+        }
+        case OP_FUN: {
+            push(vm, to_function(read_function(frame)));
+            break;
+        }
+        case OP_NEGATE: {
+            Value value = pop(vm);
+            push(vm, negate_value(value));
+            break;
+        }
+        case OP_ADD: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, add_values(a, b));
+            break;
+        }
+        case OP_SUBTRACT: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, subtract_values(a, b));
+            break;
+        }
+        case OP_MULTIPLY: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, multiply_values(a, b));
+            break;
+        }
+        case OP_DIVIDE: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, divide_values(a, b));
+            break;
+        }
+        case OP_MOD: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, mod_values(a, b));
+            break;
+        }
+        case OP_LESS: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, less_values(a, b));
+            break;
+        }
+        case OP_GREATER: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, greater_values(a, b));
+            break;
+        }
+        case OP_GET_VAR: {
+            uint8_t slot = read_slot(frame);
+            push(vm, vm->stack[slot]);
+            break;
+        }
+        case OP_SET_VAR: {
+            uint8_t slot = read_slot(frame);
+            vm->stack[slot] = peek(vm, 0);
+            break;
+        }
+        case OP_JUMP_IF_FALSE: {
+            uint16_t distance = read_short(frame);
+            if (!(peek(vm, 0).as.boolean_type)) {
+                frame->ip += distance;
             }
-            case OP_FLOAT: {
-                push(vm, to_float(read_float(vm, chunk)));
-                break;
-            }
-            case OP_STRING: {
-                push(vm, to_string(read_string(vm, chunk)));
-                break;
-            }
-            case OP_FUN: {
-                push(vm, to_function(read_function(vm, chunk)));
-                break;
-            }
-            case OP_NEGATE: {
-                Value value = pop(vm);
-                push(vm, negate_value(value));
-                break;
-            }
-            case OP_ADD: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, add_values(a, b));
-                break;
-            }
-            case OP_SUBTRACT: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, subtract_values(a, b));
-                break;
-            }
-            case OP_MULTIPLY: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, multiply_values(a, b));
-                break;
-            }
-            case OP_DIVIDE: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, divide_values(a, b));
-                break;
-            }
-            case OP_MOD: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, mod_values(a, b));
-                break;
-            }
-            case OP_LESS: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, less_values(a, b));
-                break;
-            }
-            case OP_GREATER: {
-                Value b = pop(vm);
-                Value a = pop(vm);
-                push(vm, greater_values(a, b));
-                break;
-            }
-            case OP_GET_VAR: {
-                uint8_t slot = read_byte(vm, chunk);
-                push(vm, vm->stack[slot]);
-                break;
-            }
-            case OP_SET_VAR: {
-                uint8_t slot = read_byte(vm, chunk);
-                vm->stack[slot] = peek(vm, 0);
-                break;
-            }
-            case OP_JUMP_IF_FALSE: {
-                uint16_t distance = read_short(vm, chunk);
-                if (!(peek(vm, 0).as.boolean_type)) {
-                    vm->ip += distance;
-                }
-                break;
-            } 
-            case OP_JUMP_IF_TRUE: {
-                uint16_t distance = read_short(vm, chunk);
-                if ((peek(vm, 0).as.boolean_type)) {
-                    vm->ip += distance;
-                }
-                break;
-            } 
-            case OP_JUMP: {
-                uint16_t distance = read_short(vm, chunk);
-                vm->ip += distance;
-                break;
-            } 
-            case OP_JUMP_BACK: {
-                uint16_t distance = read_short(vm, chunk);
-                vm->ip -= distance;
-                break;
-            }
-            case OP_TRUE: {
-                push(vm, to_boolean(true));
-                break;
-            }
-            case OP_FALSE: {
-                push(vm, to_boolean(false));
-                break;
-            }
-            case OP_POP: {
-                pop(vm);
-                break;
-            }
-            case OP_PRINT: {
-                print_value(pop(vm));
-                printf("\n");
-                break;
-            }
-            case OP_RETURN: {
-                break;
-            }
+            break;
         } 
+        case OP_JUMP_IF_TRUE: {
+            uint16_t distance = read_short(frame);
+            if ((peek(vm, 0).as.boolean_type)) {
+                frame->ip += distance;
+            }
+            break;
+        } 
+        case OP_JUMP: {
+            uint16_t distance = read_short(frame);
+            frame->ip += distance;
+            break;
+        } 
+        case OP_JUMP_BACK: {
+            uint16_t distance = read_short(frame);
+            frame->ip -= distance;
+            break;
+        }
+        case OP_TRUE: {
+            push(vm, to_boolean(true));
+            break;
+        }
+        case OP_FALSE: {
+            push(vm, to_boolean(false));
+            break;
+        }
+        case OP_POP: {
+            pop(vm);
+            break;
+        }
+        case OP_PRINT: {
+            print_value(pop(vm));
+            printf("\n");
+            break;
+        }
+        case OP_CALL: {
+            uint8_t slot = read_slot(frame);
+            add_callframe(vm, vm->stack[slot].as.function_type);
+            break;
+        }
+        case OP_RETURN: {
+            Value ret = pop(vm);
+            while (vm->stack_top > frame->stack_offset) {
+                pop(vm);
+            }
+            vm->frame_count--;
+            push(vm, ret);
+            break;
+        }
+    } 
 #ifdef DEBUG_TRACE
-        print_trace(vm, op);
+    print_trace(vm, op);
 #endif
-   } 
-
 
     return RESULT_SUCCESS;
 }
@@ -213,20 +234,27 @@ ResultCode compile_and_run(VM* vm, DeclList* dl) {
     Compiler root_compiler;
     init_compiler(&root_compiler);
 
-    ResultCode compile_result = compile(&root_compiler, dl); //TODO: <-- compile is crashing
+    ResultCode compile_result = compile(&root_compiler, dl);
 
     if (compile_result == RESULT_FAILED) {
         free_compiler(&root_compiler);
         return RESULT_FAILED; 
     }
 
+//someoffset if enclosing compilers is causing wrong opcodes to being emitted (off at least offset so reads are wrong)
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(&root_compiler.chunk);
 #endif
-    
-    run(vm, &root_compiler.chunk); 
 
-    free_compiler(&root_compiler);
+    //initial script
+    ObjFunction* function = make_function(root_compiler.chunk, 0); //make a function with arity = 0
+    add_callframe(vm, function);
+   
+    //running the vm 
+    while (vm->frame_count > 0) {
+        CallFrame* frame = &vm->frames[vm->frame_count - 1];
+        execute_frame(vm, frame);
+    }
 
     return RESULT_SUCCESS;
 }

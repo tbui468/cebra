@@ -25,13 +25,8 @@
  */
 
 //TODO:
-//function names add_int, add_float, add_function is compiler is a bit unclear
-//  those are being added to the chunk opcodes (+ constants).  Could I give them a clearer name?
-//  call them emit
+//0 parameter function calls not working
 //
-//How to call a function?
-//
-//CallFrames are needed now 
 //
 //once function calls work, should make root compiler into a function object too (just embed the compiler into a function object)
 //

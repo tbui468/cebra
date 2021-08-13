@@ -245,12 +245,12 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             Compiler func;
             init_compiler(&func);
             func.enclosing = compiler;
-
+            int arity = df->parameters.count;
             //adding body to parameter DeclList so only one compile call is needed
             add_decl(&df->parameters, df->body);
             compile(&func, &df->parameters);
 
-            emit_function(compiler, OP_FUN, make_function(func));
+            emit_function(compiler, OP_FUN, make_function(func.chunk, arity));
 
             add_local(compiler, df->name);
             break;
@@ -348,6 +348,15 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             }
             break;
         }
+        case NODE_CALL: {
+            Call* call = (Call*)node;
+            for (int i = 0; i < call->arguments.count; i++) {
+                compile_node(compiler, call->arguments.decls[i]);
+            }
+            emit_byte(compiler, OP_CALL);
+            emit_byte(compiler, find_local(compiler, call->name));
+            break;
+        }
     } 
 }
 
@@ -439,6 +448,7 @@ const char* op_to_string(OpCode op) {
         case OP_JUMP_IF_TRUE: return "OP_JUMP_IF_TRUE";
         case OP_JUMP: return "OP_JUMP";
         case OP_JUMP_BACK: return "OP_JUMP_BACK";
+        case OP_CALL: return "OP_CALL";
         case OP_RETURN: return "OP_RETURN";
         default: return "Unrecognized op";
     }
@@ -504,6 +514,12 @@ void disassemble_chunk(Chunk* chunk) {
                 uint16_t dis = (uint16_t)chunk->codes[i];
                 i += 2;
                 printf("->[%d]", i - dis);
+                break;
+            }
+            case OP_CALL: {
+                uint8_t slot = chunk->codes[i];
+                i++;
+                printf("[%d]", slot);
                 break;
             }
         }

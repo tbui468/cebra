@@ -7,14 +7,20 @@
 #include "decl_list.h"
 
 typedef struct {
+    ObjFunction* function;
+    int stack_offset;
+    int ip;
+} CallFrame;
+
+typedef struct {
     Value stack[256];
     int stack_top;
-    int ip;
+    CallFrame frames[256];
+    int frame_count;
 } VM;
 
 ResultCode init_vm(VM* vm);
 ResultCode free_vm(VM* vm);
 ResultCode compile_and_run(VM* vm, DeclList* dl);
-ResultCode run(VM* vm, Chunk* chunk);
 
 #endif// CEBRA_VM_H

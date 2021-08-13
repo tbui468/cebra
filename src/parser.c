@@ -45,6 +45,13 @@ static struct Node* primary() {
         Token name = parser.previous;
         if (match(TOKEN_EQUAL)) {
             return make_set_var(name, expression(), false);
+        } else if (match(TOKEN_LEFT_PAREN)) {
+            DeclList args;
+            init_decl_list(&args);
+            while (!match(TOKEN_RIGHT_PAREN)) {
+                add_decl(&args, expression()); 
+            }
+            return make_call(name, args);
         }
         return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
@@ -168,6 +175,13 @@ static struct Node* decl_or_assignment() {
         return make_decl_var(name, type, value);
     } else if (match(TOKEN_EQUAL)) {
         return make_set_var(name, expression(), true);
+    } else if (match(TOKEN_LEFT_PAREN)) {
+        DeclList args;
+        init_decl_list(&args);
+        while (!match(TOKEN_RIGHT_PAREN)) {
+            add_decl(&args, expression()); 
+        }
+        return make_call(name, args);
     } else if (match(TOKEN_COLON_COLON)) {
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
         DeclList params;
@@ -183,9 +197,9 @@ static struct Node* decl_or_assignment() {
                 Token type = parser.previous;
                 add_decl(&params, make_decl_var(name, type, NULL));
             } while (match(TOKEN_COMMA));
+            consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
         }
 
-        consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
         consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
         Token ret;
         ret.type = TOKEN_NIL_TYPE;

@@ -20,13 +20,14 @@ typedef struct {
 
 typedef struct {
     Obj base;
-    Compiler compiler;
+    int arity;
+    Chunk chunk;
 } ObjFunction;
 
 
 ObjString* make_string(const char* start, int length);
 ObjString* take_string(char* start, int length);
-ObjFunction* make_function(Compiler compiler);
+ObjFunction* make_function(Chunk chunk, int arity);
 
 
 #endif// CEBRA_OBJECT_H

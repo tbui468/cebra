@@ -27,10 +27,11 @@ ObjString* take_string(char* chars, int length) {
 }
 
 
-ObjFunction* make_function(Compiler compiler) {
+ObjFunction* make_function(Chunk chunk, int arity) {
     ObjFunction* obj = ALLOCATE_OBJ(ObjFunction);
     obj->base.type = OBJ_FUNCTION;
-    obj->compiler = compiler;
+    obj->arity = arity;
+    obj->chunk = chunk;
 
     return obj;
 }

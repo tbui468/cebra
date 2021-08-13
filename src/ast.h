@@ -20,6 +20,7 @@ typedef enum {
     NODE_FOR,
     NODE_DECL_FUN,
     NODE_RETURN,
+    NODE_CALL,
 } NodeType;
 
 struct Node {
@@ -126,6 +127,12 @@ typedef struct {
     bool decl;
 } SetVar;
 
+typedef struct {
+    struct Node base;
+    Token name;
+    DeclList arguments;
+} Call;
+
 
 
 struct Node* make_literal(Token name);
@@ -141,6 +148,7 @@ struct Node* make_while(Token name, struct Node* condition, struct Node* then_bl
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
 struct Node* make_decl_fun(Token name, DeclList parameters, Token ret, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
+struct Node* make_call(Token name, DeclList arguments);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);
