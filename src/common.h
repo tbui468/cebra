@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define DEBUG_DISASSEMBLE
-#define DEBUG_TRACE
-#define DEBUG_AST
+//#define DEBUG_DISASSEMBLE
+//#define DEBUG_TRACE
+//#define DEBUG_AST
 
 
 #endif// CEBRA_COMMON_H

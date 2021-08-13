@@ -200,7 +200,7 @@ static void add_local(Compiler* compiler, Token name) {
 static uint8_t find_local(Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
-        if (memcmp(local->name.start, name.start, name.length) == 0) {
+        if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
             return (uint8_t)i;
         }
     }
@@ -251,7 +251,6 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             compile(&func, &df->parameters);
 
             emit_function(compiler, OP_FUN, make_function(func.chunk, arity));
-
             add_local(compiler, df->name);
             break;
         }
@@ -526,3 +525,11 @@ void disassemble_chunk(Chunk* chunk) {
         printf("\n");
     }
 }
+
+void print_locals(Compiler* compiler) {
+    for (int i = 0; i < compiler->locals_count; i ++) {
+        Local* local = &compiler->locals[i];
+        printf("%.*s\n", local->name.length, local->name.start);
+    }
+}
+

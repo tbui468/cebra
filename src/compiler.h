@@ -64,5 +64,6 @@ void free_compiler(Compiler* compiler);
 ResultCode compile(Compiler* compiler, DeclList* dl);
 void disassemble_chunk(Chunk* chunk);
 const char* op_to_string(OpCode op);
+void print_locals(Compiler* compiler);
 
 #endif// CEBRA_COMPILER_H
