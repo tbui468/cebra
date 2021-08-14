@@ -3,6 +3,10 @@
 #include "common.h"
 
 
+#define READ_TYPE(frame, type) \
+    (frame->ip += (int)sizeof(type), (type)frame->function->chunk.codes[frame->ip - (int)sizeof(type)])
+
+
 static Value pop(VM* vm) {
     vm->stack_top--;
     return vm->stack[vm->stack_top];
@@ -15,17 +19,6 @@ static Value peek(VM* vm, int depth) {
 static void push(VM* vm, Value value) {
     vm->stack[vm->stack_top] = value;
     vm->stack_top++;
-}
-
-static uint8_t read_byte(CallFrame* frame) {
-    frame->ip++;
-    return frame->function->chunk.codes[frame->ip - 1]; 
-}
-
-static uint16_t read_short(CallFrame* frame) {
-    uint16_t sh = (uint16_t)frame->function->chunk.codes[frame->ip];
-    frame->ip += 2;
-    return sh;
 }
 
 ResultCode init_vm(VM* vm) {
@@ -49,18 +42,6 @@ void call(VM* vm, int start) {
     vm->frame_count++;
 }
 
-//TODO: make a macro for all four of these (including reading shorts etc)
-static int32_t read_int(CallFrame* frame) {
-    int32_t* ptr = (int32_t*)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(int32_t);
-    return *ptr;
-}
-
-static double read_float(CallFrame* frame) {
-    double* ptr = (double*)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(double);
-    return *ptr;
-}
 
 static ObjString* read_string(CallFrame* frame) {
     ObjString** ptr = (ObjString**)(&frame->function->chunk.codes[frame->ip]);
@@ -73,11 +54,6 @@ static ObjFunction* read_function(CallFrame* frame) {
     frame->ip += (int)sizeof(ObjFunction*);
     return *ptr;
 }
-
-static uint8_t read_slot(CallFrame* frame) {
-    return read_byte(frame) + frame->stack_offset;
-}
-
 
 static void print_trace(VM* vm, OpCode op) {
     //print opcodes - how can the compiler and this use the same code?
@@ -94,14 +70,14 @@ static void print_trace(VM* vm, OpCode op) {
 }
 
 ResultCode execute_frame(VM* vm, CallFrame* frame) {
-    uint8_t op = read_byte(frame);
+    uint8_t op = READ_TYPE(frame, uint8_t);
     switch(op) {
         case OP_INT: {
-            push(vm, to_integer(read_int(frame)));
+            push(vm, to_integer(READ_TYPE(frame, int32_t)));
             break;
         }
         case OP_FLOAT: {
-            push(vm, to_float(read_float(frame)));
+            push(vm, to_float(READ_TYPE(frame, double)));
             break;
         }
         case OP_STRING: {
@@ -166,36 +142,36 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_GET_VAR: {
-            uint8_t slot = read_slot(frame);
+            uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
             push(vm, vm->stack[slot]);
             break;
         }
         case OP_SET_VAR: {
-            uint8_t slot = read_slot(frame);
+            uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
             vm->stack[slot] = peek(vm, 0);
             break;
         }
         case OP_JUMP_IF_FALSE: {
-            uint16_t distance = read_short(frame);
+            uint16_t distance = READ_TYPE(frame, uint16_t);
             if (!(peek(vm, 0).as.boolean_type)) {
                 frame->ip += distance;
             }
             break;
         } 
         case OP_JUMP_IF_TRUE: {
-            uint16_t distance = read_short(frame);
+            uint16_t distance = READ_TYPE(frame, uint16_t);
             if ((peek(vm, 0).as.boolean_type)) {
                 frame->ip += distance;
             }
             break;
         } 
         case OP_JUMP: {
-            uint16_t distance = read_short(frame);
+            uint16_t distance = READ_TYPE(frame, uint16_t);
             frame->ip += distance;
             break;
         } 
         case OP_JUMP_BACK: {
-            uint16_t distance = read_short(frame);
+            uint16_t distance = READ_TYPE(frame, uint16_t);
             frame->ip -= distance;
             break;
         }
@@ -217,14 +193,14 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_CALL: {
-            int arity = (int)read_byte(frame);
+            int arity = (int)READ_TYPE(frame, uint8_t);
             call(vm, vm->stack_top - arity - 1);
             break;
         }
         case OP_RETURN: {
             //TODO: this is ugly - rewrite this
             //we want to cache the top of the callframe stack (the return value)
-            //before popping everything
+            //before popping everything, and only push it if it's NOT nil
             Value ret = to_nil();
             if (vm->stack_top > frame->stack_offset + 1 + frame->arity) {
                 ret = pop(vm);

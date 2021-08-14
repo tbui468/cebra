@@ -29,10 +29,10 @@
 {
     print ""
     print "***********Inequality************"
-    if 1 == 1 {
-        print "Integer Equality - Passed!"
+    if 1 < 2 {
+        print "Integer Less Than - Passed!"
     } else {
-        print "Integer Equality - Failed!"
+        print "Integer Less Than - Failed!"
     }
 }
 
@@ -106,6 +106,20 @@
             print "Using Variables in Outer Scopes (3 levels): Failed!" 
         } 
     }}}
+}
+
+{
+    print ""
+    print "***********For Loops************"
+    j: int = 0
+    for i: int = 0, i < 5, i = i + 1 {
+        j = j + 1
+    }
+    if j == 5 {
+        print "Initializer, Condition, Upate: Passed!"
+    } else {
+        print "Initializer, Condition, Upate: Failed!"
+    }
 }
 
 {

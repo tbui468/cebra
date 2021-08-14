@@ -26,15 +26,15 @@
 
 /*
  * Add correctness tests as features are implemented
+ *  closures, structs
  */
 
 //TODO:
 //
 //  Refactor
+//      - write basic tests for while and for loops (including without updaters and initialzers)
+//      - decl_list should be renamed to something else since it holds expressions, decls and stmts (does it?)
 //      - combine common uses into macros - especially the read_byte, read_string, etc in VM
-//      - let parser peek ahead 4 (instead of just 1 currently) to clean up parsing logic
-//          -separate decl/stmt/expr into own shit
-//          - decl_list should be renamed to something else since it holds expressions, decls and stmts (does it?)
 //      - keep track of allocated objects in a linked list for GC later
 //      - what is the ALLOCATE macro used for?  Trace its usage.  We need to know for GC later.  Get rid of it/combine if necessary
 //      - skim crafting interpreters (1st part with jlox) and test edge cases - then stamp them out or record them for later

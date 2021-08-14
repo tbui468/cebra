@@ -11,7 +11,8 @@ static void add_error(Token token, const char* message);
 static bool match(TokenType type) {
     if (parser.current.type == type) {
         parser.previous = parser.current;
-        parser.current = next_token();
+        parser.current = parser.next;
+        parser.next = next_token();
         return true;
     }
 
@@ -21,11 +22,20 @@ static bool match(TokenType type) {
 static void consume(TokenType type, const char* message) {
     if (type == parser.current.type) {
         parser.previous = parser.current;
-        parser.current = next_token();
+        parser.current = parser.next;
+        parser.next = next_token();
         return;
     }
     
     add_error(parser.previous, message);
+}
+
+static bool peek(TokenType type) {
+    return parser.current.type == type;
+}
+
+static bool peek_two(TokenType type1, TokenType type2) {
+    return parser.current.type == type1 && parser.next.type == type2;
 }
 
 static bool read_type() {
@@ -161,11 +171,14 @@ static struct Node* block() {
     return make_block(name, dl);
 }
 
-//TODO: this function feels kinda hacky - would more than one level
-//of token look-ahead fix this?  May need that for class/function decl too
-static struct Node* decl_or_assignment() {
-    Token name = parser.previous;
-    if (match(TOKEN_COLON)) {
+static struct Node* declaration() {
+    if (match(TOKEN_PRINT)) {
+        Token name = parser.previous;
+        return make_print(name, expression());
+    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
+        match(TOKEN_IDENTIFIER);
+        Token name = parser.previous;
+        match(TOKEN_COLON);
         if (!read_type()) {
             add_error(parser.previous, "Expect data type after ':'.");
         }
@@ -173,16 +186,25 @@ static struct Node* decl_or_assignment() {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
         struct Node* value = expression();
         return make_decl_var(name, type, value);
-    } else if (match(TOKEN_EQUAL)) {
+    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
+        match(TOKEN_IDENTIFIER);
+        Token name = parser.previous;
+        match(TOKEN_EQUAL);
         return make_set_var(name, expression(), true);
-    } else if (match(TOKEN_LEFT_PAREN)) {
+    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
+        match(TOKEN_IDENTIFIER);
+        Token name = parser.previous;
+        match(TOKEN_LEFT_PAREN);
         DeclList args;
         init_decl_list(&args);
         while (!match(TOKEN_RIGHT_PAREN)) {
             add_decl(&args, expression()); 
         }
         return make_call(name, args);
-    } else if (match(TOKEN_COLON_COLON)) {
+    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON_COLON)) {
+        match(TOKEN_IDENTIFIER);
+        Token name = parser.previous;
+        match(TOKEN_COLON_COLON);
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
         DeclList params;
         init_decl_list(&params);
@@ -214,15 +236,6 @@ static struct Node* decl_or_assignment() {
         struct Node* body = block();
 
         return make_decl_fun(name, params, ret, body);
-    }
-}
-
-static struct Node* declaration() {
-    if (match(TOKEN_PRINT)) {
-        Token name = parser.previous;
-        return make_print(name, expression());
-    } else if (match(TOKEN_IDENTIFIER)) {
-        return decl_or_assignment();
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {
@@ -247,8 +260,7 @@ static struct Node* declaration() {
         Token name = parser.previous;
         struct Node* initializer = NULL;
         if (!match(TOKEN_COMMA)) {
-            consume(TOKEN_IDENTIFIER, "Expect initializer or ',' after 'for'.");
-            initializer = decl_or_assignment();
+            initializer = declaration();
             consume(TOKEN_COMMA, "Expect ',' after initializer.");
         }
 
@@ -285,6 +297,7 @@ static void init_parser(const char* source) {
     init_lexer(source);
     parser.error_count = 0;
     parser.current = next_token();
+    parser.next = next_token();
 }
 
 
