@@ -225,14 +225,14 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //we want to cache the top of the callframe stack (the return value)
             //before popping everything
             Value ret = to_nil();
-            if (vm->stack_top > frame->stack_offset) {
+            if (vm->stack_top > frame->stack_offset + 1) {
                 ret = pop(vm);
             }
             while (vm->stack_top > frame->stack_offset) {
                 pop(vm);
             }
             vm->frame_count--;
-            push(vm, ret);
+            if (ret.type != VAL_NIL) push(vm, ret);
             break;
         }
     } 

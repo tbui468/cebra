@@ -1,0 +1,126 @@
+//Correctness test
+
+{
+    print ""
+    print "***********Basic************"
+    print "Print - Passed!"
+    if true {
+        print "If / Else - Passed!"
+    } else {
+        print "If / Else - Failed!"
+    }
+}
+
+{
+    print ""
+    print "***********Equality************"
+    if 1 == 1 {
+        print "Integer Equal - Passed!"
+    } else {
+        print "Integer Equal - Failed!"
+    }
+    if 1 != 2 {
+        print "Integer Not Equal - Passed!"
+    } else {
+        print "Integer Not Equal - Failed!"
+    }
+}
+
+{
+    print ""
+    print "***********Inequality************"
+    if 1 == 1 {
+        print "Integer Equality - Passed!"
+    } else {
+        print "Integer Equality - Failed!"
+    }
+}
+
+{
+    print ""
+    print "***********Operations************"
+    if 1 + 3 == 4 {
+        print "Integer Addition: Passed!"
+    } else {
+        print "Integer Addition: Failed!"
+    }
+    if 1 - 3 == -2 {
+        print "Integer Subtraction: Passed!"
+    } else {
+        print "Integer Subtraction: Failed!"
+    }
+    if -1 * 3 == -3 {
+        print "Integer Multiplication: Passed!"
+    } else {
+        print "Integer Multiplication: Failed!"
+    }
+    if 12 / 5 == 2 {
+        print "Integer Division: Passed!"
+    } else {
+        print "Integer Division: Failed!"
+    }
+    if 7 % 3 == 1 {
+        print "Integer Modulus: Passed!"
+    } else {
+        print "Integer Modulus: Failed!"
+    }
+}
+
+{
+    print ""
+    print "***********Variables************"
+    a: int = 1
+    if a == 1 {
+        print "Declaring Integers: Passed!" 
+    } else {
+        print "Declaring Integers: Failed!" 
+    } 
+}
+
+{
+    print ""
+    print "***********Scopes************"
+    a: int = 1
+    {
+        if a == 1 {
+            print "Using Variables in Outer Scopes: Passed!" 
+        } else {
+            print "Using Variables in Outer Scopes: Failed!" 
+        } 
+        a: int = 2
+        if a == 2 {
+            print "Shadowing Variables in Outer Scopes: Passed!" 
+        } else {
+            print "Shadowing Variables in Outer Scopes: Failed!" 
+        } 
+    }
+    if a == 1 {
+        print "Popping Variables at Scope End: Passed!" 
+    } else {
+        print "Popping Variables at Scope End: Failed!" 
+    }
+    {{{
+        if a == 1 {
+            print "Using Variables in Outer Scopes (3 levels): Passed!" 
+        } else {
+            print "Using Variables in Outer Scopes (3 levels): Failed!" 
+        } 
+    }}}
+}
+
+{
+    print ""
+    print "***********Functions************"
+    a :: () -> {
+        print "Zero Parameters / No Return: Passed!"
+    }
+    a()
+    b :: () -> int {
+        -> -1
+    }
+    if b() == -1 {
+        print "Zero parameters / Integer Return: Passed!"
+    } else {
+        print "Zero parameters / Integer Return: Failed!"
+    }
+}

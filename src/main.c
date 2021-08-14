@@ -25,22 +25,28 @@
  */
 
 //TODO:
+//  Write some sample scripts testing features (except the type checking) to make sure it all works
+//      when me start making changes
+//      track what doesn't work for type checking
 //
-//  Bug with function being called before the declaration is finished - error message popping up
-//  in compiler
+//  Refactor
+//      - combine common uses into macros - especially the read_byte, read_string, etc in VM
+//      - let parser peek ahead 4 (instead of just 1 currently) to clean up parsing logic
+//          -separate decl/stmt/expr into own shit
+//          - decl_list should be renamed to something else since it holds expressions, decls and stmts (does it?)
+//      - keep track of allocated objects in a linked list for GC later
+//      - what is the ALLOCATE macro used for?  Trace its usage.  We need to know for GC later.  Get rid of it/combine if necessary
+//      - skim crafting interpreters (1st part with jlox) and test edge cases - then stamp them out or record them for later
 //
-//  Should declare a function before 
-//
+//  Type checking - do the type checking at the same time at compiling!
+//      - get the basic framework up and running with errors/warnings to user
+//      - since compiling returns a void anyway, use the return value to return datatypes
 //
 //  Closures
 //      could skip classes and just do structs if we have closures
 //
 //  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
-//
-//  Type checking - do the type checking at the same time at comiling!
-//      since compiling returns a void anyway, use the return value to return types
-//      We only need to traverse AST once this way
-//
+//      add code inside memory.h - all allocations should go through there
 //
 //
 //Need to remember to make GC for ObjStrings (all Objs)
