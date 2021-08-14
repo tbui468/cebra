@@ -38,10 +38,11 @@ ResultCode free_vm(VM* vm) {
     return RESULT_SUCCESS;
 }
 
-void add_callframe(VM* vm, ObjFunction* function) {
+void call(VM* vm, int start) {
+    ObjFunction* function = vm->stack[start].as.function_type;
     CallFrame frame;
     frame.function = function;
-    frame.stack_offset = vm->stack_top - function->arity;
+    frame.stack_offset = start;
     frame.ip = 0;
     vm->frames[vm->frame_count] = frame;
     vm->frame_count++;
@@ -157,6 +158,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, greater_values(a, b));
             break;
         }
+        case OP_EQUAL: {
+            Value b = pop(vm);
+            Value a = pop(vm);
+            push(vm, equal_values(a, b));
+            break;
+        }
         case OP_GET_VAR: {
             uint8_t slot = read_slot(frame);
             push(vm, vm->stack[slot]);
@@ -209,12 +216,18 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_CALL: {
-            uint8_t slot = read_slot(frame);
-            add_callframe(vm, vm->stack[slot].as.function_type);
+            int arity = (int)read_byte(frame);
+            call(vm, vm->stack_top - arity - 1);
             break;
         }
         case OP_RETURN: {
-            Value ret = pop(vm);
+            //TODO: this is ugly - rewrite this
+            //we want to cache the top of the callframe stack (the return value)
+            //before popping everything
+            Value ret = to_nil();
+            if (vm->stack_top > frame->stack_offset) {
+                ret = pop(vm);
+            }
             while (vm->stack_top > frame->stack_offset) {
                 pop(vm);
             }
@@ -248,7 +261,8 @@ ResultCode compile_and_run(VM* vm, DeclList* dl) {
 
     //initial script
     ObjFunction* function = make_function(root_compiler.chunk, 0); //make a function with arity = 0
-    add_callframe(vm, function);
+    push(vm, to_function(function));
+    call(vm, 0);
    
     //running the vm 
     while (vm->frame_count > 0) {

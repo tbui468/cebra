@@ -25,38 +25,27 @@
  */
 
 //TODO:
-//0 parameter function calls not working
 //
+//  Main script needs to return something at the end to keep it in line with
+//      other functions.  NIL_TYPE could be added to the end of all globall scripts
 //
-//once function calls work, should make root compiler into a function object too (just embed the compiler into a function object)
+//  Recursion doesn't work now.  "Local variable not declared" error.
+//  Where should a function local be declared?  Look at one possible solution below.
 //
-//When that function object is called (found on the stack using the locals in the enclosing function)
-//We grab the function object from the stack (at the given local slot)
-//and then push it into the VM callframes stack
-//the callframes have an ordering (since it IS a stack) but they may overlap
+//  When we get a function call, emit OP_GET_LOCAL (to find the function being called)
+//      and push it to the top of the stack
 //
-//  The VM needs to maintain a callframe stack
-//  DeclFun needs to create function object on the stack
+//  When a function is called, push it to the top of the stack, followed by the arguments
+//      need to change parser to emit OP_CALL before the arguments are compiled
 //
-//  need to compiler DeclFun into a Value on the stack that we can instantiate later
-//  add_local
+//  How about main function?  Just manually call call(0) on the main function after pushing 
+//  inside compile_and_run()
 //
-//  split compilers into linked list, where top compiler has enclosed = NULL
-//  all inner function/compilers have enclosing = outer compiler
-//
-//  finish decl_or_assignment in parser.c (making function declaration node)
-//      store function objects pointers on the stack (as locals)
-//          is a hash table really necessary???
-//
-//  Each function call is its own compiler???
-//  What's the problem we need to solve?
-//      Declare functions
-//      Call functions
 //
 //  Closures
 //      could skip classes and just do structs if we have closures
 //
-//  Garbage Collection
+//  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
 //
 //  Type checking - do the type checking at the same time at comiling!
 //      since compiling returns a void anyway, use the return value to return types

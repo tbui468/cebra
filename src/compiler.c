@@ -179,6 +179,13 @@ static void compile_binary(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_LESS);
             emit_byte(compiler, OP_NEGATE);
             break;
+        case TOKEN_EQUAL_EQUAL:
+            emit_byte(compiler, OP_EQUAL);
+            break;
+        case TOKEN_BANG_EQUAL:
+            emit_byte(compiler, OP_EQUAL);
+            emit_byte(compiler, OP_NEGATE);
+            break;
     }
 }
 
@@ -242,6 +249,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
+            add_local(compiler, df->name);
             Compiler func;
             init_compiler(&func);
             func.enclosing = compiler;
@@ -251,7 +259,6 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             compile(&func, &df->parameters);
 
             emit_function(compiler, OP_FUN, make_function(func.chunk, arity));
-            add_local(compiler, df->name);
             break;
         }
         //statements
@@ -349,11 +356,16 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
+            //push <fn> definition to top of stack
+            emit_byte(compiler, OP_GET_VAR);
+            emit_byte(compiler, find_local(compiler, call->name));
+            //push arguments to top of stack
             for (int i = 0; i < call->arguments.count; i++) {
                 compile_node(compiler, call->arguments.decls[i]);
             }
+            //make a new callframe
             emit_byte(compiler, OP_CALL);
-            emit_byte(compiler, find_local(compiler, call->name));
+            emit_byte(compiler, (uint8_t)(call->arguments.count));
             break;
         }
     } 
@@ -372,7 +384,7 @@ static void free_chunk(Chunk* chunk) {
 
 void init_compiler(Compiler* compiler) {
     compiler->scope_depth = 0;
-    compiler->locals_count = 0;
+    compiler->locals_count = 1; //first slot is for function def
     compiler->error_count = 0;
     Chunk chunk;
     init_chunk(&chunk);

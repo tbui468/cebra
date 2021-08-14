@@ -11,6 +11,7 @@ typedef enum {
     VAL_BOOL,
     VAL_STRING,
     VAL_FUNCTION,
+    VAL_NIL,
 } ValueType;
 
 typedef struct {
@@ -30,6 +31,7 @@ Value to_integer(int32_t num);
 Value to_string(ObjString* obj);
 Value to_boolean(bool b);
 Value to_function(ObjFunction* obj);
+Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);
 Value subtract_values(Value a, Value b);
@@ -38,6 +40,7 @@ Value divide_values(Value a, Value b);
 Value less_values(Value a, Value b);
 Value greater_values(Value a, Value b);
 Value mod_values(Value a, Value b);
+Value equal_values(Value a, Value b);
 void print_value(Value a);
 
 

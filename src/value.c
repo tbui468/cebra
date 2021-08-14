@@ -40,6 +40,12 @@ Value to_function(ObjFunction* obj) {
     return value;
 }
 
+Value to_nil() {
+    Value value;
+    value.type = VAL_NIL;
+    return value;
+}
+
 Value negate_value(Value value) {
     if (value.type == VAL_INT) {
         return to_integer(-value.as.integer_type);
@@ -111,6 +117,17 @@ Value mod_values(Value a, Value b) {
     return to_integer(a.as.integer_type % b.as.integer_type);
 }
 
+
+Value equal_values(Value a, Value b) {
+    if (a.type != b.type) return to_boolean(false);
+
+    if (b.type == VAL_INT) {
+        return to_boolean(a.as.integer_type == b.as.integer_type);
+    } else {
+        return to_boolean(a.as.float_type == b.as.float_type);
+    }
+}
+
 void print_value(Value a) {
     switch(a.type) {
         case VAL_INT:
@@ -127,6 +144,9 @@ void print_value(Value a) {
             break;
         case VAL_FUNCTION:
             printf("%s", "<fun>");
+            break;
+        case VAL_NIL:
+            printf("%s", "<Nil>");
             break;
     }
 }
