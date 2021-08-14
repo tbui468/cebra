@@ -250,9 +250,17 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
             add_local(compiler, df->name);
+
+            //creating new compiler
+            //and adding the function def at local slot 0
             Compiler func;
             init_compiler(&func);
             func.enclosing = compiler;
+            Local local;
+            local.name = df->name;
+            local.depth = func.scope_depth;
+            func.locals[0] = local;
+
             int arity = df->parameters.count;
             //adding body to parameter DeclList so only one compile call is needed
             add_decl(&df->parameters, df->body);

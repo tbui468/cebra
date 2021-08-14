@@ -26,20 +26,10 @@
 
 //TODO:
 //
-//  Main script needs to return something at the end to keep it in line with
-//      other functions.  NIL_TYPE could be added to the end of all globall scripts
+//  Bug with function being called before the declaration is finished - error message popping up
+//  in compiler
 //
-//  Recursion doesn't work now.  "Local variable not declared" error.
-//  Where should a function local be declared?  Look at one possible solution below.
-//
-//  When we get a function call, emit OP_GET_LOCAL (to find the function being called)
-//      and push it to the top of the stack
-//
-//  When a function is called, push it to the top of the stack, followed by the arguments
-//      need to change parser to emit OP_CALL before the arguments are compiled
-//
-//  How about main function?  Just manually call call(0) on the main function after pushing 
-//  inside compile_and_run()
+//  Should declare a function before 
 //
 //
 //  Closures
