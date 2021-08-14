@@ -24,10 +24,11 @@
 //      push one value on the stack
  */
 
+/*
+ * Add correctness tests as features are implemented
+ */
+
 //TODO:
-//  Write some sample scripts testing features (except the type checking) to make sure it all works
-//      when me start making changes
-//      track what doesn't work for type checking
 //
 //  Refactor
 //      - combine common uses into macros - especially the read_byte, read_string, etc in VM

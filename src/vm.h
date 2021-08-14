@@ -10,6 +10,7 @@ typedef struct {
     ObjFunction* function;
     int stack_offset;
     int ip;
+    int arity;
 } CallFrame;
 
 typedef struct {

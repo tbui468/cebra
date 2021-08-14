@@ -119,8 +119,27 @@
         -> -1
     }
     if b() == -1 {
-        print "Zero parameters / Integer Return: Passed!"
+        print "Zero Parameters / Integer Return: Passed!"
     } else {
-        print "Zero parameters / Integer Return: Failed!"
+        print "Zero Parameters / Integer Return: Failed!"
+    }
+    c :: (i: int) -> {
+        if i == 2 {
+            print "Integer Parameter: Passed!"
+        } else {
+            print "Integer Parameter: Failed!"
+        }
+    }
+    c(2)
+    fib :: (i: int) -> int {
+        if i < 2 {
+            -> i
+        }
+        -> fib(i - 1) + fib(i - 2)
+    }
+    if fib(10) == 55 {
+        print "Recursion: Passed!"
+    } else {
+        print "Recursion: Failed!"
     }
 }

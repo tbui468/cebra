@@ -44,6 +44,7 @@ void call(VM* vm, int start) {
     frame.function = function;
     frame.stack_offset = start;
     frame.ip = 0;
+    frame.arity = function->arity;
     vm->frames[vm->frame_count] = frame;
     vm->frame_count++;
 }
@@ -225,7 +226,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //we want to cache the top of the callframe stack (the return value)
             //before popping everything
             Value ret = to_nil();
-            if (vm->stack_top > frame->stack_offset + 1) {
+            if (vm->stack_top > frame->stack_offset + 1 + frame->arity) {
                 ret = pop(vm);
             }
             while (vm->stack_top > frame->stack_offset) {
