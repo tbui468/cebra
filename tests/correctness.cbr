@@ -120,6 +120,37 @@
     } else {
         print "Initializer, Condition, Upate: Failed!"
     }
+
+    a: int = 0
+    b: int = 0
+    for , b < 5, b = b + 1 {
+        a = a + 1
+    }
+    if a == 5 {
+        print "No Initializer: Passed!"
+    } else {
+        print "No Initializer: Failed!"
+    }
+
+    c: int = 0
+    for , c < 5, {
+        c = c + 1
+    }
+    if c == 5 {
+        print "No Initializer, No Update: Passed!"
+    } else {
+        print "No Initializer, No Update: Failed!"
+    }
+
+    d: int = 0
+    while d < 5 {
+        d = d + 1
+    }
+    if d == 5 {
+        print "While: Passed!"
+    } else {
+        print "While: Failed!"
+    }
 }
 
 {

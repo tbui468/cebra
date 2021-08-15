@@ -56,10 +56,10 @@ static struct Node* primary() {
         if (match(TOKEN_EQUAL)) {
             return make_set_var(name, expression(), false);
         } else if (match(TOKEN_LEFT_PAREN)) {
-            DeclList args;
-            init_decl_list(&args);
+            NodeList args;
+            init_node_list(&args);
             while (!match(TOKEN_RIGHT_PAREN)) {
-                add_decl(&args, expression()); 
+                add_node(&args, expression()); 
             }
             return make_call(name, args);
         }
@@ -163,12 +163,12 @@ static struct Node* expression() {
 
 static struct Node* block() {
     Token name = parser.previous;
-    DeclList dl;
-    init_decl_list(&dl);
+    NodeList body;
+    init_node_list(&body);
     while (!match(TOKEN_RIGHT_BRACE)) {
-        add_decl(&dl, declaration());
+        add_node(&body, declaration());
     }
-    return make_block(name, dl);
+    return make_block(name, body);
 }
 
 static struct Node* declaration() {
@@ -195,10 +195,10 @@ static struct Node* declaration() {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
         match(TOKEN_LEFT_PAREN);
-        DeclList args;
-        init_decl_list(&args);
+        NodeList args;
+        init_node_list(&args);
         while (!match(TOKEN_RIGHT_PAREN)) {
-            add_decl(&args, expression()); 
+            add_node(&args, expression()); 
         }
         return make_call(name, args);
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON_COLON)) {
@@ -206,8 +206,8 @@ static struct Node* declaration() {
         Token name = parser.previous;
         match(TOKEN_COLON_COLON);
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
-        DeclList params;
-        init_decl_list(&params);
+        NodeList params;
+        init_node_list(&params);
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 consume(TOKEN_IDENTIFIER, "Expect parameter identifier.");
@@ -217,7 +217,7 @@ static struct Node* declaration() {
                     add_error(parser.previous, "Expect data type after ':'.");
                 }
                 Token type = parser.previous;
-                add_decl(&params, make_decl_var(name, type, NULL));
+                add_node(&params, make_decl_var(name, type, NULL));
             } while (match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
         }
@@ -301,11 +301,11 @@ static void init_parser(const char* source) {
 }
 
 
-ResultCode parse(const char* source, DeclList* dl) {
+ResultCode parse(const char* source, NodeList* nl) {
     init_parser(source);
 
     while(parser.current.type != TOKEN_EOF) {
-        add_decl(dl, declaration());
+        add_node(nl, declaration());
     }
 
     if (parser.error_count > 0) {

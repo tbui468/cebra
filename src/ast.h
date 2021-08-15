@@ -4,7 +4,7 @@
 #include "common.h"
 #include "token.h"
 #include "result_code.h"
-#include "decl_list.h"
+#include "node_list.h"
 
 typedef enum {
     NODE_LITERAL,
@@ -41,7 +41,7 @@ typedef struct {
 typedef struct {
     struct Node base;
     Token name;
-    DeclList parameters;
+    NodeList parameters;
     Token ret;
     struct Node* body;
 } DeclFun;
@@ -59,7 +59,7 @@ typedef struct {
 typedef struct {
     struct Node base;
     Token name;
-    DeclList decl_list;
+    NodeList decl_list;
 } Block;
 
 typedef struct {
@@ -130,7 +130,7 @@ typedef struct {
 typedef struct {
     struct Node base;
     Token name;
-    DeclList arguments;
+    NodeList arguments;
 } Call;
 
 
@@ -142,13 +142,13 @@ struct Node* make_print(Token name, struct Node* right);
 struct Node* make_decl_var(Token name, Token type, struct Node* right);
 struct Node* make_get_var(Token name);
 struct Node* make_set_var(Token name, struct Node* right, bool decl);
-struct Node* make_block(Token name, DeclList dl);
+struct Node* make_block(Token name, NodeList dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
-struct Node* make_decl_fun(Token name, DeclList parameters, Token ret, struct Node* body);
+struct Node* make_decl_fun(Token name, NodeList parameters, Token ret, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
-struct Node* make_call(Token name, DeclList arguments);
+struct Node* make_call(Token name, NodeList arguments);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

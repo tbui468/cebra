@@ -3,7 +3,7 @@
 
 #include "result_code.h"
 #include "ast.h"
-#include "decl_list.h"
+#include "node_list.h"
 
 typedef struct {
     Token token;
@@ -62,7 +62,7 @@ typedef struct {
 
 void init_compiler(Compiler* compiler);
 void free_compiler(Compiler* compiler);
-ResultCode compile(Compiler* compiler, DeclList* dl);
+ResultCode compile(Compiler* compiler, NodeList* nl);
 void disassemble_chunk(Chunk* chunk);
 const char* op_to_string(OpCode op);
 void print_locals(Compiler* compiler);

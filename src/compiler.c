@@ -255,7 +255,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             //and adding the function def at local slot 0
             Compiler func;
             init_compiler(&func);
-            func.enclosing = compiler;
+            func.enclosing = (Compiler*)compiler;
             Local local;
             local.name = df->name;
             local.depth = func.scope_depth;
@@ -263,7 +263,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
 
             int arity = df->parameters.count;
             //adding body to parameter DeclList so only one compile call is needed
-            add_decl(&df->parameters, df->body);
+            add_node(&df->parameters, df->body);
             compile(&func, &df->parameters);
 
             emit_function(compiler, OP_FUN, make_function(func.chunk, arity));
@@ -275,7 +275,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             Block* block = (Block*)node;
             start_scope(compiler);
             for (int i = 0; i < block->decl_list.count; i++) {
-                compile_node(compiler, block->decl_list.decls[i]);
+                compile_node(compiler, block->decl_list.nodes[i]);
             }
             end_scope(compiler);
             break;
@@ -369,7 +369,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, find_local(compiler, call->name));
             //push arguments to top of stack
             for (int i = 0; i < call->arguments.count; i++) {
-                compile_node(compiler, call->arguments.decls[i]);
+                compile_node(compiler, call->arguments.nodes[i]);
             }
             //make a new callframe
             emit_byte(compiler, OP_CALL);
@@ -405,9 +405,9 @@ void free_compiler(Compiler* compiler) {
 }
 
 
-ResultCode compile(Compiler* compiler, DeclList* dl) {
-    for (int i = 0; i < dl->count; i++) {
-        compile_node(compiler, dl->decls[i]);
+ResultCode compile(Compiler* compiler, NodeList* nl) {
+    for (int i = 0; i < nl->count; i++) {
+        compile_node(compiler, nl->nodes[i]);
     }
 
     emit_byte(compiler, OP_RETURN);

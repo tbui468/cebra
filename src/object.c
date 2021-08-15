@@ -5,7 +5,7 @@
 
 
 ObjString* make_string(const char* start, int length) {
-    char* chars = ALLOCATE(char, length + 1);
+    char* chars = ALLOCATE_CHAR(length + 1);
     memcpy(chars, start, length);
     chars[length] = '\0';
 

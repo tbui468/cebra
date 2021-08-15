@@ -220,11 +220,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
     return RESULT_SUCCESS;
 }
 
-ResultCode compile_and_run(VM* vm, DeclList* dl) {
+ResultCode compile_and_run(VM* vm, NodeList* nl) {
     Compiler root_compiler;
     init_compiler(&root_compiler);
 
-    ResultCode compile_result = compile(&root_compiler, dl);
+    ResultCode compile_result = compile(&root_compiler, nl);
 
     if (compile_result == RESULT_FAILED) {
         free_compiler(&root_compiler);

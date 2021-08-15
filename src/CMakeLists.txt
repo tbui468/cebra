@@ -2,7 +2,7 @@ set(Sources
     main.c
     token.c
     value.c
-    decl_list.c
+    node_list.c
     object.c
     lexer.c
     parser.c
@@ -18,7 +18,7 @@ set(Headers
     memory.h
     token.h
     value.h
-    decl_list.h
+    node_list.h
     object.h
     lexer.h
     parser.h

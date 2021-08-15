@@ -3,7 +3,7 @@
 
 #include "token.h"
 #include "result_code.h"
-#include "decl_list.h"
+#include "node_list.h"
 
 typedef struct {
     Token token;
@@ -21,7 +21,7 @@ typedef enum {
     DATA_STRING,
 } DataType;
 
-ResultCode type_check(DeclList* dl);
+ResultCode type_check(NodeList* nl);
 
 
 #endif// CEBRA_AST_TYPER_H

@@ -16,7 +16,7 @@ struct Node* make_decl_var(Token name, Token type, struct Node* right) {
     return (struct Node*)decl_var;
 }
 
-struct Node* make_decl_fun(Token name, DeclList parameters, Token ret, struct Node* body) {
+struct Node* make_decl_fun(Token name, NodeList parameters, Token ret, struct Node* body) {
     DeclFun* df = ALLOCATE_NODE(DeclFun);
     df->name = name;
     df->parameters = parameters;
@@ -40,7 +40,7 @@ struct Node* make_print(Token name, struct Node* right) {
     return (struct Node*)print;
 }
 
-struct Node* make_block(Token name, DeclList dl) {
+struct Node* make_block(Token name, NodeList dl) {
     Block* block = ALLOCATE_NODE(Block);
     block->name = name;
     block->decl_list = dl;
@@ -144,7 +144,7 @@ struct Node* make_set_var(Token name, struct Node* right, bool decl) {
     return (struct Node*)set_var;
 }
 
-struct Node* make_call(Token name, DeclList arguments) {
+struct Node* make_call(Token name, NodeList arguments) {
     Call* call = ALLOCATE_NODE(Call);
     call->name = name;
     call->arguments = arguments;
@@ -184,7 +184,7 @@ void print_node(struct Node* node) {
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             printf("( Block");
-            print_decl_list(&block->decl_list);
+            print_node_list(&block->decl_list);
             printf(" )");
             break;
         }
@@ -270,7 +270,7 @@ void free_node(struct Node* node) {
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
-            free_decl_list(&df->parameters);
+            free_node_list(&df->parameters);
             free_node(df->body);
             FREE(df);
             break;
@@ -284,7 +284,7 @@ void free_node(struct Node* node) {
         }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
-            free_decl_list(&block->decl_list);
+            free_node_list(&block->decl_list);
             FREE(block);
             break;
         }
@@ -352,7 +352,7 @@ void free_node(struct Node* node) {
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
-            free_decl_list(&call->arguments);
+            free_node_list(&call->arguments);
             FREE(call);
             break;
         }

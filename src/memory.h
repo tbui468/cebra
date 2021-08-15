@@ -3,7 +3,8 @@
 
 #include <stdlib.h>
 
-#define ALLOCATE(type, len) ((type*)realloc(NULL, sizeof(type) * (len)))
+//for strings in object.c and value.c
+#define ALLOCATE_CHAR(len) ((char*)realloc(NULL, sizeof(char) * (len)))
 
 //for objects
 #define ALLOCATE_OBJ(type) ((type*)realloc(NULL, sizeof(type)))

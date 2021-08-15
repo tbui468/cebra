@@ -76,10 +76,10 @@ static DataType type(struct Node* expr) {
     } 
 }
 
-ResultCode type_check(DeclList* dl) {
+ResultCode type_check(NodeList* nl) {
     typer.error_count = 0;
-    for (int i = 0; i < dl->count; i++) {
-        type(dl->decls[i]); //discarding result for now
+    for (int i = 0; i < nl->count; i++) {
+        type(nl->nodes[i]); //discarding result for now
     }
 
     if (typer.error_count > 0) {

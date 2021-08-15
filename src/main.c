@@ -3,7 +3,7 @@
 #include "ast.h"
 #include "value.h"
 #include "vm.h"
-#include "decl_list.h"
+#include "node_list.h"
 #include "ast_typer.h"
 
 /*
@@ -32,14 +32,17 @@
 //TODO:
 //
 //  Refactor
-//      - write basic tests for while and for loops (including without updaters and initialzers)
-//      - decl_list should be renamed to something else since it holds expressions, decls and stmts (does it?)
-//      - combine common uses into macros - especially the read_byte, read_string, etc in VM
+//      - node_list should be renamed to something else since it holds expressions, decls and stmts
+//          node_list - 
+//          get program compiling with node_list 
+//          make sure all correctness tests pass
 //      - keep track of allocated objects in a linked list for GC later
-//      - what is the ALLOCATE macro used for?  Trace its usage.  We need to know for GC later.  Get rid of it/combine if necessary
-//      - skim crafting interpreters (1st part with jlox) and test edge cases - then stamp them out or record them for later
+//          have VM keep a global counter of bytes allocated and freed
+//          should be zero when the program closes
 //
 //  Type checking - do the type checking at the same time at compiling!
+//      - implement basic type checking in compiler
+//      - remove ast_typer / move functionality into compiler
 //      - get the basic framework up and running with errors/warnings to user
 //      - since compiling returns a void anyway, use the return value to return datatypes
 //
@@ -49,6 +52,7 @@
 //  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
 //      add code inside memory.h - all allocations should go through there
 //
+//  Why are if /else so much slower than just if (think of the fibonacci example
 //
 //Need to remember to make GC for ObjStrings (all Objs)
 
@@ -56,28 +60,28 @@
 ResultCode run_source(VM* vm, const char* source) {
 
     //create list of declarations (AST)
-    DeclList dl;
-    init_decl_list(&dl);
+    NodeList nl;
+    init_node_list(&nl);
 
-    ResultCode parse_result = parse(source, &dl);
+    ResultCode parse_result = parse(source, &nl);
     
     if (parse_result == RESULT_FAILED) {
-        free_decl_list(&dl);
+        free_node_list(&nl);
         return RESULT_FAILED;
     }
 
 #ifdef DEBUG_AST
-    print_decl_list(&dl);
+    print_node_list(&dl);
 #endif
 
-    ResultCode run_result = compile_and_run(vm, &dl);
+    ResultCode run_result = compile_and_run(vm, &nl);
 
     if (run_result == RESULT_FAILED) {
-        free_decl_list(&dl);
+        free_node_list(&nl);
         return RESULT_FAILED; 
     }
 
-    free_decl_list(&dl);
+    free_node_list(&nl);
 
     return RESULT_SUCCESS;
 }
