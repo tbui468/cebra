@@ -15,13 +15,13 @@ void free_node_list(NodeList* nl) {
     for (int i = 0; i < nl->count; i++) {
         free_node(nl->nodes[i]);
     }
-    FREE(nl->nodes);
+    FREE_ARRAY(nl->nodes, struct Node**, nl->capacity);
 }
 
 void add_node(NodeList* nl, struct Node* node) {
     if (nl->count + 1 > nl->capacity) {
         int new_capacity = nl->capacity == 0 ? 8 : nl->capacity * 2;
-        nl->nodes = GROW_ARRAY(struct Node*, nl->nodes, new_capacity);
+        nl->nodes = GROW_ARRAY(nl->nodes, struct Node*, new_capacity, nl->capacity);
         nl->capacity = new_capacity;
     }
 

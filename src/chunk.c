@@ -9,7 +9,7 @@ void init_chunk(Chunk* chunk) {
 }
 
 void free_chunk(Chunk* chunk) {
-    FREE(chunk->codes);
+    FREE_ARRAY(chunk->codes, OpCode, chunk->capacity);
 }
 
 const char* op_to_string(OpCode op) {

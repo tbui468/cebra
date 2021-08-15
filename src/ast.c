@@ -265,27 +265,27 @@ void free_node(struct Node* node) {
             if (decl_var->right != NULL) {
                 free_node(decl_var->right);
             }
-            FREE(decl_var);
+            FREE_NODE(decl_var, DeclVar);
             break;
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
             free_node_list(&df->parameters);
             free_node(df->body);
-            FREE(df);
+            FREE_NODE(df, DeclFun);
             break;
         }
         //Statements
         case NODE_PRINT: {
             Print* print = (Print*)node;
             free_node(print->right);
-            FREE(print);
+            FREE_NODE(print, Print);
             break;
         }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             free_node_list(&block->decl_list);
-            FREE(block);
+            FREE_NODE(block, Block);
             break;
         }
         case NODE_IF_ELSE: {
@@ -295,14 +295,14 @@ void free_node(struct Node* node) {
             if (ie->else_block != NULL) {
                 free_node(ie->else_block);
             }
-            FREE(ie);
+            FREE_NODE(ie, IfElse);
             break;
         }
         case NODE_WHILE: {
             While* wh = (While*)node;
             free_node(wh->condition);
             free_node(wh->then_block);
-            FREE(wh);
+            FREE_NODE(wh, While);
             break;
         }
         case NODE_FOR: {
@@ -311,49 +311,49 @@ void free_node(struct Node* node) {
             free_node(fo->condition);
             if (fo->update != NULL) free_node(fo->update);
             free_node(fo->then_block);
-            FREE(fo);
+            FREE_NODE(fo, For);
             break;
         }
         case NODE_RETURN: {
             Return* ret = (Return*)node;
             if (ret->right != NULL) free_node(ret->right);
-            FREE(ret);
+            FREE_NODE(ret, Return);
             break;
         }
         //struct Expressions
         case NODE_LITERAL: {
             Literal* literal = (Literal*)node;
-            FREE(literal);
+            FREE_NODE(literal, Literal);
             break;
         }
         case NODE_BINARY: {
             Binary* binary = (Binary*)node;
             free_node(binary->left);
             free_node(binary->right);
-            FREE(binary);
+            FREE_NODE(binary, Binary);
             break;
         }
         case NODE_UNARY: {
             Unary* unary = (Unary*)node;
             free_node(unary->right);
-            FREE(unary);
+            FREE_NODE(unary, Unary);
             break;
         }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
-            FREE(gv);
+            FREE_NODE(gv, GetVar);
             break;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             free_node(sv->right);
-            FREE(sv);
+            FREE_NODE(sv, SetVar);
             break;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
             free_node_list(&call->arguments);
-            FREE(call);
+            FREE_NODE(call, Call);
             break;
         }
     } 

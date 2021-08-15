@@ -11,6 +11,7 @@ typedef enum {
 
 typedef struct {
     ObjType type;
+    struct Obj* next;
 } Obj;
 
 typedef struct {
@@ -29,6 +30,7 @@ typedef struct {
 ObjString* make_string(const char* start, int length);
 ObjString* take_string(char* start, int length);
 ObjFunction* make_function(Chunk chunk, int arity);
+void free_object(Obj* obj);
 
 
 #endif// CEBRA_OBJECT_H

@@ -5,12 +5,12 @@
 #include "vm.h"
 #include "node_list.h"
 #include "ast_typer.h"
+#include "memory.h"
 
 /*
  * Parser -> Compiler -> VM
  *  compiler does both type checking and code generation during one AST traversal
  */
-
 
 /*
  * AST structure
@@ -31,28 +31,8 @@
 
 //TODO:
 //
-//  Problem: ObjFunction holds a chunk, but the compiler is what frees
-//      the chunk.  Need to make ObjFunction hold the compiler so 
-//      that memory is freed in a cleaner way
-//
-//      Let's have the chunk NOT owned by the compiler - the compiler
-//          takes in a chunk reference on initialization and fills
-//          it in during compilation.  Then it hands off the chunk to
-//          the function.  ObjFunction then has the job of freeing 
-//          the chunk when done with it
-//
-//      Need to separate chunk from compiler for this
-//
-//  Memory Manager
-//      - keep track of allocated objects in a linked list for GC later
-//          have VM keep a global counter of bytes allocated and freed
-//          should be zero when the program closes
-//          
-//          All memory allocation functions should update memorymanager,
-//              wrap them in the current macros to do this
-//
-//          ALLOCATE_CHAR is just ALLOCATE_ARRAY / GROW_ARRAY with a char type
-//              combine them to reduce redundant code
+//  Add more tests with strings to make sure memory manager is clearing them at the end of
+//  the VM (will clear it with GC later)
 //
 //  Type checking - do the type checking at the same time at compiling!
 //      - implement basic type checking in compiler
@@ -159,7 +139,7 @@ ResultCode run_script(const char* path) {
 }
 
 int main(int argc, char** argv) {
-
+    init_memory_manager();
     ResultCode result = RESULT_SUCCESS;
     if (argc == 1) {
         result = repl();
@@ -170,6 +150,6 @@ int main(int argc, char** argv) {
     if (result == RESULT_FAILED) {
         return 1;
     }
-
+    print_memory();
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "vm.h"
 #include "object.h"
 #include "common.h"
+#include "memory.h"
 
 
 #define READ_TYPE(frame, type) \
@@ -242,12 +243,23 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
     ObjFunction* function = make_function(chunk, 0); //make a function with arity = 0
     push(vm, to_function(function));
     call(vm, 0);
+
    
     //running the vm 
     while (vm->frame_count > 0) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];
         execute_frame(vm, frame);
     }
+
+    //TODO: testing mm.objects - loooks good to me.  Free them here for now until GC works
+    free_objects();
+    Obj* obj = mm.objects;
+    int count = 0;
+    while (obj != NULL) {
+        count++;
+        obj = obj->next;
+    }
+    printf("Total Objects: %d\n", count);
 
     return RESULT_SUCCESS;
 }

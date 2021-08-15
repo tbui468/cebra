@@ -14,7 +14,7 @@ static void add_error(Compiler* compiler, Token token, const char* message) {
 
 static void grow_capacity(Compiler* compiler) {
     int new_capacity = compiler->chunk->capacity == 0 ? 8 : compiler->chunk->capacity * 2;
-    compiler->chunk->codes = GROW_ARRAY(OpCode, compiler->chunk->codes, new_capacity);
+    compiler->chunk->codes = GROW_ARRAY(compiler->chunk->codes, OpCode, new_capacity, compiler->chunk->capacity);
     compiler->chunk->capacity = new_capacity;
 }
 
