@@ -4,46 +4,13 @@
 #include "result_code.h"
 #include "ast.h"
 #include "node_list.h"
+#include "chunk.h"
 
 typedef struct {
     Token token;
     const char* message;
 } CompileError;
 
-typedef enum {
-    OP_INT,
-    OP_FLOAT,
-    OP_STRING,
-    OP_FUN,
-    OP_PRINT,
-    //No OP_DECL_VAR since we're using stack based local variables
-    OP_TRUE,
-    OP_FALSE,
-    OP_LESS,
-    OP_GREATER,
-    OP_EQUAL,
-    OP_SET_VAR,
-    OP_GET_VAR,
-    OP_ADD,
-    OP_SUBTRACT,
-    OP_MULTIPLY,
-    OP_DIVIDE,
-    OP_MOD,
-    OP_NEGATE,
-    OP_POP,
-    OP_JUMP_IF_FALSE,
-    OP_JUMP_IF_TRUE,
-    OP_JUMP,
-    OP_JUMP_BACK,
-    OP_CALL,
-    OP_RETURN
-} OpCode;
-
-typedef struct {
-    OpCode* codes;
-    int count; 
-    int capacity;
-} Chunk;
 
 typedef struct {
     Token name;
@@ -51,7 +18,7 @@ typedef struct {
 } Local;
 
 typedef struct {
-    Chunk chunk;
+    Chunk* chunk;
     int scope_depth;
     Local locals[256];
     int locals_count;
@@ -60,10 +27,8 @@ typedef struct {
     struct Compiler* enclosing;
 } Compiler;
 
-void init_compiler(Compiler* compiler);
-void free_compiler(Compiler* compiler);
+void init_compiler(Compiler* compiler, Chunk* chunk);
 ResultCode compile(Compiler* compiler, NodeList* nl);
-void disassemble_chunk(Chunk* chunk);
 const char* op_to_string(OpCode op);
 void print_locals(Compiler* compiler);
 

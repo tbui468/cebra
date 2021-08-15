@@ -31,14 +31,28 @@
 
 //TODO:
 //
-//  Refactor
-//      - node_list should be renamed to something else since it holds expressions, decls and stmts
-//          node_list - 
-//          get program compiling with node_list 
-//          make sure all correctness tests pass
+//  Problem: ObjFunction holds a chunk, but the compiler is what frees
+//      the chunk.  Need to make ObjFunction hold the compiler so 
+//      that memory is freed in a cleaner way
+//
+//      Let's have the chunk NOT owned by the compiler - the compiler
+//          takes in a chunk reference on initialization and fills
+//          it in during compilation.  Then it hands off the chunk to
+//          the function.  ObjFunction then has the job of freeing 
+//          the chunk when done with it
+//
+//      Need to separate chunk from compiler for this
+//
+//  Memory Manager
 //      - keep track of allocated objects in a linked list for GC later
 //          have VM keep a global counter of bytes allocated and freed
 //          should be zero when the program closes
+//          
+//          All memory allocation functions should update memorymanager,
+//              wrap them in the current macros to do this
+//
+//          ALLOCATE_CHAR is just ALLOCATE_ARRAY / GROW_ARRAY with a char type
+//              combine them to reduce redundant code
 //
 //  Type checking - do the type checking at the same time at compiling!
 //      - implement basic type checking in compiler
@@ -47,14 +61,24 @@
 //      - since compiling returns a void anyway, use the return value to return datatypes
 //
 //  Closures
-//      could skip classes and just do structs if we have closures
 //
 //  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
 //      add code inside memory.h - all allocations should go through there
 //
+//  Structs Instances
+//
+//  Struct Getters and Setters
+//
+//  Struct Instantiation
+//
+//  Struct Inheritance
+//
+//  Test Edge cases by writing toy programs - save these programs as correctness tests
+//
+//  Stress test by writing script to load nyc_subway data - compare runtime to python pandas
+//
 //  Why are if /else so much slower than just if (think of the fibonacci example
 //
-//Need to remember to make GC for ObjStrings (all Objs)
 
 
 ResultCode run_source(VM* vm, const char* source) {

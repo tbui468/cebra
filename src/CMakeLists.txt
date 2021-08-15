@@ -1,5 +1,6 @@
 set(Sources
     main.c
+    memory.c
     token.c
     value.c
     node_list.c
@@ -7,7 +8,7 @@ set(Sources
     lexer.c
     parser.c
     ast.c
-    ast_typer.c
+    chunk.c
     compiler.c
     vm.c
     )
@@ -23,7 +24,7 @@ set(Headers
     lexer.h
     parser.h
     ast.h
-    ast_typer.h
+    chunk.h
     compiler.h
     vm.h
     )

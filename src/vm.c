@@ -222,22 +222,24 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 
 ResultCode compile_and_run(VM* vm, NodeList* nl) {
     Compiler root_compiler;
-    init_compiler(&root_compiler);
+    Chunk chunk;
+    init_chunk(&chunk);
+    init_compiler(&root_compiler, &chunk);
 
     ResultCode compile_result = compile(&root_compiler, nl);
 
     if (compile_result == RESULT_FAILED) {
-        free_compiler(&root_compiler);
+        free_chunk(&chunk);
         return RESULT_FAILED; 
     }
 
 //someoffset if enclosing compilers is causing wrong opcodes to being emitted (off at least offset so reads are wrong)
 #ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(&root_compiler.chunk);
+    disassemble_chunk(&chunk);
 #endif
 
     //initial script
-    ObjFunction* function = make_function(root_compiler.chunk, 0); //make a function with arity = 0
+    ObjFunction* function = make_function(chunk, 0); //make a function with arity = 0
     push(vm, to_function(function));
     call(vm, 0);
    

@@ -13,18 +13,18 @@ static void add_error(Compiler* compiler, Token token, const char* message) {
 }
 
 static void grow_capacity(Compiler* compiler) {
-    int new_capacity = compiler->chunk.capacity == 0 ? 8 : compiler->chunk.capacity * 2;
-    compiler->chunk.codes = GROW_ARRAY(OpCode, compiler->chunk.codes, new_capacity);
-    compiler->chunk.capacity = new_capacity;
+    int new_capacity = compiler->chunk->capacity == 0 ? 8 : compiler->chunk->capacity * 2;
+    compiler->chunk->codes = GROW_ARRAY(OpCode, compiler->chunk->codes, new_capacity);
+    compiler->chunk->capacity = new_capacity;
 }
 
 static void emit_byte(Compiler* compiler, uint8_t byte) {
-    if (compiler->chunk.count + 1 > compiler->chunk.capacity) {
+    if (compiler->chunk->count + 1 > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
 
-    compiler->chunk.codes[compiler->chunk.count] = byte;
-    compiler->chunk.count++;
+    compiler->chunk->codes[compiler->chunk->count] = byte;
+    compiler->chunk->count++;
 }
 
 
@@ -32,21 +32,21 @@ static int emit_jump(Compiler* compiler, OpCode op) {
     emit_byte(compiler, op);
     emit_byte(compiler, 0xff);
     emit_byte(compiler, 0xff);
-    return compiler->chunk.count;
+    return compiler->chunk->count;
 }
 
 static void patch_jump(Compiler* compiler, int index) {
-    uint16_t destination = (uint16_t)(compiler->chunk.count - index);
-    memcpy(&compiler->chunk.codes[index - 2], &destination, sizeof(uint16_t));
+    uint16_t destination = (uint16_t)(compiler->chunk->count - index);
+    memcpy(&compiler->chunk->codes[index - 2], &destination, sizeof(uint16_t));
 }
 
 static void emit_short(Compiler* compiler, uint16_t num) {
-    if (compiler->chunk.count + (int)sizeof(int16_t) > compiler->chunk.capacity) {
+    if (compiler->chunk->count + (int)sizeof(int16_t) > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
 
-    memcpy(&compiler->chunk.codes[compiler->chunk.count], &num, sizeof(int16_t));
-    compiler->chunk.count += sizeof(int16_t);
+    memcpy(&compiler->chunk->codes[compiler->chunk->count], &num, sizeof(int16_t));
+    compiler->chunk->count += sizeof(int16_t);
 }
 
 static void emit_jump_by(Compiler* compiler, OpCode op, int index) {
@@ -55,47 +55,47 @@ static void emit_jump_by(Compiler* compiler, OpCode op, int index) {
 }
 
 static void emit_int(Compiler* compiler, uint8_t op_code, int32_t num) {
-    if (compiler->chunk.count + (int)sizeof(int32_t) + 1 > compiler->chunk.capacity) {
+    if (compiler->chunk->count + (int)sizeof(int32_t) + 1 > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
 
     emit_byte(compiler, op_code);
 
-    memcpy(&compiler->chunk.codes[compiler->chunk.count], &num, sizeof(int32_t));
-    compiler->chunk.count += sizeof(int32_t);
+    memcpy(&compiler->chunk->codes[compiler->chunk->count], &num, sizeof(int32_t));
+    compiler->chunk->count += sizeof(int32_t);
 }
 
 static void emit_float(Compiler* compiler, uint8_t op_code, double num) {
-    if (compiler->chunk.count + (int)sizeof(double) + 1 > compiler->chunk.capacity) {
+    if (compiler->chunk->count + (int)sizeof(double) + 1 > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
 
     emit_byte(compiler, op_code);
 
-    memcpy(&compiler->chunk.codes[compiler->chunk.count], &num, sizeof(double));
-    compiler->chunk.count += sizeof(double);
+    memcpy(&compiler->chunk->codes[compiler->chunk->count], &num, sizeof(double));
+    compiler->chunk->count += sizeof(double);
 }
 
 static void emit_string(Compiler* compiler, uint8_t op_code, ObjString* obj) {
-    if (compiler->chunk.count + (int)sizeof(ObjString*) + 1 > compiler->chunk.capacity) {
+    if (compiler->chunk->count + (int)sizeof(ObjString*) + 1 > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
 
     emit_byte(compiler, op_code);
 
-    memcpy(&compiler->chunk.codes[compiler->chunk.count], &obj, sizeof(ObjString*));
-    compiler->chunk.count += sizeof(ObjString*);
+    memcpy(&compiler->chunk->codes[compiler->chunk->count], &obj, sizeof(ObjString*));
+    compiler->chunk->count += sizeof(ObjString*);
 }
 
 static void emit_function(Compiler* compiler, uint8_t op_code, ObjFunction* obj) {
-    if (compiler->chunk.count + (int)sizeof(ObjFunction*) + 1 > compiler->chunk.capacity) {
+    if (compiler->chunk->count + (int)sizeof(ObjFunction*) + 1 > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
 
     emit_byte(compiler, op_code);
 
-    memcpy(&compiler->chunk.codes[compiler->chunk.count], &obj, sizeof(ObjFunction*));
-    compiler->chunk.count += sizeof(ObjFunction*);
+    memcpy(&compiler->chunk->codes[compiler->chunk->count], &obj, sizeof(ObjFunction*));
+    compiler->chunk->count += sizeof(ObjFunction*);
 }
 
 
@@ -254,8 +254,10 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             //creating new compiler
             //and adding the function def at local slot 0
             Compiler func;
-            init_compiler(&func);
-            func.enclosing = (Compiler*)compiler;
+            Chunk chunk;
+            init_chunk(&chunk);
+            init_compiler(&func, &chunk);
+            func.enclosing = (struct Compiler*)compiler;
             Local local;
             local.name = df->name;
             local.depth = func.scope_depth;
@@ -266,7 +268,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             add_node(&df->parameters, df->body);
             compile(&func, &df->parameters);
 
-            emit_function(compiler, OP_FUN, make_function(func.chunk, arity));
+            emit_function(compiler, OP_FUN, make_function(chunk, arity));
             break;
         }
         //statements
@@ -297,7 +299,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
         }
         case NODE_WHILE: {
             While* wh = (While*)node;
-            int start = compiler->chunk.count;
+            int start = compiler->chunk->count;
             compile_node(compiler, wh->condition);
             int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
 
@@ -305,7 +307,7 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             compile_node(compiler, wh->then_block);
 
             //+3 to include OP_JUMP_BACK and uint16_t for jump distance
-            int from = compiler->chunk.count + 3;
+            int from = compiler->chunk->count + 3;
             emit_jump_by(compiler, OP_JUMP_BACK, from - start);
             patch_jump(compiler, false_jump);   
             emit_byte(compiler, OP_POP);
@@ -315,22 +317,22 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             For* fo = (For*)node;
             compile_node(compiler, fo->initializer); //should leave no value on stack
 
-            int condition_start = compiler->chunk.count;
+            int condition_start = compiler->chunk->count;
             compile_node(compiler, fo->condition);
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
             int body_jump = emit_jump(compiler, OP_JUMP);
 
-            int update_start = compiler->chunk.count;
+            int update_start = compiler->chunk->count;
             if (fo->update) {
                 compile_node(compiler, fo->update);
                 emit_byte(compiler, OP_POP); //pop update
             }
-            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk.count + 3 - condition_start);
+            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk->count + 3 - condition_start);
 
             patch_jump(compiler, body_jump);
             emit_byte(compiler, OP_POP); //pop condition if true
             compile_node(compiler, fo->then_block);
-            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk.count + 3 - update_start);
+            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk->count + 3 - update_start);
 
             patch_jump(compiler, exit_jump);
             emit_byte(compiler, OP_POP); //pop condition if false
@@ -379,31 +381,13 @@ static void compile_node(Compiler* compiler, struct Node* node) {
     } 
 }
 
-
-static void init_chunk(Chunk* chunk) {
-    chunk->codes = ALLOCATE_ARRAY(OpCode);
-    chunk->count = 0;
-    chunk->capacity = 0;
-}
-
-static void free_chunk(Chunk* chunk) {
-    FREE(chunk->codes);
-}
-
-void init_compiler(Compiler* compiler) {
+void init_compiler(Compiler* compiler, Chunk* chunk) {
     compiler->scope_depth = 0;
     compiler->locals_count = 1; //first slot is for function def
     compiler->error_count = 0;
-    Chunk chunk;
-    init_chunk(&chunk);
     compiler->chunk = chunk;
     compiler->enclosing = NULL;
 }
-
-void free_compiler(Compiler* compiler) {
-    free_chunk(&compiler->chunk);
-}
-
 
 ResultCode compile(Compiler* compiler, NodeList* nl) {
     for (int i = 0; i < nl->count; i++) {
@@ -422,129 +406,6 @@ ResultCode compile(Compiler* compiler, NodeList* nl) {
     return RESULT_SUCCESS;
 }
 
-
-static int32_t read_int(Chunk* chunk, int offset) {
-    int32_t* ptr = (int32_t*)(&chunk->codes[offset]);
-    return *ptr;
-}
-
-static double read_float(Chunk* chunk, int offset) {
-    double* ptr = (double*)(&chunk->codes[offset]);
-    return *ptr;
-}
-
-static ObjString* read_string(Chunk* chunk, int offset) {
-    ObjString** ptr = (ObjString**)(&chunk->codes[offset]);
-    return *ptr;
-}
-
-static ObjFunction* read_function(Chunk* chunk, int offset) {
-    ObjFunction** ptr = (ObjFunction**)(&chunk->codes[offset]);
-    return *ptr;
-}
-
-const char* op_to_string(OpCode op) {
-    switch(op) {
-        case OP_INT: return "OP_INT";
-        case OP_FLOAT: return "OP_FLOAT";
-        case OP_STRING: return "OP_STRING";
-        case OP_FUN: return "OP_FUN";
-        case OP_PRINT: return "OP_PRINT";
-        case OP_SET_VAR: return "OP_SET_VAR";
-        case OP_GET_VAR: return "OP_GET_VAR";
-        case OP_ADD: return "OP_ADD";
-        case OP_SUBTRACT: return "OP_SUBTRACT";
-        case OP_MULTIPLY: return "OP_MULTIPLY";
-        case OP_DIVIDE: return "OP_DIVIDE";
-        case OP_MOD: return "OP_MOD";
-        case OP_NEGATE: return "OP_NEGATE";
-        case OP_POP: return "OP_POP";
-        case OP_TRUE: return "OP_TRUE";
-        case OP_FALSE: return "OP_FALSE";
-        case OP_GREATER: return "OP_GREATER";
-        case OP_LESS: return "OP_LESS";
-        case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE";
-        case OP_JUMP_IF_TRUE: return "OP_JUMP_IF_TRUE";
-        case OP_JUMP: return "OP_JUMP";
-        case OP_JUMP_BACK: return "OP_JUMP_BACK";
-        case OP_CALL: return "OP_CALL";
-        case OP_RETURN: return "OP_RETURN";
-        default: return "Unrecognized op";
-    }
-}
-
-void disassemble_chunk(Chunk* chunk) {
-    int i = 0;
-    while (i < chunk->count) {
-        OpCode op = chunk->codes[i++];
-        printf("%04d    [ %s ] ", i - 1, op_to_string(op));
-        switch(op) {
-            case OP_INT: 
-                printf("%d", read_int(chunk, i)); 
-                i += sizeof(int32_t);
-                break;
-            case OP_FLOAT: 
-                printf("%f", read_float(chunk, i)); 
-                i += sizeof(double);
-                break;
-            case OP_STRING: {
-                ObjString* obj = read_string(chunk, i);
-                printf("%s", obj->chars); 
-                i += sizeof(ObjString*);
-                break;
-            }
-            case OP_FUN: {
-                ObjFunction* obj = read_function(chunk, i);
-                printf("<fun>"); 
-                i += sizeof(ObjFunction*);
-                break;
-            }
-            case OP_GET_VAR: {
-                uint8_t slot = chunk->codes[i];
-                i++;
-                printf("[%d]", slot);
-                break;
-            }
-            case OP_SET_VAR: {
-                uint8_t slot = chunk->codes[i];
-                i++;
-                printf("[%d]", slot);
-                break;
-            }
-            case OP_JUMP_IF_FALSE: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
-                i += 2;
-                printf("->[%d]", dis + i); //i currently points to low bit in 'dis'
-                break;
-            }
-            case OP_JUMP_IF_TRUE: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
-                i += 2;
-                printf("->[%d]", dis + i); //i points to low bit in 'dis'
-                break;
-            }
-            case OP_JUMP: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
-                i += 2;
-                printf("->[%d]", dis + i);
-                break;
-            }
-            case OP_JUMP_BACK: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
-                i += 2;
-                printf("->[%d]", i - dis);
-                break;
-            }
-            case OP_CALL: {
-                uint8_t slot = chunk->codes[i];
-                i++;
-                printf("[%d]", slot);
-                break;
-            }
-        }
-        printf("\n");
-    }
-}
 
 void print_locals(Compiler* compiler) {
     for (int i = 0; i < compiler->locals_count; i ++) {
