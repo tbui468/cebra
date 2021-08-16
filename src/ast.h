@@ -44,7 +44,7 @@ typedef struct {
     struct Node base;
     Token name;
     NodeList parameters;
-    Token ret;
+    ValueType ret_type;
     struct Node* body;
 } DeclFun;
 
@@ -155,7 +155,7 @@ struct Node* make_block(Token name, NodeList dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
-struct Node* make_decl_fun(Token name, NodeList parameters, Token ret, struct Node* body);
+struct Node* make_decl_fun(Token name, NodeList parameters, ValueType ret_type, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, NodeList arguments);
 

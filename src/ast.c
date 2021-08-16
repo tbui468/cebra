@@ -16,11 +16,11 @@ struct Node* make_decl_var(Token name, ValueType type, struct Node* right) {
     return (struct Node*)decl_var;
 }
 
-struct Node* make_decl_fun(Token name, NodeList parameters, Token ret, struct Node* body) {
+struct Node* make_decl_fun(Token name, NodeList parameters, ValueType ret_type, struct Node* body) {
     DeclFun* df = ALLOCATE_NODE(DeclFun);
     df->name = name;
     df->parameters = parameters;
-    df->ret = ret;
+    df->ret_type = ret_type;
     df->body = body;
     df->base.type = NODE_DECL_FUN;
 

@@ -30,24 +30,18 @@
  */
 
 //TODO:
+//  Don't like the messiness of NODE_DECL_FUN compilation.
+//      adding function signatures twice, once to outer and once to inner compiler
+//      can this be simplified??  We need to reserve the first slot for the function definition
+//      itself.  
 //
-//  So that structs and function types can be checked too,
-//  Locals should store an array (variable or fixed) of ValueTypes
-//  rather than just one.  Structs will be typechecked using
-//  the properties in declared order, and functions will be
-//  type checked by parameters + return value.
-//
-//  Type checking - do the type checking at the same time at compiling!
-//      - implement basic type checking in compiler
-//      - remove ast_typer / move functionality into compiler
-//      - get the basic framework up and running with errors/warnings to user
-//      - since compiling returns a void anyway, use the return value to return datatypes
-//
-//  How to test type errors??  Need to feed source into vm, and get a code out
-//      could just write a script that reads in test files (with incorrect syntax)
-//      that checks if the error message is correct
+//      Clean up compiler before adding to it for closures
 //
 //  Closures
+//      first set up test.cbr function that captures a variable at declaration time
+//      then write some code to get this working
+//      each compiler needs a list of upvalues
+//      need ObjUpvalue since we need to close some upvalues that are out of scope
 //
 //  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
 //      add code inside memory.h - all allocations should go through there

@@ -155,7 +155,7 @@ static ValueType compile_logical(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_NEGATE);
             break;
     }
-    return left_type;
+    return VAL_BOOL;
 }
 
 static ValueType compile_binary(Compiler* compiler, struct Node* node) {
@@ -177,10 +177,11 @@ static ValueType compile_binary(Compiler* compiler, struct Node* node) {
     return type1;
 }
 
-static void compile_print(Compiler* compiler, struct Node* node) {
+static ValueType compile_print(Compiler* compiler, struct Node* node) {
     Print* print = (Print*)node;
-    compile_node(compiler, print->right);
+    ValueType type = compile_node(compiler, print->right);
     emit_byte(compiler, OP_PRINT);
+    return VAL_NIL;
 }
 
 
@@ -241,13 +242,19 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             if (type != VAL_NIL && type != dv->type) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
-            return VAL_NIL;
+            return dv->type;
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
+
+            //adding function signatures for type checking
             int arity = df->parameters.count;
-            ValueType* values = ALLOCATE_VALUE_TYPE(arity + 1);
-            add_local(compiler, df->name, values, arity + 1); //temp
+            ValueType* signature = ALLOCATE_VALUE_TYPE(arity + 1);
+            for (int i = 0; i < arity; i++) {
+                signature[i] = ((DeclVar*)df->parameters.nodes[i])->type;
+            }
+            signature[arity] = df->ret_type;
+            add_local(compiler, df->name, signature, arity + 1);
 
             //creating new compiler
             //and adding the function def at local slot 0
@@ -256,9 +263,14 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             init_chunk(&chunk);
             init_compiler(&func_comp, &chunk);
             func_comp.enclosing = (struct Compiler*)compiler;
+
+
             Local local;
             local.name = df->name;
             local.depth = func_comp.scope_depth;
+            local.types = ALLOCATE_VALUE_TYPE(arity + 1);
+            memcpy(local.types, signature, sizeof(ValueType) * (arity + 1));
+            local.type_count = arity + 1;
             func_comp.locals[0] = local;
 
             //adding body to parameter DeclList so only one compile call is needed
@@ -268,10 +280,11 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             ObjFunction* f = make_function(chunk, arity);
             EMIT_TYPE(compiler, OP_FUN, f);
             free_compiler(&func_comp);
-            break;
+            
+            return VAL_NIL;
         }
         //statements
-        case NODE_PRINT:    compile_print(compiler, node); break;
+        case NODE_PRINT:    return compile_print(compiler, node);
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             start_scope(compiler);
@@ -279,11 +292,15 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
                 compile_node(compiler, block->decl_list.nodes[i]);
             }
             end_scope(compiler);
-            break;
+            return VAL_NIL;
         }
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
-            compile_node(compiler, ie->condition);
+            ValueType cond = compile_node(compiler, ie->condition);
+            if (cond != VAL_BOOL) {
+                add_error(compiler, ie->name, "Condition must evaluate to boolean.");
+            }
+
             int jump_then = emit_jump(compiler, OP_JUMP_IF_FALSE); 
 
             emit_byte(compiler, OP_POP);
@@ -294,12 +311,15 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_POP);
             compile_node(compiler, ie->else_block);
             patch_jump(compiler, jump_else);
-            break;
+            return VAL_NIL;
         }
         case NODE_WHILE: {
             While* wh = (While*)node;
             int start = compiler->chunk->count;
-            compile_node(compiler, wh->condition);
+            ValueType cond = compile_node(compiler, wh->condition);
+            if (cond != VAL_BOOL) {
+                add_error(compiler, wh->name, "Condition must evaluate to boolean.");
+            }
             int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
 
             emit_byte(compiler, OP_POP);
@@ -310,14 +330,18 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             emit_jump_by(compiler, OP_JUMP_BACK, from - start);
             patch_jump(compiler, false_jump);   
             emit_byte(compiler, OP_POP);
-            break;
+            return VAL_NIL;
         }
         case NODE_FOR: {
             For* fo = (For*)node;
             compile_node(compiler, fo->initializer); //should leave no value on stack
 
             int condition_start = compiler->chunk->count;
-            compile_node(compiler, fo->condition);
+            ValueType cond = compile_node(compiler, fo->condition);
+            if (cond != VAL_BOOL) {
+                add_error(compiler, fo->name, "Condition must evaluate to boolean.");
+            }
+
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
             int body_jump = emit_jump(compiler, OP_JUMP);
 
@@ -335,13 +359,13 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             patch_jump(compiler, exit_jump);
             emit_byte(compiler, OP_POP); //pop condition if false
-            break;
+            return VAL_NIL;
         }
         case NODE_RETURN: {
             Return* ret = (Return*)node;
-            compile_node(compiler, ret->right);
+            ValueType type = compile_node(compiler, ret->right);
             emit_byte(compiler, OP_RETURN);
-            break;
+            return type;
         }
         //expressions
         case NODE_LITERAL:      return compile_literal(compiler, node);
@@ -357,27 +381,34 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
-            compile_node(compiler, sv->right);
+            ValueType type = compile_node(compiler, sv->right);
             emit_byte(compiler, OP_SET_VAR);
             emit_byte(compiler, find_local(compiler, sv->name));
             if (sv->decl) {
                 emit_byte(compiler, OP_POP);
             }
-            break;
+            return type;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
             //push <fn> definition to top of stack
             emit_byte(compiler, OP_GET_VAR);
             emit_byte(compiler, find_local(compiler, call->name));
-            //push arguments to top of stack
+
+            //push arguments to top of stack and check types
+            uint8_t idx = find_local(compiler, call->name);
+            ValueType* signature = compiler->locals[idx].types;
+            int sig_count = compiler->locals[idx].type_count;
             for (int i = 0; i < call->arguments.count; i++) {
-                compile_node(compiler, call->arguments.nodes[i]);
+                ValueType arg_type = compile_node(compiler, call->arguments.nodes[i]);
+                if (arg_type != signature[i]) {
+                    add_error(compiler, call->name, "Argument type must match parameter type.");
+                }
             }
             //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
-            break;
+            return signature[sig_count - 1];
         }
     } 
 }
@@ -391,9 +422,7 @@ void init_compiler(Compiler* compiler, Chunk* chunk) {
 }
 
 void free_compiler(Compiler* compiler) {
-    printf("Inside free compiler\n");
     for (int i = 0; i < compiler->locals_count; i++) {
-        printf("%d\n", i);
         FREE_VALUE_TYPE(compiler->locals[i].types, compiler->locals[i].type_count);
     }
 }

@@ -235,7 +235,7 @@ static struct Node* declaration() {
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();
 
-        return make_decl_fun(name, params, ret, body);
+        return make_decl_fun(name, params, get_value_type(ret), body);
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {
