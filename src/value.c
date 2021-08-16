@@ -156,3 +156,13 @@ void print_value(Value a) {
             break;
     }
 }
+
+ValueType get_value_type(Token token) {
+    switch(token.type) {
+        case TOKEN_INT_TYPE: return VAL_INT;
+        case TOKEN_FLOAT_TYPE: return VAL_FLOAT;
+        case TOKEN_STRING_TYPE: return VAL_STRING;
+        case TOKEN_BOOL_TYPE: return VAL_BOOL;
+        case TOKEN_NIL_TYPE: return VAL_NIL;
+    }
+}

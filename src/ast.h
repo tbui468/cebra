@@ -5,6 +5,7 @@
 #include "token.h"
 #include "result_code.h"
 #include "node_list.h"
+#include "value.h"
 
 typedef enum {
     NODE_LITERAL,
@@ -34,7 +35,7 @@ struct Node {
 typedef struct {
     struct Node base;
     Token name;
-    Token type;
+    ValueType type;
     struct Node* right;
 } DeclVar;
 
@@ -139,7 +140,7 @@ struct Node* make_literal(Token name);
 struct Node* make_unary(Token name, struct Node* right);
 struct Node* make_binary(Token name, struct Node* left, struct Node* right);
 struct Node* make_print(Token name, struct Node* right);
-struct Node* make_decl_var(Token name, Token type, struct Node* right);
+struct Node* make_decl_var(Token name, ValueType type, struct Node* right);
 struct Node* make_get_var(Token name);
 struct Node* make_set_var(Token name, struct Node* right, bool decl);
 struct Node* make_block(Token name, NodeList dl);

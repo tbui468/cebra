@@ -30,9 +30,6 @@
  */
 
 //TODO:
-//  Not a big fan of how emit byte/short/function etc all has same resize chunk code
-//      essentially copied and pasted.  Can we generalize a bit more?
-//
 //  How to test type errors??  Need to feed source into vm, and get a code out
 //      could just write a script that reads in test files (with incorrect syntax)
 //      that checks if the error message is correct

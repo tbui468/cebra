@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <stdio.h>
+
 #include "chunk.h"
 #include "object.h"
 #include "memory.h"
@@ -84,7 +87,7 @@ void disassemble_chunk(Chunk* chunk) {
                 break;
             }
             case OP_FUN: {
-                ObjFunction* obj = read_function(chunk, i);
+                read_function(chunk, i); //just to get it out of byte stream
                 printf("<fun>"); 
                 i += sizeof(ObjFunction*);
                 break;

@@ -182,7 +182,7 @@ static struct Node* declaration() {
         if (!read_type()) {
             add_error(parser.previous, "Expect data type after ':'.");
         }
-        Token type = parser.previous;
+        ValueType type = get_value_type(parser.previous);
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
         struct Node* value = expression();
         return make_decl_var(name, type, value);
@@ -216,7 +216,7 @@ static struct Node* declaration() {
                 if (!read_type()) {
                     add_error(parser.previous, "Expect data type after ':'.");
                 }
-                Token type = parser.previous;
+                ValueType type = get_value_type(parser.previous);
                 add_node(&params, make_decl_var(name, type, NULL));
             } while (match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");

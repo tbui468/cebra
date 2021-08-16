@@ -6,7 +6,7 @@
  * Declarations
  */
 
-struct Node* make_decl_var(Token name, Token type, struct Node* right) {
+struct Node* make_decl_var(Token name, ValueType type, struct Node* right) {
     DeclVar* decl_var = ALLOCATE_NODE(DeclVar);
     decl_var->name = name;
     decl_var->type = type;

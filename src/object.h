@@ -1,7 +1,6 @@
 #ifndef CEBRA_OBJECT_H
 #define CEBRA_OBJECT_H
 
-#include "compiler.h"
 #include "chunk.h"
 
 typedef enum {

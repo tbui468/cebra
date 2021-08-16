@@ -67,19 +67,16 @@ static void compile_literal(Compiler* compiler, struct Node* node) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
-            //emit_int(compiler, OP_INT, (int32_t)strtol(literal->name.start, NULL, 10));
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
             EMIT_TYPE(compiler, OP_INT, integer);
             break;
         }
         case TOKEN_FLOAT: {
-            //emit_float(compiler, OP_FLOAT, strtod(literal->name.start, NULL));
             double f = strtod(literal->name.start, NULL);
             EMIT_TYPE(compiler, OP_FLOAT, f);
             break;
         }
         case TOKEN_STRING: {
-            //emit_string(compiler, OP_STRING, make_string(literal->name.start, literal->name.length));
             ObjString* str = make_string(literal->name.start, literal->name.length);
             EMIT_TYPE(compiler, OP_STRING, str);
             break;

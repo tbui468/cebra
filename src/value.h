@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "object.h"
+#include "token.h"
 
 typedef enum {
     VAL_INT,
@@ -42,7 +43,7 @@ Value greater_values(Value a, Value b);
 Value mod_values(Value a, Value b);
 Value equal_values(Value a, Value b);
 void print_value(Value a);
-
+ValueType get_value_type(Token token);
 
 #endif// CEBRA_VALUE_H
 
