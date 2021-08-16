@@ -2,6 +2,14 @@
 #include "memory.h"
 #include "object.h"
 
+#define EMIT_TYPE(compiler, op_code, value) \
+    emit_byte(compiler, op_code); \
+    if (compiler->chunk->count + (int)sizeof(value) > compiler->chunk->capacity) { \
+        grow_capacity(compiler); \
+    } \
+    memcpy(&compiler->chunk->codes[compiler->chunk->count], &value, sizeof(value)); \
+    compiler->chunk->count += sizeof(value)
+
 void compile_node(Compiler* compiler, struct Node* node);
 
 static void add_error(Compiler* compiler, Token token, const char* message) {
@@ -54,64 +62,26 @@ static void emit_jump_by(Compiler* compiler, OpCode op, int index) {
     emit_short(compiler, (uint16_t)index);
 }
 
-static void emit_int(Compiler* compiler, uint8_t op_code, int32_t num) {
-    if (compiler->chunk->count + (int)sizeof(int32_t) + 1 > compiler->chunk->capacity) {
-        grow_capacity(compiler);
-    }
-
-    emit_byte(compiler, op_code);
-
-    memcpy(&compiler->chunk->codes[compiler->chunk->count], &num, sizeof(int32_t));
-    compiler->chunk->count += sizeof(int32_t);
-}
-
-static void emit_float(Compiler* compiler, uint8_t op_code, double num) {
-    if (compiler->chunk->count + (int)sizeof(double) + 1 > compiler->chunk->capacity) {
-        grow_capacity(compiler);
-    }
-
-    emit_byte(compiler, op_code);
-
-    memcpy(&compiler->chunk->codes[compiler->chunk->count], &num, sizeof(double));
-    compiler->chunk->count += sizeof(double);
-}
-
-static void emit_string(Compiler* compiler, uint8_t op_code, ObjString* obj) {
-    if (compiler->chunk->count + (int)sizeof(ObjString*) + 1 > compiler->chunk->capacity) {
-        grow_capacity(compiler);
-    }
-
-    emit_byte(compiler, op_code);
-
-    memcpy(&compiler->chunk->codes[compiler->chunk->count], &obj, sizeof(ObjString*));
-    compiler->chunk->count += sizeof(ObjString*);
-}
-
-static void emit_function(Compiler* compiler, uint8_t op_code, ObjFunction* obj) {
-    if (compiler->chunk->count + (int)sizeof(ObjFunction*) + 1 > compiler->chunk->capacity) {
-        grow_capacity(compiler);
-    }
-
-    emit_byte(compiler, op_code);
-
-    memcpy(&compiler->chunk->codes[compiler->chunk->count], &obj, sizeof(ObjFunction*));
-    compiler->chunk->count += sizeof(ObjFunction*);
-}
-
 
 static void compile_literal(Compiler* compiler, struct Node* node) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
-            emit_int(compiler, OP_INT, (int32_t)strtol(literal->name.start, NULL, 10));
+            //emit_int(compiler, OP_INT, (int32_t)strtol(literal->name.start, NULL, 10));
+            int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
+            EMIT_TYPE(compiler, OP_INT, integer);
             break;
         }
         case TOKEN_FLOAT: {
-            emit_float(compiler, OP_FLOAT, strtod(literal->name.start, NULL));
+            //emit_float(compiler, OP_FLOAT, strtod(literal->name.start, NULL));
+            double f = strtod(literal->name.start, NULL);
+            EMIT_TYPE(compiler, OP_FLOAT, f);
             break;
         }
         case TOKEN_STRING: {
-            emit_string(compiler, OP_STRING, make_string(literal->name.start, literal->name.length));
+            //emit_string(compiler, OP_STRING, make_string(literal->name.start, literal->name.length));
+            ObjString* str = make_string(literal->name.start, literal->name.length);
+            EMIT_TYPE(compiler, OP_STRING, str);
             break;
         }
         case TOKEN_TRUE: {
@@ -268,7 +238,9 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             add_node(&df->parameters, df->body);
             compile(&func, &df->parameters);
 
-            emit_function(compiler, OP_FUN, make_function(chunk, arity));
+            //emit_function(compiler, OP_FUN, make_function(chunk, arity));
+            ObjFunction* f = make_function(chunk, arity);
+            EMIT_TYPE(compiler, OP_FUN, f);
             break;
         }
         //statements

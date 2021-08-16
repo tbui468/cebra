@@ -121,10 +121,16 @@ Value mod_values(Value a, Value b) {
 Value equal_values(Value a, Value b) {
     if (a.type != b.type) return to_boolean(false);
 
-    if (b.type == VAL_INT) {
-        return to_boolean(a.as.integer_type == b.as.integer_type);
-    } else {
-        return to_boolean(a.as.float_type == b.as.float_type);
+    switch(b.type) {
+        case VAL_INT:
+            return to_boolean(a.as.integer_type == b.as.integer_type);
+        case VAL_FLOAT:
+            return to_boolean(a.as.float_type == b.as.float_type);
+        case VAL_STRING:
+            ObjString* s1 = a.as.string_type;
+            ObjString* s2 = a.as.string_type;
+            if (s1->length != s2->length) return to_boolean(false);
+            return to_boolean(memcmp(s1->chars, s2->chars, s1->length) == 0);
     }
 }
 

@@ -64,6 +64,11 @@
     } else {
         print "Integer Modulus: Failed!"
     }
+    if "dog" + "cat" == "dogcat" {
+        print "String Concatenation: Passed!"
+    } else {
+        print "String Concatenation: Failed!"
+    }
 }
 
 {
@@ -75,6 +80,12 @@
     } else {
         print "Declaring Integers: Failed!" 
     } 
+    b: string = "dog"
+    if b == "dog" {
+        print "Declaring Strings: Passed!"
+    } else {
+        print "Declaring Strings: Failed!"
+    }
 }
 
 {
