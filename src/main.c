@@ -30,13 +30,12 @@
  */
 
 //TODO:
-//  Correctness tests get caught up by compiler errors now (incorrectly)
-//          because of logical expressions and variables
 //
-//  Make logic node (similar to binary node) that returns a boolean type
-//          for AND, OR, <=, ==, etc
-//
-//  Redo compile_node() function to have all switch cases return a ValueType
+//  So that structs and function types can be checked too,
+//  Locals should store an array (variable or fixed) of ValueTypes
+//  rather than just one.  Structs will be typechecked using
+//  the properties in declared order, and functions will be
+//  type checked by parameters + return value.
 //
 //  Type checking - do the type checking at the same time at compiling!
 //      - implement basic type checking in compiler
@@ -47,7 +46,6 @@
 //  How to test type errors??  Need to feed source into vm, and get a code out
 //      could just write a script that reads in test files (with incorrect syntax)
 //      that checks if the error message is correct
-//
 //
 //  Closures
 //

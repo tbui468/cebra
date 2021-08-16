@@ -9,6 +9,11 @@ void* allocate_node(size_t size) {
     return realloc(NULL, size);
 }
 
+ValueType* allocate_value_type(int len) {
+    mm.compiler_bytes_allocated += sizeof(ValueType) * len;
+    return (ValueType*)realloc(NULL, sizeof(ValueType) * len);
+}
+
 void* allocate_obj(size_t size) {
     mm.object_bytes_allocated += size;
     return realloc(NULL, size);
@@ -28,6 +33,8 @@ void init_memory_manager() {
     mm.object_bytes_freed = 0;
     mm.char_bytes_allocated = 0;
     mm.char_bytes_freed = 0;
+    mm.compiler_bytes_allocated = 0;
+    mm.compiler_bytes_freed = 0;
     mm.objects = NULL;
 }
 
@@ -40,6 +47,8 @@ void print_memory() {
     printf("object bytes freed bytes: %d\n", mm.object_bytes_freed);
     printf("char bytes allocated bytes: %d\n", mm.char_bytes_allocated);
     printf("char bytes freed bytes: %d\n", mm.char_bytes_freed);
+    printf("compiler bytes allocated bytes: %d\n", mm.compiler_bytes_allocated);
+    printf("compiler bytes freed bytes: %d\n", mm.compiler_bytes_freed);
 }
 
 

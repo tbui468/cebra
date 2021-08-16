@@ -184,10 +184,11 @@ static void compile_print(Compiler* compiler, struct Node* node) {
 }
 
 
-static void add_local(Compiler* compiler, Token name, ValueType type) {
+static void add_local(Compiler* compiler, Token name, ValueType* types, int count) {
     Local local;
     local.name = name;
-    local.type = type;
+    local.types = types;
+    local.type_count = count;
     local.depth = compiler->scope_depth;
     compiler->locals[compiler->locals_count] = local;
     compiler->locals_count++;
@@ -214,6 +215,7 @@ static void end_scope(Compiler* compiler) {
         Local* local = &compiler->locals[i];
         if (local->depth == compiler->scope_depth) {
             compiler->locals_count--;
+            FREE_VALUE_TYPE(compiler->locals[i].types, compiler->locals[i].type_count);
             emit_byte(compiler, OP_POP);
         }else{
             break;
@@ -233,7 +235,9 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
             ValueType type = compile_node(compiler, dv->right);
-            add_local(compiler, dv->name, dv->type);
+            ValueType* values = ALLOCATE_VALUE_TYPE(1);
+            values[0] = dv->type;
+            add_local(compiler, dv->name, values, 1);
             if (type != VAL_NIL && type != dv->type) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
@@ -241,28 +245,29 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
-            add_local(compiler, df->name, VAL_FUNCTION); //temp
+            int arity = df->parameters.count;
+            ValueType* values = ALLOCATE_VALUE_TYPE(arity + 1);
+            add_local(compiler, df->name, values, arity + 1); //temp
 
             //creating new compiler
             //and adding the function def at local slot 0
-            Compiler func;
+            Compiler func_comp;
             Chunk chunk;
             init_chunk(&chunk);
-            init_compiler(&func, &chunk);
-            func.enclosing = (struct Compiler*)compiler;
+            init_compiler(&func_comp, &chunk);
+            func_comp.enclosing = (struct Compiler*)compiler;
             Local local;
             local.name = df->name;
-            local.depth = func.scope_depth;
-            func.locals[0] = local;
+            local.depth = func_comp.scope_depth;
+            func_comp.locals[0] = local;
 
-            int arity = df->parameters.count;
             //adding body to parameter DeclList so only one compile call is needed
             add_node(&df->parameters, df->body);
-            compile(&func, &df->parameters);
+            compile(&func_comp, &df->parameters);
 
-            //emit_function(compiler, OP_FUN, make_function(chunk, arity));
             ObjFunction* f = make_function(chunk, arity);
             EMIT_TYPE(compiler, OP_FUN, f);
+            free_compiler(&func_comp);
             break;
         }
         //statements
@@ -348,7 +353,7 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_GET_VAR);
             uint8_t idx = find_local(compiler, gv->name);
             emit_byte(compiler, idx);
-            return compiler->locals[idx].type;
+            return compiler->locals[idx].types[0];
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
@@ -383,6 +388,14 @@ void init_compiler(Compiler* compiler, Chunk* chunk) {
     compiler->error_count = 0;
     compiler->chunk = chunk;
     compiler->enclosing = NULL;
+}
+
+void free_compiler(Compiler* compiler) {
+    printf("Inside free compiler\n");
+    for (int i = 0; i < compiler->locals_count; i++) {
+        printf("%d\n", i);
+        FREE_VALUE_TYPE(compiler->locals[i].types, compiler->locals[i].type_count);
+    }
 }
 
 ResultCode compile(Compiler* compiler, NodeList* nl) {

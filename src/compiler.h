@@ -15,7 +15,8 @@ typedef struct {
 
 typedef struct {
     Token name;
-    ValueType type;
+    ValueType* types;
+    int type_count;
     int depth;
 } Local;
 
@@ -30,6 +31,7 @@ typedef struct {
 } Compiler;
 
 void init_compiler(Compiler* compiler, Chunk* chunk);
+void free_compiler(Compiler* compiler);
 ResultCode compile(Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(Compiler* compiler);

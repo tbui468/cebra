@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "object.h"
+#include "value.h"
 
 //vm memory
 #define ALLOCATE_CHAR(len) ((char*)allocate_char(sizeof(char) * (len)))
@@ -10,9 +11,12 @@
 #define ALLOCATE_OBJ(type) ((type*)allocate_obj(sizeof(type)))
 #define FREE_OBJ(ptr, type) (free((type*)ptr), mm.object_bytes_freed += sizeof(type))
 
-//AST node memory
+//Compiler memory
 #define ALLOCATE_NODE(type) (type*)allocate_node(sizeof(type))
 #define FREE_NODE(ptr, type) (free((type*)ptr), mm.node_bytes_freed += sizeof(type))
+
+#define ALLOCATE_VALUE_TYPE(len) allocate_value_type(len)
+#define FREE_VALUE_TYPE(ptr, len) (free(ptr), mm.compiler_bytes_freed += sizeof(ValueType) * len)
 
 #define ALLOCATE_ARRAY(type) ((type*)realloc(NULL, 0))
 #define GROW_ARRAY(ptr, type, new_capacity, old_capacity) \
@@ -22,6 +26,7 @@
              
 
 void* allocate_node(size_t size);
+ValueType* allocate_value_type(int len);
 void* allocate_obj(size_t size);
 void* allocate_char(size_t size);
 void init_memory_manager();
@@ -39,6 +44,8 @@ typedef struct {
     int object_bytes_freed;
     int char_bytes_allocated;
     int char_bytes_freed;
+    int compiler_bytes_allocated;
+    int compiler_bytes_freed;
     Obj* objects;
 } MemoryManager;
 

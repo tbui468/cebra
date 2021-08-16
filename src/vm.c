@@ -244,6 +244,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
     push(vm, to_function(function));
     call(vm, 0);
 
+    free_compiler(&root_compiler);
    
     //running the vm 
     while (vm->frame_count > 0) {
