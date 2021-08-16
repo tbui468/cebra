@@ -115,7 +115,7 @@ static struct Node* relation() {
            match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
         Token name = parser.previous;
         struct Node* right = term();
-        left = make_binary(name, left, right);
+        left = make_logical(name, left, right);
     }
 
     return left;
@@ -127,7 +127,7 @@ static struct Node* equality() {
     while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL)) {
         Token name = parser.previous;
         struct Node* right = relation();
-        left = make_binary(name, left, right);
+        left = make_logical(name, left, right);
     }
 
     return left;
@@ -139,7 +139,7 @@ static struct Node* and() {
     while (match(TOKEN_AND)) {
         Token name = parser.previous;
         struct Node* right = equality();
-        left = make_binary(name, left, right);
+        left = make_logical(name, left, right);
     }
 
     return left;
@@ -151,7 +151,7 @@ static struct Node* or() {
     while (match(TOKEN_OR)) {
         Token name = parser.previous;
         struct Node* right = and();
-        left = make_binary(name, left, right);
+        left = make_logical(name, left, right);
     }
 
     return left;

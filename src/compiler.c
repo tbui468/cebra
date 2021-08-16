@@ -10,7 +10,7 @@
     memcpy(&compiler->chunk->codes[compiler->chunk->count], &value, sizeof(value)); \
     compiler->chunk->count += sizeof(value)
 
-void compile_node(Compiler* compiler, struct Node* node);
+ValueType compile_node(Compiler* compiler, struct Node* node);
 
 static void add_error(Compiler* compiler, Token token, const char* message) {
     CompileError error;
@@ -63,75 +63,76 @@ static void emit_jump_by(Compiler* compiler, OpCode op, int index) {
 }
 
 
-static void compile_literal(Compiler* compiler, struct Node* node) {
+static ValueType compile_literal(Compiler* compiler, struct Node* node) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
             EMIT_TYPE(compiler, OP_INT, integer);
-            break;
+            return VAL_INT;
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
             EMIT_TYPE(compiler, OP_FLOAT, f);
-            break;
+            return VAL_FLOAT;
         }
         case TOKEN_STRING: {
             ObjString* str = make_string(literal->name.start, literal->name.length);
             EMIT_TYPE(compiler, OP_STRING, str);
-            break;
+            return VAL_STRING;
         }
         case TOKEN_TRUE: {
             emit_byte(compiler, OP_TRUE);
-            break;
+            return VAL_BOOL;
         }
         case TOKEN_FALSE: {
             emit_byte(compiler, OP_FALSE);
-            break;
+            return VAL_BOOL;
         }
     }
 }
 
-static void compile_unary(Compiler* compiler, struct Node* node) {
+static ValueType compile_unary(Compiler* compiler, struct Node* node) {
     Unary* unary = (Unary*)node;
-    compile_node(compiler, unary->right);
+    ValueType type = compile_node(compiler, unary->right);
     emit_byte(compiler, OP_NEGATE);
+    return type;
 }
 
-static void compile_binary(Compiler* compiler, struct Node* node) {
-    Binary* binary = (Binary*)node;
+static ValueType compile_logical(Compiler* compiler, struct Node* node) {
+    Logical* logical = (Logical*)node;
 
-    //Note: compiling order is different for logical operators
-    //so pulling TOKEN_AND and TOKEN_OR out of switch statement
-    //Could make a new node type for AND and OR - maybe useful
-    //when we add static typing during the AST traversal
-    if (binary->name.type == TOKEN_AND) {
-        compile_node(compiler, binary->left);
+    if (logical->name.type == TOKEN_AND) {
+        ValueType left_type = compile_node(compiler, logical->left);
         int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
         emit_byte(compiler, OP_POP);
-        compile_node(compiler, binary->right);
+        ValueType right_type = compile_node(compiler, logical->right);
         patch_jump(compiler, false_jump);
-        return;
+        if (left_type != right_type) {
+            add_error(compiler, logical->name, "Left and right types must match.");
+        }
+        return VAL_BOOL;
     }
 
-    if (binary->name.type == TOKEN_OR) {
-        compile_node(compiler, binary->left);
+    if (logical->name.type == TOKEN_OR) {
+        ValueType left_type = compile_node(compiler, logical->left);
         int true_jump = emit_jump(compiler, OP_JUMP_IF_TRUE);
         emit_byte(compiler, OP_POP);
-        compile_node(compiler, binary->right);
+        ValueType right_type = compile_node(compiler, logical->right);
         patch_jump(compiler, true_jump);
-        return;
+        if (left_type != right_type) {
+            add_error(compiler, logical->name, "Left and right types must match.");
+        }
+        return VAL_BOOL;
     }
 
 
-    compile_node(compiler, binary->left);
-    compile_node(compiler, binary->right);
-    switch(binary->name.type) {
-        case TOKEN_PLUS: emit_byte(compiler, OP_ADD); break;
-        case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT); break;
-        case TOKEN_STAR: emit_byte(compiler, OP_MULTIPLY); break;
-        case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE); break;
-        case TOKEN_MOD: emit_byte(compiler, OP_MOD); break;
+    ValueType left_type = compile_node(compiler, logical->left);
+    ValueType right_type = compile_node(compiler, logical->right);
+    if (left_type != right_type) {
+        add_error(compiler, logical->name, "Left and right types must match.");
+    }
+    switch(logical->name.type) {
         case TOKEN_LESS:
             emit_byte(compiler, OP_LESS);
             break;
@@ -154,6 +155,26 @@ static void compile_binary(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_NEGATE);
             break;
     }
+    return left_type;
+}
+
+static ValueType compile_binary(Compiler* compiler, struct Node* node) {
+    Binary* binary = (Binary*)node;
+
+    ValueType type1 = compile_node(compiler, binary->left);
+    ValueType type2 = compile_node(compiler, binary->right);
+    if (type1 != type2) {
+        add_error(compiler, binary->name, "Left and right types must match.");
+    }
+    switch(binary->name.type) {
+        case TOKEN_PLUS: emit_byte(compiler, OP_ADD); break;
+        case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT); break;
+        case TOKEN_STAR: emit_byte(compiler, OP_MULTIPLY); break;
+        case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE); break;
+        case TOKEN_MOD: emit_byte(compiler, OP_MOD); break;
+    }
+
+    return type1;
 }
 
 static void compile_print(Compiler* compiler, struct Node* node) {
@@ -163,9 +184,10 @@ static void compile_print(Compiler* compiler, struct Node* node) {
 }
 
 
-static void add_local(Compiler* compiler, Token name) {
+static void add_local(Compiler* compiler, Token name, ValueType type) {
     Local local;
     local.name = name;
+    local.type = type;
     local.depth = compiler->scope_depth;
     compiler->locals[compiler->locals_count] = local;
     compiler->locals_count++;
@@ -202,21 +224,24 @@ static void end_scope(Compiler* compiler) {
 }
 
 
-static void compile_node(Compiler* compiler, struct Node* node) {
+static ValueType compile_node(Compiler* compiler, struct Node* node) {
     if (node == NULL) {
-        return;
+        return VAL_NIL;
     }
     switch(node->type) {
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
-            compile_node(compiler, dv->right);
-            add_local(compiler, dv->name);
-            break;
+            ValueType type = compile_node(compiler, dv->right);
+            add_local(compiler, dv->name, dv->type);
+            if (type != VAL_NIL && type != dv->type) {
+                add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
+            }
+            return VAL_NIL;
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
-            add_local(compiler, df->name);
+            add_local(compiler, df->name, VAL_FUNCTION); //temp
 
             //creating new compiler
             //and adding the function def at local slot 0
@@ -314,14 +339,16 @@ static void compile_node(Compiler* compiler, struct Node* node) {
             break;
         }
         //expressions
-        case NODE_LITERAL:  compile_literal(compiler, node); break;
-        case NODE_BINARY:   compile_binary(compiler, node); break;
-        case NODE_UNARY:    compile_unary(compiler, node); break;
+        case NODE_LITERAL:      return compile_literal(compiler, node);
+        case NODE_BINARY:       return compile_binary(compiler, node);
+        case NODE_LOGICAL:      return compile_logical(compiler, node);
+        case NODE_UNARY:        return compile_unary(compiler, node);
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
             emit_byte(compiler, OP_GET_VAR);
-            emit_byte(compiler, find_local(compiler, gv->name));
-            break;
+            uint8_t idx = find_local(compiler, gv->name);
+            emit_byte(compiler, idx);
+            return compiler->locals[idx].type;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
@@ -360,7 +387,7 @@ void init_compiler(Compiler* compiler, Chunk* chunk) {
 
 ResultCode compile(Compiler* compiler, NodeList* nl) {
     for (int i = 0; i < nl->count; i++) {
-        compile_node(compiler, nl->nodes[i]);
+        ValueType type = compile_node(compiler, nl->nodes[i]);
     }
 
     emit_byte(compiler, OP_RETURN);

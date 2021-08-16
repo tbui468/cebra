@@ -5,6 +5,7 @@
 #include "ast.h"
 #include "node_list.h"
 #include "chunk.h"
+#include "value.h"
 
 typedef struct {
     Token token;
@@ -14,6 +15,7 @@ typedef struct {
 
 typedef struct {
     Token name;
+    ValueType type;
     int depth;
 } Local;
 

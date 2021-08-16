@@ -30,15 +30,24 @@
  */
 
 //TODO:
-//  How to test type errors??  Need to feed source into vm, and get a code out
-//      could just write a script that reads in test files (with incorrect syntax)
-//      that checks if the error message is correct
+//  Correctness tests get caught up by compiler errors now (incorrectly)
+//          because of logical expressions and variables
+//
+//  Make logic node (similar to binary node) that returns a boolean type
+//          for AND, OR, <=, ==, etc
+//
+//  Redo compile_node() function to have all switch cases return a ValueType
 //
 //  Type checking - do the type checking at the same time at compiling!
 //      - implement basic type checking in compiler
 //      - remove ast_typer / move functionality into compiler
 //      - get the basic framework up and running with errors/warnings to user
 //      - since compiling returns a void anyway, use the return value to return datatypes
+//
+//  How to test type errors??  Need to feed source into vm, and get a code out
+//      could just write a script that reads in test files (with incorrect syntax)
+//      that checks if the error message is correct
+//
 //
 //  Closures
 //

@@ -126,6 +126,16 @@ struct Node* make_binary(Token name, struct Node* left, struct Node* right) {
     return (struct Node*)binary;
 }
 
+struct Node* make_logical(Token name, struct Node* left, struct Node* right) {
+    Logical* logical = ALLOCATE_NODE(Logical);
+    logical->name = name;
+    logical->left = left;
+    logical->right = right;
+    logical->base.type = NODE_LOGICAL;
+
+    return (struct Node*)logical;
+}
+
 struct Node* make_get_var(Token name) {
     GetVar* get_var = ALLOCATE_NODE(GetVar);
     get_var->name = name;
@@ -224,6 +234,14 @@ void print_node(struct Node* node) {
         }
         case NODE_BINARY: {
             Binary* binary = (Binary*)node;
+            printf("( %.*s ", binary->name.length, binary->name.start);
+            print_node(binary->left);
+            print_node(binary->right);
+            printf(")");
+            break;
+        }
+        case NODE_LOGICAL: {
+            Logical* binary = (Logical*)node;
             printf("( %.*s ", binary->name.length, binary->name.start);
             print_node(binary->left);
             print_node(binary->right);
@@ -331,6 +349,13 @@ void free_node(struct Node* node) {
             free_node(binary->left);
             free_node(binary->right);
             FREE_NODE(binary, Binary);
+            break;
+        }
+        case NODE_LOGICAL: {
+            Logical* binary = (Logical*)node;
+            free_node(binary->left);
+            free_node(binary->right);
+            FREE_NODE(binary, Logical);
             break;
         }
         case NODE_UNARY: {

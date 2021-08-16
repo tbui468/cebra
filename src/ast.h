@@ -11,6 +11,7 @@ typedef enum {
     NODE_LITERAL,
     NODE_UNARY,
     NODE_BINARY,
+    NODE_LOGICAL,
     NODE_PRINT,
     NODE_DECL_VAR,
     NODE_GET_VAR,
@@ -115,6 +116,12 @@ typedef struct {
     struct Node* right;
 } Binary;
 
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* left;
+    struct Node* right;
+} Logical;
 
 typedef struct {
     struct Node base;
@@ -139,6 +146,7 @@ typedef struct {
 struct Node* make_literal(Token name);
 struct Node* make_unary(Token name, struct Node* right);
 struct Node* make_binary(Token name, struct Node* left, struct Node* right);
+struct Node* make_logical(Token name, struct Node* left, struct Node* right);
 struct Node* make_print(Token name, struct Node* right);
 struct Node* make_decl_var(Token name, ValueType type, struct Node* right);
 struct Node* make_get_var(Token name);
