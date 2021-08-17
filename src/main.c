@@ -4,7 +4,6 @@
 #include "value.h"
 #include "vm.h"
 #include "node_list.h"
-#include "ast_typer.h"
 #include "memory.h"
 
 /*
@@ -30,12 +29,7 @@
  */
 
 //TODO:
-//  Don't like the messiness of NODE_DECL_FUN compilation.
-//      adding function signatures twice, once to outer and once to inner compiler
-//      can this be simplified??  We need to reserve the first slot for the function definition
-//      itself.  
-//
-//      Clean up compiler before adding to it for closures
+//  Get rid of ast_typer.c and .h
 //
 //  Closures
 //      first set up test.cbr function that captures a variable at declaration time

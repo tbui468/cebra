@@ -184,17 +184,16 @@ static ValueType compile_print(Compiler* compiler, struct Node* node) {
     return VAL_NIL;
 }
 
-static void set_local(Compiler* compiler, Token name, ValueType* types, int type_count, int index) {
+static void set_local(Compiler* compiler, Token name, SigList sl, int index) {
     Local local;
     local.name = name;
-    local.types = types;
-    local.type_count = type_count;
+    local.sig_list = sl;
     local.depth = compiler->scope_depth;
     compiler->locals[index] = local;
 }
 
-static void add_local(Compiler* compiler, Token name, ValueType* types, int type_count) {
-    set_local(compiler, name, types, type_count, compiler->locals_count);
+static void add_local(Compiler* compiler, Token name, SigList sl) {
+    set_local(compiler, name, sl, compiler->locals_count);
     compiler->locals_count++;
 }
 
@@ -219,7 +218,7 @@ static void end_scope(Compiler* compiler) {
         Local* local = &compiler->locals[i];
         if (local->depth == compiler->scope_depth) {
             compiler->locals_count--;
-            FREE_VALUE_TYPE(compiler->locals[i].types, compiler->locals[i].type_count);
+            free_sig_list(&compiler->locals[i].sig_list);
             emit_byte(compiler, OP_POP);
         }else{
             break;
@@ -238,10 +237,11 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
+            SigList sl;
+            init_sig_list(&sl);
+            add_sig_type(&sl, dv->type);
             ValueType type = compile_node(compiler, dv->right);
-            ValueType* values = ALLOCATE_VALUE_TYPE(1);
-            values[0] = dv->type;
-            add_local(compiler, dv->name, values, 1);
+            add_local(compiler, dv->name, sl);
             if (type != VAL_NIL && type != dv->type) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
@@ -252,12 +252,13 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             //adding function signatures for type checking
             int arity = df->parameters.count;
-            ValueType* signature = ALLOCATE_VALUE_TYPE(arity + 1);
+            SigList sl;
+            init_sig_list(&sl);
             for (int i = 0; i < arity; i++) {
-                signature[i] = ((DeclVar*)df->parameters.nodes[i])->type;
+                add_sig_type(&sl, ((DeclVar*)df->parameters.nodes[i])->type);
             }
-            signature[arity] = df->ret_type;
-            add_local(compiler, df->name, signature, arity + 1);
+            add_sig_type(&sl, df->ret_type);
+            add_local(compiler, df->name, sl);
 
             //creating new compiler
             Compiler func_comp;
@@ -268,9 +269,12 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             //set local slot 0 in new compiler to function definition (so recursion can work)
             //Recall: locals are only used for compiler to sync local variables with vm
-            ValueType* sig_copy = ALLOCATE_VALUE_TYPE(arity + 1);
-            memcpy(sig_copy, signature, sizeof(ValueType) * (arity + 1));
-            set_local(&func_comp, df->name, sig_copy, arity + 1, 0);
+            SigList sl2;
+            init_sig_list(&sl2);
+            for (int i = 0; i < sl.count; i++) {
+                add_sig_type(&sl2, sl.types[i]);
+            }
+            set_local(&func_comp, df->name, sl2, 0);
 
             //adding body to parameter DeclList so only one compile call is needed
             add_node(&df->parameters, df->body);
@@ -376,7 +380,7 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_GET_VAR);
             uint8_t idx = find_local(compiler, gv->name);
             emit_byte(compiler, idx);
-            return compiler->locals[idx].types[0];
+            return compiler->locals[idx].sig_list.types[0];
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
@@ -396,18 +400,17 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             //push arguments to top of stack and check types
             uint8_t idx = find_local(compiler, call->name);
-            ValueType* signature = compiler->locals[idx].types;
-            int sig_count = compiler->locals[idx].type_count;
+            SigList* sl = &compiler->locals[idx].sig_list;
             for (int i = 0; i < call->arguments.count; i++) {
                 ValueType arg_type = compile_node(compiler, call->arguments.nodes[i]);
-                if (arg_type != signature[i]) {
+                if (arg_type != sl->types[i]) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
             }
             //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
-            return signature[sig_count - 1];
+            return sl->types[sl->count - 1];
         }
     } 
 }
@@ -422,7 +425,7 @@ void init_compiler(Compiler* compiler, Chunk* chunk) {
 
 void free_compiler(Compiler* compiler) {
     for (int i = 0; i < compiler->locals_count; i++) {
-        FREE_VALUE_TYPE(compiler->locals[i].types, compiler->locals[i].type_count);
+        free_sig_list(&compiler->locals[i].sig_list);
     }
 }
 

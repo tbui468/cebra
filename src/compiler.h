@@ -15,8 +15,7 @@ typedef struct {
 
 typedef struct {
     Token name;
-    ValueType* types;
-    int type_count;
+    SigList sig_list;
     int depth;
 } Local;
 
