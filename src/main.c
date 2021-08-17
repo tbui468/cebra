@@ -29,8 +29,11 @@
  */
 
 //TODO:
+//  free_node_list should free the sig nodes
 //
-//  Make sure function typing works
+//  Generalize the sigs in compiler/parser to let them work with functions too (only primitive work now)
+//
+//  Make sure function typing works by defining a function and then passing it around with variables
 //
 //  Closures
 //      first set up test.cbr function that captures a variable at declaration time

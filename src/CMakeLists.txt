@@ -2,6 +2,7 @@ set(Sources
     main.c
     memory.c
     token.c
+    sig.c
     value.c
     node_list.c
     object.c
@@ -18,6 +19,7 @@ set(Headers
     common.h
     memory.h
     token.h
+    sig.h
     value.h
     node_list.h
     object.h

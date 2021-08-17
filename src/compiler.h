@@ -15,7 +15,7 @@ typedef struct {
 
 typedef struct {
     Token name;
-    SigList sig_list;
+    Sig* sig;
     int depth;
 } Local;
 

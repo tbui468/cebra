@@ -6,21 +6,21 @@
  * Declarations
  */
 
-struct Node* make_decl_var(Token name, SigList sl, struct Node* right) {
+struct Node* make_decl_var(Token name, Sig* sig, struct Node* right) {
     DeclVar* decl_var = ALLOCATE_NODE(DeclVar);
     decl_var->name = name;
-    decl_var->sig_list = sl;
+    decl_var->sig = sig;
     decl_var->right = right;
     decl_var->base.type = NODE_DECL_VAR;
 
     return (struct Node*)decl_var;
 }
 
-struct Node* make_decl_fun(Token name, NodeList parameters, SigList sl, struct Node* body) {
+struct Node* make_decl_fun(Token name, NodeList parameters, Sig* sig, struct Node* body) {
     DeclFun* df = ALLOCATE_NODE(DeclFun);
     df->name = name;
     df->parameters = parameters;
-    df->sig_list = sl;
+    df->sig = sig;
     df->body = body;
     df->base.type = NODE_DECL_FUN;
 

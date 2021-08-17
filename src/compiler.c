@@ -184,16 +184,16 @@ static ValueType compile_print(Compiler* compiler, struct Node* node) {
     return VAL_NIL;
 }
 
-static void set_local(Compiler* compiler, Token name, SigList sl, int index) {
+static void set_local(Compiler* compiler, Token name, Sig* sig, int index) {
     Local local;
     local.name = name;
-    local.sig_list = sl;
+    local.sig = sig;
     local.depth = compiler->scope_depth;
     compiler->locals[index] = local;
 }
 
-static void add_local(Compiler* compiler, Token name, SigList sl) {
-    set_local(compiler, name, sl, compiler->locals_count);
+static void add_local(Compiler* compiler, Token name, Sig* sig) {
+    set_local(compiler, name, sig, compiler->locals_count);
     compiler->locals_count++;
 }
 
@@ -218,7 +218,6 @@ static void end_scope(Compiler* compiler) {
         Local* local = &compiler->locals[i];
         if (local->depth == compiler->scope_depth) {
             compiler->locals_count--;
-            free_sig_list(&compiler->locals[i].sig_list);
             emit_byte(compiler, OP_POP);
         }else{
             break;
@@ -238,18 +237,18 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
             ValueType type = compile_node(compiler, dv->right);
-            add_local(compiler, dv->name, dv->sig_list);
-            if (type != VAL_NIL && type != dv->sig_list.types[0]) {
+            add_local(compiler, dv->name, dv->sig);
+            if (type != VAL_NIL && type != ((SigPrim*)dv->sig)->type) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
-            return dv->sig_list.types[0];
+            return ((SigPrim*)dv->sig)->type;
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
 
             //adding function signatures for type checking
             int arity = df->parameters.count;
-            add_local(compiler, df->name, df->sig_list);
+            add_local(compiler, df->name, df->sig);
 
             Compiler func_comp;
             Chunk chunk;
@@ -259,7 +258,7 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             //set local slot 0 in new compiler to function definition (so recursion can work)
             //Recall: locals are only used for compiler to sync local variables with vm
-            set_local(&func_comp, df->name, copy_sig_list(&df->sig_list), 0);
+            set_local(&func_comp, df->name, df->sig, 0);
 
             //adding body to parameter DeclList so only one compile call is needed
             add_node(&df->parameters, df->body);
@@ -268,7 +267,7 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             ObjFunction* f = make_function(chunk, arity);
             EMIT_TYPE(compiler, OP_FUN, f);
             free_compiler(&func_comp);
-            
+
             return VAL_NIL;
         }
         //statements
@@ -365,7 +364,7 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_GET_VAR);
             uint8_t idx = find_local(compiler, gv->name);
             emit_byte(compiler, idx);
-            return compiler->locals[idx].sig_list.types[0];
+            return ((SigPrim*)(compiler->locals[idx].sig))->type;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
@@ -385,17 +384,19 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             //push arguments to top of stack and check types
             uint8_t idx = find_local(compiler, call->name);
-            SigList* sl = &compiler->locals[idx].sig_list;
+            SigFun* sf = (SigFun*)(compiler->locals[idx].sig);
+            Sig** sigs = sf->params.sigs;
             for (int i = 0; i < call->arguments.count; i++) {
                 ValueType arg_type = compile_node(compiler, call->arguments.nodes[i]);
-                if (arg_type != sl->types[i]) {
+
+                if (arg_type != ((SigPrim*)sigs[i])->type) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
             }
             //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
-            return sl->types[sl->count - 1];
+            return ((SigPrim*)sf->ret)->type;
         }
     } 
 }
@@ -409,9 +410,6 @@ void init_compiler(Compiler* compiler, Chunk* chunk) {
 }
 
 void free_compiler(Compiler* compiler) {
-    for (int i = 0; i < compiler->locals_count; i++) {
-        free_sig_list(&compiler->locals[i].sig_list);
-    }
 }
 
 ResultCode compile(Compiler* compiler, NodeList* nl) {

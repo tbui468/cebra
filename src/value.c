@@ -4,6 +4,7 @@
 #include "value.h"
 #include "memory.h"
 
+/*
 void init_sig_list(SigList* sl) {
     sl->types = ALLOCATE_ARRAY(ValueType);
     sl->count = 0;
@@ -34,7 +35,7 @@ SigList copy_sig_list(SigList* sl) {
     }
 
     return copy;
-}
+}*/
 
 Value to_float(double num) {
     Value value;

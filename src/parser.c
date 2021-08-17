@@ -179,22 +179,20 @@ static struct Node* var_declaration(bool require_assign) {
         add_error(parser.previous, "Expect data type after ':'.");
     }
 
-    SigList sl;
-    init_sig_list(&sl);
     ValueType type = get_value_type(parser.previous);
-    add_sig_type(&sl, type);
+    Sig* sig = make_prim_sig(type); //TODO: generalize this to include functions
 
     if (require_assign) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
         struct Node* value = expression();
-        return make_decl_var(name, sl, value);
+        return make_decl_var(name, sig, value);
     }
 
     if (match(TOKEN_EQUAL)) {
         struct Node* value = expression();
-        return make_decl_var(name, sl, value);
+        return make_decl_var(name, sig, value);
     } else {
-        return make_decl_var(name, sl, NULL); 
+        return make_decl_var(name, sig, NULL); 
     }
 }
 
@@ -226,14 +224,15 @@ static struct Node* declaration() {
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
         NodeList params;
         init_node_list(&params);
+
         SigList sl;
         init_sig_list(&sl); 
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Node* var_decl = var_declaration(false);
-                
-                //get signatures of declared parameters
-                add_sig_type(&sl, ((DeclVar*)var_decl)->sig_list.types[0]);
+                DeclVar* vd = (DeclVar*)var_decl;
+                Sig* prim_sig = make_prim_sig(((SigPrim*)vd->sig)->type);
+                add_sig(&sl, prim_sig);
                 add_node(&params, var_decl);
             } while (match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
@@ -251,8 +250,9 @@ static struct Node* declaration() {
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();
-        add_sig_type(&sl, get_value_type(ret));
-        return make_decl_fun(name, params, sl, body);
+        Sig* ret_sig = make_prim_sig(get_value_type(ret));
+        Sig* sig = make_fun_sig(sl, ret_sig);
+        return make_decl_fun(name, params, sig, body);
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {

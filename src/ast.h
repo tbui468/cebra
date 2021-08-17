@@ -6,6 +6,7 @@
 #include "result_code.h"
 #include "node_list.h"
 #include "value.h"
+#include "sig.h"
 
 typedef enum {
     NODE_LITERAL,
@@ -36,7 +37,7 @@ struct Node {
 typedef struct {
     struct Node base;
     Token name;
-    SigList sig_list;
+    Sig* sig;
     struct Node* right;
 } DeclVar;
 
@@ -44,7 +45,7 @@ typedef struct {
     struct Node base;
     Token name;
     NodeList parameters;
-    SigList sig_list;
+    Sig* sig;
     struct Node* body;
 } DeclFun;
 
@@ -148,14 +149,14 @@ struct Node* make_unary(Token name, struct Node* right);
 struct Node* make_binary(Token name, struct Node* left, struct Node* right);
 struct Node* make_logical(Token name, struct Node* left, struct Node* right);
 struct Node* make_print(Token name, struct Node* right);
-struct Node* make_decl_var(Token name, SigList sl, struct Node* right);
+struct Node* make_decl_var(Token name, Sig* sig, struct Node* right);
 struct Node* make_get_var(Token name);
 struct Node* make_set_var(Token name, struct Node* right, bool decl);
 struct Node* make_block(Token name, NodeList dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
-struct Node* make_decl_fun(Token name, NodeList parameters, SigList sl, struct Node* body);
+struct Node* make_decl_fun(Token name, NodeList parameters, Sig* sig, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, NodeList arguments);
 
