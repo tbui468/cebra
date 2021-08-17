@@ -32,11 +32,10 @@ ResultCode free_vm(VM* vm) {
     return RESULT_SUCCESS;
 }
 
-void call(VM* vm, int start) {
-    ObjFunction* function = vm->stack[start].as.function_type;
+void call(VM* vm, ObjFunction* function) {
     CallFrame frame;
     frame.function = function;
-    frame.stack_offset = start;
+    frame.stack_offset = vm->stack_top - function->arity - 1;
     frame.ip = 0;
     frame.arity = function->arity;
     vm->frames[vm->frame_count] = frame;
@@ -195,7 +194,9 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_CALL: {
             int arity = (int)READ_TYPE(frame, uint8_t);
-            call(vm, vm->stack_top - arity - 1);
+            int start = vm->stack_top - arity - 1;
+            ObjFunction* function = vm->stack[start].as.function_type;
+            call(vm, function);
             break;
         }
         case OP_RETURN: {
@@ -242,7 +243,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
     //initial script
     ObjFunction* function = make_function(chunk, 0); //make a function with arity = 0
     push(vm, to_function(function));
-    call(vm, 0);
+    call(vm, function);
 
     free_compiler(&root_compiler);
    

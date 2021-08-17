@@ -184,14 +184,17 @@ static ValueType compile_print(Compiler* compiler, struct Node* node) {
     return VAL_NIL;
 }
 
-
-static void add_local(Compiler* compiler, Token name, ValueType* types, int count) {
+static void set_local(Compiler* compiler, Token name, ValueType* types, int type_count, int index) {
     Local local;
     local.name = name;
     local.types = types;
-    local.type_count = count;
+    local.type_count = type_count;
     local.depth = compiler->scope_depth;
-    compiler->locals[compiler->locals_count] = local;
+    compiler->locals[index] = local;
+}
+
+static void add_local(Compiler* compiler, Token name, ValueType* types, int type_count) {
+    set_local(compiler, name, types, type_count, compiler->locals_count);
     compiler->locals_count++;
 }
 
@@ -257,21 +260,17 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             add_local(compiler, df->name, signature, arity + 1);
 
             //creating new compiler
-            //and adding the function def at local slot 0
             Compiler func_comp;
             Chunk chunk;
             init_chunk(&chunk);
             init_compiler(&func_comp, &chunk);
             func_comp.enclosing = (struct Compiler*)compiler;
 
-
-            Local local;
-            local.name = df->name;
-            local.depth = func_comp.scope_depth;
-            local.types = ALLOCATE_VALUE_TYPE(arity + 1);
-            memcpy(local.types, signature, sizeof(ValueType) * (arity + 1));
-            local.type_count = arity + 1;
-            func_comp.locals[0] = local;
+            //set local slot 0 in new compiler to function definition (so recursion can work)
+            //Recall: locals are only used for compiler to sync local variables with vm
+            ValueType* sig_copy = ALLOCATE_VALUE_TYPE(arity + 1);
+            memcpy(sig_copy, signature, sizeof(ValueType) * (arity + 1));
+            set_local(&func_comp, df->name, sig_copy, arity + 1, 0);
 
             //adding body to parameter DeclList so only one compile call is needed
             add_node(&df->parameters, df->body);
