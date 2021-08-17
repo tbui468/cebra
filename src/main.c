@@ -29,7 +29,8 @@
  */
 
 //TODO:
-//  Get rid of ast_typer.c and .h
+//
+//  Make sure function typing works
 //
 //  Closures
 //      first set up test.cbr function that captures a variable at declaration time

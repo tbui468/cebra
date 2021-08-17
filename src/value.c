@@ -25,6 +25,17 @@ void add_sig_type(SigList* sl, ValueType type) {
     sl->count++;
 }
 
+SigList copy_sig_list(SigList* sl) {
+    SigList copy;
+    init_sig_list(&copy);
+
+    for (int i = 0; i < sl->count; i++) {
+        add_sig_type(&copy, sl->types[i]);
+    }
+
+    return copy;
+}
+
 Value to_float(double num) {
     Value value;
     value.type = VAL_FLOAT;

@@ -171,21 +171,39 @@ static struct Node* block() {
     return make_block(name, body);
 }
 
+static struct Node* var_declaration(bool require_assign) {
+    match(TOKEN_IDENTIFIER);
+    Token name = parser.previous;
+    match(TOKEN_COLON);
+    if (!read_type()) {
+        add_error(parser.previous, "Expect data type after ':'.");
+    }
+
+    SigList sl;
+    init_sig_list(&sl);
+    ValueType type = get_value_type(parser.previous);
+    add_sig_type(&sl, type);
+
+    if (require_assign) {
+        consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
+        struct Node* value = expression();
+        return make_decl_var(name, sl, value);
+    }
+
+    if (match(TOKEN_EQUAL)) {
+        struct Node* value = expression();
+        return make_decl_var(name, sl, value);
+    } else {
+        return make_decl_var(name, sl, NULL); 
+    }
+}
+
 static struct Node* declaration() {
     if (match(TOKEN_PRINT)) {
         Token name = parser.previous;
         return make_print(name, expression());
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
-        match(TOKEN_IDENTIFIER);
-        Token name = parser.previous;
-        match(TOKEN_COLON);
-        if (!read_type()) {
-            add_error(parser.previous, "Expect data type after ':'.");
-        }
-        ValueType type = get_value_type(parser.previous);
-        consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
-        struct Node* value = expression();
-        return make_decl_var(name, type, value);
+        return var_declaration(true);
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
@@ -208,16 +226,15 @@ static struct Node* declaration() {
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
         NodeList params;
         init_node_list(&params);
+        SigList sl;
+        init_sig_list(&sl); 
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                consume(TOKEN_IDENTIFIER, "Expect parameter identifier.");
-                Token name = parser.previous;
-                consume(TOKEN_COLON, "Expect ':' after identifier."); 
-                if (!read_type()) {
-                    add_error(parser.previous, "Expect data type after ':'.");
-                }
-                ValueType type = get_value_type(parser.previous);
-                add_node(&params, make_decl_var(name, type, NULL));
+                struct Node* var_decl = var_declaration(false);
+                
+                //get signatures of declared parameters
+                add_sig_type(&sl, ((DeclVar*)var_decl)->sig_list.types[0]);
+                add_node(&params, var_decl);
             } while (match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
         }
@@ -234,8 +251,8 @@ static struct Node* declaration() {
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();
-
-        return make_decl_fun(name, params, get_value_type(ret), body);
+        add_sig_type(&sl, get_value_type(ret));
+        return make_decl_fun(name, params, sl, body);
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {

@@ -237,30 +237,20 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
-            SigList sl;
-            init_sig_list(&sl);
-            add_sig_type(&sl, dv->type);
             ValueType type = compile_node(compiler, dv->right);
-            add_local(compiler, dv->name, sl);
-            if (type != VAL_NIL && type != dv->type) {
+            add_local(compiler, dv->name, dv->sig_list);
+            if (type != VAL_NIL && type != dv->sig_list.types[0]) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
-            return dv->type;
+            return dv->sig_list.types[0];
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
 
             //adding function signatures for type checking
             int arity = df->parameters.count;
-            SigList sl;
-            init_sig_list(&sl);
-            for (int i = 0; i < arity; i++) {
-                add_sig_type(&sl, ((DeclVar*)df->parameters.nodes[i])->type);
-            }
-            add_sig_type(&sl, df->ret_type);
-            add_local(compiler, df->name, sl);
+            add_local(compiler, df->name, df->sig_list);
 
-            //creating new compiler
             Compiler func_comp;
             Chunk chunk;
             init_chunk(&chunk);
@@ -269,12 +259,7 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             //set local slot 0 in new compiler to function definition (so recursion can work)
             //Recall: locals are only used for compiler to sync local variables with vm
-            SigList sl2;
-            init_sig_list(&sl2);
-            for (int i = 0; i < sl.count; i++) {
-                add_sig_type(&sl2, sl.types[i]);
-            }
-            set_local(&func_comp, df->name, sl2, 0);
+            set_local(&func_comp, df->name, copy_sig_list(&df->sig_list), 0);
 
             //adding body to parameter DeclList so only one compile call is needed
             add_node(&df->parameters, df->body);

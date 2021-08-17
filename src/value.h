@@ -36,7 +36,7 @@ typedef struct {
 void init_sig_list(SigList* sl);
 void free_sig_list(SigList* sl);
 void add_sig_type(SigList* sl, ValueType type);
-
+SigList copy_sig_list(SigList* sl);
 
 Value to_float(double num);
 Value to_integer(int32_t num);
