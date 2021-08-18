@@ -4,38 +4,6 @@
 #include "value.h"
 #include "memory.h"
 
-/*
-void init_sig_list(SigList* sl) {
-    sl->types = ALLOCATE_ARRAY(ValueType);
-    sl->count = 0;
-    sl->capacity = 0;
-}
-
-void free_sig_list(SigList* sl) {
-    FREE_ARRAY(sl->types, ValueType, sl->capacity);
-}
-
-void add_sig_type(SigList* sl, ValueType type) {
-    if (sl->count + 1 > sl->capacity) {
-        int new_capacity = sl->capacity == 0 ? 8 : sl->capacity * 2;
-        sl->types = GROW_ARRAY(sl->types, ValueType, new_capacity, sl->capacity);
-        sl->capacity = new_capacity;
-    }
-
-    sl->types[sl->count] = type;
-    sl->count++;
-}
-
-SigList copy_sig_list(SigList* sl) {
-    SigList copy;
-    init_sig_list(&copy);
-
-    for (int i = 0; i < sl->count; i++) {
-        add_sig_type(&copy, sl->types[i]);
-    }
-
-    return copy;
-}*/
 
 Value to_float(double num) {
     Value value;

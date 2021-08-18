@@ -10,7 +10,7 @@
     memcpy(&compiler->chunk->codes[compiler->chunk->count], &value, sizeof(value)); \
     compiler->chunk->count += sizeof(value)
 
-ValueType compile_node(Compiler* compiler, struct Node* node);
+Sig* compile_node(Compiler* compiler, struct Node* node);
 
 static void add_error(Compiler* compiler, Token token, const char* message) {
     CompileError error;
@@ -63,75 +63,81 @@ static void emit_jump_by(Compiler* compiler, OpCode op, int index) {
 }
 
 
-static ValueType compile_literal(Compiler* compiler, struct Node* node) {
+static Sig* compile_literal(Compiler* compiler, struct Node* node) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
             EMIT_TYPE(compiler, OP_INT, integer);
-            return VAL_INT;
+            return make_prim_sig(VAL_INT);
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
             EMIT_TYPE(compiler, OP_FLOAT, f);
-            return VAL_FLOAT;
+            return make_prim_sig(VAL_FLOAT);
         }
         case TOKEN_STRING: {
             ObjString* str = make_string(literal->name.start, literal->name.length);
             EMIT_TYPE(compiler, OP_STRING, str);
-            return VAL_STRING;
+            return make_prim_sig(VAL_STRING);
         }
         case TOKEN_TRUE: {
             emit_byte(compiler, OP_TRUE);
-            return VAL_BOOL;
+            return make_prim_sig(VAL_BOOL);
         }
         case TOKEN_FALSE: {
             emit_byte(compiler, OP_FALSE);
-            return VAL_BOOL;
+            return make_prim_sig(VAL_BOOL);
         }
     }
 }
 
-static ValueType compile_unary(Compiler* compiler, struct Node* node) {
+static Sig* compile_unary(Compiler* compiler, struct Node* node) {
     Unary* unary = (Unary*)node;
-    ValueType type = compile_node(compiler, unary->right);
+    Sig* sig = compile_node(compiler, unary->right);
     emit_byte(compiler, OP_NEGATE);
-    return type;
+    return sig;
 }
 
-static ValueType compile_logical(Compiler* compiler, struct Node* node) {
+static Sig* compile_logical(Compiler* compiler, struct Node* node) {
     Logical* logical = (Logical*)node;
 
     if (logical->name.type == TOKEN_AND) {
-        ValueType left_type = compile_node(compiler, logical->left);
+        Sig* left_type = compile_node(compiler, logical->left);
         int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
         emit_byte(compiler, OP_POP);
-        ValueType right_type = compile_node(compiler, logical->right);
+        Sig* right_type = compile_node(compiler, logical->right);
         patch_jump(compiler, false_jump);
-        if (left_type != right_type) {
+        if (!same_sig(left_type, right_type)) {
             add_error(compiler, logical->name, "Left and right types must match.");
         }
-        return VAL_BOOL;
+        free_sig(left_type);
+        free_sig(right_type);
+        return make_prim_sig(VAL_BOOL);
     }
 
     if (logical->name.type == TOKEN_OR) {
-        ValueType left_type = compile_node(compiler, logical->left);
+        Sig* left_type = compile_node(compiler, logical->left);
         int true_jump = emit_jump(compiler, OP_JUMP_IF_TRUE);
         emit_byte(compiler, OP_POP);
-        ValueType right_type = compile_node(compiler, logical->right);
+        Sig* right_type = compile_node(compiler, logical->right);
         patch_jump(compiler, true_jump);
-        if (left_type != right_type) {
+        if (!same_sig(left_type, right_type)) {
             add_error(compiler, logical->name, "Left and right types must match.");
         }
-        return VAL_BOOL;
+        free_sig(left_type);
+        free_sig(right_type);
+        return make_prim_sig(VAL_BOOL);
     }
 
 
-    ValueType left_type = compile_node(compiler, logical->left);
-    ValueType right_type = compile_node(compiler, logical->right);
-    if (left_type != right_type) {
+    Sig* left_type = compile_node(compiler, logical->left);
+    Sig* right_type = compile_node(compiler, logical->right);
+    if (!same_sig(left_type, right_type)) {
         add_error(compiler, logical->name, "Left and right types must match.");
     }
+    free_sig(left_type);
+    free_sig(right_type);
     switch(logical->name.type) {
         case TOKEN_LESS:
             emit_byte(compiler, OP_LESS);
@@ -155,17 +161,18 @@ static ValueType compile_logical(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_NEGATE);
             break;
     }
-    return VAL_BOOL;
+    return make_prim_sig(VAL_BOOL);
 }
 
-static ValueType compile_binary(Compiler* compiler, struct Node* node) {
+static Sig* compile_binary(Compiler* compiler, struct Node* node) {
     Binary* binary = (Binary*)node;
 
-    ValueType type1 = compile_node(compiler, binary->left);
-    ValueType type2 = compile_node(compiler, binary->right);
-    if (type1 != type2) {
+    Sig* type1 = compile_node(compiler, binary->left);
+    Sig* type2 = compile_node(compiler, binary->right);
+    if (!same_sig(type1, type2)) {
         add_error(compiler, binary->name, "Left and right types must match.");
     }
+    free_sig(type2); //returning type1, so not freeing
     switch(binary->name.type) {
         case TOKEN_PLUS: emit_byte(compiler, OP_ADD); break;
         case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT); break;
@@ -177,11 +184,12 @@ static ValueType compile_binary(Compiler* compiler, struct Node* node) {
     return type1;
 }
 
-static ValueType compile_print(Compiler* compiler, struct Node* node) {
+static Sig* compile_print(Compiler* compiler, struct Node* node) {
     Print* print = (Print*)node;
-    ValueType type = compile_node(compiler, print->right);
+    Sig* type = compile_node(compiler, print->right);
+    free_sig(type);
     emit_byte(compiler, OP_PRINT);
-    return VAL_NIL;
+    return make_prim_sig(VAL_NIL);
 }
 
 static void set_local(Compiler* compiler, Token name, Sig* sig, int index) {
@@ -228,20 +236,21 @@ static void end_scope(Compiler* compiler) {
 }
 
 
-static ValueType compile_node(Compiler* compiler, struct Node* node) {
+static Sig* compile_node(Compiler* compiler, struct Node* node) {
     if (node == NULL) {
-        return VAL_NIL;
+        return make_prim_sig(VAL_NIL);
     }
     switch(node->type) {
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
-            ValueType type = compile_node(compiler, dv->right);
+            Sig* sig = compile_node(compiler, dv->right);
             add_local(compiler, dv->name, dv->sig);
-            if (type != VAL_NIL && type != ((SigPrim*)dv->sig)->type) {
+            if (!sig_is_type(sig, VAL_NIL) && !same_sig(sig, dv->sig)) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
-            return ((SigPrim*)dv->sig)->type;
+            free_sig(sig);
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
@@ -268,7 +277,7 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             EMIT_TYPE(compiler, OP_FUN, f);
             free_compiler(&func_comp);
 
-            return VAL_NIL;
+            return make_prim_sig(VAL_NIL);
         }
         //statements
         case NODE_PRINT:    return compile_print(compiler, node);
@@ -276,83 +285,94 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             Block* block = (Block*)node;
             start_scope(compiler);
             for (int i = 0; i < block->decl_list.count; i++) {
-                compile_node(compiler, block->decl_list.nodes[i]);
+                Sig* sig = compile_node(compiler, block->decl_list.nodes[i]);
+                free_sig(sig);
             }
             end_scope(compiler);
-            return VAL_NIL;
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
-            ValueType cond = compile_node(compiler, ie->condition);
-            if (cond != VAL_BOOL) {
+            Sig* cond = compile_node(compiler, ie->condition);
+            if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, ie->name, "Condition must evaluate to boolean.");
             }
+            free_sig(cond);
 
             int jump_then = emit_jump(compiler, OP_JUMP_IF_FALSE); 
 
             emit_byte(compiler, OP_POP);
-            compile_node(compiler, ie->then_block);
+            Sig* then_sig = compile_node(compiler, ie->then_block);
+            free_sig(then_sig);
             int jump_else = emit_jump(compiler, OP_JUMP);
 
             patch_jump(compiler, jump_then);
             emit_byte(compiler, OP_POP);
-            compile_node(compiler, ie->else_block);
+            Sig* else_sig = compile_node(compiler, ie->else_block);
+            free_sig(else_sig);
             patch_jump(compiler, jump_else);
-            return VAL_NIL;
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_WHILE: {
             While* wh = (While*)node;
             int start = compiler->chunk->count;
-            ValueType cond = compile_node(compiler, wh->condition);
-            if (cond != VAL_BOOL) {
+            Sig* cond = compile_node(compiler, wh->condition);
+            if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, wh->name, "Condition must evaluate to boolean.");
             }
+            free_sig(cond);
+
             int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
 
             emit_byte(compiler, OP_POP);
-            compile_node(compiler, wh->then_block);
+            Sig* then_block = compile_node(compiler, wh->then_block);
+            free_sig(then_block);
 
             //+3 to include OP_JUMP_BACK and uint16_t for jump distance
             int from = compiler->chunk->count + 3;
             emit_jump_by(compiler, OP_JUMP_BACK, from - start);
             patch_jump(compiler, false_jump);   
             emit_byte(compiler, OP_POP);
-            return VAL_NIL;
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_FOR: {
             For* fo = (For*)node;
-            compile_node(compiler, fo->initializer); //should leave no value on stack
+            Sig* init = compile_node(compiler, fo->initializer); //should leave no value on stack
+            free_sig(init);
 
             int condition_start = compiler->chunk->count;
-            ValueType cond = compile_node(compiler, fo->condition);
-            if (cond != VAL_BOOL) {
+            Sig* cond = compile_node(compiler, fo->condition);
+            if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, fo->name, "Condition must evaluate to boolean.");
             }
+            free_sig(cond);
 
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
             int body_jump = emit_jump(compiler, OP_JUMP);
 
             int update_start = compiler->chunk->count;
             if (fo->update) {
-                compile_node(compiler, fo->update);
+                Sig* up = compile_node(compiler, fo->update);
+                free_sig(up);
                 emit_byte(compiler, OP_POP); //pop update
             }
             emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk->count + 3 - condition_start);
 
             patch_jump(compiler, body_jump);
             emit_byte(compiler, OP_POP); //pop condition if true
-            compile_node(compiler, fo->then_block);
+            Sig* then_sig = compile_node(compiler, fo->then_block);
+            free_sig(then_sig);
             emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk->count + 3 - update_start);
 
             patch_jump(compiler, exit_jump);
             emit_byte(compiler, OP_POP); //pop condition if false
-            return VAL_NIL;
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_RETURN: {
             Return* ret = (Return*)node;
-            ValueType type = compile_node(compiler, ret->right);
+            Sig* sig = compile_node(compiler, ret->right);
             emit_byte(compiler, OP_RETURN);
-            return type;
+            return sig;
         }
         //expressions
         case NODE_LITERAL:      return compile_literal(compiler, node);
@@ -364,17 +384,17 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_GET_VAR);
             uint8_t idx = find_local(compiler, gv->name);
             emit_byte(compiler, idx);
-            return ((SigPrim*)(compiler->locals[idx].sig))->type;
+            return copy_sig(compiler->locals[idx].sig);
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
-            ValueType type = compile_node(compiler, sv->right);
+            Sig* sig = compile_node(compiler, sv->right);
             emit_byte(compiler, OP_SET_VAR);
             emit_byte(compiler, find_local(compiler, sv->name));
             if (sv->decl) {
                 emit_byte(compiler, OP_POP);
             }
-            return type;
+            return sig;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
@@ -384,19 +404,19 @@ static ValueType compile_node(Compiler* compiler, struct Node* node) {
 
             //push arguments to top of stack and check types
             uint8_t idx = find_local(compiler, call->name);
-            SigFun* sf = (SigFun*)(compiler->locals[idx].sig);
-            Sig** sigs = sf->params.sigs;
+            Sig* sig = compiler->locals[idx].sig;
+            SigList* params = &((SigFun*)sig)->params;
             for (int i = 0; i < call->arguments.count; i++) {
-                ValueType arg_type = compile_node(compiler, call->arguments.nodes[i]);
-
-                if (arg_type != ((SigPrim*)sigs[i])->type) {
+                Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i]);
+                if (!same_sig(arg_sig, params->sigs[i])) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
+                free_sig(arg_sig);
             }
             //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
-            return ((SigPrim*)sf->ret)->type;
+            return copy_sig(((SigFun*)sig)->ret);
         }
     } 
 }
@@ -414,7 +434,8 @@ void free_compiler(Compiler* compiler) {
 
 ResultCode compile(Compiler* compiler, NodeList* nl) {
     for (int i = 0; i < nl->count; i++) {
-        ValueType type = compile_node(compiler, nl->nodes[i]);
+        Sig* sig = compile_node(compiler, nl->nodes[i]);
+        free_sig(sig);
     }
 
     emit_byte(compiler, OP_RETURN);

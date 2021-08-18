@@ -29,10 +29,9 @@
  */
 
 //TODO:
-//  All the pointer casting is messy and error prone.  Can we simplify the Sig nodes?
-//      YES!  Have the compiler functions return Sig* instead of ValueType.  Then a function in sig.c
-//      can be used to see if two Sig* are equal!  This should simplify a lot of things.  Try to keep
-//      all type checking to just using sig comparison functions
+//
+//  Need to change other compile_node subfunctions to return Sig* rather than ValueType
+//          literal, binary, logical, unary, print
 //
 //  Generalize the sigs in compiler/parser to let them work with functions too (only primitives work now)
 //      check by passing functions around using variables

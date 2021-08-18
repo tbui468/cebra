@@ -37,6 +37,9 @@ Sig* make_prim_sig(ValueType type);
 Sig* make_fun_sig(SigList params, Sig* ret);
 
 bool same_sig(Sig* sig1, Sig* sig2);
+bool sig_is_type(Sig* sig, ValueType type);
+
+Sig* copy_sig(Sig* sig);
 
 void free_sig(Sig* sig);
 

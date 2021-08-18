@@ -68,6 +68,33 @@ bool same_sig(Sig* sig1, Sig* sig2) {
     }
 }
 
+Sig* copy_sig(Sig* sig);
+static SigList copy_sig_list(SigList* sl) {
+    SigList copy;
+    init_sig_list(&copy);
+    for (int i = 0; i < sl->count; i++) {
+        add_sig(&copy, copy_sig(sl->sigs[i]));
+    }
+    return copy;
+}
+
+Sig* copy_sig(Sig* sig) {
+    switch(sig->type) {
+        case SIG_PRIM:
+            SigPrim* sp = (SigPrim*)sig;
+            return make_prim_sig(sp->type);
+        case SIG_FUN:
+            SigFun* sf = (SigFun*)sig;
+            return make_fun_sig(copy_sig_list(&sf->params), copy_sig(sf->ret));
+    }
+}
+
+bool sig_is_type(Sig* sig, ValueType type) {
+    if (sig->type != SIG_PRIM) return false;
+
+    return ((SigPrim*)sig)->type == type;
+}
+
 void free_sig(Sig* sig) {
     switch(sig->type) {
         case SIG_PRIM:
