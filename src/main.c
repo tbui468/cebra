@@ -29,9 +29,6 @@
  */
 
 //TODO:
-//  free_node_list should free the sig nodes
-//      check that memory is all freed
-//
 //  All the pointer casting is messy and error prone.  Can we simplify the Sig nodes?
 //      YES!  Have the compiler functions return Sig* instead of ValueType.  Then a function in sig.c
 //      can be used to see if two Sig* are equal!  This should simplify a lot of things.  Try to keep

@@ -45,6 +45,29 @@ Sig* make_fun_sig(SigList params, Sig* ret) {
     return (Sig*)sig_fun;
 }
 
+bool same_sig_list(SigList* sl1, SigList* sl2) {
+    if (sl1->count != sl2->count) return false;
+
+    for (int i = 0; i < sl1->count; i++) {
+        if (!same_sig(sl1->sigs[i], sl2->sigs[i])) return false;
+    }
+
+    return true;
+}
+
+bool same_sig(Sig* sig1, Sig* sig2) {
+    if (sig1->type != sig2->type) return false;
+
+    switch(sig1->type) {
+        case SIG_PRIM:
+            return (SigPrim*)sig1->type == (SigPrim*)sig2->type;
+        case SIG_FUN:
+            bool ret_same = same_sig(((SigFun*)sig1)->ret, ((SigFun*)sig2)->ret);
+            bool params_same = same_sig_list(&((SigFun*)sig1)->params, &((SigFun*)sig2)->params);
+            return ret_same && params_same;
+    }
+}
+
 void free_sig(Sig* sig) {
     switch(sig->type) {
         case SIG_PRIM:

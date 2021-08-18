@@ -36,6 +36,8 @@ void add_sig(SigList* sl, Sig* sig);
 Sig* make_prim_sig(ValueType type);
 Sig* make_fun_sig(SigList params, Sig* ret);
 
+bool same_sig(Sig* sig1, Sig* sig2);
+
 void free_sig(Sig* sig);
 
 #endif// CEBRA_SIG_H
