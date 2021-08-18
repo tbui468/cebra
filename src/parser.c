@@ -38,13 +38,6 @@ static bool peek_two(TokenType type1, TokenType type2) {
     return parser.current.type == type1 && parser.next.type == type2;
 }
 
-static bool read_type() {
-    if (match(TOKEN_INT_TYPE)) return true; 
-    if (match(TOKEN_FLOAT_TYPE)) return true; 
-    if (match(TOKEN_STRING_TYPE)) return true; 
-    if (match(TOKEN_BOOL_TYPE)) return true; 
-    return false;
-}
 
 static struct Node* primary() {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
@@ -171,16 +164,35 @@ static struct Node* block() {
     return make_block(name, body);
 }
 
+static Sig* read_sig() {
+    if (match(TOKEN_LEFT_PAREN)) {
+        SigList params;
+        init_sig_list(&params);
+        do {
+            add_sig(&params, read_sig());
+        } while(match(TOKEN_COMMA));
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
+        consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.");
+        Sig* ret = read_sig();
+        return make_fun_sig(params, ret);
+    }
+
+    if (match(TOKEN_INT_TYPE) ||
+        match(TOKEN_FLOAT_TYPE) ||
+        match(TOKEN_STRING_TYPE) ||
+        match(TOKEN_BOOL_TYPE)) {
+        
+        return make_prim_sig(get_value_type(parser.previous));
+    }
+
+    return make_prim_sig(VAL_NIL);
+}
+
 static struct Node* var_declaration(bool require_assign) {
     match(TOKEN_IDENTIFIER);
     Token name = parser.previous;
-    match(TOKEN_COLON);
-    if (!read_type()) {
-        add_error(parser.previous, "Expect data type after ':'.");
-    }
-
-    ValueType type = get_value_type(parser.previous);
-    Sig* sig = make_prim_sig(type); //TODO: generalize this to include functions
+    consume(TOKEN_COLON, "Expect ':' after identifier.");
+    Sig* sig = read_sig();
 
     if (require_assign) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
@@ -239,18 +251,11 @@ static struct Node* declaration() {
         }
 
         consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
-        Token ret;
-        ret.type = TOKEN_NIL_TYPE;
-        ret.line = -1;
-        ret.start = NULL;
-        ret.length = 0;
-        if (read_type()) {
-            ret = parser.previous;
-        }
+
+        Sig* ret_sig = read_sig();
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();
-        Sig* ret_sig = make_prim_sig(get_value_type(ret));
         Sig* sig = make_fun_sig(sl, ret_sig);
         return make_decl_fun(name, params, sig, body);
     } else if (match(TOKEN_LEFT_BRACE)) {

@@ -29,10 +29,6 @@
  */
 
 //TODO:
-//
-//  Need to change other compile_node subfunctions to return Sig* rather than ValueType
-//          literal, binary, logical, unary, print
-//
 //  Generalize the sigs in compiler/parser to let them work with functions too (only primitives work now)
 //      check by passing functions around using variables
 //
