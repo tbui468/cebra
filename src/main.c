@@ -30,10 +30,17 @@
 
 //TODO:
 //  free_node_list should free the sig nodes
+//      check that memory is all freed
 //
-//  Generalize the sigs in compiler/parser to let them work with functions too (only primitive work now)
+//  All the pointer casting is messy and error prone.  Can we simplify the Sig nodes?
+//      YES!  Have the compiler functions return Sig* instead of ValueType.  Then a function in sig.c
+//      can be used to see if two Sig* are equal!  This should simplify a lot of things.  Try to keep
+//      all type checking to just using sig comparison functions
 //
-//  Make sure function typing works by defining a function and then passing it around with variables
+//  Generalize the sigs in compiler/parser to let them work with functions too (only primitives work now)
+//      check by passing functions around using variables
+//
+//  Clear up the warnings (especially with switch statements)
 //
 //  Closures
 //      first set up test.cbr function that captures a variable at declaration time
@@ -74,7 +81,7 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 
 #ifdef DEBUG_AST
-    print_node_list(&dl);
+    print_node_list(&nl);
 #endif
 
     ResultCode run_result = compile_and_run(vm, &nl);

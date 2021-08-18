@@ -15,7 +15,7 @@ void free_node_list(NodeList* nl) {
     for (int i = 0; i < nl->count; i++) {
         free_node(nl->nodes[i]);
     }
-    FREE_ARRAY(nl->nodes, struct Node**, nl->capacity);
+    FREE_ARRAY(nl->nodes, struct Node*, nl->capacity);
 }
 
 void add_node(NodeList* nl, struct Node* node) {

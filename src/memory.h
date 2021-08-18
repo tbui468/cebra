@@ -11,7 +11,7 @@
 #define ALLOCATE_OBJ(type) ((type*)allocate_obj(sizeof(type)))
 #define FREE_OBJ(ptr, type) (free((type*)ptr), mm.object_bytes_freed += sizeof(type))
 
-//Compiler memory
+//ALLOCATE/FREE NODE also takes care of Sig nodes (along with AST nodes)
 #define ALLOCATE_NODE(type) (type*)allocate_node(sizeof(type))
 #define FREE_NODE(ptr, type) (free((type*)ptr), mm.node_bytes_freed += sizeof(type))
 

@@ -1,8 +1,6 @@
 #include "sig.h"
 #include "memory.h"
 
-//static Sig* copy_sig(Sig* sig);
-
 void init_sig_list(SigList* sl) {
     sl->sigs = ALLOCATE_ARRAY(Sig*);
     sl->count = 0;
@@ -10,6 +8,9 @@ void init_sig_list(SigList* sl) {
 }
 
 void free_sig_list(SigList* sl) {
+    for (int i = 0; i < sl->count; i++) {
+        free_sig(sl->sigs[i]);
+    }
     FREE_ARRAY(sl->sigs, Sig*, sl->capacity);
 }
 
@@ -24,18 +25,6 @@ void add_sig(SigList* sl, Sig* sig) {
     sl->sigs[sl->count] = sig;
     sl->count++;
 }
-
-/*
-SigList copy_sig_list(SigList* sl) {
-    SigList copy;
-    init_sig_list(&copy);
-
-    for (int i = 0; i < sl->count; i++) {
-        add_sig(&copy, copy_sig(sl->sigs[i]));
-    }
-
-    return copy;
-}*/
 
 Sig* make_prim_sig(ValueType type) {
     SigPrim* sig_prim = ALLOCATE_NODE(SigPrim);
@@ -55,18 +44,6 @@ Sig* make_fun_sig(SigList params, Sig* ret) {
     
     return (Sig*)sig_fun;
 }
-
-/*
-static Sig* copy_sig(Sig* sig) {
-    switch(sig->type) {
-        case SIG_PRIM:
-            SigPrim* sp = (SigPrim*)sig;
-            return make_prim_sig(sp->type);
-        case SIG_FUN:
-            SigFun* sf = (SigFun*)sig;
-            return make_fun_sig(copy_sig_list(&sf->params), copy_sig(sf->ret));
-    }
-}*/
 
 void free_sig(Sig* sig) {
     switch(sig->type) {
