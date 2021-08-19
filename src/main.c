@@ -37,10 +37,6 @@
 //Dog: string, int < Animal = { name: string, age: int }
 
 //TODO:
-//  Compiler should throw error (or VM?) when the argument count not equal to function signatures parameter count
-//
-//  Line counts not incrementing on commented lines
-//
 //  Make this work: outer()() where the second set of parens calls the returned function from calling 'outer'
 //      if function call is followed by '(', embed the result inside another function call
 //      how to distinguish from a grouping??

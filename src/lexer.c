@@ -121,6 +121,7 @@ Token next_token() {
     while (c == '/' && peek_char() == '/') {
         while (next_char() != '\n') {
         }        
+        lexer.line++;
         consume_whitespace();
         c = next_char();
     }
