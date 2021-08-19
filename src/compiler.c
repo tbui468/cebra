@@ -420,13 +420,19 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             uint8_t idx = find_local(compiler, call->name);
             Sig* sig = compiler->locals[idx].sig;
             SigList* params = &((SigFun*)sig)->params;
-            for (int i = 0; i < call->arguments.count; i++) {
+            if (params->count != call->arguments.count) {
+                add_error(compiler, call->name, "Argument count must match declaration.");
+            }
+
+            int min = call->arguments.count < params->count ? call->arguments.count : params->count;
+            for (int i = 0; i < min; i++) {
                 Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
                 if (!same_sig(arg_sig, params->sigs[i])) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
                 free_sig(arg_sig);
             }
+
             //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));

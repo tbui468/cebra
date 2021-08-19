@@ -30,12 +30,27 @@ static void consume(TokenType type, const char* message) {
     add_error(parser.previous, message);
 }
 
-static bool peek(TokenType type) {
+static bool peek_one(TokenType type) {
     return parser.current.type == type;
 }
 
 static bool peek_two(TokenType type1, TokenType type2) {
     return parser.current.type == type1 && parser.next.type == type2;
+}
+
+static struct Node* call_expression() {
+    match(TOKEN_IDENTIFIER);
+    Token name = parser.previous;
+    match(TOKEN_LEFT_PAREN);
+    NodeList args;
+    init_node_list(&args);
+    if (!match(TOKEN_RIGHT_PAREN)) {
+        do {
+            add_node(&args, expression()); 
+        } while (match(TOKEN_COMMA));
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+    }
+    return make_call(name, args);
 }
 
 
@@ -44,18 +59,16 @@ static struct Node* primary() {
         match(TOKEN_STRING) || match(TOKEN_TRUE) ||
         match(TOKEN_FALSE)) {
         return make_literal(parser.previous);
-    } else if (match(TOKEN_IDENTIFIER)) {
+    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
+        match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
-        if (match(TOKEN_EQUAL)) {
-            return make_set_var(name, expression(), false);
-        } else if (match(TOKEN_LEFT_PAREN)) {
-            NodeList args;
-            init_node_list(&args);
-            while (!match(TOKEN_RIGHT_PAREN)) {
-                add_node(&args, expression()); 
-            }
-            return make_call(name, args);
-        }
+        match(TOKEN_EQUAL);
+        return make_set_var(name, expression(), false);
+    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
+        return call_expression();
+    } else if (peek_one(TOKEN_IDENTIFIER)) {
+        match(TOKEN_IDENTIFIER);
+        Token name = parser.previous;
         return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
         struct Node* expr = expression();
@@ -63,7 +76,7 @@ static struct Node* primary() {
         return expr;
     }
 
-//    add_error(parser.previous, "Unrecognized token.");
+    add_error(parser.previous, "Unrecognized token.");
     return NULL;
 }
 
@@ -222,15 +235,7 @@ static struct Node* declaration() {
         match(TOKEN_EQUAL);
         return make_set_var(name, expression(), true);
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
-        match(TOKEN_IDENTIFIER);
-        Token name = parser.previous;
-        match(TOKEN_LEFT_PAREN);
-        NodeList args;
-        init_node_list(&args);
-        while (!match(TOKEN_RIGHT_PAREN)) {
-            add_node(&args, expression()); 
-        }
-        return make_call(name, args);
+        return call_expression();
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON_COLON)) {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;

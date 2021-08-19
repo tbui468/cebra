@@ -37,10 +37,9 @@
 //Dog: string, int < Animal = { name: string, age: int }
 
 //TODO:
-//  Return types aren't checked right now for some reason
-//      make print_sig function to debug signatures
-//      in function, need to compare return statement signatures vs
-//      function return signature
+//  Compiler should throw error (or VM?) when the argument count not equal to function signatures parameter count
+//
+//  Line counts not incrementing on commented lines
 //
 //  Make this work: outer()() where the second set of parens calls the returned function from calling 'outer'
 //      if function call is followed by '(', embed the result inside another function call
@@ -52,9 +51,7 @@
 //      NOTE: this should be part of the precedence in recursive descent
 //          where () is highest precedence
 //
-//  Line counts not incrementing on commented lines
-//
-//  Clear up the warnings (especially with switch statements)
+//  Clear up the warnings (especially with switch statements) before doing closures
 //
 //  Closures
 //      first set up test.cbr function that captures a variable at declaration time
