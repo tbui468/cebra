@@ -24,6 +24,7 @@ typedef enum {
     NODE_DECL_FUN,
     NODE_RETURN,
     NODE_CALL,
+    NODE_CASCADE_CALL,
 } NodeType;
 
 struct Node {
@@ -142,6 +143,12 @@ typedef struct {
     NodeList arguments;
 } Call;
 
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* function;
+    NodeList arguments;
+} CascadeCall;
 
 
 struct Node* make_literal(Token name);
@@ -159,6 +166,7 @@ struct Node* make_for(Token name, struct Node* initializer, struct Node* conditi
 struct Node* make_decl_fun(Token name, NodeList parameters, Sig* sig, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, NodeList arguments);
+struct Node* make_cascade_call(Token name, struct Node* function, NodeList arguments);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

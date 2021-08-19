@@ -38,9 +38,7 @@ static bool peek_two(TokenType type1, TokenType type2) {
     return parser.current.type == type1 && parser.next.type == type2;
 }
 
-static struct Node* call_expression() {
-    match(TOKEN_IDENTIFIER);
-    Token name = parser.previous;
+static NodeList argument_list() {
     match(TOKEN_LEFT_PAREN);
     NodeList args;
     init_node_list(&args);
@@ -50,9 +48,23 @@ static struct Node* call_expression() {
         } while (match(TOKEN_COMMA));
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
     }
-    return make_call(name, args);
+
+    return args;
 }
 
+static struct Node* call_expression() {
+    match(TOKEN_IDENTIFIER);
+    Token name = parser.previous;
+    NodeList args = argument_list();
+    struct Node* call = make_call(name, args);
+
+    while (peek_one(TOKEN_LEFT_PAREN)) {
+        //TODO: parser.previous really should be the left paren
+        call = make_cascade_call(parser.previous, call, argument_list());
+    }
+
+    return call;
+}
 
 static struct Node* primary() {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 

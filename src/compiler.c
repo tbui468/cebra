@@ -256,10 +256,6 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
 
-            printf("Function Decl sig: ");
-            print_sig(df->sig);
-            printf("\n");
-
             //adding function signatures for type checking
             int arity = df->parameters.count;
             add_local(compiler, df->name, df->sig);
@@ -426,7 +422,7 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
 
             int min = call->arguments.count < params->count ? call->arguments.count : params->count;
             for (int i = 0; i < min; i++) {
-                Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
+                Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs); //TODO: ret_sigs isn't needed here, right???
                 if (!same_sig(arg_sig, params->sigs[i])) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
@@ -437,6 +433,35 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
             return copy_sig(((SigFun*)sig)->ret);
+        }
+        case NODE_CASCADE_CALL: {
+            CascadeCall* cc = (CascadeCall*)node;
+            Sig* fun_sig = compile_node(compiler, cc->function, NULL); //TODO: ret_sigs not needed here (similar to CALL), right?
+
+            //TODO: most of this is a repeat of code in CALL - combine it
+            SigList* params = &((SigFun*)fun_sig)->params;
+            if (params->count != cc->arguments.count) {
+                add_error(compiler, cc->name, "Argument count must match declaration.");
+            }
+
+            int min = cc->arguments.count < params->count ? cc->arguments.count : params->count;
+            for (int i = 0; i < min; i++) {
+                Sig* arg_sig = compile_node(compiler, cc->arguments.nodes[i], ret_sigs); //TODO: ret_sigs isn't needed here, right???
+                if (!same_sig(arg_sig, params->sigs[i])) {
+                    add_error(compiler, cc->name, "Argument type must match parameter type.");
+                }
+                free_sig(arg_sig);
+            }
+
+            //make a new callframe
+            emit_byte(compiler, OP_CALL);
+            emit_byte(compiler, (uint8_t)(cc->arguments.count));
+
+            Sig* copy = copy_sig(((SigFun*)fun_sig)->ret);
+
+            free_sig(fun_sig);
+
+            return copy;
         }
     } 
 }

@@ -37,15 +37,7 @@
 //Dog: string, int < Animal = { name: string, age: int }
 
 //TODO:
-//  Make this work: outer()() where the second set of parens calls the returned function from calling 'outer'
-//      if function call is followed by '(', embed the result inside another function call
-//      how to distinguish from a grouping??
-//      if a function is on top of vm stack when () is called, it must be a function call
-//      How about this?  Keep track of last ast node created - if that last node was a
-//      function call with a function return signature, any following parens will be 
-//      seen as a subsequent function call
-//      NOTE: this should be part of the precedence in recursive descent
-//          where () is highest precedence
+//  Write correctness tests for new signature type checking 
 //
 //  Clear up the warnings (especially with switch statements) before doing closures
 //

@@ -163,6 +163,17 @@ struct Node* make_call(Token name, NodeList arguments) {
     return (struct Node*)call;
 }
 
+
+struct Node* make_cascade_call(Token name, struct Node* function, NodeList arguments) {
+    CascadeCall* call = ALLOCATE_NODE(CascadeCall);
+    call->name = name;
+    call->function = function;
+    call->arguments = arguments;
+    call->base.type = NODE_CASCADE_CALL;
+
+    return (struct Node*)call;
+}
+
 /*
  * Utility
  */
@@ -266,6 +277,11 @@ void print_node(struct Node* node) {
             break;
         }
         case NODE_CALL: {
+            //TODO: fill this in
+            printf("Call");
+            break;
+        }
+        case NODE_CASCADE_CALL: {
             //TODO: fill this in
             printf("Call");
             break;
@@ -381,6 +397,13 @@ void free_node(struct Node* node) {
             Call* call = (Call*)node;
             free_node_list(&call->arguments);
             FREE_NODE(call, Call);
+            break;
+        }
+        case NODE_CASCADE_CALL: {
+            CascadeCall* call = (CascadeCall*)node;
+            free_node(call->function);
+            free_node_list(&call->arguments);
+            FREE_NODE(call, CascadeCall);
             break;
         }
     } 
