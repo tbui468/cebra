@@ -60,7 +60,7 @@ bool same_sig(Sig* sig1, Sig* sig2) {
 
     switch(sig1->type) {
         case SIG_PRIM:
-            return (SigPrim*)sig1->type == (SigPrim*)sig2->type;
+            return ((SigPrim*)sig1)->type == ((SigPrim*)sig2)->type;
         case SIG_FUN:
             bool ret_same = same_sig(((SigFun*)sig1)->ret, ((SigFun*)sig2)->ret);
             bool params_same = same_sig_list(&((SigFun*)sig1)->params, &((SigFun*)sig2)->params);
@@ -93,6 +93,25 @@ bool sig_is_type(Sig* sig, ValueType type) {
     if (sig->type != SIG_PRIM) return false;
 
     return ((SigPrim*)sig)->type == type;
+}
+
+void print_sig(Sig* sig) {
+    switch(sig->type) {
+        case SIG_PRIM:
+            SigPrim* sp = (SigPrim*)sig;
+            printf(" %s ", value_type_to_string(sp->type));
+            break;
+        case SIG_FUN:
+            SigFun* sf = (SigFun*)sig;
+            SigList* params = &sf->params;
+            printf("(");
+            for (int i = 0; i < params->count; i++) {
+                print_sig(params->sigs[i]);
+            } 
+            printf(") -> ");
+            print_sig(sf->ret);
+            break;
+    }
 }
 
 void free_sig(Sig* sig) {

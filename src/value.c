@@ -157,6 +157,16 @@ void print_value(Value a) {
     }
 }
 
+const char* value_type_to_string(ValueType type) {
+    switch(type) {
+        case VAL_INT: return "VAL_INT";
+        case VAL_FLOAT: return "VAL_FLOAT";
+        case VAL_STRING: return "VAL_STRING";
+        case VAL_BOOL: return "VAL_BOOL";
+        case VAL_NIL: return "VAL_NIL";
+    }
+}
+
 ValueType get_value_type(Token token) {
     switch(token.type) {
         case TOKEN_INT_TYPE: return VAL_INT;

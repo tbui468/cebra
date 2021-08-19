@@ -29,8 +29,20 @@
  */
 
 //TODO:
-//  Generalize the sigs in compiler/parser to let them work with functions too (only primitives work now)
-//      check by passing functions around using variables
+//  Return types aren't checked right now for some reason
+//      make print_sig function to debug signatures
+//
+//  Make this work: outer()() where the second set of parens calls the returned function from calling 'outer'
+//      if function call is followed by '(', embed the result inside another function call
+//      how to distinguish from a grouping??
+//      if a function is on top of vm stack when () is called, it must be a function call
+//      How about this?  Keep track of last ast node created - if that last node was a
+//      function call with a function return signature, any following parens will be 
+//      seen as a subsequent function call
+//      NOTE: this should be part of the precedence in recursive descent
+//          where () is highest precedence
+//
+//  Line counts not incrementing on commented lines
 //
 //  Clear up the warnings (especially with switch statements)
 //

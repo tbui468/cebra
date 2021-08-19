@@ -168,10 +168,12 @@ static Sig* read_sig() {
     if (match(TOKEN_LEFT_PAREN)) {
         SigList params;
         init_sig_list(&params);
-        do {
-            add_sig(&params, read_sig());
-        } while(match(TOKEN_COMMA));
-        consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
+        if (!match(TOKEN_RIGHT_PAREN)) {
+            do {
+                add_sig(&params, read_sig());
+            } while(match(TOKEN_COMMA));
+            consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
+        }
         consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.");
         Sig* ret = read_sig();
         return make_fun_sig(params, ret);
@@ -237,14 +239,14 @@ static struct Node* declaration() {
         NodeList params;
         init_node_list(&params);
 
-        SigList sl;
-        init_sig_list(&sl); 
+        SigList param_sig;
+        init_sig_list(&param_sig); 
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Node* var_decl = var_declaration(false);
                 DeclVar* vd = (DeclVar*)var_decl;
                 Sig* prim_sig = make_prim_sig(((SigPrim*)vd->sig)->type);
-                add_sig(&sl, prim_sig);
+                add_sig(&param_sig, prim_sig);
                 add_node(&params, var_decl);
             } while (match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
@@ -256,7 +258,7 @@ static struct Node* declaration() {
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();
-        Sig* sig = make_fun_sig(sl, ret_sig);
+        Sig* sig = make_fun_sig(param_sig, ret_sig);
         return make_decl_fun(name, params, sig, body);
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();

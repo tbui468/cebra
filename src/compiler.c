@@ -276,7 +276,8 @@ static Sig* compile_node(Compiler* compiler, struct Node* node) {
             ObjFunction* f = make_function(chunk, arity);
             EMIT_TYPE(compiler, OP_FUN, f);
             free_compiler(&func_comp);
-
+            print_sig(df->sig);
+            printf("\n");
             return make_prim_sig(VAL_NIL);
         }
         //statements
@@ -384,7 +385,10 @@ static Sig* compile_node(Compiler* compiler, struct Node* node) {
             emit_byte(compiler, OP_GET_VAR);
             uint8_t idx = find_local(compiler, gv->name);
             emit_byte(compiler, idx);
-            return copy_sig(compiler->locals[idx].sig);
+            Sig* sig = copy_sig(compiler->locals[idx].sig);
+            print_sig(sig);
+            printf("\n");
+            return sig;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;

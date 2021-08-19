@@ -55,6 +55,7 @@ Value greater_values(Value a, Value b);
 Value mod_values(Value a, Value b);
 Value equal_values(Value a, Value b);
 void print_value(Value a);
+const char* value_type_to_string(ValueType type);
 ValueType get_value_type(Token token);
 
 #endif// CEBRA_VALUE_H
