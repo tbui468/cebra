@@ -28,9 +28,19 @@
  *  closures, structs
  */
 
+//Syntax ideas
+//number: int = 4
+//double: (int) -> int = (n: int) -> int { -> 2 * n }
+//double := (n: int) -> int { -> 2 * n }
+//Dog: (string, int) = { name: string, age: int }
+//Dog := { name: string, age: int }
+//Dog: string, int < Animal = { name: string, age: int }
+
 //TODO:
 //  Return types aren't checked right now for some reason
 //      make print_sig function to debug signatures
+//      in function, need to compare return statement signatures vs
+//      function return signature
 //
 //  Make this work: outer()() where the second set of parens calls the returned function from calling 'outer'
 //      if function call is followed by '(', embed the result inside another function call

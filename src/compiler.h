@@ -31,7 +31,7 @@ typedef struct {
 
 void init_compiler(Compiler* compiler, Chunk* chunk);
 void free_compiler(Compiler* compiler);
-ResultCode compile(Compiler* compiler, NodeList* nl);
+ResultCode compile_ast(Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(Compiler* compiler);
 
