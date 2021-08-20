@@ -274,6 +274,9 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             SigList inner_ret_sigs = compile_function(&func_comp, &df->parameters);
 
             SigFun* sigfun = (SigFun*)df->sig;
+            if (inner_ret_sigs.count == 0 && !sig_is_type(sigfun->ret, VAL_NIL)) {
+                add_error(compiler, df->name, "Return type must match signature in function declaration.");
+            }
             for (int i = 0; i < inner_ret_sigs.count; i++) {
                 if (!same_sig(sigfun->ret, inner_ret_sigs.sigs[i])) {
                     add_error(compiler, df->name, "Return type must match signature in function declaration.");
@@ -293,7 +296,7 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             Block* block = (Block*)node;
             start_scope(compiler);
             for (int i = 0; i < block->decl_list.count; i++) {
-                Sig* sig = compile_node(compiler, block->decl_list.nodes[i], ret_sigs); //TODO: 
+                Sig* sig = compile_node(compiler, block->decl_list.nodes[i], ret_sigs);
                 free_sig(sig);
             }
             end_scope(compiler);

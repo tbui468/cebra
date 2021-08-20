@@ -37,9 +37,16 @@
 //Dog: string, int < Animal = { name: string, age: int }
 
 //TODO:
+//  Are Nil returns implicitly added to functions?  No
 //  Write correctness tests for new signature type checking 
+//      write tests for both primitive types and function types
 //
 //  Clear up the warnings (especially with switch statements) before doing closures
+//
+//  in compiler, CALL and CASCADE CALL share a lot of code - pull that into a function
+//
+//  Having to call free_sig on almost all signatures in compile_node is a bit much
+//      and super prone to errors
 //
 //  Closures
 //      first set up test.cbr function that captures a variable at declaration time
@@ -49,18 +56,21 @@
 //
 //  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
 //      add code inside memory.h - all allocations should go through there
+//      mark and sweep or reference counting?
 //
-//  Structs Instances
+//  Class Instances
 //
-//  Struct Getters and Setters
+//  Class Getters and Setters
 //
-//  Struct Instantiation
+//  Class Instantiation
 //
-//  Struct Inheritance
+//  Class Inheritance
 //
 //  Test Edge cases by writing toy programs - save these programs as correctness tests
 //
 //  Stress test by writing script to load nyc_subway data - compare runtime to python pandas
+//
+//  Write benchmarking code to use with chrome://tracing to find hotspots
 //
 //  Why are if /else so much slower than just if (think of the fibonacci example
 //

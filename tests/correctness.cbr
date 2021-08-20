@@ -166,7 +166,7 @@
 
 {
     print ""
-    print "***********Functions************"
+    print "***********Functions Return Primitives or Nil************"
     a :: () -> {
         print "Zero Parameters / No Return: Passed!"
     }
@@ -198,4 +198,17 @@
     } else {
         print "Recursion: Failed!"
     }
+}
+
+{
+    print ""
+    print "***********Functions Returning Functions************"
+    a :: () -> () -> {
+        b :: () -> {
+            print "No Parameters / Nil Return: Passed!"
+        }
+        -> b
+    }
+
+    a()()
 }

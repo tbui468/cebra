@@ -88,7 +88,6 @@ static struct Node* primary() {
         return expr;
     }
 
-    add_error(parser.previous, "Unrecognized token.");
     return NULL;
 }
 
