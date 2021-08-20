@@ -37,7 +37,6 @@
 //Dog: string, int < Animal = { name: string, age: int }
 
 //TODO:
-//  Are Nil returns implicitly added to functions?  No
 //  Write correctness tests for new signature type checking 
 //      write tests for both primitive types and function types
 //
