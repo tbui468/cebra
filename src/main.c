@@ -44,6 +44,11 @@ print fun()
  */
 
 //TODO:
+//  Does type checking using Sig work with assignment???
+//
+//  Make NODE_DECL_CLASS (should take in Token name, and NodeList props)
+//  test to see if it compiles
+//  dot notation for OP_GET_PROP, OP_SET_PROP
 //  Classes
 //      Don't really need a closure, right? - Yes we do.  Since the class methods need to see instance fields
 //      will need a hash table for struct properties

@@ -29,6 +29,11 @@ typedef struct {
     Sig* ret;
 } SigFun;
 
+typedef struct {
+    Sig base;
+
+} SigClass;
+
 void init_sig_list(SigList* sl);
 void free_sig_list(SigList* sl);
 void add_sig(SigList* sl, Sig* sig);

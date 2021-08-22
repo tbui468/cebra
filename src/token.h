@@ -41,6 +41,7 @@ typedef enum {
     TOKEN_WHILE,
     TOKEN_FOR,
     TOKEN_COMMA,
+    TOKEN_CLASS,
     TOKEN_EOF,
 } TokenType;
 

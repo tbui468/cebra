@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "sig.h"
 #include "memory.h"
 

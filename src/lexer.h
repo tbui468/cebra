@@ -13,7 +13,6 @@ typedef struct {
 void init_lexer(const char* source);
 Token next_token();
 char next_char();
-bool end_of_file();
 
 #endif// CEBRA_LEXER_H
 

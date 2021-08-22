@@ -12,7 +12,8 @@ static bool match(TokenType type) {
     if (parser.current.type == type) {
         parser.previous = parser.current;
         parser.current = parser.next;
-        parser.next = next_token();
+        parser.next = parser.next_next;
+        parser.next_next = next_token();
         return true;
     }
 
@@ -23,7 +24,8 @@ static void consume(TokenType type, const char* message) {
     if (type == parser.current.type) {
         parser.previous = parser.current;
         parser.current = parser.next;
-        parser.next = next_token();
+        parser.next = parser.next_next;
+        parser.next_next = next_token();
         return;
     }
     
@@ -37,6 +39,12 @@ static bool peek_one(TokenType type) {
 static bool peek_two(TokenType type1, TokenType type2) {
     return parser.current.type == type1 && parser.next.type == type2;
 }
+static bool peek_three(TokenType type1, TokenType type2, TokenType type3) {
+    return parser.current.type == type1 && 
+           parser.next.type == type2 &&
+           parser.next_next.type == type3;
+}
+
 
 static NodeList argument_list() {
     match(TOKEN_LEFT_PAREN);
@@ -247,7 +255,7 @@ static struct Node* declaration() {
         return make_set_var(name, expression(), true);
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
         return call_expression();
-    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON_COLON)) {
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
         match(TOKEN_COLON_COLON);
@@ -276,6 +284,18 @@ static struct Node* declaration() {
         struct Node* body = block();
         Sig* sig = make_fun_sig(param_sig, ret_sig);
         return make_decl_fun(name, params, sig, body);
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
+        match(TOKEN_IDENTIFIER);
+        Token name = parser.previous;
+        match(TOKEN_COLON_COLON);
+        match(TOKEN_CLASS);
+        consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+        NodeList nl;
+        init_node_list(&nl);
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            add_node(&nl, declaration());
+        }
+        return make_decl_class(name, nl, NULL); //TODO: need to make sig instead of using NULL
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {
@@ -288,7 +308,6 @@ static struct Node* declaration() {
             consume(TOKEN_LEFT_BRACE, "Expect '{' after else.");
             else_block = block();
         }
-
         return make_if_else(name, condition, then_block, else_block);
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
@@ -338,6 +357,7 @@ static void init_parser(const char* source) {
     parser.error_count = 0;
     parser.current = next_token();
     parser.next = next_token();
+    parser.next_next = next_token();
 }
 
 

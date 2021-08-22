@@ -82,6 +82,9 @@ static Token read_keyword(char c) {
         case 'b':
             if (match_string("ool")) return new_token(TOKEN_BOOL_TYPE);
             break;
+        case 'c':
+            if (match_string("lass")) return new_token(TOKEN_CLASS);
+            break;
         case 'e':
             if (match_string("lse")) return new_token(TOKEN_ELSE);
             break;
@@ -115,6 +118,14 @@ static Token read_keyword(char c) {
 
 Token next_token() {
     consume_whitespace();
+
+    //keep returning TOKEN_EOF if next_token() is called after source ends
+    if (peek_char() == '\0') {
+        Token token;
+        token.type = TOKEN_EOF;
+        return token;
+    }
+
     char c = next_char();
 
     //skip line comments
@@ -208,12 +219,7 @@ Token next_token() {
                 return new_token(TOKEN_GREATER_EQUAL);
             }
             return new_token(TOKEN_GREATER);
-        case '\0':  return new_token(TOKEN_EOF);
     }
-}
-
-bool end_of_file() {
-    return peek_char() == '\0';
 }
 
 void init_lexer(const char* source) {

@@ -16,6 +16,7 @@ void print_token(Token token) {
         case TOKEN_INT: printf("%s [%.*s]", "TOKEN_INT", token.length, token.start); break;
         case TOKEN_FLOAT: printf("TOKEN_FLOAT"); break;
         case TOKEN_STRING: printf("TOKEN_STRING"); break;
+        case TOKEN_CLASS: printf("TOKEN_CLASS"); break;
         case TOKEN_EOF: printf("TOKEN_EOF"); break;
         default: printf("Unrecognized token"); break;
     }

@@ -437,13 +437,21 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
-            Sig* sig = compile_node(compiler, sv->right, ret_sigs);
+            Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
+            Sig* var_sig = find_sig(compiler, sv->name);
+
+            if (!same_sig(right_sig, var_sig)) {
+                add_error(compiler, sv->name, "Right side type must match variable type.");
+            }
+
+            free_sig(var_sig);
+
             emit_byte(compiler, OP_SET_VAR);
             emit_byte(compiler, find_local(compiler, sv->name));
             if (sv->decl) {
                 emit_byte(compiler, OP_POP);
             }
-            return sig;
+            return right_sig;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
