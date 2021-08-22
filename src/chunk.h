@@ -14,6 +14,7 @@ typedef enum {
     OP_EQUAL,
     OP_SET_VAR,
     OP_GET_VAR,
+    OP_GET_UPVALUE,
     OP_ADD,
     OP_SUBTRACT,
     OP_MULTIPLY,

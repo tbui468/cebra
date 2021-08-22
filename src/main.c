@@ -28,42 +28,53 @@
  *  closures, structs
  */
 
-//Syntax ideas
-//number: int = 4
-//double: (int) -> int = (n: int) -> int { -> 2 * n }
-//double := (n: int) -> int { -> 2 * n }
-//Dog: (string, int) = { name: string, age: int }
-//Dog := { name: string, age: int }
-//Dog: string, int < Animal = { name: string, age: int }
+/*
+ * Closure test code
+ *
+//functions should capture locals where it's declared - top level in this case
+
+a: int = 23
+
+fun :: () -> int {
+    -> a
+}
+
+print fun()
+
+ */
 
 //TODO:
-//  Write correctness tests for new signature type checking 
-//      write tests for both primitive types and function types
+//  Classes
+//      Don't really need a closure, right? - Yes we do.  Since the class methods need to see instance fields
+//      will need a hash table for struct properties
+//      will need ObjInstance (each one should have own hash table)
 //
-//  Clear up the warnings (especially with switch statements) before doing closures
+//      Class declaration
+//          Dog :: class {
+//              a: int = 5
+//              Dog :: () -> this {
+//
+//              }
+//              b :: () -> {
+//                  print a
+//              }
+//          }
+//
+//  Struct Getters and Setters
+//      including type checking
+//
+//  Clear up the warnings (especially with switch statements) before doing garbage collection
 //
 //  in compiler, CALL and CASCADE CALL share a lot of code - pull that into a function
 //
 //  Having to call free_sig on almost all signatures in compile_node is a bit much
 //      and super prone to errors
 //
-//  Closures
-//      first set up test.cbr function that captures a variable at declaration time
-//      then write some code to get this working
-//      each compiler needs a list of upvalues
-//      need ObjUpvalue since we need to close some upvalues that are out of scope
-//
 //  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
 //      add code inside memory.h - all allocations should go through there
 //      mark and sweep or reference counting?
 //
-//  Class Instances
-//
-//  Class Getters and Setters
-//
-//  Class Instantiation
-//
-//  Class Inheritance
+//  Closures - nested functions and structs won't work unless these are implemented
 //
 //  Test Edge cases by writing toy programs - save these programs as correctness tests
 //

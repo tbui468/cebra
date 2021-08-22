@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "compiler.h"
 #include "memory.h"
 #include "object.h"
@@ -214,6 +215,41 @@ static uint8_t find_local(Compiler* compiler, Token name) {
         }
     }
 
+    /*//TODO: do we want to stick the index in an upvalue array here????
+    if (compiler->enclosing != NULL) {
+        return find_local((Compiler*)(compiler->enclosing), name);
+    }*/
+
+    add_error(compiler, name, "Local variable not declared.");
+}
+
+/* //TODO: for closures, but not doing that now
+static int rec_compute_height(Compiler* compiler) {
+    if (compiler->enclosing == NULL) {
+        return compiler->locals_count;
+    }
+
+    return compiler->locals_count + rec_compute_height((Compiler*)(compiler->enclosing));
+}
+
+//find absolute position in the stack, but we don't want to include height of very top compiler
+static int find_abs_height(Compiler* compiler) {
+    int height = rec_compute_height(compiler);
+    return height - compiler->locals_count;
+}*/
+
+static Sig* find_sig(Compiler* compiler, Token name) {
+    for (int i = compiler->locals_count - 1; i >= 0; i--) {
+        Local* local = &compiler->locals[i];
+        if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
+            return copy_sig(compiler->locals[i].sig);
+        }
+    }
+
+    if (compiler->enclosing != NULL) {
+        return find_sig((Compiler*)(compiler->enclosing), name);
+    }
+
     add_error(compiler, name, "Local variable not declared.");
 }
 
@@ -396,8 +432,8 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             emit_byte(compiler, OP_GET_VAR);
             uint8_t idx = find_local(compiler, gv->name);
             emit_byte(compiler, idx);
-            Sig* sig = copy_sig(compiler->locals[idx].sig);
-            return sig;
+
+            return find_sig(compiler, gv->name);
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
