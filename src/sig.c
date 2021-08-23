@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "sig.h"
 #include "memory.h"
 
@@ -46,6 +47,15 @@ Sig* make_fun_sig(SigList params, Sig* ret) {
     return (Sig*)sig_fun;
 }
 
+Sig* make_class_sig(Token klass) {
+    SigClass* sc = ALLOCATE_NODE(SigClass);
+
+    sc->base.type = SIG_CLASS;
+    sc->klass = klass;
+
+    return (Sig*)sc;
+}
+
 bool same_sig_list(SigList* sl1, SigList* sl2) {
     if (sl1->count != sl2->count) return false;
 
@@ -66,10 +76,16 @@ bool same_sig(Sig* sig1, Sig* sig2) {
             bool ret_same = same_sig(((SigFun*)sig1)->ret, ((SigFun*)sig2)->ret);
             bool params_same = same_sig_list(&((SigFun*)sig1)->params, &((SigFun*)sig2)->params);
             return ret_same && params_same;
+        case SIG_CLASS:
+            SigClass* sc1 = (SigClass*)sig1;
+            SigClass* sc2 = (SigClass*)sig2;
+            if (sc1->klass.length != sc2->klass.length) return false;
+            return memcmp(sc1->klass.start, sc2->klass.start, sc1->klass.length) == 0;
     }
 }
 
 Sig* copy_sig(Sig* sig);
+
 static SigList copy_sig_list(SigList* sl) {
     SigList copy;
     init_sig_list(&copy);
@@ -87,6 +103,9 @@ Sig* copy_sig(Sig* sig) {
         case SIG_FUN:
             SigFun* sf = (SigFun*)sig;
             return make_fun_sig(copy_sig_list(&sf->params), copy_sig(sf->ret));
+        case SIG_CLASS:
+            SigClass* sc = (SigClass*)sig;
+            return make_class_sig(copy_token(sc->klass));
     }
 }
 
@@ -112,6 +131,9 @@ void print_sig(Sig* sig) {
             printf(") -> ");
             print_sig(sf->ret);
             break;
+        case SIG_CLASS:
+            printf("SigClass Stub");
+            break;
     }
 }
 
@@ -126,6 +148,10 @@ void free_sig(Sig* sig) {
             free_sig_list(&sig_fun->params);
             free_sig(sig_fun->ret);
             FREE_NODE(sig_fun, SigFun);
+            break;
+        case SIG_CLASS:
+            SigClass* sc = (SigClass*)sig;
+            FREE_NODE(sc, SigClass);
             break;
     }
 }

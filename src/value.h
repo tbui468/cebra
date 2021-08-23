@@ -12,6 +12,8 @@ typedef enum {
     VAL_BOOL,
     VAL_STRING,
     VAL_FUNCTION,
+    VAL_CLASS,
+    VAL_INSTANCE,
     VAL_NIL,
 } ValueType;
 
@@ -23,27 +25,19 @@ typedef struct {
         ObjString* string_type;
         bool boolean_type;
         ObjFunction* function_type;
+        ObjClass* class_type;
+        ObjInstance* instance_type;
     } as;
 } Value;
 
-/*
-typedef struct {
-    ValueType* types;
-    int count;
-    int capacity;
-} SigList;
-
-
-void init_sig_list(SigList* sl);
-void free_sig_list(SigList* sl);
-void add_sig_type(SigList* sl, ValueType type);
-SigList copy_sig_list(SigList* sl);*/
 
 Value to_float(double num);
 Value to_integer(int32_t num);
 Value to_string(ObjString* obj);
 Value to_boolean(bool b);
 Value to_function(ObjFunction* obj);
+Value to_class(ObjClass* obj);
+Value to_instance(ObjInstance* obj);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);

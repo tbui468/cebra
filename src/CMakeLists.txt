@@ -1,4 +1,5 @@
 set(Sources
+    table.c
     main.c
     memory.c
     token.c
@@ -15,6 +16,7 @@ set(Sources
     )
 
 set(Headers
+    table.h
     result_code.h
     common.h
     memory.h

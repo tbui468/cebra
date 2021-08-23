@@ -40,6 +40,20 @@ Value to_function(ObjFunction* obj) {
     return value;
 }
 
+Value to_class(ObjClass* obj) {
+    Value value;
+    value.type = VAL_CLASS;
+    value.as.class_type = obj;
+    return value;
+}
+
+Value to_instance(ObjInstance* obj) {
+    Value value;
+    value.type = VAL_INSTANCE;
+    value.as.instance_type = obj;
+    return value;
+}
+
 Value to_nil() {
     Value value;
     value.type = VAL_NIL;

@@ -6,6 +6,7 @@
 typedef enum {
     SIG_PRIM,
     SIG_FUN,
+    SIG_CLASS
 } SigType;
 
 typedef struct {
@@ -31,7 +32,7 @@ typedef struct {
 
 typedef struct {
     Sig base;
-
+    Token klass; //not using 'class' in case we want to compile in c++
 } SigClass;
 
 void init_sig_list(SigList* sl);
@@ -40,6 +41,7 @@ void add_sig(SigList* sl, Sig* sig);
 
 Sig* make_prim_sig(ValueType type);
 Sig* make_fun_sig(SigList params, Sig* ret);
+Sig* make_class_sig(Token klass);
 
 bool same_sig(Sig* sig1, Sig* sig2);
 bool sig_is_type(Sig* sig, ValueType type);

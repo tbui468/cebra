@@ -55,5 +55,6 @@ typedef struct {
 
 
 void print_token(Token token);
+Token copy_token(Token token);
 
 #endif// CEBRA_TOKEN_H

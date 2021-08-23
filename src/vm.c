@@ -55,6 +55,12 @@ static ObjFunction* read_function(CallFrame* frame) {
     return *ptr;
 }
 
+static ObjClass* read_class(CallFrame* frame) {
+    ObjClass** ptr = (ObjClass**)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(ObjClass*);
+    return *ptr;
+}
+
 static void print_trace(VM* vm, OpCode op) {
     //print opcodes - how can the compiler and this use the same code?
     printf("Op: %s\n", op_to_string(op));
@@ -86,6 +92,21 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_FUN: {
             push(vm, to_function(read_function(frame)));
+            break;
+        }
+        case OP_CLASS: {
+            push(vm, to_class(read_class(frame)));
+            break;
+        }
+        case OP_INSTANCE: {
+                              /*
+            uint8_t class_idx = READ_TYPE(frame, uint8_t) + frame->stack_offset;
+            Value klass = vm->stack[class_idx];
+
+            //Table table = ????? //TODO: how to go from klass to this?
+
+            ObjInstance* inst = make_instance(table);
+            push(vm, to_instance(inst));*/
             break;
         }
         case OP_NEGATE: {

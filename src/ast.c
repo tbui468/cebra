@@ -330,6 +330,7 @@ void free_node(struct Node* node) {
             DeclClass* dc = (DeclClass*)node;
             free_node_list(&dc->decls);
             FREE_NODE(dc, DeclClass);
+            break;
         }
         //Statements
         case NODE_PRINT: {

@@ -19,6 +19,16 @@ void print_token(Token token) {
         case TOKEN_CLASS: printf("TOKEN_CLASS"); break;
         case TOKEN_EOF: printf("TOKEN_EOF"); break;
         default: printf("Unrecognized token"); break;
+
     }
     printf("\n");
+}
+
+Token copy_token(Token token) {
+    Token copy;
+    copy.type = token.type;
+    copy.line = token.line;
+    copy.start = token.start;
+    copy.length = token.length;
+    return copy;
 }

@@ -5,6 +5,7 @@
 #include "vm.h"
 #include "node_list.h"
 #include "memory.h"
+#include "table.h"
 
 /*
  * Parser -> Compiler -> VM
@@ -44,7 +45,51 @@ print fun()
  */
 
 //TODO:
-//  Does type checking using Sig work with assignment???
+//  Test hash table
+//      add more than 8 key/values and check that it expands correctly
+//      use hash table to intern strings
+//  Get Hash table working isolation:
+//      write tests to test it comprehensively (best as possible)
+//      we don't want hash table bugs causing problems
+//      since integration will be difficult enough
+//  Each function needs a Table to store all class and function declarations
+//      we will call this globals.  This is NOT the same as in clox - functions inside
+//      another function CANNOT see enclosing variables, BUT they can see classes and functions
+//      defined in global.  Contrast this with scopes, which can see enclosing variables and
+//      of course functions and classses.
+//
+//  Make a two pass compiler - the first pass compiles all function and struct declarations, and
+//  the second pass defines them.  This allows function and struct declarations to be in any order.
+//
+//
+//  Big problem: Can't access classes (or functions etc) outside the current function scope
+//      so we can't instantiate or call functions (?) inside another function
+//      check this assumption by writing some code to see if it runs
+//
+//      Yep, it doesn't work.
+//
+//      Two options: create closures and upvalue, or make a hash table and put all
+//          class and function declarations as global objects.  Then we can access
+//          them from anywhere.  Will have to rethink function pointers/first class
+//          citizens if so.  
+//
+//          Each function has a table of global functions/class AND it has access to 
+//          any outer functions tables.  This keeps any declared functions private.
+//          
+//          But what happens if a user tries to return one of those functions?  We let them.
+//          Since it's just a reference to ObjFunction that can be pushed onto the local
+//          stack and used until the function returns.
+//
+//  OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
+//      basic problem: how to go from ObjClass -> Table necessary for instance?
+//
+//  MONDAY
+//  Make ObjInstance for storing instances
+//  Add ObjInstance* to Value and any supporting functions
+//  Check that sample class compiles
+//  Make Table (hash table) for instances to store class fields and methods
+//  Make dot notation work for getting/setting instance fields
+//  Make methods callable using dot notation
 //
 //  Make NODE_DECL_CLASS (should take in Token name, and NodeList props)
 //  test to see if it compiles
@@ -98,7 +143,7 @@ ResultCode run_source(VM* vm, const char* source) {
     init_node_list(&nl);
 
     ResultCode parse_result = parse(source, &nl);
-    
+
     if (parse_result == RESULT_FAILED) {
         free_node_list(&nl);
         return RESULT_FAILED;
@@ -169,7 +214,20 @@ ResultCode run_script(const char* path) {
 }
 
 int main(int argc, char** argv) {
+
     init_memory_manager();
+
+    ///////////testing Hash table//////////////////
+    struct Table table;
+    init_table(&table);
+    ObjString* test1 = make_string("dog", 3);
+    Value v = to_boolean(true);    
+    set_key_value(&table, test1, &v);
+    print_table(&table);
+    free_table(&table);
+
+    //////////end of hash table test//////////
+
     ResultCode result = RESULT_SUCCESS;
     if (argc == 1) {
         result = repl();

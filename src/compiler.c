@@ -281,6 +281,24 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
+
+            //class type
+            if (dv->sig->type == SIG_CLASS) {
+                SigClass* sc = (SigClass*)(dv->sig);
+                emit_byte(compiler, OP_INSTANCE);
+                uint8_t class_idx = find_local(compiler, sc->klass);
+                emit_byte(compiler, class_idx);
+                add_local(compiler, dv->name, dv->sig);
+
+                //NOTE: don't need to check class types here
+                //since we are looking up the class by
+                //declaration type anyway, so they will
+                //match or a "local not found" error will be added
+
+                return make_prim_sig(VAL_NIL);
+            }
+
+            //primitive type
             Sig* sig = compile_node(compiler, dv->right, NULL);
             add_local(compiler, dv->name, dv->sig);
             if (!sig_is_type(sig, VAL_NIL) && !same_sig(sig, dv->sig)) {
@@ -306,6 +324,8 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             //Recall: locals are only used for compiler to sync local variables with vm
             set_local(&func_comp, df->name, df->sig, 0);
 
+            //adding body to parameters so we can compile in one go
+            //TODO: could we just do this in the parser and replace it with arity?
             add_node(&df->parameters, df->body);
             SigList inner_ret_sigs = compile_function(&func_comp, &df->parameters);
 
@@ -324,6 +344,28 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             ObjFunction* f = make_function(chunk, arity);
             EMIT_TYPE(compiler, OP_FUN, f);
             free_compiler(&func_comp);
+            return make_prim_sig(VAL_NIL);
+        }
+        case NODE_DECL_CLASS: {
+            DeclClass* dc = (DeclClass*)node;
+            add_local(compiler, dc->name, dc->sig);
+
+            Compiler class_comp;
+            Chunk chunk;
+            init_chunk(&chunk);
+            init_compiler(&class_comp, &chunk);
+            class_comp.enclosing = (struct Compiler*)compiler;
+            set_local(&class_comp, dc->name, dc->sig, 0);
+
+            SigList ret_sigs = compile_function(&class_comp, &dc->decls);
+            if (ret_sigs.count > 0) {
+                add_error(compiler, dc->name, "Cannot have return statement '->' inside class definition.");
+            }
+            free_sig_list(&ret_sigs);
+
+            ObjClass* klass = make_class(chunk);
+            EMIT_TYPE(compiler, OP_CLASS, klass);
+            free_compiler(&class_comp);
             return make_prim_sig(VAL_NIL);
         }
         //statements

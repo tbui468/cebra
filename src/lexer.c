@@ -117,14 +117,8 @@ static Token read_keyword(char c) {
 }
 
 Token next_token() {
-    consume_whitespace();
 
-    //keep returning TOKEN_EOF if next_token() is called after source ends
-    if (peek_char() == '\0') {
-        Token token;
-        token.type = TOKEN_EOF;
-        return token;
-    }
+    consume_whitespace();
 
     char c = next_char();
 
@@ -219,6 +213,8 @@ Token next_token() {
                 return new_token(TOKEN_GREATER_EQUAL);
             }
             return new_token(TOKEN_GREATER);
+        case '\0':
+            return new_token(TOKEN_EOF);
     }
 }
 

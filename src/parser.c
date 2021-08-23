@@ -8,6 +8,15 @@ static struct Node* expression();
 static struct Node* declaration();
 static void add_error(Token token, const char* message);
 
+static void print_all_tokens() {
+    printf("******start**********\n");
+    printf("%d\n", parser.previous.type);
+    printf("%d\n", parser.current.type);
+    printf("%d\n", parser.next.type);
+    printf("%d\n", parser.next_next.type);
+    printf("******end**********\n");
+}
+
 static bool match(TokenType type) {
     if (parser.current.type == type) {
         parser.previous = parser.current;
@@ -219,7 +228,21 @@ static Sig* read_sig() {
         return make_prim_sig(get_value_type(parser.previous));
     }
 
+    if (match(TOKEN_IDENTIFIER)) {
+        return make_class_sig(parser.previous);
+    }
+
     return make_prim_sig(VAL_NIL);
+}
+
+//TODO: class constructor arguments go here.  Temporary stub
+static struct Node* instantiate_class() {
+    consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
+    Token klass = parser.previous;
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after class name.");
+    consume(TOKEN_LEFT_PAREN, "Expect ')' after '('.");
+
+    return NULL;
 }
 
 static struct Node* var_declaration(bool require_assign) {
@@ -227,6 +250,16 @@ static struct Node* var_declaration(bool require_assign) {
     Token name = parser.previous;
     consume(TOKEN_COLON, "Expect ':' after identifier.");
     Sig* sig = read_sig();
+
+    if (sig->type == SIG_CLASS) {
+        if (require_assign || match(TOKEN_EQUAL)) {
+            consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
+            struct Node* value = instantiate_class();
+            return make_decl_var(name, sig, value);
+        }
+        
+        return make_decl_var(name, sig, NULL);
+    }
 
     if (require_assign) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
