@@ -1,8 +1,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "obj_function.h"
+#include "obj_string.h"
 #include "chunk.h"
-#include "object.h"
 #include "memory.h"
 
 void init_chunk(Chunk* chunk) {
@@ -55,13 +56,13 @@ static double read_float(Chunk* chunk, int offset) {
     return *ptr;
 }
 
-static ObjString* read_string(Chunk* chunk, int offset) {
-    ObjString** ptr = (ObjString**)(&chunk->codes[offset]);
+static struct ObjString* read_string(Chunk* chunk, int offset) {
+    struct ObjString** ptr = (struct ObjString**)(&chunk->codes[offset]);
     return *ptr;
 }
 
-static ObjFunction* read_function(Chunk* chunk, int offset) {
-    ObjFunction** ptr = (ObjFunction**)(&chunk->codes[offset]);
+static struct ObjFunction* read_function(Chunk* chunk, int offset) {
+    struct ObjFunction** ptr = (struct ObjFunction**)(&chunk->codes[offset]);
     return *ptr;
 }
 
@@ -81,15 +82,15 @@ void disassemble_chunk(Chunk* chunk) {
                 i += sizeof(double);
                 break;
             case OP_STRING: {
-                ObjString* obj = read_string(chunk, i);
+                struct ObjString* obj = read_string(chunk, i);
                 printf("%s", obj->chars); 
-                i += sizeof(ObjString*);
+                i += sizeof(struct ObjString*);
                 break;
             }
             case OP_FUN: {
                 read_function(chunk, i); //just to get it out of byte stream
                 printf("<fun>"); 
-                i += sizeof(ObjFunction*);
+                i += sizeof(struct ObjFunction*);
                 break;
             }
             case OP_GET_VAR: {

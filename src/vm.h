@@ -7,7 +7,7 @@
 #include "node_list.h"
 
 typedef struct {
-    ObjFunction* function;
+    struct ObjFunction* function;
     int stack_offset;
     int ip;
     int arity;

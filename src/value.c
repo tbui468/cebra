@@ -3,6 +3,7 @@
 
 #include "value.h"
 #include "memory.h"
+#include "obj_string.h"
 
 
 Value to_float(double num) {
@@ -19,7 +20,7 @@ Value to_integer(int32_t num) {
     return value;
 }
 
-Value to_string(ObjString* obj) {
+Value to_string(struct ObjString* obj) {
     Value value;
     value.type = VAL_STRING;
     value.as.string_type = obj;
@@ -33,21 +34,21 @@ Value to_boolean(bool b) {
     return value;
 }
 
-Value to_function(ObjFunction* obj) {
+Value to_function(struct ObjFunction* obj) {
     Value value;
     value.type = VAL_FUNCTION;
     value.as.function_type = obj;
     return value;
 }
 
-Value to_class(ObjClass* obj) {
+Value to_class(struct ObjClass* obj) {
     Value value;
     value.type = VAL_CLASS;
     value.as.class_type = obj;
     return value;
 }
 
-Value to_instance(ObjInstance* obj) {
+Value to_instance(struct ObjInstance* obj) {
     Value value;
     value.type = VAL_INSTANCE;
     value.as.instance_type = obj;
@@ -76,8 +77,8 @@ Value add_values(Value a, Value b) {
     } else if (b.type == VAL_FLOAT) {
         return to_float(a.as.float_type + b.as.float_type);
     } else if (b.type == VAL_STRING) {
-        ObjString* left = a.as.string_type;
-        ObjString* right = b.as.string_type;
+        struct ObjString* left = a.as.string_type;
+        struct ObjString* right = b.as.string_type;
 
         int length =  left->length + right->length;
         char* concat = ALLOCATE_CHAR(length + 1);
@@ -85,7 +86,7 @@ Value add_values(Value a, Value b) {
         memcpy(concat + left->length, right->chars, right->length);
         concat[length] = '\0';
 
-        ObjString* obj = take_string(concat, length);
+        struct ObjString* obj = take_string(concat, length);
         return to_string(obj);
     }
 }
@@ -141,8 +142,8 @@ Value equal_values(Value a, Value b) {
         case VAL_FLOAT:
             return to_boolean(a.as.float_type == b.as.float_type);
         case VAL_STRING:
-            ObjString* s1 = a.as.string_type;
-            ObjString* s2 = a.as.string_type;
+            struct ObjString* s1 = a.as.string_type;
+            struct ObjString* s2 = a.as.string_type;
             if (s1->length != s2->length) return to_boolean(false);
             return to_boolean(memcmp(s1->chars, s2->chars, s1->length) == 0);
     }

@@ -45,11 +45,18 @@ print fun()
  */
 
 //TODO:
-//  Each function needs a Table to store all class and function declarations
-//      we will call this globals.  This is NOT the same as in clox - functions inside
-//      another function CANNOT see enclosing variables, BUT they can see classes and functions
-//      defined in global.  Contrast this with scopes, which can see enclosing variables and
-//      of course functions and classses.
+//  Get rid of typedefs - just causing a lot of problems
+//  Problem: need each function to store a table of definitions (class and functions defined 
+//  inside that function), but we have circular dependency problems: tables require objects
+//  and objects (ObjFunction and ObjInstance) requires tables.
+//
+//  Could try pulling out ObjString into separate header???  This is getting messy
+//  Create  a separate data structure to associate Tables and Objs??
+//
+//  Or could skip this for now and just change chunks from putting pointers, doubles, ints, etc
+//  directly into the byte stream to putting in indices to a constants table.  It would simplify
+//  a lot of things.  The constants could be a table of Values.  Then run the correctness tests
+//  to make sure all current code still works.
 //
 //  Make a two pass compiler - the first pass compiles all function and struct declarations, and
 //  the second pass defines them.  This allows function and struct declarations to be in any order.
@@ -216,19 +223,19 @@ int main(int argc, char** argv) {
     ///////////testing Hash table//////////////////
     struct Table table;
     init_table(&table);
-    ObjString* test1 = make_string("zebra", 5);
+    struct ObjString* test1 = make_string("zebra", 5);
     Value v1 = to_integer(1);    
-    ObjString* test2 = make_string("dog", 3);
+    struct ObjString* test2 = make_string("dog", 3);
     Value v2 = to_integer(2);    
-    ObjString* test3 = make_string("turtle", 6);
+    struct ObjString* test3 = make_string("turtle", 6);
     Value v3 = to_integer(3);    
-    ObjString* test4 = make_string("fish", 4);
+    struct ObjString* test4 = make_string("fish", 4);
     Value v4 = to_integer(4);    
-    ObjString* test5 = make_string("cat", 3);
+    struct ObjString* test5 = make_string("cat", 3);
     Value v5 = to_integer(5);    
-    ObjString* test6 = make_string("lion", 4);
+    struct ObjString* test6 = make_string("lion", 4);
     Value v6 = to_integer(6);    
-    ObjString* test7 = make_string("rabbit", 6);
+    struct ObjString* test7 = make_string("rabbit", 6);
     Value v7 = to_integer(7);    
     set_pair(&table, test1, v1);
     set_pair(&table, test2, v2);

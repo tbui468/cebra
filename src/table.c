@@ -1,7 +1,8 @@
 #include <string.h>
 #include <stdio.h>
-#include "value.h"
+
 #include "table.h"
+#include "memory.h"
 
 #define MAX_LOAD 0.75
 
@@ -58,13 +59,13 @@ static void grow_table(struct Table* table) {
     free_table(&original);
 }
 
-static bool same_keys(ObjString* key1, ObjString* key2) {
+static bool same_keys(struct ObjString* key1, struct ObjString* key2) {
     return  key1->hash == key2->hash &&
             key1->length == key2->length &&
             memcmp(key1->chars, key2->chars, key2->length) == 0;
 }
 
-void set_pair(struct Table* table, ObjString* key, Value value) {
+void set_pair(struct Table* table, struct ObjString* key, Value value) {
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;
@@ -90,7 +91,7 @@ void set_pair(struct Table* table, ObjString* key, Value value) {
 }
 
 
-bool get_value(struct Table* table, ObjString* key, Value* value) {
+bool get_value(struct Table* table, struct ObjString* key, Value* value) {
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;
@@ -100,7 +101,7 @@ bool get_value(struct Table* table, ObjString* key, Value* value) {
         }
 
         if (same_keys(pair->key, key)) {
-            *value = pair->value; //TODO: this is a problem
+            *value = pair->value;
             return true;
         }
     }

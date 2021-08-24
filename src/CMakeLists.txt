@@ -1,4 +1,9 @@
 set(Sources
+    obj.c
+    obj_function.c
+    obj_class.c
+    obj_string.c
+    obj_instance.c
     table.c
     main.c
     memory.c
@@ -6,7 +11,6 @@ set(Sources
     sig.c
     value.c
     node_list.c
-    object.c
     lexer.c
     parser.c
     ast.c
@@ -16,6 +20,11 @@ set(Sources
     )
 
 set(Headers
+    obj.h
+    obj_function.h
+    obj_class.h
+    obj_string.h
+    obj_instance.h
     table.h
     result_code.h
     common.h
@@ -24,7 +33,6 @@ set(Headers
     sig.h
     value.h
     node_list.h
-    object.h
     lexer.h
     parser.h
     ast.h

@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include "compiler.h"
 #include "memory.h"
-#include "object.h"
+#include "obj_string.h"
+#include "obj_function.h"
+#include "obj_class.h"
 
 #define EMIT_TYPE(compiler, op_code, value) \
     emit_byte(compiler, op_code); \
@@ -79,7 +81,7 @@ static Sig* compile_literal(Compiler* compiler, struct Node* node) {
             return make_prim_sig(VAL_FLOAT);
         }
         case TOKEN_STRING: {
-            ObjString* str = make_string(literal->name.start, literal->name.length);
+            struct ObjString* str = make_string(literal->name.start, literal->name.length);
             EMIT_TYPE(compiler, OP_STRING, str);
             return make_prim_sig(VAL_STRING);
         }
@@ -341,7 +343,7 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
 
             free_sig_list(&inner_ret_sigs);
 
-            ObjFunction* f = make_function(chunk, arity);
+            struct ObjFunction* f = make_function(chunk, arity);
             EMIT_TYPE(compiler, OP_FUN, f);
             free_compiler(&func_comp);
             return make_prim_sig(VAL_NIL);
@@ -363,7 +365,7 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             }
             free_sig_list(&ret_sigs);
 
-            ObjClass* klass = make_class(chunk);
+            struct ObjClass* klass = make_class(chunk);
             EMIT_TYPE(compiler, OP_CLASS, klass);
             free_compiler(&class_comp);
             return make_prim_sig(VAL_NIL);

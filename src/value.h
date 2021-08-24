@@ -3,10 +3,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "object.h"
 #include "token.h"
 
 #define IS_NIL(value) (value.type == VAL_NIL)
+
+struct ObjInstance;
+struct ObjFunction;
+struct ObjClass;
+struct ObjString;
 
 typedef enum {
     VAL_INT,
@@ -24,22 +28,22 @@ typedef struct {
     union {
         int32_t integer_type;
         double float_type;
-        ObjString* string_type;
+        struct ObjString* string_type;
         bool boolean_type;
-        ObjFunction* function_type;
-        ObjClass* class_type;
-        ObjInstance* instance_type;
+        struct ObjFunction* function_type;
+        struct ObjClass* class_type;
+        struct ObjInstance* instance_type;
     } as;
 } Value;
 
 
 Value to_float(double num);
 Value to_integer(int32_t num);
-Value to_string(ObjString* obj);
+Value to_string(struct ObjString* obj);
 Value to_boolean(bool b);
-Value to_function(ObjFunction* obj);
-Value to_class(ObjClass* obj);
-Value to_instance(ObjInstance* obj);
+Value to_function(struct ObjFunction* obj);
+Value to_class(struct ObjClass* obj);
+Value to_instance(struct ObjInstance* obj);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);

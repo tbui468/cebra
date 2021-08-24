@@ -2,8 +2,8 @@
 #define CEBRA_MEMORY_H
 
 #include <stdlib.h>
-#include "object.h"
 #include "value.h"
+#include "obj.h"
 
 //vm memory
 #define ALLOCATE_CHAR(len) ((char*)allocate_char(sizeof(char) * (len)))

@@ -1,0 +1,15 @@
+#ifndef CEBRA_OBJ_FUNCTION_H
+#define CEBRA_OBJ_FUNCTION_H
+
+#include "chunk.h"
+#include "obj.h"
+
+struct ObjFunction {
+    Obj base;
+    int arity;
+    Chunk chunk;
+};
+
+struct ObjFunction* make_function(Chunk chunk, int arity);
+
+#endif// CEBRA_OBJ_FUNCTION_H

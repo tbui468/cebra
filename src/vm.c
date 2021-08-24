@@ -1,7 +1,9 @@
 #include "vm.h"
-#include "object.h"
 #include "common.h"
 #include "memory.h"
+#include "obj_string.h"
+#include "obj_function.h"
+#include "obj_class.h"
 
 
 #define READ_TYPE(frame, type) \
@@ -32,7 +34,7 @@ ResultCode free_vm(VM* vm) {
     return RESULT_SUCCESS;
 }
 
-void call(VM* vm, ObjFunction* function) {
+void call(VM* vm, struct ObjFunction* function) {
     CallFrame frame;
     frame.function = function;
     frame.stack_offset = vm->stack_top - function->arity - 1;
@@ -43,21 +45,21 @@ void call(VM* vm, ObjFunction* function) {
 }
 
 
-static ObjString* read_string(CallFrame* frame) {
-    ObjString** ptr = (ObjString**)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(ObjString*);
+static struct ObjString* read_string(CallFrame* frame) {
+    struct ObjString** ptr = (struct ObjString**)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(struct ObjString*);
     return *ptr;
 }
 
-static ObjFunction* read_function(CallFrame* frame) {
-    ObjFunction** ptr = (ObjFunction**)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(ObjFunction*);
+static struct ObjFunction* read_function(CallFrame* frame) {
+    struct ObjFunction** ptr = (struct ObjFunction**)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(struct ObjFunction*);
     return *ptr;
 }
 
-static ObjClass* read_class(CallFrame* frame) {
-    ObjClass** ptr = (ObjClass**)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(ObjClass*);
+static struct ObjClass* read_class(CallFrame* frame) {
+    struct ObjClass** ptr = (struct ObjClass**)(&frame->function->chunk.codes[frame->ip]);
+    frame->ip += (int)sizeof(struct ObjClass*);
     return *ptr;
 }
 
@@ -216,7 +218,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_CALL: {
             int arity = (int)READ_TYPE(frame, uint8_t);
             int start = vm->stack_top - arity - 1;
-            ObjFunction* function = vm->stack[start].as.function_type;
+            struct ObjFunction* function = vm->stack[start].as.function_type;
             call(vm, function);
             break;
         }
@@ -262,7 +264,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
 #endif
 
     //initial script
-    ObjFunction* function = make_function(chunk, 0); //make a function with arity = 0
+    struct ObjFunction* function = make_function(chunk, 0); //make a function with arity = 0
     push(vm, to_function(function));
     call(vm, function);
 
