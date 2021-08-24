@@ -30,6 +30,11 @@ static void grow_capacity(Compiler* compiler) {
     compiler->chunk->capacity = new_capacity;
 }
 
+static int add_constant(Compiler* compiler, Value value) {
+    add_value(&compiler->chunk->constants, value);
+    return compiler->chunk->constants.count - 1;
+}
+
 static void emit_byte(Compiler* compiler, uint8_t byte) {
     if (compiler->chunk->count + 1 > compiler->chunk->capacity) {
         grow_capacity(compiler);
@@ -39,6 +44,10 @@ static void emit_byte(Compiler* compiler, uint8_t byte) {
     compiler->chunk->count++;
 }
 
+static void emit_bytes(Compiler* compiler, uint8_t byte1, uint8_t byte2) {
+    emit_byte(compiler, byte1);
+    emit_byte(compiler, byte2);
+}
 
 static int emit_jump(Compiler* compiler, OpCode op) {
     emit_byte(compiler, op);
@@ -72,7 +81,8 @@ static Sig* compile_literal(Compiler* compiler, struct Node* node) {
     switch(literal->name.type) {
         case TOKEN_INT: {
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
-            EMIT_TYPE(compiler, OP_INT, integer);
+            emit_bytes(compiler, OP_INT, add_constant(compiler, to_integer(integer)));
+            //EMIT_TYPE(compiler, OP_INT, integer);
             return make_prim_sig(VAL_INT);
         }
         case TOKEN_FLOAT: {

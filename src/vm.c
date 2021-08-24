@@ -44,6 +44,9 @@ void call(VM* vm, struct ObjFunction* function) {
     vm->frame_count++;
 }
 
+static Value read_constant(CallFrame* frame, int idx) {
+    return frame->function->chunk.constants.values[idx];
+}
 
 static struct ObjString* read_string(CallFrame* frame) {
     struct ObjString** ptr = (struct ObjString**)(&frame->function->chunk.codes[frame->ip]);
@@ -81,7 +84,8 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
     uint8_t op = READ_TYPE(frame, uint8_t);
     switch(op) {
         case OP_INT: {
-            push(vm, to_integer(READ_TYPE(frame, int32_t)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
+            //push(vm, to_integer(READ_TYPE(frame, int32_t)));
             break;
         }
         case OP_FLOAT: {

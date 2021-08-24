@@ -45,11 +45,8 @@ print fun()
  */
 
 //TODO:
-//  Create ValueArray struct for use in chunk
-//  Or could skip this for now and just change chunks from putting pointers, doubles, ints, etc
-//  directly into the byte stream to putting in indices to a constants table.  It would simplify
-//  a lot of things.  The constants could be a table of Values.  Then run the correctness tests
-//  to make sure all current code still works.
+//  Integer constants now use new constants array in chunk.  
+//      change the rest over too.
 //
 //  Make a two pass compiler - the first pass compiles all function and struct declarations, and
 //  the second pass defines them.  This allows function and struct declarations to be in any order.
