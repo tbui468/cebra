@@ -46,7 +46,7 @@ typedef struct {
     int char_bytes_freed;
     int compiler_bytes_allocated;
     int compiler_bytes_freed;
-    Obj* objects;
+    struct Obj* objects;
 } MemoryManager;
 
 extern MemoryManager mm;

@@ -5,7 +5,7 @@
 #include "table.h"
 
 struct ObjInstance {
-    Obj base;
+    struct Obj base;
     struct Table* props; //both for both data and methods
 };
 

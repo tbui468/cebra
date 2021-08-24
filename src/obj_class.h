@@ -5,7 +5,7 @@
 #include "obj.h"
 
 struct ObjClass{
-    Obj base;
+    struct Obj base;
     Chunk chunk;
 };
 

@@ -5,7 +5,7 @@
 #include "obj_string.h"
 #include "memory.h"
 
-void insert_object(Obj* ptr) {
+void insert_object(struct Obj* ptr) {
     if (mm.objects == NULL) {
         mm.objects = ptr;
         return; 
@@ -16,7 +16,7 @@ void insert_object(Obj* ptr) {
 }
 
 
-void free_object(Obj* obj) {
+void free_object(struct Obj* obj) {
     switch(obj->type) {
         case OBJ_STRING:
             struct ObjString* obj_string = (struct ObjString*)obj;

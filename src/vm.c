@@ -278,7 +278,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
 
     //TODO: testing mm.objects - loooks good to me.  Free them here for now until GC works
     free_objects();
-    Obj* obj = mm.objects;
+    struct Obj* obj = mm.objects;
     int count = 0;
     while (obj != NULL) {
         count++;

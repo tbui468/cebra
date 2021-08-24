@@ -5,7 +5,7 @@
 #include "obj.h"
 
 struct ObjFunction {
-    Obj base;
+    struct Obj base;
     int arity;
     Chunk chunk;
 };

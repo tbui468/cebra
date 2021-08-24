@@ -46,12 +46,6 @@ print fun()
 
 //TODO:
 //  Get rid of typedefs - just causing a lot of problems
-//  Problem: need each function to store a table of definitions (class and functions defined 
-//  inside that function), but we have circular dependency problems: tables require objects
-//  and objects (ObjFunction and ObjInstance) requires tables.
-//
-//  Could try pulling out ObjString into separate header???  This is getting messy
-//  Create  a separate data structure to associate Tables and Objs??
 //
 //  Or could skip this for now and just change chunks from putting pointers, doubles, ints, etc
 //  directly into the byte stream to putting in indices to a constants table.  It would simplify

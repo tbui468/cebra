@@ -8,14 +8,14 @@ typedef enum {
     OBJ_INSTANCE
 } ObjType;
 
-typedef struct {
+struct Obj {
     ObjType type;
     struct Obj* next;
-} Obj;
+};
 
 
-void insert_object(Obj* ptr);
-void free_object(Obj* obj);
+void insert_object(struct Obj* ptr);
+void free_object(struct Obj* obj);
 
 #endif// CEBRA_OBJ_H
 

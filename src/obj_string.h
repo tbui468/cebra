@@ -6,7 +6,7 @@
 #include "obj.h"
 
 struct ObjString {
-    Obj base;
+    struct Obj base;
     char* chars;
     int length;
     uint32_t hash;

@@ -53,9 +53,9 @@ void print_memory() {
 
 
 void free_objects() {
-    Obj* obj = mm.objects;
+    struct Obj* obj = mm.objects;
     while (obj != NULL) {
-        Obj* current = obj;
+        struct Obj* current = obj;
         obj = obj->next;
         free_object(current);
     }
