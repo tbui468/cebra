@@ -7,11 +7,11 @@
 #define MAX_LOAD 0.75
 
 static void reset_table_capacity(struct Table* table, int capacity) {
-    table->pairs = GROW_ARRAY(table->pairs, Pair, capacity, table->capacity);
+    table->pairs = GROW_ARRAY(table->pairs, struct Pair, capacity, table->capacity);
     table->capacity = capacity;
     table->count = 0;
     for (int i = 0; i < table->capacity; i++) {
-        Pair pair;
+        struct Pair pair;
         pair.key = NULL;
         pair.value = to_nil();
         table->pairs[i] = pair;
@@ -19,14 +19,14 @@ static void reset_table_capacity(struct Table* table, int capacity) {
 }
 
 void init_table(struct Table* table) {
-    table->pairs = ALLOCATE_ARRAY(Pair);
+    table->pairs = ALLOCATE_ARRAY(struct Pair);
     table->count = 0;
     table->capacity = 0;
     reset_table_capacity(table, 8);
 }
 
 void free_table(struct Table* table) {
-    FREE_ARRAY(table->pairs, Pair, table->capacity);
+    FREE_ARRAY(table->pairs, struct Pair, table->capacity);
 }
 
 static struct Table copy_table(struct Table* table) {
@@ -35,7 +35,7 @@ static struct Table copy_table(struct Table* table) {
     reset_table_capacity(&copy, table->capacity); 
 
     for (int i = 0; i < table->capacity; i++) {
-        Pair* pair = &table->pairs[i];
+        struct Pair* pair = &table->pairs[i];
         if (pair->key != NULL) {
             set_pair(&copy, pair->key, pair->value);
         }
@@ -50,7 +50,7 @@ static void grow_table(struct Table* table) {
     reset_table_capacity(table, new_capacity);
 
     for (int i = 0; i < original.capacity; i++) {
-        Pair* pair = &original.pairs[i];
+        struct Pair* pair = &original.pairs[i];
         if (pair->key != NULL) {
             set_pair(table, pair->key, pair->value);
         }
@@ -69,13 +69,13 @@ void set_pair(struct Table* table, struct ObjString* key, Value value) {
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;
-        Pair* pair = &table->pairs[mod_i];
+        struct Pair* pair = &table->pairs[mod_i];
 
         if (pair->key == NULL) {
             if (table->capacity * MAX_LOAD < table->count + 1) {
                 grow_table(table);
             }
-            Pair new_pair;
+            struct Pair new_pair;
             new_pair.key = key;
             new_pair.value = value;
             table->pairs[mod_i] = new_pair;
@@ -95,7 +95,7 @@ bool get_value(struct Table* table, struct ObjString* key, Value* value) {
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;
-        Pair* pair = &table->pairs[mod_i];
+        struct Pair* pair = &table->pairs[mod_i];
         if (pair->key == NULL) {
             return false;
         }
@@ -113,7 +113,7 @@ bool get_value(struct Table* table, struct ObjString* key, Value* value) {
 void print_table(struct Table* table) {
     printf("Table count: %d, Table capacity: %d \n", table->count, table->capacity);
     for (int i = 0; i < table->capacity; i++) {
-        Pair* pair = &table->pairs[i];
+        struct Pair* pair = &table->pairs[i];
         if (pair->key != NULL) {
             printf("Key: %.*s, Value: ", pair->key->length, pair->key->chars);
             print_value(pair->value);

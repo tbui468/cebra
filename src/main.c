@@ -45,8 +45,7 @@ print fun()
  */
 
 //TODO:
-//  Get rid of typedefs - just causing a lot of problems
-//
+//  Create ValueArray struct for use in chunk
 //  Or could skip this for now and just change chunks from putting pointers, doubles, ints, etc
 //  directly into the byte stream to putting in indices to a constants table.  It would simplify
 //  a lot of things.  The constants could be a table of Values.  Then run the correctness tests

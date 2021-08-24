@@ -22,7 +22,7 @@
 #define GROW_ARRAY(ptr, type, new_capacity, old_capacity) \
             ((mm.array_bytes_allocated += sizeof(type) * (new_capacity - old_capacity), \
              (type*)realloc(ptr, sizeof(type) * new_capacity)))
-#define FREE_ARRAY(ptr, type, count) (free((type*)ptr), mm.array_bytes_freed += sizeof(type) * count)
+#define FREE_ARRAY(ptr, type, capacity) (free((type*)ptr), mm.array_bytes_freed += sizeof(type) * capacity)
              
 
 void* allocate_node(size_t size);

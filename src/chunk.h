@@ -1,6 +1,8 @@
 #ifndef CEBRA_CHUNK_H
 #define CEBRA_CHUNK_H
 
+#include "value_array.h"
+
 typedef enum {
     OP_INT,
     OP_FLOAT,
@@ -36,6 +38,7 @@ typedef struct {
     OpCode* codes;
     int count; 
     int capacity;
+    struct ValueArray constants;
 } Chunk;
 
 void init_chunk(Chunk* chunk);

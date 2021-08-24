@@ -4,13 +4,13 @@
 #include "value.h"
 #include "obj_string.h"
 
-typedef struct {
+struct Pair {
     struct ObjString* key;
     Value value;
-} Pair;
+};
 
 struct Table {
-    Pair* pairs;
+    struct Pair* pairs;
     int count;
     int capacity;
 };
