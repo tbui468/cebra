@@ -45,13 +45,6 @@ print fun()
  */
 
 //TODO:
-//  Test hash table
-//      add more than 8 key/values and check that it expands correctly
-//      use hash table to intern strings
-//  Get Hash table working isolation:
-//      write tests to test it comprehensively (best as possible)
-//      we don't want hash table bugs causing problems
-//      since integration will be difficult enough
 //  Each function needs a Table to store all class and function declarations
 //      we will call this globals.  This is NOT the same as in clox - functions inside
 //      another function CANNOT see enclosing variables, BUT they can see classes and functions
@@ -60,7 +53,6 @@ print fun()
 //
 //  Make a two pass compiler - the first pass compiles all function and struct declarations, and
 //  the second pass defines them.  This allows function and struct declarations to be in any order.
-//
 //
 //  Big problem: Can't access classes (or functions etc) outside the current function scope
 //      so we can't instantiate or call functions (?) inside another function
@@ -125,6 +117,10 @@ print fun()
 //      mark and sweep or reference counting?
 //
 //  Closures - nested functions and structs won't work unless these are implemented
+//
+//  Implement deleting from hash table - need to use tombstones
+//
+//  Intern strings - create a "strings" table in vm
 //
 //  Test Edge cases by writing toy programs - save these programs as correctness tests
 //
@@ -220,10 +216,37 @@ int main(int argc, char** argv) {
     ///////////testing Hash table//////////////////
     struct Table table;
     init_table(&table);
-    ObjString* test1 = make_string("dog", 3);
-    Value v = to_boolean(true);    
-    set_key_value(&table, test1, &v);
+    ObjString* test1 = make_string("zebra", 5);
+    Value v1 = to_integer(1);    
+    ObjString* test2 = make_string("dog", 3);
+    Value v2 = to_integer(2);    
+    ObjString* test3 = make_string("turtle", 6);
+    Value v3 = to_integer(3);    
+    ObjString* test4 = make_string("fish", 4);
+    Value v4 = to_integer(4);    
+    ObjString* test5 = make_string("cat", 3);
+    Value v5 = to_integer(5);    
+    ObjString* test6 = make_string("lion", 4);
+    Value v6 = to_integer(6);    
+    ObjString* test7 = make_string("rabbit", 6);
+    Value v7 = to_integer(7);    
+    set_pair(&table, test1, v1);
+    set_pair(&table, test2, v2);
+    set_pair(&table, test3, v3);
+    set_pair(&table, test4, v4);
+    set_pair(&table, test5, v5);
+    set_pair(&table, test6, v6);
+    set_pair(&table, test7, v7);
     print_table(&table);
+
+    Value value;
+
+    if (get_value(&table, test7, &value)) {
+        print_value(value);
+    } else {
+        printf("Not found");
+    }
+
     free_table(&table);
 
     //////////end of hash table test//////////

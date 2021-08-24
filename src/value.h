@@ -6,6 +6,8 @@
 #include "object.h"
 #include "token.h"
 
+#define IS_NIL(value) (value.type == VAL_NIL)
+
 typedef enum {
     VAL_INT,
     VAL_FLOAT,

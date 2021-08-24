@@ -7,7 +7,7 @@
 
 typedef struct {
     ObjString* key;
-    Value* value;
+    Value value;
 } Pair;
 
 struct Table {
@@ -17,8 +17,9 @@ struct Table {
 };
 
 void init_table(struct Table* table);
-void set_key_value(struct Table* table, ObjString* key, Value* value);
-Value get_value(struct Table* table, ObjString* key);
+void set_pair(struct Table* table, ObjString* key, Value value);
+bool get_value(struct Table* table, ObjString* key, Value* value);
+//void delete_pair(struct Table* table, ObjString* key);
 void free_table(struct Table* table);
 void print_table(struct Table* table);
 
