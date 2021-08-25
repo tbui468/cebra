@@ -5,13 +5,6 @@
 #include "obj_function.h"
 #include "obj_class.h"
 
-#define EMIT_TYPE(compiler, op_code, value) \
-    emit_byte(compiler, op_code); \
-    if (compiler->chunk->count + (int)sizeof(value) > compiler->chunk->capacity) { \
-        grow_capacity(compiler); \
-    } \
-    memcpy(&compiler->chunk->codes[compiler->chunk->count], &value, sizeof(value)); \
-    compiler->chunk->count += sizeof(value)
 
 Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sigs);
 static SigList compile_function(Compiler* compiler, NodeList* nl);
@@ -82,17 +75,16 @@ static Sig* compile_literal(Compiler* compiler, struct Node* node) {
         case TOKEN_INT: {
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
             emit_bytes(compiler, OP_INT, add_constant(compiler, to_integer(integer)));
-            //EMIT_TYPE(compiler, OP_INT, integer);
             return make_prim_sig(VAL_INT);
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
-            EMIT_TYPE(compiler, OP_FLOAT, f);
+            emit_bytes(compiler, OP_FLOAT, add_constant(compiler, to_float(f)));
             return make_prim_sig(VAL_FLOAT);
         }
         case TOKEN_STRING: {
             struct ObjString* str = make_string(literal->name.start, literal->name.length);
-            EMIT_TYPE(compiler, OP_STRING, str);
+            emit_bytes(compiler, OP_STRING, add_constant(compiler, to_string(str)));
             return make_prim_sig(VAL_STRING);
         }
         case TOKEN_TRUE: {
@@ -354,8 +346,8 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             free_sig_list(&inner_ret_sigs);
 
             struct ObjFunction* f = make_function(chunk, arity);
-            EMIT_TYPE(compiler, OP_FUN, f);
-            free_compiler(&func_comp);
+            int idx = add_constant(compiler, to_function(f));
+            emit_bytes(compiler, OP_FUN, idx);
             return make_prim_sig(VAL_NIL);
         }
         case NODE_DECL_CLASS: {
@@ -376,8 +368,7 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             free_sig_list(&ret_sigs);
 
             struct ObjClass* klass = make_class(chunk);
-            EMIT_TYPE(compiler, OP_CLASS, klass);
-            free_compiler(&class_comp);
+            emit_bytes(compiler, OP_CLASS, add_constant(compiler, to_class(klass)));
             return make_prim_sig(VAL_NIL);
         }
         //statements
@@ -573,9 +564,6 @@ void init_compiler(Compiler* compiler, Chunk* chunk) {
     compiler->error_count = 0;
     compiler->chunk = chunk;
     compiler->enclosing = NULL;
-}
-
-void free_compiler(Compiler* compiler) {
 }
 
 static SigList compile_function(Compiler* compiler, NodeList* nl) {

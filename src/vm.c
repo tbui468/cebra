@@ -48,24 +48,6 @@ static Value read_constant(CallFrame* frame, int idx) {
     return frame->function->chunk.constants.values[idx];
 }
 
-static struct ObjString* read_string(CallFrame* frame) {
-    struct ObjString** ptr = (struct ObjString**)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(struct ObjString*);
-    return *ptr;
-}
-
-static struct ObjFunction* read_function(CallFrame* frame) {
-    struct ObjFunction** ptr = (struct ObjFunction**)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(struct ObjFunction*);
-    return *ptr;
-}
-
-static struct ObjClass* read_class(CallFrame* frame) {
-    struct ObjClass** ptr = (struct ObjClass**)(&frame->function->chunk.codes[frame->ip]);
-    frame->ip += (int)sizeof(struct ObjClass*);
-    return *ptr;
-}
-
 static void print_trace(VM* vm, OpCode op) {
     //print opcodes - how can the compiler and this use the same code?
     printf("Op: %s\n", op_to_string(op));
@@ -85,23 +67,22 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
     switch(op) {
         case OP_INT: {
             push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
-            //push(vm, to_integer(READ_TYPE(frame, int32_t)));
             break;
         }
         case OP_FLOAT: {
-            push(vm, to_float(READ_TYPE(frame, double)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
         }
         case OP_STRING: {
-            push(vm, to_string(read_string(frame)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
         }
         case OP_FUN: {
-            push(vm, to_function(read_function(frame)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
         }
         case OP_CLASS: {
-            push(vm, to_class(read_class(frame)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
         }
         case OP_INSTANCE: {
@@ -272,8 +253,6 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
     push(vm, to_function(function));
     call(vm, function);
 
-    free_compiler(&root_compiler);
-   
     //running the vm 
     while (vm->frame_count > 0) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];

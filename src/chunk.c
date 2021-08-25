@@ -10,9 +10,11 @@ void init_chunk(Chunk* chunk) {
     chunk->codes = ALLOCATE_ARRAY(OpCode);
     chunk->count = 0;
     chunk->capacity = 0;
+    init_value_array(&chunk->constants);
 }
 
 void free_chunk(Chunk* chunk) {
+    free_value_array(&chunk->constants);
     FREE_ARRAY(chunk->codes, OpCode, chunk->capacity);
 }
 
@@ -46,26 +48,13 @@ const char* op_to_string(OpCode op) {
     }
 }
 
-static int32_t read_int(Chunk* chunk, int offset) {
-    int32_t* ptr = (int32_t*)(&chunk->codes[offset]);
-    return *ptr;
+static uint8_t read_byte(Chunk* chunk, int code_idx) {
+    return chunk->codes[code_idx];
 }
 
-static double read_float(Chunk* chunk, int offset) {
-    double* ptr = (double*)(&chunk->codes[offset]);
-    return *ptr;
+static uint16_t read_short(Chunk* chunk, int code_idx) {
+    return (uint16_t)chunk->codes[code_idx];
 }
-
-static struct ObjString* read_string(Chunk* chunk, int offset) {
-    struct ObjString** ptr = (struct ObjString**)(&chunk->codes[offset]);
-    return *ptr;
-}
-
-static struct ObjFunction* read_function(Chunk* chunk, int offset) {
-    struct ObjFunction** ptr = (struct ObjFunction**)(&chunk->codes[offset]);
-    return *ptr;
-}
-
 
 void disassemble_chunk(Chunk* chunk) {
     int i = 0;
@@ -73,65 +62,62 @@ void disassemble_chunk(Chunk* chunk) {
         OpCode op = chunk->codes[i++];
         printf("%04d    [ %s ] ", i - 1, op_to_string(op));
         switch(op) {
-            case OP_INT: 
-                printf("%d", read_int(chunk, i)); 
-                i += sizeof(int32_t);
+            case OP_INT: {
+                int idx = read_byte(chunk, i++);
+                printf("%d", chunk->constants.values[idx].as.integer_type); 
                 break;
-            case OP_FLOAT: 
-                printf("%f", read_float(chunk, i)); 
-                i += sizeof(double);
+            }
+            case OP_FLOAT: {
+                int idx = read_byte(chunk, i++);
+                printf("%f", chunk->constants.values[idx].as.float_type); 
                 break;
+            }
             case OP_STRING: {
-                struct ObjString* obj = read_string(chunk, i);
-                printf("%s", obj->chars); 
-                i += sizeof(struct ObjString*);
+                int idx = read_byte(chunk, i++);
+                printf("%s", chunk->constants.values[idx].as.string_type->chars); 
                 break;
             }
             case OP_FUN: {
-                read_function(chunk, i); //just to get it out of byte stream
+                int idx = read_byte(chunk, i++);
                 printf("<fun>"); 
-                i += sizeof(struct ObjFunction*);
                 break;
             }
             case OP_GET_VAR: {
-                uint8_t slot = chunk->codes[i];
-                i++;
+                int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;
             }
             case OP_SET_VAR: {
-                uint8_t slot = chunk->codes[i];
-                i++;
+                int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;
             }
             case OP_JUMP_IF_FALSE: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
+                uint16_t dis = read_short(chunk, i);
                 i += 2;
                 printf("->[%d]", dis + i); //i currently points to low bit in 'dis'
                 break;
             }
             case OP_JUMP_IF_TRUE: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
+                uint16_t dis = read_short(chunk, i);
                 i += 2;
                 printf("->[%d]", dis + i); //i points to low bit in 'dis'
                 break;
             }
             case OP_JUMP: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
+                uint16_t dis = read_short(chunk, i);
                 i += 2;
                 printf("->[%d]", dis + i);
                 break;
             }
             case OP_JUMP_BACK: {
-                uint16_t dis = (uint16_t)chunk->codes[i];
+                uint16_t dis = read_short(chunk, i);
                 i += 2;
                 printf("->[%d]", i - dis);
                 break;
             }
             case OP_CALL: {
-                uint8_t slot = chunk->codes[i];
-                i++;
+                int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;
             }
