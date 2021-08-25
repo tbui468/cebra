@@ -37,7 +37,7 @@ static struct Table copy_table(struct Table* table) {
     for (int i = 0; i < table->capacity; i++) {
         struct Pair* pair = &table->pairs[i];
         if (pair->key != NULL) {
-            set_pair(&copy, pair->key, pair->value);
+            set_table(&copy, pair->key, pair->value);
         }
     }
 
@@ -52,7 +52,7 @@ static void grow_table(struct Table* table) {
     for (int i = 0; i < original.capacity; i++) {
         struct Pair* pair = &original.pairs[i];
         if (pair->key != NULL) {
-            set_pair(table, pair->key, pair->value);
+            set_table(table, pair->key, pair->value);
         }
     }
 
@@ -65,7 +65,7 @@ static bool same_keys(struct ObjString* key1, struct ObjString* key2) {
             memcmp(key1->chars, key2->chars, key2->length) == 0;
 }
 
-void set_pair(struct Table* table, struct ObjString* key, Value value) {
+void set_table(struct Table* table, struct ObjString* key, Value value) {
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;
@@ -91,7 +91,7 @@ void set_pair(struct Table* table, struct ObjString* key, Value value) {
 }
 
 
-bool get_value(struct Table* table, struct ObjString* key, Value* value) {
+bool get_from_table(struct Table* table, struct ObjString* key, Value* value) {
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;

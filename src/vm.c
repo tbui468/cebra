@@ -40,8 +40,14 @@ void call(VM* vm, struct ObjFunction* function) {
     frame.stack_offset = vm->stack_top - function->arity - 1;
     frame.ip = 0;
     frame.arity = function->arity;
+    init_table(&frame.defs);
+
     vm->frames[vm->frame_count] = frame;
     vm->frame_count++;
+}
+
+void free_frame(CallFrame* frame) {
+    free_table(&frame->defs);
 }
 
 static Value read_constant(CallFrame* frame, int idx) {
@@ -62,6 +68,18 @@ static void print_trace(VM* vm, OpCode op) {
     printf("\n*************************\n");
 }
 
+static Value find_def(VM* vm, struct ObjString* str) {
+    for (int i = vm->frame_count - 1; i >= 0; i--) {
+        CallFrame* frame = &vm->frames[i];
+        Value value;
+        if (get_from_table(&frame->defs, str, &value)) {
+            return value;
+        }
+    }
+
+    //TODO: add runtim error if not found, but this should be caught in compiler
+}
+
 ResultCode execute_frame(VM* vm, CallFrame* frame) {
     uint8_t op = READ_TYPE(frame, uint8_t);
     switch(op) {
@@ -77,14 +95,19 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
         }
+        /*
         case OP_FUN: {
-            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
+            Value fun;
+            get_value(&frame->function->chunk->defs, 
+            set_key_value(&frame->function->defs,
+                          str,
+                          read_constant(frame, READ_TYPE(frame, uint8_t)))
             break;
         }
         case OP_CLASS: {
             push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
-        }
+        }*/
         case OP_INSTANCE: {
                               /*
             uint8_t class_idx = READ_TYPE(frame, uint8_t) + frame->stack_offset;
@@ -159,6 +182,18 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             vm->stack[slot] = peek(vm, 0);
             break;
         }
+        case OP_SET_DEF: {
+            Value str_value = read_constant(frame, READ_TYPE(frame, uint8_t));
+            Value fun_value = read_constant(frame, READ_TYPE(frame, uint8_t));
+            set_table(&frame->defs, str_value.as.string_type, fun_value);
+            break;
+        }
+        case OP_GET_DEF: {
+            Value str_value = read_constant(frame, READ_TYPE(frame, uint8_t));
+            Value fun_def = find_def(vm, str_value.as.string_type);
+            push(vm, fun_def);
+            break;
+        }
         case OP_JUMP_IF_FALSE: {
             uint16_t distance = READ_TYPE(frame, uint16_t);
             if (!(peek(vm, 0).as.boolean_type)) {
@@ -218,6 +253,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             while (vm->stack_top > frame->stack_offset) {
                 pop(vm);
             }
+            free_frame(frame);
             vm->frame_count--;
             if (ret.type != VAL_NIL) push(vm, ret);
             break;
@@ -243,17 +279,14 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
         return RESULT_FAILED; 
     }
 
-//someoffset if enclosing compilers is causing wrong opcodes to being emitted (off at least offset so reads are wrong)
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(&chunk);
 #endif
 
-    //initial script
-    struct ObjFunction* function = make_function(chunk, 0); //make a function with arity = 0
-    push(vm, to_function(function));
-    call(vm, function);
+    struct ObjFunction* script = make_function(chunk, 0);
+    push(vm, to_function(script));
+    call(vm, script);
 
-    //running the vm 
     while (vm->frame_count > 0) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];
         execute_frame(vm, frame);

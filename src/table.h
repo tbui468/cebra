@@ -16,8 +16,8 @@ struct Table {
 };
 
 void init_table(struct Table* table);
-void set_pair(struct Table* table, struct ObjString* key, Value value);
-bool get_value(struct Table* table, struct ObjString* key, Value* value);
+void set_table(struct Table* table, struct ObjString* key, Value value);
+bool get_from_table(struct Table* table, struct ObjString* key, Value* value);
 //void delete_pair(struct Table* table, ObjString* key);
 void free_table(struct Table* table);
 void print_table(struct Table* table);

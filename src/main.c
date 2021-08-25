@@ -45,11 +45,10 @@ print fun()
  */
 
 //TODO:
-//  Why is are function correctness tests failing?
+//  Redo NODE_CASCADE in compiler to get it working
 //
-//  Integer constants now use new constants array in chunk.  
-//      change the rest over too.
-//      get rid of any superflous code related to messy bytestream with ObjString*, ObjFunction* etc
+//  Currently there is no type checking for NODE_DECL_FUN, NODE_CALL in compiler using new defs table
+//      reimplement type checking
 //
 //  Make a two pass compiler - the first pass compiles all function and struct declarations, and
 //  the second pass defines them.  This allows function and struct declarations to be in any order.

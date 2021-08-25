@@ -219,28 +219,8 @@ static uint8_t find_local(Compiler* compiler, Token name) {
         }
     }
 
-    /*//TODO: do we want to stick the index in an upvalue array here????
-    if (compiler->enclosing != NULL) {
-        return find_local((Compiler*)(compiler->enclosing), name);
-    }*/
-
     add_error(compiler, name, "Local variable not declared.");
 }
-
-/* //TODO: for closures, but not doing that now
-static int rec_compute_height(Compiler* compiler) {
-    if (compiler->enclosing == NULL) {
-        return compiler->locals_count;
-    }
-
-    return compiler->locals_count + rec_compute_height((Compiler*)(compiler->enclosing));
-}
-
-//find absolute position in the stack, but we don't want to include height of very top compiler
-static int find_abs_height(Compiler* compiler) {
-    int height = rec_compute_height(compiler);
-    return height - compiler->locals_count;
-}*/
 
 static Sig* find_sig(Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
@@ -316,7 +296,7 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
 
             //adding function signatures for type checking
             int arity = df->parameters.count;
-            add_local(compiler, df->name, df->sig);
+            //add_local(compiler, df->name, df->sig);
 
             Compiler func_comp;
             Chunk chunk;
@@ -324,30 +304,33 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             init_compiler(&func_comp, &chunk);
             func_comp.enclosing = (struct Compiler*)compiler;
 
-            //set local slot 0 in new compiler to function definition (so recursion can work)
-            //Recall: locals are only used for compiler to sync local variables with vm
             set_local(&func_comp, df->name, df->sig, 0);
 
-            //adding body to parameters so we can compile in one go
-            //TODO: could we just do this in the parser and replace it with arity?
             add_node(&df->parameters, df->body);
             SigList inner_ret_sigs = compile_function(&func_comp, &df->parameters);
 
+            /*
             SigFun* sigfun = (SigFun*)df->sig;
             if (inner_ret_sigs.count == 0 && !sig_is_type(sigfun->ret, VAL_NIL)) {
                 add_error(compiler, df->name, "Return type must match signature in function declaration.");
             }
+
             for (int i = 0; i < inner_ret_sigs.count; i++) {
                 if (!same_sig(sigfun->ret, inner_ret_sigs.sigs[i])) {
                     add_error(compiler, df->name, "Return type must match signature in function declaration.");
                 }
             }
 
-            free_sig_list(&inner_ret_sigs);
+            free_sig_list(&inner_ret_sigs);*/
 
             struct ObjFunction* f = make_function(chunk, arity);
-            int idx = add_constant(compiler, to_function(f));
-            emit_bytes(compiler, OP_FUN, idx);
+            int f_idx = add_constant(compiler, to_function(f));
+            struct ObjString* s = make_string(df->name.start, df->name.length);
+            int s_idx = add_constant(compiler, to_string(s));
+            emit_byte(compiler, OP_SET_DEF);
+            emit_byte(compiler, s_idx);
+            emit_byte(compiler, f_idx);
+
             return make_prim_sig(VAL_NIL);
         }
         case NODE_DECL_CLASS: {
@@ -500,13 +483,15 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
-            //push <fn> definition to top of stack
-            emit_byte(compiler, OP_GET_VAR);
-            emit_byte(compiler, find_local(compiler, call->name));
 
-            //push arguments to top of stack and check types
-            uint8_t idx = find_local(compiler, call->name);
-            Sig* sig = compiler->locals[idx].sig;
+            emit_byte(compiler, OP_GET_DEF);
+            struct ObjString* fun_name = make_string(call->name.start, call->name.length);
+            emit_byte(compiler, add_constant(compiler, to_string(fun_name)));
+
+            //check types TODO: this won't work with new defs table
+            /*
+            uint8_t idx = find_local(compiler, call->name);//?
+            Sig* sig = compiler->locals[idx].sig; //?
             SigList* params = &((SigFun*)sig)->params;
             if (params->count != call->arguments.count) {
                 add_error(compiler, call->name, "Argument count must match declaration.");
@@ -519,12 +504,13 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
                 free_sig(arg_sig);
-            }
+            }*/
 
             //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
-            return copy_sig(((SigFun*)sig)->ret);
+            //return copy_sig(((SigFun*)sig)->ret); //TODO: need to redo this
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_CASCADE_CALL: {
             CascadeCall* cc = (CascadeCall*)node;
