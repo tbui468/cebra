@@ -45,14 +45,20 @@ print fun()
  */
 
 //TODO:
-//  Redo NODE_CASCADE in compiler to get it working
+//  change Compiler to struct Compiler to prevent all kinds of weird shit
 //
 //  Currently there is no type checking for NODE_DECL_FUN, NODE_CALL in compiler using new defs table
-//      reimplement type checking
+//      Temporarily set sig return type of NODE_CALL to VAL_NIL, so any functions with non-nil return 
+//      types get caught by the typechecker and doesn't run.  Run test.cbr to see the compiler errors triggering.
 //
-//  Make a two pass compiler - the first pass compiles all function and struct declarations, and
-//  the second pass defines them.  This allows function and struct declarations to be in any order.
+//      Do we have to save signatures in a list inside compiler?
+//          create a new array called defs (that mirrors locals) 
+//      Is there a good reason why we aren't using a table?
+//      This close coupling of the compiler and vm is troubling
 //
+//  Get NODE_CASCADE working again - which should be easy if the above stuff works correctly
+//
+//  //TODO: Note: this should be solved if the above stuff works
 //  Big problem: Can't access classes (or functions etc) outside the current function scope
 //      so we can't instantiate or call functions (?) inside another function
 //      check this assumption by writing some code to see if it runs
@@ -70,6 +76,9 @@ print fun()
 //          But what happens if a user tries to return one of those functions?  We let them.
 //          Since it's just a reference to ObjFunction that can be pushed onto the local
 //          stack and used until the function returns.
+//  
+//  Get NODE_CLASS working with new defs table - in call frames
+//      should just need to use OP_SET/GET_DEF since they all use Values
 //
 //  OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
 //      basic problem: how to go from ObjClass -> Table necessary for instance?

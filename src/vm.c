@@ -267,7 +267,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 }
 
 ResultCode compile_and_run(VM* vm, NodeList* nl) {
-    Compiler root_compiler;
+    struct Compiler root_compiler;
     Chunk chunk;
     init_chunk(&chunk);
     init_compiler(&root_compiler, &chunk);

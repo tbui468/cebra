@@ -6,10 +6,10 @@
 #include "obj_class.h"
 
 
-Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sigs);
-static SigList compile_function(Compiler* compiler, NodeList* nl);
+Sig* compile_node(struct Compiler* compiler, struct Node* node, SigList* ret_sigs);
+static SigList compile_function(struct Compiler* compiler, NodeList* nl);
 
-static void add_error(Compiler* compiler, Token token, const char* message) {
+static void add_error(struct Compiler* compiler, Token token, const char* message) {
     CompileError error;
     error.token = token;
     error.message = message;
@@ -17,18 +17,18 @@ static void add_error(Compiler* compiler, Token token, const char* message) {
     compiler->error_count++;
 }
 
-static void grow_capacity(Compiler* compiler) {
+static void grow_capacity(struct Compiler* compiler) {
     int new_capacity = compiler->chunk->capacity == 0 ? 8 : compiler->chunk->capacity * 2;
     compiler->chunk->codes = GROW_ARRAY(compiler->chunk->codes, OpCode, new_capacity, compiler->chunk->capacity);
     compiler->chunk->capacity = new_capacity;
 }
 
-static int add_constant(Compiler* compiler, Value value) {
+static int add_constant(struct Compiler* compiler, Value value) {
     add_value(&compiler->chunk->constants, value);
     return compiler->chunk->constants.count - 1;
 }
 
-static void emit_byte(Compiler* compiler, uint8_t byte) {
+static void emit_byte(struct Compiler* compiler, uint8_t byte) {
     if (compiler->chunk->count + 1 > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
@@ -37,24 +37,24 @@ static void emit_byte(Compiler* compiler, uint8_t byte) {
     compiler->chunk->count++;
 }
 
-static void emit_bytes(Compiler* compiler, uint8_t byte1, uint8_t byte2) {
+static void emit_bytes(struct Compiler* compiler, uint8_t byte1, uint8_t byte2) {
     emit_byte(compiler, byte1);
     emit_byte(compiler, byte2);
 }
 
-static int emit_jump(Compiler* compiler, OpCode op) {
+static int emit_jump(struct Compiler* compiler, OpCode op) {
     emit_byte(compiler, op);
     emit_byte(compiler, 0xff);
     emit_byte(compiler, 0xff);
     return compiler->chunk->count;
 }
 
-static void patch_jump(Compiler* compiler, int index) {
+static void patch_jump(struct Compiler* compiler, int index) {
     uint16_t destination = (uint16_t)(compiler->chunk->count - index);
     memcpy(&compiler->chunk->codes[index - 2], &destination, sizeof(uint16_t));
 }
 
-static void emit_short(Compiler* compiler, uint16_t num) {
+static void emit_short(struct Compiler* compiler, uint16_t num) {
     if (compiler->chunk->count + (int)sizeof(int16_t) > compiler->chunk->capacity) {
         grow_capacity(compiler);
     }
@@ -63,13 +63,13 @@ static void emit_short(Compiler* compiler, uint16_t num) {
     compiler->chunk->count += sizeof(int16_t);
 }
 
-static void emit_jump_by(Compiler* compiler, OpCode op, int index) {
+static void emit_jump_by(struct Compiler* compiler, OpCode op, int index) {
     emit_byte(compiler, op);
     emit_short(compiler, (uint16_t)index);
 }
 
 
-static Sig* compile_literal(Compiler* compiler, struct Node* node) {
+static Sig* compile_literal(struct Compiler* compiler, struct Node* node) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
@@ -98,14 +98,14 @@ static Sig* compile_literal(Compiler* compiler, struct Node* node) {
     }
 }
 
-static Sig* compile_unary(Compiler* compiler, struct Node* node) {
+static Sig* compile_unary(struct Compiler* compiler, struct Node* node) {
     Unary* unary = (Unary*)node;
     Sig* sig = compile_node(compiler, unary->right, NULL);
     emit_byte(compiler, OP_NEGATE);
     return sig;
 }
 
-static Sig* compile_logical(Compiler* compiler, struct Node* node) {
+static Sig* compile_logical(struct Compiler* compiler, struct Node* node) {
     Logical* logical = (Logical*)node;
 
     if (logical->name.type == TOKEN_AND) {
@@ -170,7 +170,7 @@ static Sig* compile_logical(Compiler* compiler, struct Node* node) {
     return make_prim_sig(VAL_BOOL);
 }
 
-static Sig* compile_binary(Compiler* compiler, struct Node* node) {
+static Sig* compile_binary(struct Compiler* compiler, struct Node* node) {
     Binary* binary = (Binary*)node;
 
     Sig* type1 = compile_node(compiler, binary->left, NULL);
@@ -190,7 +190,7 @@ static Sig* compile_binary(Compiler* compiler, struct Node* node) {
     return type1;
 }
 
-static Sig* compile_print(Compiler* compiler, struct Node* node) {
+static Sig* compile_print(struct Compiler* compiler, struct Node* node) {
     Print* print = (Print*)node;
     Sig* type = compile_node(compiler, print->right, NULL);
     free_sig(type);
@@ -198,7 +198,7 @@ static Sig* compile_print(Compiler* compiler, struct Node* node) {
     return make_prim_sig(VAL_NIL);
 }
 
-static void set_local(Compiler* compiler, Token name, Sig* sig, int index) {
+static void set_local(struct Compiler* compiler, Token name, Sig* sig, int index) {
     Local local;
     local.name = name;
     local.sig = sig;
@@ -206,12 +206,12 @@ static void set_local(Compiler* compiler, Token name, Sig* sig, int index) {
     compiler->locals[index] = local;
 }
 
-static void add_local(Compiler* compiler, Token name, Sig* sig) {
+static void add_local(struct Compiler* compiler, Token name, Sig* sig) {
     set_local(compiler, name, sig, compiler->locals_count);
     compiler->locals_count++;
 }
 
-static uint8_t find_local(Compiler* compiler, Token name) {
+static uint8_t find_local(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
         if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
@@ -222,7 +222,7 @@ static uint8_t find_local(Compiler* compiler, Token name) {
     add_error(compiler, name, "Local variable not declared.");
 }
 
-static Sig* find_sig(Compiler* compiler, Token name) {
+static Sig* find_sig(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
         if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
@@ -231,18 +231,18 @@ static Sig* find_sig(Compiler* compiler, Token name) {
     }
 
     if (compiler->enclosing != NULL) {
-        return find_sig((Compiler*)(compiler->enclosing), name);
+        return find_sig((struct Compiler*)(compiler->enclosing), name);
     }
 
     add_error(compiler, name, "Local variable not declared.");
 }
 
 
-static void start_scope(Compiler* compiler) {
+static void start_scope(struct Compiler* compiler) {
     compiler->scope_depth++;
 }
 
-static void end_scope(Compiler* compiler) {
+static void end_scope(struct Compiler* compiler) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
         if (local->depth == compiler->scope_depth) {
@@ -257,7 +257,7 @@ static void end_scope(Compiler* compiler) {
 }
 
 
-static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sigs) {
+static Sig* compile_node(struct Compiler* compiler, struct Node* node, SigList* ret_sigs) {
     if (node == NULL) {
         return make_prim_sig(VAL_NIL);
     }
@@ -298,11 +298,11 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             int arity = df->parameters.count;
             //add_local(compiler, df->name, df->sig);
 
-            Compiler func_comp;
+            struct Compiler func_comp;
             Chunk chunk;
             init_chunk(&chunk);
             init_compiler(&func_comp, &chunk);
-            func_comp.enclosing = (struct Compiler*)compiler;
+            func_comp.enclosing = compiler;
 
             set_local(&func_comp, df->name, df->sig, 0);
 
@@ -337,11 +337,11 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
             DeclClass* dc = (DeclClass*)node;
             add_local(compiler, dc->name, dc->sig);
 
-            Compiler class_comp;
+            struct Compiler class_comp;
             Chunk chunk;
             init_chunk(&chunk);
             init_compiler(&class_comp, &chunk);
-            class_comp.enclosing = (struct Compiler*)compiler;
+            class_comp.enclosing = compiler;
             set_local(&class_comp, dc->name, dc->sig, 0);
 
             SigList ret_sigs = compile_function(&class_comp, &dc->decls);
@@ -544,7 +544,7 @@ static Sig* compile_node(Compiler* compiler, struct Node* node, SigList* ret_sig
     } 
 }
 
-void init_compiler(Compiler* compiler, Chunk* chunk) {
+void init_compiler(struct Compiler* compiler, Chunk* chunk) {
     compiler->scope_depth = 0;
     compiler->locals_count = 1; //first slot is for function def
     compiler->error_count = 0;
@@ -552,7 +552,7 @@ void init_compiler(Compiler* compiler, Chunk* chunk) {
     compiler->enclosing = NULL;
 }
 
-static SigList compile_function(Compiler* compiler, NodeList* nl) {
+static SigList compile_function(struct Compiler* compiler, NodeList* nl) {
     SigList ret_sigs;
     init_sig_list(&ret_sigs);
     for (int i = 0; i < nl->count; i++) {
@@ -564,7 +564,7 @@ static SigList compile_function(Compiler* compiler, NodeList* nl) {
     return ret_sigs;
 }
 
-ResultCode compile_ast(Compiler* compiler, NodeList* nl) {
+ResultCode compile_ast(struct Compiler* compiler, NodeList* nl) {
     SigList sl = compile_function(compiler, nl);
     free_sig_list(&sl);
 
@@ -579,7 +579,7 @@ ResultCode compile_ast(Compiler* compiler, NodeList* nl) {
 }
 
 
-void print_locals(Compiler* compiler) {
+void print_locals(struct Compiler* compiler) {
     for (int i = 0; i < compiler->locals_count; i ++) {
         Local* local = &compiler->locals[i];
         printf("%.*s\n", local->name.length, local->name.start);

@@ -19,7 +19,7 @@ typedef struct {
     int depth;
 } Local;
 
-typedef struct {
+struct Compiler {
     Chunk* chunk;
     int scope_depth;
     Local locals[256];
@@ -27,12 +27,12 @@ typedef struct {
     CompileError errors[256];
     int error_count;
     struct Compiler* enclosing;
-} Compiler;
+};
 
-void init_compiler(Compiler* compiler, Chunk* chunk);
-void free_compiler(Compiler* compiler);
-ResultCode compile_ast(Compiler* compiler, NodeList* nl);
+void init_compiler(struct Compiler* compiler, Chunk* chunk);
+void free_compiler(struct Compiler* compiler);
+ResultCode compile_ast(struct Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);
-void print_locals(Compiler* compiler);
+void print_locals(struct Compiler* compiler);
 
 #endif// CEBRA_COMPILER_H
