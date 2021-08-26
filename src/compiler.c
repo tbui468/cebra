@@ -303,8 +303,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
-            struct ObjString* s = make_string(df->name.start, df->name.length);
-            set_table(&compiler->compiletime_defs, s, to_sig(df->sig));
+            add_local(compiler, df->name, df->sig);
 
             struct Compiler func_comp;
             Chunk chunk;
@@ -333,10 +332,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
 
             struct ObjFunction* f = make_function(chunk, arity);
             int f_idx = add_constant(compiler, to_function(f));
-            int s_idx = add_constant(compiler, to_string(s));
-            emit_byte(compiler, OP_SET_DEF);
-            emit_byte(compiler, s_idx);
-            emit_byte(compiler, f_idx);
+            emit_bytes(compiler, OP_FUN, f_idx);
 
             return make_prim_sig(VAL_NIL);
         }
@@ -503,15 +499,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_CALL: {
             Call* call = (Call*)node;
 
-            emit_byte(compiler, OP_GET_DEF);
-            struct ObjString* fun_name = make_string(call->name.start, call->name.length);
-            emit_byte(compiler, add_constant(compiler, to_string(fun_name)));
+            emit_byte(compiler, OP_GET_VAR);
+            uint8_t idx = find_local(compiler, call->name);
+            emit_byte(compiler, idx);
 
-            Value sig_val;
-            if (!find_compiletime_defs(compiler, fun_name, &sig_val)) {
-                add_error(compiler, call->name, "Function not found.");
-            }
-            struct Sig* sig = sig_val.as.sig_type;
+            struct Sig* sig = compiler->locals[idx].sig;
             SigList* params = &((SigFun*)sig)->params;
             if (params->count != call->arguments.count) {
                 add_error(compiler, call->name, "Argument count must match declaration.");

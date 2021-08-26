@@ -2,10 +2,38 @@ TODO:  There's no way around using upvalues - will need to implement them for co
 
     Redo system so that we only use local variables again for everything (both primitive types
         and functions).  Get all the original tests (with return functions and cascading function
-        calls) working again.  Clean up any code necessary.
-        On the plus side, we have working hash tables now.
+        calls) working again.
+
+        What needs to be redone?
+            replace OP_SET_DEF/OP_GET_DEF with the VAR verions
+            remove defs Table from vm
+            remove compile_defs Table from compilers
+                and replace them with add_locals()
+                same thing for finding defs - replace with find_locals()
+
+    Class and function definitions should be treated just like regular variables now 
+        Change declarations to use following syntax:
+        eg, no COLON_COLON necessary
+        fib: (int) -> int = (n: int) -> int {
+            if n < 2 {
+                -> n
+            }
+
+            -> fib(n - 2) + fib(n -1)
+        }
+
+        print fib(10)
+
+        Dog: class = {
+            name: string = "Mittens"
+            age: int = 2
+        }
+
+        dog: Dog = Dog()
 
     Write some basic programs (that don't require closures) to hammer out bugs before we continue with upvalues.
+        definition / declaration bug - try this: a: int = a + 4
+        this should produce an error at compile time
 
     Implement upvalues step by step - just make them work for locals in the immediately enclosing
         function first.

@@ -5,14 +5,12 @@
 #include "value.h"
 #include "compiler.h"
 #include "node_list.h"
-#include "table.h"
 
 typedef struct {
     struct ObjFunction* function;
     int stack_offset;
     int ip;
     int arity;
-    struct Table defs;
 } CallFrame;
 
 typedef struct {
