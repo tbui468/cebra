@@ -261,6 +261,36 @@ static struct Node* var_declaration(bool require_assign) {
         return make_decl_var(name, sig, NULL);
     }
 
+    if (sig->type == SIG_FUN) {
+        free_sig(sig); //signature is redundant so freeing it here
+        consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
+        consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
+        NodeList params;
+        init_node_list(&params);
+
+        SigList param_sig;
+        init_sig_list(&param_sig); 
+        if (!match(TOKEN_RIGHT_PAREN)) {
+            do {
+                struct Node* var_decl = var_declaration(false);
+                DeclVar* vd = (DeclVar*)var_decl;
+                struct Sig* prim_sig = make_prim_sig(((SigPrim*)vd->sig)->type);
+                add_sig(&param_sig, prim_sig);
+                add_node(&params, var_decl);
+            } while (match(TOKEN_COMMA));
+            consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+        }
+
+        consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
+
+        struct Sig* ret_sig = read_sig();
+
+        consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+        struct Node* body = block();
+        struct Sig* sig = make_fun_sig(param_sig, ret_sig);
+        return make_decl_fun(name, params, sig, body);
+    }
+
     if (require_assign) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
         struct Node* value = expression();
@@ -288,35 +318,6 @@ static struct Node* declaration() {
         return make_set_var(name, expression(), true);
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
         return make_expr_stmt(call_expression());
-    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
-        match(TOKEN_IDENTIFIER);
-        Token name = parser.previous;
-        match(TOKEN_COLON_COLON);
-        consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
-        NodeList params;
-        init_node_list(&params);
-
-        SigList param_sig;
-        init_sig_list(&param_sig); 
-        if (!match(TOKEN_RIGHT_PAREN)) {
-            do {
-                struct Node* var_decl = var_declaration(false);
-                DeclVar* vd = (DeclVar*)var_decl;
-                struct Sig* prim_sig = make_prim_sig(((SigPrim*)vd->sig)->type);
-                add_sig(&param_sig, prim_sig);
-                add_node(&params, var_decl);
-            } while (match(TOKEN_COMMA));
-            consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
-        }
-
-        consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
-
-        struct Sig* ret_sig = read_sig();
-
-        consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
-        struct Node* body = block();
-        struct Sig* sig = make_fun_sig(param_sig, ret_sig);
-        return make_decl_fun(name, params, sig, body);
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;

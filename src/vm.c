@@ -236,7 +236,6 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
     init_compiler(&root_compiler, &chunk);
 
     ResultCode compile_result = compile_ast(&root_compiler, nl);
-    free_compiler(&root_compiler);
 
     if (compile_result == RESULT_FAILED) {
         free_chunk(&chunk);

@@ -167,11 +167,11 @@
 {
     print ""
     print "***********Functions Return Primitives or Nil************"
-    a :: () -> {
+    a: () -> = () -> {
         print "Zero Parameters / No Return: Passed!"
     }
     a()
-    b :: () -> int {
+    b: () -> int = () -> int {
         -> -1
     }
     if b() == -1 {
@@ -179,7 +179,7 @@
     } else {
         print "Zero Parameters / Integer Return: Failed!"
     }
-    c :: (i: int) -> {
+    c: (int) -> = (i: int) -> {
         if i == 2 {
             print "Integer Parameter: Passed!"
         } else {
@@ -187,7 +187,7 @@
         }
     }
     c(2)
-    fib :: (i: int) -> int {
+    fib: (int) -> int = (i: int) -> int {
         if i < 2 {
             -> i
         }
@@ -203,8 +203,8 @@
 {
     print ""
     print "***********Functions Returning Functions************"
-    a :: () -> () -> {
-        b :: () -> {
+    a: () -> () -> = () -> () -> {
+        b: () -> = () -> {
             print "No Parameters / Nil Return: Passed!"
         }
         -> b
@@ -212,8 +212,8 @@
 
     a()()
 
-    c :: () -> (int) -> int {
-        d :: (n: int) -> int {
+    c: () -> (int) -> int = () -> (int) -> int {
+        d: (int) -> int = (n: int) -> int {
             -> n * 2
         }
         -> d
@@ -230,9 +230,9 @@
     print ""
     print "***********Cascading Calls************"
 
-    a :: () -> () -> () -> int {
-        b :: () -> () -> int {
-            c :: () -> int {
+    a: () -> () -> () -> int = () -> () -> () -> int {
+        b: () -> () -> int = () -> () -> int {
+            c: () -> int = () -> int {
                 -> 1
             }
             -> c
@@ -246,8 +246,8 @@
         print "Triple calls: Failed!"
     }
 
-    d :: () -> (int) -> int {
-        e :: (n: int) -> int {
+    d: () -> (int) -> int = () -> (int) -> int {
+        e: (int) -> int = (n: int) -> int {
             -> 2 * n
         }
         -> e

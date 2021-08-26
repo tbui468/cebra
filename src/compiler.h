@@ -6,7 +6,6 @@
 #include "node_list.h"
 #include "chunk.h"
 #include "value.h"
-#include "table.h"
 
 typedef struct {
     Token token;
@@ -28,11 +27,9 @@ struct Compiler {
     CompileError errors[256];
     int error_count;
     struct Compiler* enclosing;
-    struct Table compiletime_defs;
 };
 
 void init_compiler(struct Compiler* compiler, Chunk* chunk);
-void free_compiler(struct Compiler* compiler);
 ResultCode compile_ast(struct Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(struct Compiler* compiler);

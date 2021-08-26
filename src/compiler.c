@@ -256,16 +256,6 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
-static bool find_compiletime_defs(struct Compiler* compiler, struct ObjString* name, Value* value) {
-    struct Compiler* current = compiler;
-
-    while (current != NULL) {
-        if (get_from_table(&current->compiletime_defs, name, value)) return true;
-        current = compiler->enclosing;
-    }
-
-    return false;
-}
 
 static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, SigList* ret_sigs) {
     if (node == NULL) {
@@ -315,7 +305,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
             SigList inner_ret_sigs = compile_function(&func_comp, &df->parameters);
-            free_compiler(&func_comp);
 
             SigFun* sigfun = (SigFun*)df->sig;
             if (inner_ret_sigs.count == 0 && !sig_is_type(sigfun->ret, VAL_NIL)) {
@@ -500,10 +489,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             Call* call = (Call*)node;
 
             emit_byte(compiler, OP_GET_VAR);
-            uint8_t idx = find_local(compiler, call->name);
-            emit_byte(compiler, idx);
+            emit_byte(compiler, find_local(compiler, call->name));
 
-            struct Sig* sig = compiler->locals[idx].sig;
+            struct Sig* sig = find_sig(compiler, call->name);
             SigList* params = &((SigFun*)sig)->params;
             if (params->count != call->arguments.count) {
                 add_error(compiler, call->name, "Argument count must match declaration.");
@@ -511,22 +499,24 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
 
             int min = call->arguments.count < params->count ? call->arguments.count : params->count;
             for (int i = 0; i < min; i++) {
-                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs); //TODO: ret_sigs isn't needed here, right???
+                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
                 if (!same_sig(arg_sig, params->sigs[i])) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
                 free_sig(arg_sig);
             }
 
-            //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
 
-            return copy_sig(((SigFun*)sig)->ret);
+            struct Sig* ret = copy_sig(((SigFun*)sig)->ret);
+            free_sig(sig);
+
+            return ret;
         }
         case NODE_CASCADE_CALL: {
             CascadeCall* cc = (CascadeCall*)node;
-            struct Sig* fun_sig = compile_node(compiler, cc->function, NULL); //TODO: ret_sigs not needed here (similar to CALL), right?
+            struct Sig* fun_sig = compile_node(compiler, cc->function, NULL);
 
             //TODO: most of this is a repeat of code in CALL - combine it
             SigList* params = &((SigFun*)fun_sig)->params;
@@ -536,14 +526,13 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
 
             int min = cc->arguments.count < params->count ? cc->arguments.count : params->count;
             for (int i = 0; i < min; i++) {
-                struct Sig* arg_sig = compile_node(compiler, cc->arguments.nodes[i], ret_sigs); //TODO: ret_sigs isn't needed here, right???
+                struct Sig* arg_sig = compile_node(compiler, cc->arguments.nodes[i], ret_sigs);
                 if (!same_sig(arg_sig, params->sigs[i])) {
                     add_error(compiler, cc->name, "Argument type must match parameter type.");
                 }
                 free_sig(arg_sig);
             }
 
-            //make a new callframe
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(cc->arguments.count));
 
@@ -556,17 +545,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
     } 
 }
 
-void free_compiler(struct Compiler* compiler) {
-    free_table(&compiler->compiletime_defs);
-}
-
 void init_compiler(struct Compiler* compiler, Chunk* chunk) {
     compiler->scope_depth = 0;
     compiler->locals_count = 1; //first slot is for function def
     compiler->error_count = 0;
     compiler->chunk = chunk;
     compiler->enclosing = NULL;
-    init_table(&compiler->compiletime_defs);
 }
 
 static SigList compile_function(struct Compiler* compiler, NodeList* nl) {
