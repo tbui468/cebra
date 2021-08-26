@@ -256,6 +256,16 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
+static bool find_compiletime_defs(struct Compiler* compiler, struct ObjString* name, Value* value) {
+    struct Compiler* current = compiler;
+
+    while (current != NULL) {
+        if (get_from_table(&current->compiletime_defs, name, value)) return true;
+        current = compiler->enclosing;
+    }
+
+    return false;
+}
 
 static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, SigList* ret_sigs) {
     if (node == NULL) {
@@ -496,7 +506,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             emit_byte(compiler, add_constant(compiler, to_string(fun_name)));
 
             Value sig_val;
-            get_from_table(&compiler->compiletime_defs, fun_name, &sig_val);
+            find_compiletime_defs(compiler, fun_name, &sig_val);
             struct Sig* sig = sig_val.as.sig_type;
             SigList* params = &((SigFun*)sig)->params;
             if (params->count != call->arguments.count) {
