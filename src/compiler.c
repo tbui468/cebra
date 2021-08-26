@@ -508,7 +508,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             emit_byte(compiler, add_constant(compiler, to_string(fun_name)));
 
             Value sig_val;
-            find_compiletime_defs(compiler, fun_name, &sig_val);
+            if (!find_compiletime_defs(compiler, fun_name, &sig_val)) {
+                add_error(compiler, call->name, "Function not found.");
+            }
             struct Sig* sig = sig_val.as.sig_type;
             SigList* params = &((SigFun*)sig)->params;
             if (params->count != call->arguments.count) {

@@ -200,3 +200,62 @@
     }
 }
 
+{
+    print ""
+    print "***********Functions Returning Functions************"
+    a :: () -> () -> {
+        b :: () -> {
+            print "No Parameters / Nil Return: Passed!"
+        }
+        -> b
+    }
+
+    a()()
+
+    c :: () -> (int) -> int {
+        d :: (n: int) -> int {
+            -> n * 2
+        }
+        -> d
+    }
+
+    if c()(4) == 8 {
+        print "One Parameter / Int Return: Passed!"
+    } else {
+        print "One Parameter / Int Return: Failed!"
+    }
+}
+
+{
+    print ""
+    print "***********Cascading Calls************"
+
+    a :: () -> () -> () -> int {
+        b :: () -> () -> int {
+            c :: () -> int {
+                -> 1
+            }
+            -> c
+        }
+        -> b
+    }
+
+    if a()()() == 1 {
+        print "Triple calls: Passed!"
+    } else {
+        print "Triple calls: Failed!"
+    }
+
+    d :: () -> (int) -> int {
+        e :: (n: int) -> int {
+            -> 2 * n
+        }
+        -> e
+    }
+
+    if d()(2) == 4 {
+        print "Double calls: Passed!"
+    } else {
+        print "Double calls: Failed!"
+    }
+}
