@@ -365,8 +365,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
             struct Sig* sig = compile_node(compiler, es->expr, ret_sigs);
+            if (!sig_is_type(sig, VAL_NIL)) {
+                emit_byte(compiler, OP_POP);
+            }
             free_sig(sig);
-            emit_byte(compiler, OP_POP);
             return make_prim_sig(VAL_NIL);
         }
         case NODE_PRINT:    return compile_print(compiler, node);
@@ -577,7 +579,6 @@ static SigList compile_function(struct Compiler* compiler, NodeList* nl) {
     SigList ret_sigs;
     init_sig_list(&ret_sigs);
     for (int i = 0; i < nl->count; i++) {
-        printf("compiled node\n");
         struct Sig* sig = compile_node(compiler, nl->nodes[i], &ret_sigs);
         free_sig(sig);
     }
