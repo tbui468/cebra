@@ -7,6 +7,7 @@ typedef enum {
     OP_INT,
     OP_FLOAT,
     OP_STRING,
+    OP_NIL,
     OP_PRINT,
     OP_TRUE,
     OP_FALSE,

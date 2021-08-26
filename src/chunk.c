@@ -23,6 +23,7 @@ const char* op_to_string(OpCode op) {
         case OP_INT: return "OP_INT";
         case OP_FLOAT: return "OP_FLOAT";
         case OP_STRING: return "OP_STRING";
+        case OP_NIL: return "OP_NIL";
         case OP_PRINT: return "OP_PRINT";
         case OP_SET_VAR: return "OP_SET_VAR";
         case OP_GET_VAR: return "OP_GET_VAR";
@@ -76,6 +77,10 @@ void disassemble_chunk(Chunk* chunk) {
             case OP_STRING: {
                 int idx = read_byte(chunk, i++);
                 printf("%s", chunk->constants.values[idx].as.string_type->chars); 
+                break;
+            }
+            case OP_NIL: {
+                printf("%s", op_to_string(op));
                 break;
             }
             case OP_GET_VAR: {

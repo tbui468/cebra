@@ -26,6 +26,7 @@ typedef enum {
     NODE_RETURN,
     NODE_CALL,
     NODE_CASCADE_CALL,
+    NODE_EXPR_STMT
 } NodeType;
 
 struct Node {
@@ -39,7 +40,7 @@ struct Node {
 typedef struct {
     struct Node base;
     Token name;
-    Sig* sig;
+    struct Sig* sig;
     struct Node* right;
 } DeclVar;
 
@@ -47,7 +48,7 @@ typedef struct {
     struct Node base;
     Token name;
     NodeList parameters;
-    Sig* sig;
+    struct Sig* sig;
     struct Node* body;
 } DeclFun;
 
@@ -55,12 +56,18 @@ typedef struct {
     struct Node base;
     Token name;
     NodeList decls;
-    Sig* sig;
+    struct Sig* sig;
 } DeclClass;
 
 /*
  * Statements
  */
+
+typedef struct {
+    struct Node base;
+    struct Node* expr;
+} ExprStmt;
+
 
 typedef struct {
     struct Node base;
@@ -164,18 +171,19 @@ struct Node* make_unary(Token name, struct Node* right);
 struct Node* make_binary(Token name, struct Node* left, struct Node* right);
 struct Node* make_logical(Token name, struct Node* left, struct Node* right);
 struct Node* make_print(Token name, struct Node* right);
-struct Node* make_decl_var(Token name, Sig* sig, struct Node* right);
+struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right);
 struct Node* make_get_var(Token name);
 struct Node* make_set_var(Token name, struct Node* right, bool decl);
 struct Node* make_block(Token name, NodeList dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
-struct Node* make_decl_fun(Token name, NodeList parameters, Sig* sig, struct Node* body);
+struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, NodeList arguments);
 struct Node* make_cascade_call(Token name, struct Node* function, NodeList arguments);
-struct Node* make_decl_class(Token name, NodeList decls, Sig* sig);
+struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig);
+struct Node* make_expr_stmt(struct Node* expr);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

@@ -6,7 +6,7 @@
  * Declarations
  */
 
-struct Node* make_decl_var(Token name, Sig* sig, struct Node* right) {
+struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right) {
     DeclVar* decl_var = ALLOCATE_NODE(DeclVar);
     decl_var->name = name;
     decl_var->sig = sig;
@@ -16,7 +16,7 @@ struct Node* make_decl_var(Token name, Sig* sig, struct Node* right) {
     return (struct Node*)decl_var;
 }
 
-struct Node* make_decl_fun(Token name, NodeList parameters, Sig* sig, struct Node* body) {
+struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, struct Node* body) {
     DeclFun* df = ALLOCATE_NODE(DeclFun);
     df->name = name;
     df->parameters = parameters;
@@ -27,7 +27,7 @@ struct Node* make_decl_fun(Token name, NodeList parameters, Sig* sig, struct Nod
     return (struct Node*)df;
 }
 
-struct Node* make_decl_class(Token name, NodeList decls, Sig* sig) {
+struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig) {
     DeclClass* dc = ALLOCATE_NODE(DeclClass);
     dc->name = name;
     dc->decls = decls;
@@ -40,6 +40,14 @@ struct Node* make_decl_class(Token name, NodeList decls, Sig* sig) {
 /*
  * Statements
  */
+
+struct Node* make_expr_stmt(struct Node* expr) {
+    ExprStmt* es = ALLOCATE_NODE(ExprStmt);
+    es->expr = expr;
+    es->base.type = NODE_EXPR_STMT;
+
+    return (struct Node*)es;
+}
 
 struct Node* make_print(Token name, struct Node* right) {
     Print* print = ALLOCATE_NODE(Print);
@@ -210,6 +218,11 @@ void print_node(struct Node* node) {
             break;
         }
         //Statements
+        case NODE_EXPR_STMT: {
+            ExprStmt* es = (ExprStmt*)node;
+            printf("Expr Stmt");
+            break;
+        }
         case NODE_PRINT: {
             Print* print = (Print*)node;
             printf("( %.*s ", print->name.length, print->name.start);
@@ -333,6 +346,12 @@ void free_node(struct Node* node) {
             break;
         }
         //Statements
+        case NODE_EXPR_STMT: {
+            ExprStmt* es = (ExprStmt*)node;
+            free_node(es->expr);
+            FREE_NODE(es, ExprStmt);
+            break;
+        }
         case NODE_PRINT: {
             Print* print = (Print*)node;
             free_node(print->right);

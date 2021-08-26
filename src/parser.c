@@ -205,7 +205,7 @@ static struct Node* block() {
     return make_block(name, body);
 }
 
-static Sig* read_sig() {
+static struct Sig* read_sig() {
     if (match(TOKEN_LEFT_PAREN)) {
         SigList params;
         init_sig_list(&params);
@@ -216,7 +216,7 @@ static Sig* read_sig() {
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
         }
         consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.");
-        Sig* ret = read_sig();
+        struct Sig* ret = read_sig();
         return make_fun_sig(params, ret);
     }
 
@@ -249,7 +249,7 @@ static struct Node* var_declaration(bool require_assign) {
     match(TOKEN_IDENTIFIER);
     Token name = parser.previous;
     consume(TOKEN_COLON, "Expect ':' after identifier.");
-    Sig* sig = read_sig();
+    struct Sig* sig = read_sig();
 
     if (sig->type == SIG_CLASS) {
         if (require_assign || match(TOKEN_EQUAL)) {
@@ -287,7 +287,7 @@ static struct Node* declaration() {
         match(TOKEN_EQUAL);
         return make_set_var(name, expression(), true);
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
-        return call_expression();
+        return make_expr_stmt(call_expression());
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
@@ -302,7 +302,7 @@ static struct Node* declaration() {
             do {
                 struct Node* var_decl = var_declaration(false);
                 DeclVar* vd = (DeclVar*)var_decl;
-                Sig* prim_sig = make_prim_sig(((SigPrim*)vd->sig)->type);
+                struct Sig* prim_sig = make_prim_sig(((SigPrim*)vd->sig)->type);
                 add_sig(&param_sig, prim_sig);
                 add_node(&params, var_decl);
             } while (match(TOKEN_COMMA));
@@ -311,11 +311,11 @@ static struct Node* declaration() {
 
         consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
 
-        Sig* ret_sig = read_sig();
+        struct Sig* ret_sig = read_sig();
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();
-        Sig* sig = make_fun_sig(param_sig, ret_sig);
+        struct Sig* sig = make_fun_sig(param_sig, ret_sig);
         return make_decl_fun(name, params, sig, body);
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
         match(TOKEN_IDENTIFIER);

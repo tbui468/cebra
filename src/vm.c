@@ -95,6 +95,10 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
         }
+        case OP_NIL: {
+            push(vm, to_nil());
+            break;
+        }
         /*
         case OP_FUN: {
             Value fun;
@@ -243,13 +247,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_RETURN: {
-            //TODO: this is ugly - rewrite this
-            //we want to cache the top of the callframe stack (the return value)
-            //before popping everything, and only push it if it's NOT nil
-            Value ret = to_nil();
-            if (vm->stack_top > frame->stack_offset + 1 + frame->arity) {
-                ret = pop(vm);
-            }
+            Value ret = ret = pop(vm);
             while (vm->stack_top > frame->stack_offset) {
                 pop(vm);
             }
@@ -273,6 +271,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
     init_compiler(&root_compiler, &chunk);
 
     ResultCode compile_result = compile_ast(&root_compiler, nl);
+    free_compiler(&root_compiler);
 
     if (compile_result == RESULT_FAILED) {
         free_chunk(&chunk);

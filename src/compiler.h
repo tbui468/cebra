@@ -6,6 +6,7 @@
 #include "node_list.h"
 #include "chunk.h"
 #include "value.h"
+#include "table.h"
 
 typedef struct {
     Token token;
@@ -15,7 +16,7 @@ typedef struct {
 
 typedef struct {
     Token name;
-    Sig* sig;
+    struct Sig* sig;
     int depth;
 } Local;
 
@@ -27,6 +28,7 @@ struct Compiler {
     CompileError errors[256];
     int error_count;
     struct Compiler* enclosing;
+    struct Table compiletime_defs;
 };
 
 void init_compiler(struct Compiler* compiler, Chunk* chunk);

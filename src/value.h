@@ -11,6 +11,7 @@ struct ObjInstance;
 struct ObjFunction;
 struct ObjClass;
 struct ObjString;
+struct Sig;
 
 typedef enum {
     VAL_INT,
@@ -20,6 +21,7 @@ typedef enum {
     VAL_FUNCTION,
     VAL_CLASS,
     VAL_INSTANCE,
+    VAL_SIG,
     VAL_NIL,
 } ValueType;
 
@@ -33,6 +35,7 @@ typedef struct {
         struct ObjFunction* function_type;
         struct ObjClass* class_type;
         struct ObjInstance* instance_type;
+        struct Sig* sig_type;
     } as;
 } Value;
 
@@ -44,6 +47,7 @@ Value to_boolean(bool b);
 Value to_function(struct ObjFunction* obj);
 Value to_class(struct ObjClass* obj);
 Value to_instance(struct ObjInstance* obj);
+Value to_sig(struct Sig* sig);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);
