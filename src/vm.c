@@ -155,12 +155,14 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_GET_VAR: {
-            uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
+            //uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
+            uint8_t slot = READ_TYPE(frame, uint8_t);
             push(vm, vm->stack[slot]);
             break;
         }
         case OP_SET_VAR: {
-            uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
+            //uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
+            uint8_t slot = READ_TYPE(frame, uint8_t);
             vm->stack[slot] = peek(vm, 0);
             break;
         }

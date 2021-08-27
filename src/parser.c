@@ -263,6 +263,11 @@ static struct Node* var_declaration(bool require_assign) {
 
     if (sig->type == SIG_FUN) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
+
+        if (peek_one(TOKEN_IDENTIFIER)) {
+            return make_decl_var(name, sig, expression());
+        }
+
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
         NodeList params;
         init_node_list(&params);

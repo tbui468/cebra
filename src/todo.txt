@@ -1,22 +1,21 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
-    For errors, returning NULL for signatures now.  Would it make more sense to return a special
-    sig_error?  Or NIL even?
+    Errors in inner compilers are not being check, and being tossed out immediately when
+        the enclosing compiler is returned to.  Need to add any errors to outcompiler before
+        the inner compiler is lost
 
-    Write some basic programs (that don't require closures) to hammer out bugs before we continue with upvalues.
-        definition / declaration bug - try this: a: int = a + 4
-        this should produce an error at compile time
+    Step 2.  Have returned function capture local variable when declared.
+        so we want each compiler to have an array of Upvalues (which can be a new struct)
+        recall that upvalues are only something we think about when a function is declared.
+        when called, all locals/upvalues should already be wired up
+        when SETTING or GETTING a variable in a function declaration look in three places:
+            locals - if found, don't need to worry about anything
+            locals of enclosing function - need to add this to upvalues list
+            upvalues of enclosing function - this requires more thinking/machinery to get working
 
-        this crashes 
-        a: int = 6 + b
-
-        What do we do when a local can't be found?  Trying to compile the rest will crash since we don't 
-        have a valid index for signature checking or emitting locals idx to chunk.
-
-        Will need to synchronize if so.  Then we'll need a flag to signify when we have a new error
-
-    Implement upvalues step by step - just make them work for locals in the immediately enclosing
-        function first.
+            What data do we actually need?
+            Goal is to have OP_GET_UPVALUE, OP_SET_UPVALUE find the correct upvalue
+            in the stack (and then also be able to find closed upvalues on the heap)
     
     Intern strings - have vm hold a table of ObjString*/ObjString* (value) so that copies of
         strings aren't created.  Interning can be done at both compile and runtime.

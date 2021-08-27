@@ -17,6 +17,13 @@ static void add_error(struct Compiler* compiler, Token token, const char* messag
     compiler->error_count++;
 }
 
+static void copy_errors(struct Compiler* dest, struct Compiler* src) {
+    for (int i = 0; i < src->error_count; i++) {
+        dest->errors[dest->error_count] = src->errors[i];
+        dest->error_count++;
+    }
+}
+
 static void grow_capacity(struct Compiler* compiler) {
     int new_capacity = compiler->chunk->capacity == 0 ? 8 : compiler->chunk->capacity * 2;
     compiler->chunk->codes = GROW_ARRAY(compiler->chunk->codes, OpCode, new_capacity, compiler->chunk->capacity);
@@ -212,9 +219,21 @@ static int find_local(struct Compiler* compiler, Token name) {
     }
 
     add_error(compiler, name, "Local variable not declared.");
+
     return -1;
 }
 
+static int compute_frame_offset(struct Compiler* compiler) {
+    
+    struct Compiler* current = compiler->enclosing;
+    int height = 0;
+    while (current != NULL) {
+        height += (compiler->locals_count - 1);
+        current = current->enclosing;
+    }
+
+    return height;
+}
 
 static void start_scope(struct Compiler* compiler) {
     compiler->scope_depth++;
@@ -284,6 +303,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
             SigList inner_ret_sigs = compile_function(&func_comp, &df->parameters);
+
+            copy_errors(compiler, &func_comp);
 
             SigFun* sigfun = (SigFun*)df->sig;
             if (inner_ret_sigs.count == 0 && !sig_is_type(sigfun->ret, VAL_NIL)) {
@@ -449,7 +470,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             int idx = find_local(compiler, gv->name);
             if (idx == -1 ) return make_prim_sig(VAL_NIL);
             emit_byte(compiler, OP_GET_VAR);
-            emit_byte(compiler, idx);
+            emit_byte(compiler, idx + compute_frame_offset(compiler));
 
             return copy_sig(compiler->locals[idx].sig);
         }
@@ -469,7 +490,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             }
 
             emit_byte(compiler, OP_SET_VAR);
-            emit_byte(compiler, idx);
+            emit_byte(compiler, idx + compute_frame_offset(compiler));
             if (sv->decl) {
                 emit_byte(compiler, OP_POP);
             }
