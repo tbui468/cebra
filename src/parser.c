@@ -262,7 +262,6 @@ static struct Node* var_declaration(bool require_assign) {
     }
 
     if (sig->type == SIG_FUN) {
-        free_sig(sig); //signature is redundant so freeing it here
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
         NodeList params;
@@ -287,8 +286,12 @@ static struct Node* var_declaration(bool require_assign) {
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();
-        struct Sig* sig = make_fun_sig(param_sig, ret_sig);
-        return make_decl_fun(name, params, sig, body);
+        struct Sig* fun_sig = make_fun_sig(param_sig, ret_sig);
+        if (!same_sig(fun_sig, sig)) {
+            add_error(name, "Function declaration type must match definition type.");
+        }
+        free_sig(sig); //signature should be same as fun_sig at this point, so redundant
+        return make_decl_fun(name, params, fun_sig, body);
     }
 
     if (require_assign) {

@@ -1,6 +1,13 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
     Function definitions before equals sign aren't being type checked right now 
+        this should follow same pattern as any variable being assigned a primitive type - 
+        review how that's done and where that is typed checked and do the same
+        thing for functions.
+
+        Right side should be function, which is an expression
+
+        fun: () -> = () -> { }
 
     Write some basic programs (that don't require closures) to hammer out bugs before we continue with upvalues.
         definition / declaration bug - try this: a: int = a + 4
