@@ -222,21 +222,6 @@ static uint8_t find_local(struct Compiler* compiler, Token name) {
     add_error(compiler, name, "Local variable not declared.");
 }
 
-static struct Sig* find_sig(struct Compiler* compiler, Token name) {
-    for (int i = compiler->locals_count - 1; i >= 0; i--) {
-        Local* local = &compiler->locals[i];
-        if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
-            return copy_sig(compiler->locals[i].sig);
-        }
-    }
-
-    if (compiler->enclosing != NULL) {
-        return find_sig((struct Compiler*)(compiler->enclosing), name);
-    }
-
-    add_error(compiler, name, "Local variable not declared.");
-}
-
 
 static void start_scope(struct Compiler* compiler) {
     compiler->scope_depth++;
@@ -465,18 +450,17 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             emit_byte(compiler, OP_GET_VAR);
             emit_byte(compiler, idx);
 
-            return find_sig(compiler, gv->name);
+            return copy_sig(compiler->locals[idx].sig);
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
-            struct Sig* var_sig = find_sig(compiler, sv->name);
+            uint8_t idx = find_local(compiler, sv->name);
+            struct Sig* var_sig = compiler->locals[idx].sig;
 
             if (!same_sig(right_sig, var_sig)) {
                 add_error(compiler, sv->name, "Right side type must match variable type.");
             }
-
-            free_sig(var_sig);
 
             emit_byte(compiler, OP_SET_VAR);
             emit_byte(compiler, find_local(compiler, sv->name));
@@ -489,9 +473,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             Call* call = (Call*)node;
 
             emit_byte(compiler, OP_GET_VAR);
-            emit_byte(compiler, find_local(compiler, call->name));
+            uint8_t idx =  find_local(compiler, call->name);
+            emit_byte(compiler, idx);
 
-            struct Sig* sig = find_sig(compiler, call->name);
+            struct Sig* sig = compiler->locals[idx].sig;
             SigList* params = &((SigFun*)sig)->params;
             if (params->count != call->arguments.count) {
                 add_error(compiler, call->name, "Argument count must match declaration.");
@@ -510,7 +495,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             emit_byte(compiler, (uint8_t)(call->arguments.count));
 
             struct Sig* ret = copy_sig(((SigFun*)sig)->ret);
-            free_sig(sig);
 
             return ret;
         }

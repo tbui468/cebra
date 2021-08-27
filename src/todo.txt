@@ -1,51 +1,24 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
-    Function definitions before equals sign aren't being type checked right now 
-        this should follow same pattern as any variable being assigned a primitive type - 
-        review how that's done and where that is typed checked and do the same
-        thing for functions.
-
-        Right side should be function, which is an expression
-
-        fun: () -> = () -> { }
-
     Write some basic programs (that don't require closures) to hammer out bugs before we continue with upvalues.
         definition / declaration bug - try this: a: int = a + 4
         this should produce an error at compile time
 
+        this crashes 
+        a: int = 6 + b
+
     Implement upvalues step by step - just make them work for locals in the immediately enclosing
         function first.
     
-  Get NODE_CASCADE working again - which should be easy if the above stuff works correctly
-      NODE_CASCADE and returning functions from functions not working now with new
-      format.  How could be get this to work?  If a function is returned, we could
-        then just add that to the defs table of the current compiler.  This works at
-        runtime, but will this be okay at compiletime????  If functions are passed
-        up the chain, they're seen as local variables. 
-
-        making them locals causes own problems:  identifiers look the same for both
-        functions and primitive types - there's no way to differentiate now
-
-        allow passing of function literals only?  But that seems inconsistent
-
-        the only option is to implement closures and then allow access to 
-        EVERYTHING outside a function body
-
-        There's no way around this unless we allow function pointers to be passed around
-        but the entire goal is to NOT use pointers
-
-        then the entire defs system needs to be rewritten again.  We dont' even needs globals,
-        just locals again.  Then upvalues will be needed.  
-
     Intern strings - have vm hold a table of ObjString*/ObjString* (value) so that copies of
         strings aren't created.  Interning can be done at both compile and runtime.
         Just put some code inside make_string/take_string so that it doesn't
         add a new key/value pair if if the key already exists in the table.
 
-  Get NODE_CLASS working with new defs table - in call frames
+    Get NODE_CLASS working with new defs table - in call frames
       should just need to use OP_SET/GET_DEF since they all use Values
 
-  OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
+    OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
      basic problem: how to go from ObjClass -> Table necessary for instance?
 
   MONDAY
