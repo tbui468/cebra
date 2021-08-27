@@ -67,6 +67,7 @@ bool same_sig_list(SigList* sl1, SigList* sl2) {
 }
 
 bool same_sig(struct Sig* sig1, struct Sig* sig2) {
+    if (sig1 == NULL || sig2 == NULL) return false;
     if (sig1->type != sig2->type) return false;
 
     switch(sig1->type) {

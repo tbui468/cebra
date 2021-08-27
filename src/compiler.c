@@ -190,14 +190,6 @@ static struct Sig* compile_binary(struct Compiler* compiler, struct Node* node) 
     return type1;
 }
 
-static struct Sig* compile_print(struct Compiler* compiler, struct Node* node) {
-    Print* print = (Print*)node;
-    struct Sig* type = compile_node(compiler, print->right, NULL);
-    free_sig(type);
-    emit_byte(compiler, OP_PRINT);
-    return make_prim_sig(VAL_NIL);
-}
-
 static void set_local(struct Compiler* compiler, Token name, struct Sig* sig, int index) {
     Local local;
     local.name = name;
@@ -211,15 +203,16 @@ static void add_local(struct Compiler* compiler, Token name, struct Sig* sig) {
     compiler->locals_count++;
 }
 
-static uint8_t find_local(struct Compiler* compiler, Token name) {
+static int find_local(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
         if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
-            return (uint8_t)i;
+            return i;
         }
     }
 
     add_error(compiler, name, "Local variable not declared.");
+    return -1;
 }
 
 
@@ -255,7 +248,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             if (dv->sig->type == SIG_CLASS) {
                 SigClass* sc = (SigClass*)(dv->sig);
                 emit_byte(compiler, OP_INSTANCE);
-                uint8_t class_idx = find_local(compiler, sc->klass);
+                int class_idx = find_local(compiler, sc->klass);
+                if (class_idx == -1) return make_prim_sig(VAL_NIL);
                 emit_byte(compiler, class_idx);
                 add_local(compiler, dv->name, dv->sig);
 
@@ -341,7 +335,13 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             free_sig(sig);
             return make_prim_sig(VAL_NIL);
         }
-        case NODE_PRINT:    return compile_print(compiler, node);
+        case NODE_PRINT: {
+            Print* print = (Print*)node;
+            struct Sig* type = compile_node(compiler, print->right, ret_sigs);
+            free_sig(type);
+            emit_byte(compiler, OP_PRINT);
+            return make_prim_sig(VAL_NIL);
+        }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             start_scope(compiler);
@@ -446,7 +446,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_UNARY:        return compile_unary(compiler, node);
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
-            uint8_t idx = find_local(compiler, gv->name);
+            int idx = find_local(compiler, gv->name);
+            if (idx == -1 ) return make_prim_sig(VAL_NIL);
             emit_byte(compiler, OP_GET_VAR);
             emit_byte(compiler, idx);
 
@@ -455,7 +456,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
-            uint8_t idx = find_local(compiler, sv->name);
+            int idx = find_local(compiler, sv->name);
+            if (idx == -1) {
+                free_sig(right_sig);
+                return make_prim_sig(VAL_NIL);
+            }
+
             struct Sig* var_sig = compiler->locals[idx].sig;
 
             if (!same_sig(right_sig, var_sig)) {
@@ -463,7 +469,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             }
 
             emit_byte(compiler, OP_SET_VAR);
-            emit_byte(compiler, find_local(compiler, sv->name));
+            emit_byte(compiler, idx);
             if (sv->decl) {
                 emit_byte(compiler, OP_POP);
             }
@@ -473,7 +479,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             Call* call = (Call*)node;
 
             emit_byte(compiler, OP_GET_VAR);
-            uint8_t idx =  find_local(compiler, call->name);
+            int idx =  find_local(compiler, call->name);
+            if (idx == -1) return make_prim_sig(VAL_NIL);
             emit_byte(compiler, idx);
 
             struct Sig* sig = compiler->locals[idx].sig;

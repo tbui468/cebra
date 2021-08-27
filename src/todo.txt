@@ -1,11 +1,19 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
+    For errors, returning NULL for signatures now.  Would it make more sense to return a special
+    sig_error?  Or NIL even?
+
     Write some basic programs (that don't require closures) to hammer out bugs before we continue with upvalues.
         definition / declaration bug - try this: a: int = a + 4
         this should produce an error at compile time
 
         this crashes 
         a: int = 6 + b
+
+        What do we do when a local can't be found?  Trying to compile the rest will crash since we don't 
+        have a valid index for signature checking or emitting locals idx to chunk.
+
+        Will need to synchronize if so.  Then we'll need a flag to signify when we have a new error
 
     Implement upvalues step by step - just make them work for locals in the immediately enclosing
         function first.
