@@ -197,6 +197,18 @@ static struct Sig* compile_binary(struct Compiler* compiler, struct Node* node) 
     return type1;
 }
 
+static int compute_frame_offset(struct Compiler* compiler) {
+    
+    struct Compiler* current = compiler->enclosing;
+    int height = 0;
+    while (current != NULL) {
+        height += current->locals_count;
+        current = current->enclosing;
+    }
+
+    return height;
+}
+
 static void set_local(struct Compiler* compiler, Token name, struct Sig* sig, int index) {
     Local local;
     local.name = name;
@@ -210,6 +222,40 @@ static void add_local(struct Compiler* compiler, Token name, struct Sig* sig) {
     compiler->locals_count++;
 }
 
+static struct Sig* resolve_sig(struct Compiler* compiler, Token name) {
+    struct Compiler* current = compiler;
+    do {
+        for (int i = current->locals_count - 1; i >= 0; i--) {
+            Local* local = &current->locals[i];
+            if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
+                return copy_sig(current->locals[i].sig);
+            }
+        }
+        current = current->enclosing;
+    } while(current != NULL);
+
+    add_error(compiler, name, "Local variable not declared.");
+
+    return NULL;
+}
+
+static int resolve_variable(struct Compiler* compiler, Token name) {
+    struct Compiler* current = compiler;
+    do {
+        for (int i = current->locals_count - 1; i >= 0; i--) {
+            Local* local = &current->locals[i];
+            if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
+                return i + compute_frame_offset(current);
+            }
+        }
+        current = current->enclosing;
+    } while(current != NULL);
+
+    add_error(compiler, name, "Local variable not declared.");
+
+    return -1;
+}
+
 static int find_local(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
@@ -221,18 +267,6 @@ static int find_local(struct Compiler* compiler, Token name) {
     add_error(compiler, name, "Local variable not declared.");
 
     return -1;
-}
-
-static int compute_frame_offset(struct Compiler* compiler) {
-    
-    struct Compiler* current = compiler->enclosing;
-    int height = 0;
-    while (current != NULL) {
-        height += (compiler->locals_count - 1);
-        current = current->enclosing;
-    }
-
-    return height;
 }
 
 static void start_scope(struct Compiler* compiler) {
@@ -467,30 +501,32 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_UNARY:        return compile_unary(compiler, node);
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
-            int idx = find_local(compiler, gv->name);
-            if (idx == -1 ) return make_prim_sig(VAL_NIL);
+            int idx = resolve_variable(compiler, gv->name);
+            if (idx == -1) {
+                return make_prim_sig(VAL_NIL);
+            }
             emit_byte(compiler, OP_GET_VAR);
-            emit_byte(compiler, idx + compute_frame_offset(compiler));
+            emit_byte(compiler, idx);
 
-            return copy_sig(compiler->locals[idx].sig);
+            return resolve_sig(compiler, gv->name);
         }
-        case NODE_SET_VAR: {
+        case NODE_SET_VAR: { //TODO: update this with new resolve functions
             SetVar* sv = (SetVar*)node;
             struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
-            int idx = find_local(compiler, sv->name);
+            int idx = resolve_variable(compiler, sv->name);
             if (idx == -1) {
                 free_sig(right_sig);
                 return make_prim_sig(VAL_NIL);
             }
 
-            struct Sig* var_sig = compiler->locals[idx].sig;
-
+            struct Sig* var_sig = resolve_sig(compiler, sv->name);
             if (!same_sig(right_sig, var_sig)) {
                 add_error(compiler, sv->name, "Right side type must match variable type.");
             }
+            free_sig(var_sig);
 
             emit_byte(compiler, OP_SET_VAR);
-            emit_byte(compiler, idx + compute_frame_offset(compiler));
+            emit_byte(compiler, idx);
             if (sv->decl) {
                 emit_byte(compiler, OP_POP);
             }
@@ -500,11 +536,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             Call* call = (Call*)node;
 
             emit_byte(compiler, OP_GET_VAR);
-            int idx =  find_local(compiler, call->name);
+            int idx =  resolve_variable(compiler, call->name);
             if (idx == -1) return make_prim_sig(VAL_NIL);
             emit_byte(compiler, idx);
 
-            struct Sig* sig = compiler->locals[idx].sig;
+            struct Sig* sig = resolve_sig(compiler, call->name);
             SigList* params = &((SigFun*)sig)->params;
             if (params->count != call->arguments.count) {
                 add_error(compiler, call->name, "Argument count must match declaration.");
@@ -523,6 +559,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             emit_byte(compiler, (uint8_t)(call->arguments.count));
 
             struct Sig* ret = copy_sig(((SigFun*)sig)->ret);
+
+            free_sig(sig);
 
             return ret;
         }
