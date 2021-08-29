@@ -89,8 +89,8 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             struct ObjFunction* func = peek(vm, 0).as.function_type;
             int total_upvalues = READ_TYPE(frame, uint8_t);
             for (int i = 0; i < total_upvalues; i++) {
-                Value upvalue = frame->slots[READ_TYPE(frame, uint8_t)];
-                func->upvalues[func->upvalue_count] = make_upvalue(&upvalue);
+                Value* upvalue = &frame->slots[READ_TYPE(frame, uint8_t)];
+                func->upvalues[func->upvalue_count] = make_upvalue(upvalue);
                 func->upvalue_count++;
             }
             break;

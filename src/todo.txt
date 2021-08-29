@@ -1,19 +1,6 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
-    a: int = 0
-    b: () -> = () -> {
-        a = a + 1
-    }
-
-    print a
-    b()
-    print a
-    b()
-    print a
-
-    This doesn't work as expected.  Should print 0, 1, 2 but instead prints 0, 0, 0
-        seems like we are changing a copy of the captured variable rather than the 
-        reference to the original
+    Check out code in test.cbr to see what should work
 
     Now we need code to allow arbitrary depths of closures.  Need to "pull" 
     upvalues or locals from higher up the enclosing function chain down to the function that
@@ -25,9 +12,6 @@ TODO:  There's no way around using upvalues - will need to implement them for co
 
     Duplicate upvalues also need to be eliminated (have vm hold a linked list of ObjUpvalues
         and check before creating a new one)
-
-    OP_GET_VAR/OP_SET_VAR should be changed to OP_GET_LOCAL/OP_SET_LOCAL for consistency with
-    OP_GET_UPVALUE/OP_SET_UPVALUE
 
     Read chapter on upvalues carefully - summarize/write pseudo code
         Notes: we have two arrays of upvalues - one for compile time and one for runtime
