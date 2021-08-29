@@ -1,14 +1,18 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
+    Get closures with only in one enclosing scope working for now.
+    Make a ObjClosure?
+    in each function, keep array of Upvalues (which will only hold the index for now. Add is_local when needed)
+    during compiler time, fill this array with locals in the enclosing function as needed
+    
+
+    Note: use tabs for files I need to switch between (such as compiler.c and vm.c) since it's so 
+        much faster
+
     I'm confused about how OP_CLOSURE (which emits bytes for is_local and the index) relates
         to captureUpvalue(Value* value).  This is then followed by OP_CLOSE_UPVALUE that
         does something to the ObjUpvalue created by captureUpvalue(Value* value).  This 
-        is what I dont' understand.
-
-        First of all, the index that is emitted by the compiler is just an integer,
-            which can be used to index into the Value* stack.  Correct?  Yes
-        AND, the frames each track their own slots, so that it doesn't need to rely
-        on the vm stack.
+        is what I dont' understand.  Read book and look at code in clox to see how it's done.
 
     Read chapter on upvalues carefully - summarize/write pseudo code
         Notes: we have two arrays of upvalues - one for compile time and one for runtime

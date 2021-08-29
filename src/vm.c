@@ -230,9 +230,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 
 ResultCode compile_and_run(VM* vm, NodeList* nl) {
     struct Compiler root_compiler;
+
+    //TODO: could move chunk initialization to inside make_function 
     Chunk chunk;
     init_chunk(&chunk);
-    init_compiler(&root_compiler, &chunk);
+    struct ObjFunction* script = make_function(chunk, 0);
+    init_compiler(&root_compiler, script);
 
     ResultCode compile_result = compile_ast(&root_compiler, nl);
 
@@ -245,7 +248,6 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
     disassemble_chunk(&chunk);
 #endif
 
-    struct ObjFunction* script = make_function(chunk, 0);
     push(vm, to_function(script));
     call(vm, script);
 

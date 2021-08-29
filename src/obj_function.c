@@ -10,6 +10,7 @@ struct ObjFunction* make_function(Chunk chunk, int arity) {
     insert_object((struct Obj*)obj);
     obj->arity = arity;
     obj->chunk = chunk;
+    obj->upvalue_count = 0;
 
     return obj;
 }

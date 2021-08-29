@@ -25,23 +25,23 @@ static void copy_errors(struct Compiler* dest, struct Compiler* src) {
 }
 
 static void grow_capacity(struct Compiler* compiler) {
-    int new_capacity = compiler->chunk->capacity == 0 ? 8 : compiler->chunk->capacity * 2;
-    compiler->chunk->codes = GROW_ARRAY(compiler->chunk->codes, OpCode, new_capacity, compiler->chunk->capacity);
-    compiler->chunk->capacity = new_capacity;
+    int new_capacity = compiler->function->chunk.capacity == 0 ? 8 : compiler->function->chunk.capacity * 2;
+    compiler->function->chunk.codes = GROW_ARRAY(compiler->function->chunk.codes, OpCode, new_capacity, compiler->function->chunk.capacity);
+    compiler->function->chunk.capacity = new_capacity;
 }
 
 static int add_constant(struct Compiler* compiler, Value value) {
-    add_value(&compiler->chunk->constants, value);
-    return compiler->chunk->constants.count - 1;
+    add_value(&compiler->function->chunk.constants, value);
+    return compiler->function->chunk.constants.count - 1;
 }
 
 static void emit_byte(struct Compiler* compiler, uint8_t byte) {
-    if (compiler->chunk->count + 1 > compiler->chunk->capacity) {
+    if (compiler->function->chunk.count + 1 > compiler->function->chunk.capacity) {
         grow_capacity(compiler);
     }
 
-    compiler->chunk->codes[compiler->chunk->count] = byte;
-    compiler->chunk->count++;
+    compiler->function->chunk.codes[compiler->function->chunk.count] = byte;
+    compiler->function->chunk.count++;
 }
 
 static void emit_bytes(struct Compiler* compiler, uint8_t byte1, uint8_t byte2) {
@@ -53,21 +53,21 @@ static int emit_jump(struct Compiler* compiler, OpCode op) {
     emit_byte(compiler, op);
     emit_byte(compiler, 0xff);
     emit_byte(compiler, 0xff);
-    return compiler->chunk->count;
+    return compiler->function->chunk.count;
 }
 
 static void patch_jump(struct Compiler* compiler, int index) {
-    uint16_t destination = (uint16_t)(compiler->chunk->count - index);
-    memcpy(&compiler->chunk->codes[index - 2], &destination, sizeof(uint16_t));
+    uint16_t destination = (uint16_t)(compiler->function->chunk.count - index);
+    memcpy(&compiler->function->chunk.codes[index - 2], &destination, sizeof(uint16_t));
 }
 
 static void emit_short(struct Compiler* compiler, uint16_t num) {
-    if (compiler->chunk->count + (int)sizeof(int16_t) > compiler->chunk->capacity) {
+    if (compiler->function->chunk.count + (int)sizeof(int16_t) > compiler->function->chunk.capacity) {
         grow_capacity(compiler);
     }
 
-    memcpy(&compiler->chunk->codes[compiler->chunk->count], &num, sizeof(int16_t));
-    compiler->chunk->count += sizeof(int16_t);
+    memcpy(&compiler->function->chunk.codes[compiler->function->chunk.count], &num, sizeof(int16_t));
+    compiler->function->chunk.count += sizeof(int16_t);
 }
 
 static void emit_jump_by(struct Compiler* compiler, OpCode op, int index) {
@@ -196,18 +196,6 @@ static struct Sig* compile_binary(struct Compiler* compiler, struct Node* node) 
 
     return type1;
 }
-/*
-static int compute_frame_offset(struct Compiler* compiler) {
-    
-    struct Compiler* current = compiler->enclosing;
-    int height = 0;
-    while (current != NULL) {
-        height += current->locals_count;
-        current = current->enclosing;
-    }
-
-    return height;
-}*/
 
 static void set_local(struct Compiler* compiler, Token name, struct Sig* sig, int index) {
     Local local;
@@ -222,6 +210,12 @@ static void add_local(struct Compiler* compiler, Token name, struct Sig* sig) {
     compiler->locals_count++;
 }
 
+/*
+static void add_upvalue(struct Compiler* compiler, Upvalue upvalue) {
+    compiler->function->upvalues[compiler->function->upvalue_count] = upvalue;
+    compiler->function->upvalue_count++;
+}*/
+
 static struct Sig* resolve_sig(struct Compiler* compiler, Token name) {
     struct Compiler* current = compiler;
     do {
@@ -232,15 +226,30 @@ static struct Sig* resolve_sig(struct Compiler* compiler, Token name) {
             }
         }
         current = current->enclosing;
-    } while(0);
+    } while(current != NULL);
 
     add_error(compiler, name, "Local variable not declared.");
 
     return NULL;
 }
 
-static int resolve_variable(struct Compiler* compiler, Token name) {
-    struct Compiler* current = compiler;
+static int resolve_local(struct Compiler* compiler, Token name) {
+    for (int i = compiler->locals_count - 1; i >= 0; i--) {
+        Local* local = &compiler->locals[i];
+        if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
+            return i;
+        }
+    }
+
+    add_error(compiler, name, "Local variable not declared.");
+
+    return -1;
+}
+
+static int resolve_upvalue(struct Compiler* compiler, Token name) {
+    if (compiler->enclosing == NULL) return -1;
+
+    struct Compiler* current = compiler->enclosing;
     do {
         for (int i = current->locals_count - 1; i >= 0; i--) {
             Local* local = &current->locals[i];
@@ -249,13 +258,14 @@ static int resolve_variable(struct Compiler* compiler, Token name) {
             }
         }
         current = current->enclosing;
-    } while(0);
+    } while(current != NULL);
 
     add_error(compiler, name, "Local variable not declared.");
 
     return -1;
 }
 
+//TODO: get rid of this and replace all calls with resolve local
 static int find_local(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
@@ -330,9 +340,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             struct Compiler func_comp;
             Chunk chunk;
             init_chunk(&chunk);
-            init_compiler(&func_comp, &chunk);
+            struct ObjFunction* f = make_function(chunk, df->parameters.count);
+            init_compiler(&func_comp, f);
             func_comp.enclosing = compiler;
-            int arity = df->parameters.count;
 
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
@@ -353,12 +363,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
 
             free_sig_list(&inner_ret_sigs);
 
-            struct ObjFunction* f = make_function(chunk, arity);
             int f_idx = add_constant(compiler, to_function(f));
             emit_bytes(compiler, OP_FUN, f_idx);
 
             return make_prim_sig(VAL_NIL);
         }
+                            /*
         case NODE_DECL_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             add_local(compiler, dc->name, dc->sig);
@@ -379,7 +389,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             struct ObjClass* klass = make_class(chunk);
             emit_bytes(compiler, OP_CLASS, add_constant(compiler, to_class(klass)));
             return make_prim_sig(VAL_NIL);
-        }
+        }*/
         //statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
@@ -431,7 +441,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         }
         case NODE_WHILE: {
             While* wh = (While*)node;
-            int start = compiler->chunk->count;
+            int start = compiler->function->chunk.count;
             struct Sig* cond = compile_node(compiler, wh->condition, ret_sigs);
             if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, wh->name, "Condition must evaluate to boolean.");
@@ -445,7 +455,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             free_sig(then_block);
 
             //+3 to include OP_JUMP_BACK and uint16_t for jump distance
-            int from = compiler->chunk->count + 3;
+            int from = compiler->function->chunk.count + 3;
             emit_jump_by(compiler, OP_JUMP_BACK, from - start);
             patch_jump(compiler, false_jump);   
             emit_byte(compiler, OP_POP);
@@ -456,7 +466,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             struct Sig* init = compile_node(compiler, fo->initializer, ret_sigs); //should leave no value on stack
             free_sig(init);
 
-            int condition_start = compiler->chunk->count;
+            int condition_start = compiler->function->chunk.count;
             struct Sig* cond = compile_node(compiler, fo->condition, ret_sigs);
             if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, fo->name, "Condition must evaluate to boolean.");
@@ -466,19 +476,19 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
             int body_jump = emit_jump(compiler, OP_JUMP);
 
-            int update_start = compiler->chunk->count;
+            int update_start = compiler->function->chunk.count;
             if (fo->update) {
                 struct Sig* up = compile_node(compiler, fo->update, ret_sigs);
                 free_sig(up);
                 emit_byte(compiler, OP_POP); //pop update
             }
-            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk->count + 3 - condition_start);
+            emit_jump_by(compiler, OP_JUMP_BACK, compiler->function->chunk.count + 3 - condition_start);
 
             patch_jump(compiler, body_jump);
             emit_byte(compiler, OP_POP); //pop condition if true
             struct Sig* then_sig = compile_node(compiler, fo->then_block, ret_sigs);
             free_sig(then_sig);
-            emit_jump_by(compiler, OP_JUMP_BACK, compiler->chunk->count + 3 - update_start);
+            emit_jump_by(compiler, OP_JUMP_BACK, compiler->function->chunk.count + 3 - update_start);
 
             patch_jump(compiler, exit_jump);
             emit_byte(compiler, OP_POP); //pop condition if false
@@ -501,19 +511,27 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_UNARY:        return compile_unary(compiler, node);
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
-            int idx = resolve_variable(compiler, gv->name);
-            if (idx == -1) {
-                return make_prim_sig(VAL_NIL);
+            int idx = resolve_local(compiler, gv->name);
+            if (idx != -1) {
+                emit_byte(compiler, OP_GET_VAR);
+                emit_byte(compiler, idx);
+                return resolve_sig(compiler, gv->name);
             }
-            emit_byte(compiler, OP_GET_VAR);
-            emit_byte(compiler, idx);
 
-            return resolve_sig(compiler, gv->name);
+            /*
+            idx = resolve_upvalue(compiler, gv->name);
+            if (idx != -1) {
+                emit_byte(compiler, OP_GET_UPVALUE);
+                emit_byte(compiler, idx);
+                return resolve_sig(compiler, gv->name);
+            }*/
+
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_SET_VAR: { //TODO: update this with new resolve functions
             SetVar* sv = (SetVar*)node;
             struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
-            int idx = resolve_variable(compiler, sv->name);
+            int idx = resolve_local(compiler, sv->name);
             if (idx == -1) {
                 free_sig(right_sig);
                 return make_prim_sig(VAL_NIL);
@@ -536,7 +554,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             Call* call = (Call*)node;
 
             emit_byte(compiler, OP_GET_VAR);
-            int idx =  resolve_variable(compiler, call->name);
+            int idx =  resolve_local(compiler, call->name);
             if (idx == -1) return make_prim_sig(VAL_NIL);
             emit_byte(compiler, idx);
 
@@ -595,11 +613,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
     } 
 }
 
-void init_compiler(struct Compiler* compiler, Chunk* chunk) {
+void init_compiler(struct Compiler* compiler, struct ObjFunction* function) {
     compiler->scope_depth = 0;
     compiler->locals_count = 1; //first slot is for function def
     compiler->error_count = 0;
-    compiler->chunk = chunk;
+    compiler->function = function;
     compiler->enclosing = NULL;
 }
 

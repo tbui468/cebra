@@ -20,7 +20,7 @@ typedef struct {
 } Local;
 
 struct Compiler {
-    Chunk* chunk;
+    struct ObjFunction* function;
     int scope_depth;
     Local locals[256];
     int locals_count;
@@ -29,7 +29,7 @@ struct Compiler {
     struct Compiler* enclosing;
 };
 
-void init_compiler(struct Compiler* compiler, Chunk* chunk);
+void init_compiler(struct Compiler* compiler, struct ObjFunction* function);
 ResultCode compile_ast(struct Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(struct Compiler* compiler);
