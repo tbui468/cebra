@@ -196,7 +196,7 @@ static struct Sig* compile_binary(struct Compiler* compiler, struct Node* node) 
 
     return type1;
 }
-
+/*
 static int compute_frame_offset(struct Compiler* compiler) {
     
     struct Compiler* current = compiler->enclosing;
@@ -207,7 +207,7 @@ static int compute_frame_offset(struct Compiler* compiler) {
     }
 
     return height;
-}
+}*/
 
 static void set_local(struct Compiler* compiler, Token name, struct Sig* sig, int index) {
     Local local;
@@ -232,7 +232,7 @@ static struct Sig* resolve_sig(struct Compiler* compiler, Token name) {
             }
         }
         current = current->enclosing;
-    } while(current != NULL);
+    } while(0);
 
     add_error(compiler, name, "Local variable not declared.");
 
@@ -245,11 +245,11 @@ static int resolve_variable(struct Compiler* compiler, Token name) {
         for (int i = current->locals_count - 1; i >= 0; i--) {
             Local* local = &current->locals[i];
             if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
-                return i + compute_frame_offset(current);
+                return i;
             }
         }
         current = current->enclosing;
-    } while(current != NULL);
+    } while(0);
 
     add_error(compiler, name, "Local variable not declared.");
 

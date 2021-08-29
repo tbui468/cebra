@@ -5,6 +5,11 @@ TODO:  There's no way around using upvalues - will need to implement them for co
         does something to the ObjUpvalue created by captureUpvalue(Value* value).  This 
         is what I dont' understand.
 
+        First of all, the index that is emitted by the compiler is just an integer,
+            which can be used to index into the Value* stack.  Correct?  Yes
+        AND, the frames each track their own slots, so that it doesn't need to rely
+        on the vm stack.
+
     Read chapter on upvalues carefully - summarize/write pseudo code
         Notes: we have two arrays of upvalues - one for compile time and one for runtime
             Compile time is array of type struct Upvalue tracks the relative index and is_local

@@ -8,14 +8,14 @@
 
 typedef struct {
     struct ObjFunction* function;
-    int stack_offset;
+    Value* slots;
     int ip;
     int arity;
 } CallFrame;
 
 typedef struct {
     Value stack[256];
-    int stack_top;
+    Value* stack_top;
     CallFrame frames[256];
     int frame_count;
 } VM;

@@ -12,20 +12,20 @@
 
 static Value pop(VM* vm) {
     vm->stack_top--;
-    return vm->stack[vm->stack_top];
+    return *vm->stack_top;
 }
 
 static Value peek(VM* vm, int depth) {
-    return vm->stack[vm->stack_top - 1 - depth];
+    return *(vm->stack_top - 1 - depth);
 }
 
 static void push(VM* vm, Value value) {
-    vm->stack[vm->stack_top] = value;
+    *vm->stack_top = value;
     vm->stack_top++;
 }
 
 ResultCode init_vm(VM* vm) {
-    vm->stack_top = 0;
+    vm->stack_top = &vm->stack[0];
     vm->frame_count = 0;
     return RESULT_SUCCESS;
 }
@@ -37,7 +37,7 @@ ResultCode free_vm(VM* vm) {
 void call(VM* vm, struct ObjFunction* function) {
     CallFrame frame;
     frame.function = function;
-    frame.stack_offset = vm->stack_top - function->arity - 1;
+    frame.slots = vm->stack_top - function->arity - 1;
     frame.ip = 0;
     frame.arity = function->arity;
 
@@ -55,10 +55,12 @@ static void print_trace(VM* vm, OpCode op) {
 
     //print vm stack
     printf("Stack: ");
-    for (int i = 0; i < vm->stack_top; i++) {
+    Value* start = vm->stack;
+    while (start < vm->stack_top) {
         printf("[ ");
-        print_value(vm->stack[i]);
+        print_value(*start);
         printf(" ]");
+        start++;
     }
     printf("\n*************************\n");
 }
@@ -155,15 +157,13 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_GET_VAR: {
-            //uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
             uint8_t slot = READ_TYPE(frame, uint8_t);
-            push(vm, vm->stack[slot]);
+            push(vm, frame->slots[slot]);
             break;
         }
         case OP_SET_VAR: {
-            //uint8_t slot = READ_TYPE(frame, uint8_t) + frame->stack_offset;
             uint8_t slot = READ_TYPE(frame, uint8_t);
-            vm->stack[slot] = peek(vm, 0);
+            frame->slots[slot] = peek(vm, 0);
             break;
         }
         case OP_JUMP_IF_FALSE: {
@@ -209,16 +209,13 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_CALL: {
             int arity = (int)READ_TYPE(frame, uint8_t);
-            int start = vm->stack_top - arity - 1;
-            struct ObjFunction* function = vm->stack[start].as.function_type;
+            struct ObjFunction* function = peek(vm, arity).as.function_type;
             call(vm, function);
             break;
         }
         case OP_RETURN: {
             Value ret = ret = pop(vm);
-            while (vm->stack_top > frame->stack_offset) {
-                pop(vm);
-            }
+            vm->stack_top = frame->slots;
             vm->frame_count--;
             if (ret.type != VAL_NIL) push(vm, ret);
             break;
