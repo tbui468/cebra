@@ -210,11 +210,11 @@ static void add_local(struct Compiler* compiler, Token name, struct Sig* sig) {
     compiler->locals_count++;
 }
 
-/*
-static void add_upvalue(struct Compiler* compiler, Upvalue upvalue) {
-    compiler->function->upvalues[compiler->function->upvalue_count] = upvalue;
-    compiler->function->upvalue_count++;
-}*/
+
+static int add_upvalue(struct Compiler* compiler, struct Upvalue upvalue) {
+    compiler->upvalues[compiler->upvalue_count] = upvalue;
+    return compiler->upvalue_count++;
+}
 
 static struct Sig* resolve_sig(struct Compiler* compiler, Token name) {
     struct Compiler* current = compiler;
@@ -241,8 +241,6 @@ static int resolve_local(struct Compiler* compiler, Token name) {
         }
     }
 
-    add_error(compiler, name, "Local variable not declared.");
-
     return -1;
 }
 
@@ -259,8 +257,6 @@ static int resolve_upvalue(struct Compiler* compiler, Token name) {
         }
         current = current->enclosing;
     } while(current != NULL);
-
-    add_error(compiler, name, "Local variable not declared.");
 
     return -1;
 }
@@ -365,6 +361,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
 
             int f_idx = add_constant(compiler, to_function(f));
             emit_bytes(compiler, OP_FUN, f_idx);
+            emit_byte(compiler, func_comp.upvalue_count);
+            for (int i = 0; i < func_comp.upvalue_count; i++) {
+                emit_byte(compiler, func_comp.upvalues[i].index);
+            }
 
             return make_prim_sig(VAL_NIL);
         }
@@ -518,37 +518,63 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                 return resolve_sig(compiler, gv->name);
             }
 
-            /*
             idx = resolve_upvalue(compiler, gv->name);
             if (idx != -1) {
+                struct Upvalue upvalue;
+                upvalue.index = idx;
+                int upvalue_idx = add_upvalue(compiler, upvalue);
                 emit_byte(compiler, OP_GET_UPVALUE);
-                emit_byte(compiler, idx);
+                emit_byte(compiler, upvalue_idx);
                 return resolve_sig(compiler, gv->name);
-            }*/
+            }
+
+            add_error(compiler, gv->name, "Local variable not declared.");
 
             return make_prim_sig(VAL_NIL);
         }
-        case NODE_SET_VAR: { //TODO: update this with new resolve functions
+        case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
+
             int idx = resolve_local(compiler, sv->name);
-            if (idx == -1) {
-                free_sig(right_sig);
-                return make_prim_sig(VAL_NIL);
+            if (idx != -1) {
+                struct Sig* var_sig = resolve_sig(compiler, sv->name);
+                if (!same_sig(right_sig, var_sig)) {
+                    add_error(compiler, sv->name, "Right side type must match variable type.");
+                }
+                free_sig(var_sig);
+
+                emit_byte(compiler, OP_SET_VAR);
+                emit_byte(compiler, idx);
+                if (sv->decl) {
+                    emit_byte(compiler, OP_POP);
+                }
+                return right_sig;
             }
 
-            struct Sig* var_sig = resolve_sig(compiler, sv->name);
-            if (!same_sig(right_sig, var_sig)) {
-                add_error(compiler, sv->name, "Right side type must match variable type.");
-            }
-            free_sig(var_sig);
+            idx = resolve_upvalue(compiler, sv->name);
+            if (idx != -1) {
+                struct Upvalue upvalue;
+                upvalue.index = idx;
+                int upvalue_idx = add_upvalue(compiler, upvalue);
 
-            emit_byte(compiler, OP_SET_VAR);
-            emit_byte(compiler, idx);
-            if (sv->decl) {
-                emit_byte(compiler, OP_POP);
+                struct Sig* var_sig = resolve_sig(compiler, sv->name);
+                if (!same_sig(right_sig, var_sig)) {
+                    add_error(compiler, sv->name, "Right side type must match variable type.");
+                }
+                free_sig(var_sig);
+
+                emit_byte(compiler, OP_SET_UPVALUE);
+                emit_byte(compiler, upvalue_idx);
+                if (sv->decl) {
+                    emit_byte(compiler, OP_POP);
+                }
+                return right_sig;
             }
-            return right_sig;
+
+            add_error(compiler, sv->name, "Local variable not declared.");
+            free_sig(right_sig);
+            return make_prim_sig(VAL_NIL);
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
@@ -619,6 +645,7 @@ void init_compiler(struct Compiler* compiler, struct ObjFunction* function) {
     compiler->error_count = 0;
     compiler->function = function;
     compiler->enclosing = NULL;
+    compiler->upvalue_count = 0;
 }
 
 static SigList compile_function(struct Compiler* compiler, NodeList* nl) {

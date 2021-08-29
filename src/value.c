@@ -55,13 +55,6 @@ Value to_instance(struct ObjInstance* obj) {
     return value;
 }
 
-Value to_sig(struct Sig* sig) {
-    Value value;
-    value.type = VAL_SIG;
-    value.as.sig_type = sig;
-    return value;
-}
-
 Value to_nil() {
     Value value;
     value.type = VAL_NIL;

@@ -86,6 +86,13 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_FUN: {
             push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
+            struct ObjFunction* func = peek(vm, 0).as.function_type;
+            int total_upvalues = READ_TYPE(frame, uint8_t);
+            for (int i = 0; i < total_upvalues; i++) {
+                Value upvalue = frame->slots[READ_TYPE(frame, uint8_t)];
+                func->upvalues[func->upvalue_count] = make_upvalue(&upvalue);
+                func->upvalue_count++;
+            }
             break;
         }/*
         case OP_CLASS: {
@@ -164,6 +171,16 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_SET_VAR: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
             frame->slots[slot] = peek(vm, 0);
+            break;
+        }
+        case OP_GET_UPVALUE: {
+            uint8_t slot = READ_TYPE(frame, uint8_t);
+            push(vm, *(frame->function->upvalues[slot]->value));
+            break;
+        }
+        case OP_SET_UPVALUE: {
+            uint8_t slot = READ_TYPE(frame, uint8_t);
+            *frame->function->upvalues[slot]->value = peek(vm, 0);
             break;
         }
         case OP_JUMP_IF_FALSE: {

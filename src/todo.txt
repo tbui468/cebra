@@ -1,10 +1,21 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
+    Compiling functions with upvalues works, but calling them doesn't.  But it could be a problem
+        in either compiletime or runtime.
+
+    OP_GET_UPVALUE is not working - it could be OP_FUN is not making ObjUpvalue and adding
+        it to function->upvalues OR just a problem with OP_GET_UPVALUE.  Run test.cbr to see.
+
+    SetVar node should be wrapped in a ExprStmt instead of using a boolean 'decl' field to 
+        determine when the result should be popped
+
+    OP_GET_VAR/OP_SET_VAR should be changed to OP_GET_LOCAL/OP_SET_LOCAL for consistency with
+    OP_GET_UPVALUE/OP_SET_UPVALUE
+
     Get closures with only in one enclosing scope working for now.
     Make a ObjClosure?
     in each function, keep array of Upvalues (which will only hold the index for now. Add is_local when needed)
     during compiler time, fill this array with locals in the enclosing function as needed
-    
 
     Note: use tabs for files I need to switch between (such as compiler.c and vm.c) since it's so 
         much faster

@@ -5,7 +5,8 @@ typedef enum {
     OBJ_STRING,
     OBJ_FUNCTION,
     OBJ_CLASS,
-    OBJ_INSTANCE
+    OBJ_INSTANCE,
+    OBJ_UPVALUE
 } ObjType;
 
 struct Obj {

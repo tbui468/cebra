@@ -38,6 +38,11 @@ void free_object(struct Obj* obj) {
 //            free_table(&oi->props);
             FREE_OBJ(oi, struct ObjInstance);
             break;
+        case OBJ_UPVALUE:
+            struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
+            //shouldn't free value since that's not owned by ObjUpvalue
+            FREE_OBJ(uv, struct ObjUpvalue);
+            break;
     }
 }
 

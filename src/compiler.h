@@ -12,6 +12,9 @@ typedef struct {
     const char* message;
 } CompileError;
 
+struct Upvalue {
+    int index;
+};
 
 typedef struct {
     Token name;
@@ -24,6 +27,8 @@ struct Compiler {
     int scope_depth;
     Local locals[256];
     int locals_count;
+    struct Upvalue upvalues[256];
+    int upvalue_count;
     CompileError errors[256];
     int error_count;
     struct Compiler* enclosing;
