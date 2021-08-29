@@ -546,9 +546,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
 
                 emit_byte(compiler, OP_SET_VAR);
                 emit_byte(compiler, idx);
-                if (sv->decl) {
-                    emit_byte(compiler, OP_POP);
-                }
                 return right_sig;
             }
 
@@ -566,9 +563,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
 
                 emit_byte(compiler, OP_SET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
-                if (sv->decl) {
-                    emit_byte(compiler, OP_POP);
-                }
                 return right_sig;
             }
 

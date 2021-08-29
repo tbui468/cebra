@@ -162,11 +162,10 @@ struct Node* make_get_var(Token name) {
     return (struct Node*)get_var;
 }
 
-struct Node* make_set_var(Token name, struct Node* right, bool decl) {
+struct Node* make_set_var(Token name, struct Node* right) {
     SetVar* set_var = ALLOCATE_NODE(SetVar);
     set_var->name = name;
     set_var->right = right;
-    set_var->decl = decl;
     set_var->base.type = NODE_SET_VAR;
 
     return (struct Node*)set_var;

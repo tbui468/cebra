@@ -1,29 +1,36 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
-    Compiling functions with upvalues works, but calling them doesn't.  But it could be a problem
-        in either compiletime or runtime.
+    a: int = 0
+    b: () -> = () -> {
+        a = a + 1
+    }
 
-    OP_GET_UPVALUE is not working - it could be OP_FUN is not making ObjUpvalue and adding
-        it to function->upvalues OR just a problem with OP_GET_UPVALUE.  Run test.cbr to see.
+    print a
+    b()
+    print a
+    b()
+    print a
+
+    This doesn't work as expected.  Should print 0, 1, 2 but instead prints 0, 0, 0
+        seems like we are changing a copy of the captured variable rather than the 
+        reference to the original
+
+    Now we need code to allow arbitrary depths of closures.  Need to "pull" 
+    upvalues or locals from higher up the enclosing function chain down to the function that
+    needs to capture it.
+
+    Upvalues also need to be closed if popped off the stack while captured.  So we need 
+        a way for locals in compiler to know if they're captured when popping scopes.
+        How about when ending function scopes???
+
+    Duplicate upvalues also need to be eliminated (have vm hold a linked list of ObjUpvalues
+        and check before creating a new one)
 
     SetVar node should be wrapped in a ExprStmt instead of using a boolean 'decl' field to 
         determine when the result should be popped
 
     OP_GET_VAR/OP_SET_VAR should be changed to OP_GET_LOCAL/OP_SET_LOCAL for consistency with
     OP_GET_UPVALUE/OP_SET_UPVALUE
-
-    Get closures with only in one enclosing scope working for now.
-    Make a ObjClosure?
-    in each function, keep array of Upvalues (which will only hold the index for now. Add is_local when needed)
-    during compiler time, fill this array with locals in the enclosing function as needed
-
-    Note: use tabs for files I need to switch between (such as compiler.c and vm.c) since it's so 
-        much faster
-
-    I'm confused about how OP_CLOSURE (which emits bytes for is_local and the index) relates
-        to captureUpvalue(Value* value).  This is then followed by OP_CLOSE_UPVALUE that
-        does something to the ObjUpvalue created by captureUpvalue(Value* value).  This 
-        is what I dont' understand.  Read book and look at code in clox to see how it's done.
 
     Read chapter on upvalues carefully - summarize/write pseudo code
         Notes: we have two arrays of upvalues - one for compile time and one for runtime

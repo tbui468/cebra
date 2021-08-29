@@ -259,3 +259,46 @@
         print "Double calls: Failed!"
     }
 }
+
+{
+    print ""
+    print "***********Closures************"
+
+    a: int = 0
+    b: () -> = () -> {
+        a = a + 1
+    }
+
+    b()
+
+    if a == 1 {
+        print "Open Upvalue 0: Passed!"
+    } else {
+        print "Open Upvalue 0: Failed!"
+    }
+
+    b()
+
+    if a == 2 {
+        print "Open Upvalue 1: Passed!"
+    } else {
+        print "Open Upvalue 1: Failed!"
+    }
+
+    var: string = "hello world"
+    c: () -> string = () -> string {
+        -> var + "!"
+    }
+
+    if c() == "hello world!" {
+        print "Open upvalue 2: Passed!"
+    } else {
+        print "Open upvalue 2: Failed!"
+    }
+
+    if var == "hello world" {
+        print "Open upvalue 3: Passed!"
+    } else {
+        print "Open upvalue 3: Failed!"
+    }
+}

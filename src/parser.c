@@ -92,7 +92,7 @@ static struct Node* primary() {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
         match(TOKEN_EQUAL);
-        return make_set_var(name, expression(), false);
+        return make_set_var(name, expression());
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
         return call_expression();
     } else if (peek_one(TOKEN_IDENTIFIER)) {
@@ -323,7 +323,7 @@ static struct Node* declaration() {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
         match(TOKEN_EQUAL);
-        return make_set_var(name, expression(), true);
+        return make_expr_stmt(make_set_var(name, expression()));
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
         return make_expr_stmt(call_expression());
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
