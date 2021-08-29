@@ -513,7 +513,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             GetVar* gv = (GetVar*)node;
             int idx = resolve_local(compiler, gv->name);
             if (idx != -1) {
-                emit_byte(compiler, OP_GET_VAR);
+                emit_byte(compiler, OP_GET_LOCAL);
                 emit_byte(compiler, idx);
                 return resolve_sig(compiler, gv->name);
             }
@@ -544,7 +544,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                 }
                 free_sig(var_sig);
 
-                emit_byte(compiler, OP_SET_VAR);
+                emit_byte(compiler, OP_SET_LOCAL);
                 emit_byte(compiler, idx);
                 return right_sig;
             }
@@ -573,7 +573,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_CALL: {
             Call* call = (Call*)node;
 
-            emit_byte(compiler, OP_GET_VAR);
+            emit_byte(compiler, OP_GET_LOCAL);
             int idx =  resolve_local(compiler, call->name);
             if (idx == -1) return make_prim_sig(VAL_NIL);
             emit_byte(compiler, idx);

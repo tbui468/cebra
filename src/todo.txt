@@ -26,9 +26,6 @@ TODO:  There's no way around using upvalues - will need to implement them for co
     Duplicate upvalues also need to be eliminated (have vm hold a linked list of ObjUpvalues
         and check before creating a new one)
 
-    SetVar node should be wrapped in a ExprStmt instead of using a boolean 'decl' field to 
-        determine when the result should be popped
-
     OP_GET_VAR/OP_SET_VAR should be changed to OP_GET_LOCAL/OP_SET_LOCAL for consistency with
     OP_GET_UPVALUE/OP_SET_UPVALUE
 

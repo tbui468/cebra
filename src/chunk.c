@@ -26,8 +26,8 @@ const char* op_to_string(OpCode op) {
         case OP_FUN: return "OP_FUN";
         case OP_NIL: return "OP_NIL";
         case OP_PRINT: return "OP_PRINT";
-        case OP_SET_VAR: return "OP_SET_VAR";
-        case OP_GET_VAR: return "OP_GET_VAR";
+        case OP_SET_LOCAL: return "OP_SET_LOCAL";
+        case OP_GET_LOCAL: return "OP_GET_LOCAL";
         case OP_SET_UPVALUE: return "OP_SET_UPVALUE";
         case OP_GET_UPVALUE: return "OP_GET_UPVALUE";
         case OP_ADD: return "OP_ADD";
@@ -89,12 +89,12 @@ void disassemble_chunk(Chunk* chunk) {
                 printf("%s", op_to_string(op));
                 break;
             }
-            case OP_GET_VAR: {
+            case OP_GET_LOCAL: {
                 int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;
             }
-            case OP_SET_VAR: {
+            case OP_SET_LOCAL: {
                 int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;

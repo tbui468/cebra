@@ -163,12 +163,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, equal_values(a, b));
             break;
         }
-        case OP_GET_VAR: {
+        case OP_GET_LOCAL: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
             push(vm, frame->slots[slot]);
             break;
         }
-        case OP_SET_VAR: {
+        case OP_SET_LOCAL: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
             frame->slots[slot] = peek(vm, 0);
             break;
