@@ -8,7 +8,7 @@
 
 typedef struct {
     struct ObjFunction* function;
-    Value* slots;
+    Value* locals;
     int ip;
     int arity;
 } CallFrame;

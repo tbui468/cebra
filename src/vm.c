@@ -37,7 +37,7 @@ ResultCode free_vm(VM* vm) {
 void call(VM* vm, struct ObjFunction* function) {
     CallFrame frame;
     frame.function = function;
-    frame.slots = vm->stack_top - function->arity - 1;
+    frame.locals = vm->stack_top - function->arity - 1;
     frame.ip = 0;
     frame.arity = function->arity;
 
@@ -89,7 +89,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             struct ObjFunction* func = peek(vm, 0).as.function_type;
             int total_upvalues = READ_TYPE(frame, uint8_t);
             for (int i = 0; i < total_upvalues; i++) {
-                Value* upvalue = &frame->slots[READ_TYPE(frame, uint8_t)];
+                Value* upvalue = &frame->locals[READ_TYPE(frame, uint8_t)];
                 func->upvalues[func->upvalue_count] = make_upvalue(upvalue);
                 func->upvalue_count++;
             }
@@ -165,12 +165,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_GET_LOCAL: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
-            push(vm, frame->slots[slot]);
+            push(vm, frame->locals[slot]);
             break;
         }
         case OP_SET_LOCAL: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
-            frame->slots[slot] = peek(vm, 0);
+            frame->locals[slot] = peek(vm, 0);
             break;
         }
         case OP_GET_UPVALUE: {
@@ -232,7 +232,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_RETURN: {
             Value ret = ret = pop(vm);
-            vm->stack_top = frame->slots;
+            vm->stack_top = frame->locals;
             vm->frame_count--;
             if (ret.type != VAL_NIL) push(vm, ret);
             break;

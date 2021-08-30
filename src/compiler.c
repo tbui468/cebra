@@ -236,7 +236,9 @@ static struct Sig* resolve_sig(struct Compiler* compiler, Token name) {
 static int resolve_local(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
-        if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
+        if (local->name.length == name.length && 
+            memcmp(local->name.start, name.start, name.length) == 0) {
+
             return i;
         }
     }
@@ -251,7 +253,9 @@ static int resolve_upvalue(struct Compiler* compiler, Token name) {
     do {
         for (int i = current->locals_count - 1; i >= 0; i--) {
             Local* local = &current->locals[i];
-            if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
+            if (local->name.length == name.length && 
+                memcmp(local->name.start, name.start, name.length) == 0) {
+
                 return i;
             }
         }
