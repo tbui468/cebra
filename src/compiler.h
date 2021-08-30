@@ -14,6 +14,7 @@ typedef struct {
 
 struct Upvalue {
     int index;
+    bool is_local;
 };
 
 typedef struct {

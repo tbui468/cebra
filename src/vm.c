@@ -89,8 +89,14 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             struct ObjFunction* func = peek(vm, 0).as.function_type;
             int total_upvalues = READ_TYPE(frame, uint8_t);
             for (int i = 0; i < total_upvalues; i++) {
-                Value* upvalue = &frame->locals[READ_TYPE(frame, uint8_t)];
-                func->upvalues[func->upvalue_count] = make_upvalue(upvalue);
+                bool is_local = READ_TYPE(frame, uint8_t);
+                int idx = READ_TYPE(frame, uint8_t);
+                if (is_local) {
+                    Value* value = &frame->locals[idx];
+                    func->upvalues[func->upvalue_count] = make_upvalue(value);
+                } else {
+                    func->upvalues[func->upvalue_count] = frame->function->upvalues[idx];
+                }
                 func->upvalue_count++;
             }
             break;

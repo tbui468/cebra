@@ -212,6 +212,13 @@ static void add_local(struct Compiler* compiler, Token name, struct Sig* sig) {
 
 
 static int add_upvalue(struct Compiler* compiler, struct Upvalue upvalue) {
+    for (int i = 0; i < compiler->upvalue_count; i++) {
+        struct Upvalue* cached = &compiler->upvalues[i];
+        if (upvalue.index == cached->index && upvalue.is_local == cached->is_local) {
+            return i;
+        }
+    }
+
     compiler->upvalues[compiler->upvalue_count] = upvalue;
     return compiler->upvalue_count++;
 }
@@ -367,6 +374,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             emit_bytes(compiler, OP_FUN, f_idx);
             emit_byte(compiler, func_comp.upvalue_count);
             for (int i = 0; i < func_comp.upvalue_count; i++) {
+                emit_byte(compiler, func_comp.upvalues[i].is_local);
                 emit_byte(compiler, func_comp.upvalues[i].index);
             }
 
@@ -526,6 +534,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             if (idx != -1) {
                 struct Upvalue upvalue;
                 upvalue.index = idx;
+                upvalue.is_local = true;
                 int upvalue_idx = add_upvalue(compiler, upvalue);
                 emit_byte(compiler, OP_GET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
@@ -557,6 +566,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             if (idx != -1) {
                 struct Upvalue upvalue;
                 upvalue.index = idx;
+                upvalue.is_local = true;
                 int upvalue_idx = add_upvalue(compiler, upvalue);
 
                 struct Sig* var_sig = resolve_sig(compiler, sv->name);
