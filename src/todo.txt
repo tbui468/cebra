@@ -1,15 +1,7 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
-    Now we need code to allow arbitrary depths of closures.  Need to "pull" 
-    upvalues or locals from higher up the enclosing function chain down to the function that
-    needs to capture.
-
-        How do we capture upvalues from enclosing functions?  We capture locals in enclosing
-        functions by name since we have the token, but upvalues are stored by index/is_local.
-        Also, we need to make sure to not have two or more of the same upvalue at different
-        indices in the upvalue array in the compiler.
-
-        If is_local is true, we know that the 
+    Get rid of find_local() only used in class right now which needs to be rewritten anyway
+        run all correctness tests to make sure it still works
 
     Upvalues also need to be closed if popped off the stack while captured.  So we need 
         a way for locals in compiler to know if they're captured when popping scopes.

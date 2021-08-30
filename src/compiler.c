@@ -256,18 +256,23 @@ static int resolve_local(struct Compiler* compiler, Token name) {
 static int resolve_upvalue(struct Compiler* compiler, Token name) {
     if (compiler->enclosing == NULL) return -1;
 
-    struct Compiler* current = compiler->enclosing;
-    do {
-        for (int i = current->locals_count - 1; i >= 0; i--) {
-            Local* local = &current->locals[i];
-            if (local->name.length == name.length && 
-                memcmp(local->name.start, name.start, name.length) == 0) {
+    int local_index = resolve_local(compiler->enclosing, name);
+    if (local_index != -1) {
+        struct Upvalue upvalue;
+        upvalue.index = local_index;
+        upvalue.is_local = true;
+        int upvalue_idx = add_upvalue(compiler, upvalue);
+        return upvalue_idx;
+    }
 
-                return i;
-            }
-        }
-        current = current->enclosing;
-    } while(current != NULL);
+    int recursive_idx = resolve_upvalue(compiler->enclosing, name);
+    if (recursive_idx != -1) {
+        struct Upvalue upvalue;
+        upvalue.index = recursive_idx;
+        upvalue.is_local = false;
+        int upvalue_idx = add_upvalue(compiler, upvalue);
+        return upvalue_idx;
+    }
 
     return -1;
 }
@@ -530,12 +535,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                 return resolve_sig(compiler, gv->name);
             }
 
-            idx = resolve_upvalue(compiler, gv->name);
-            if (idx != -1) {
-                struct Upvalue upvalue;
-                upvalue.index = idx;
-                upvalue.is_local = true;
-                int upvalue_idx = add_upvalue(compiler, upvalue);
+            int upvalue_idx = resolve_upvalue(compiler, gv->name);
+            if (upvalue_idx != -1) {
                 emit_byte(compiler, OP_GET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
                 return resolve_sig(compiler, gv->name);
@@ -562,12 +563,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                 return right_sig;
             }
 
-            idx = resolve_upvalue(compiler, sv->name);
-            if (idx != -1) {
-                struct Upvalue upvalue;
-                upvalue.index = idx;
-                upvalue.is_local = true;
-                int upvalue_idx = add_upvalue(compiler, upvalue);
+            int upvalue_idx = resolve_upvalue(compiler, sv->name);
+            if (upvalue_idx != -1) {
 
                 struct Sig* var_sig = resolve_sig(compiler, sv->name);
                 if (!same_sig(right_sig, var_sig)) {

@@ -262,7 +262,7 @@
 
 {
     print ""
-    print "***********Closures************"
+    print "***********1 Depth Closures************"
 
     a: int = 0
     b: () -> = () -> {
@@ -300,5 +300,52 @@
         print "Open upvalue 3: Passed!"
     } else {
         print "Open upvalue 3: Failed!"
+    }
+
+}
+
+{
+    print ""
+    print "***********2+ Depth Closures************"
+
+    str1: string = "hello "
+    str2: string = "world"
+    a: () -> () -> string = () -> () -> string {
+        b: () -> string = () -> string {
+            -> str1 + str2
+        }
+        -> b
+    }
+
+    c: () -> string = a()
+
+    if c() == "hello world" and a()() == "hello world" {
+        print "Open upvalues, Depth 2: Passed!"
+    } else {
+        print "Open upvalues, Depth 2: Failed!"
+    }
+
+    x: () -> () -> () -> string = () -> () -> () -> string {
+        y: () -> () -> string = () -> () -> string {
+            z: () -> string = () -> string {
+                -> str1 + str2
+            }
+            -> z
+        }
+        -> y
+    }
+
+    xx: () -> () -> string = x()
+    yy: () -> string = xx()
+    if yy() == "hello world" {
+        print "Open upvalues, Depth 3: Passed!"
+    } else {
+        print "Open upvalues, Depth 3: Failed!"
+    }
+
+    if x()()() == "hello world" {
+        print "Open upvalues, Depth 3, Cascade: Passed!"
+    } else {
+        print "Open upvalues, Depth 3, Cascade: Failed!"
     }
 }
