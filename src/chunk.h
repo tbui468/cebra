@@ -4,9 +4,7 @@
 #include "value_array.h"
 
 typedef enum {
-    OP_INT,
-    OP_FLOAT,
-    OP_STRING,
+    OP_CONSTANT,
     OP_FUN,
     OP_NIL,
     OP_PRINT,

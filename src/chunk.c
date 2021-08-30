@@ -20,9 +20,7 @@ void free_chunk(Chunk* chunk) {
 
 const char* op_to_string(OpCode op) {
     switch(op) {
-        case OP_INT: return "OP_INT";
-        case OP_FLOAT: return "OP_FLOAT";
-        case OP_STRING: return "OP_STRING";
+        case OP_CONSTANT: return "OP_CONSTANT";
         case OP_FUN: return "OP_FUN";
         case OP_NIL: return "OP_NIL";
         case OP_PRINT: return "OP_PRINT";
@@ -66,19 +64,10 @@ void disassemble_chunk(Chunk* chunk) {
         OpCode op = chunk->codes[i++];
         printf("%04d    [ %s ] ", i - 1, op_to_string(op));
         switch(op) {
-            case OP_INT: {
+            case OP_CONSTANT: {
                 int idx = read_byte(chunk, i++);
-                printf("%d", chunk->constants.values[idx].as.integer_type); 
-                break;
-            }
-            case OP_FLOAT: {
-                int idx = read_byte(chunk, i++);
-                printf("%f", chunk->constants.values[idx].as.float_type); 
-                break;
-            }
-            case OP_STRING: {
-                int idx = read_byte(chunk, i++);
-                printf("%s", chunk->constants.values[idx].as.string_type->chars); 
+                print_value(chunk->constants.values[idx]);
+                printf("\n");
                 break;
             }
             case OP_FUN: {

@@ -103,15 +103,7 @@ static void close_upvalues(VM* vm, Value* location) {
 ResultCode execute_frame(VM* vm, CallFrame* frame) {
     uint8_t op = READ_TYPE(frame, uint8_t);
     switch(op) {
-        case OP_INT: {
-            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
-            break;
-        }
-        case OP_FLOAT: {
-            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
-            break;
-        }
-        case OP_STRING: {
+        case OP_CONSTANT: {
             push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
         }

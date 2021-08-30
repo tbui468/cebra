@@ -1,134 +1,17 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
     Why isn't OP_CLOSE_UPVALUE showing up in trace?  Try printing disassebly of all functions
-        to see.  Could it be because function body is parsed as a block()?  
+        to see.  Could it be because function body is parsed as a block()?  And then 
+        it's added to the parameter node_list for compilation. But isn't the OP_CLOSE_UPVALUE
+        being emitted?
 
-    Read chapter on upvalues carefully - summarize/write pseudo code
-        Notes: we have two arrays of upvalues - one for compile time and one for runtime
-            Compile time is array of type struct Upvalue tracks the relative index and is_local
-            runtime is array of type ObjUpvalue and has reference to the value, Value*
+        If it's really because returning from a function calls close_upvalue on all open
+        upvalues, think of some code using scopes where OP_CLOSE_UPVALUE is called by itself
 
-        Closure Objects
-            emit bytes to create a closure
-            vm reads in function from constants table, then 
-                creates a new closure value and pushes onto
-                the tack
-        Upvalues
-            upvalues are local variables in enclosing function
-            each closure keeps and array of upvalues it uses
-                why is the array kept in the compiler, but the upvalue count kept in function?
-                I think this is so that the vm knows how many byte pairs need to be read
-                after OP_CLOSURE + function index is read
-            when resolving a variable, first check locals (in all scopes of current function)
-                then check upvalues (locals in enclosing function only for now)
-                note: nothing about checking in higher up enclosing functions yet
-            If we find local in enclosing, then add new upvalue to upvalue array
-                with two fields: is_local and index (where is index is relative the the enclosing compiler)
-            Locals and upvalues can be captured from the enclosing function.  So if we capture an upvalue
-                from the enclosing function, the is_local variable is set to false - why?
-            OP_SET_UPVALUE and OP_GET_UPVALUE use this index (which we know if for an upvalue, eg
-                a local in the ENCLOSING function) for reading/writing
-            emitting OP_CLOSURE (which replaces the OP_FUN) is followed by pairs of 
-                bytes describing the upvalue element in the array, is_local + index
-            
-        Upvalue Objects
-            created an ObjUpvalue for runtime that can be moved to heap
-                this keeps a reference to the value (NOT a copy)
-            Each ObjClosure (along with wrapping an ObjFunction) keeps
-                and array of ObjUpvalue objects.
-            then in the vm in OP_CLOSURE, we need to fill this array using
-                the byte pairs emitted when creating a closure.  If
-                the first byte if 1, we know it's local, and it's an upvalue 
-                otherwise.  
-
-                If it's an upvalue, then that ObjUpvalue object
-                should already exits in the callframe enclosing the current
-                frame and we just grab it from here and add it to ObjUpvalue array
-
-                Else, we know it's a local in the enclosing function.  First
-                compute the absolute stack position using the relative index
-                (read after is_local) and the offset of the enclosing frame.
-                Nystrom does an interesting thing here: frame->slots is a Value* to
-                slot 0 and then he adds index (uint8_t) to get the Value* to
-                the correct index.
-
-                So we create a new upvalue object and add it to the array of ObjUpvalue,
-                IF it there isn't already an upvalue belonging to some other closure
-                associated with that variable (which can happen if two closures declared
-                in 'parallel' both capture the same variable).  To solve this problem,
-                we let VM keep a linked list of open ObjUpvalue already captured.  Then 
-                we can reuse the ObjUpvalue if it's already in the list, otherwise
-                add it to the list (and also to the array in the closure) 
-
-                OP_SET_UPVALUE and OP_GET_UPVALUE can now read the ObjUpvalue from
-                the array in the closure and get/set as needed.
-
-        Closed Upvalues
-            Add new field to locals called is_captured and set to false
-            if a closure captures the local, change this to true
-
-            Then when ending a scope, emit OP_CLOSE_UPVALUE to hoist the local
-            to the heap if it's being captured.  Otherwise we just OP_POP the
-            value as usual.
-
-            When the VM sees OP_CLOSE_UPVALUE, it closes the ObjUpvalue by
-                going through the linked list of ObjValue in the VM.  Which 
-                 
-            
-            How does OP_GET_UPVALUE and OP_SET_UPVALUE still get closed upvalues???
-                Recall that the ObjUpvalue array in closure has 'location' which is
-                a Value* to the variable.  (Also recall that the VM keeps a linked list
-                of ALL ObjUpvalue so that the closures don't create and duplicates).
-                The array of ObjUpvalue are just references that are also
-                shared by the VM - so we just go through the linked list in the VM
-                and update the ObjUpvalue when closing them, and this should also
-                update the ObjUpvalue inside the arrays of ObjUpvalue owned by each
-                closure.  To make this work, we create a new field called 'closed' of type Value
-                in the ObjUpvalue, and then set the location field (of type Value*) to point to the
-                value in there.  OP_GET_UPVALUE and OP_SET_UPVALUE look at 'location'
-                when accessing upvalues.
-
-                What does hoisting onto the heap actually mean here (in terms of code)
-                I suspect this is related to the GC.  All values on the stack and in VM
-                open upvalues linked list (along with closures, globals (not used), compiler 
-                roots (current compiler and enclosing compilers), and initString  (for classes) 
-                are marked as roots.  All closures are marked by the GC, including
-                the ObjUpvalue array.  If the upvalue is still open, it's directly
-                on the stack and the GC won't collect it.  
-
-                Closures will ALWAYS have a
-                reference to their upvalues, so the GC won't collect the upvalues until
-                it collects the closure itself.  What closing upvalues actually does is 
-                change the location (type Value*) in ObjUpvalue to ???  I'm confused 
-
-            Also need to close upvalues when the function frame is returned so that
-                function arguments and any variables declared at uppermost function
-                scope are also closed.  We need to do this since OP_CLOSE_UPVALUE
-                only is called when a scope is ended - this doesn't get called 
-                when the function ends (does it work the same in my code?)
-
-    Revert back to relative stack indices (before implementing upvalues)
-
-    Nystrom wraps all functions in closure objects at runtime (since the captured
-    variable depends on when the function declaration is executed at runtime)
-
-    On a recursive call, the recursively called function is getting the local variable
-        from the calling function, not the the newly update (one less) variable from
-        itself. 
-
-        This is a problem with using absolute indices for recursion - it doesn't work.
-        For recursion of arbitrary depth to work, we need to use relative indicies
-        for local variables.
-
-        So then only upvalues can be accessed outside the calling function.
-
-    THIS DOES NOT WORK
-    New resolve_variable and resolve_sig return absolute stack positions to OP_GET_VAR and
-        OP_SET_VAR, so that functions can capture local variables in compiler where
-        it is declared.  How to generalize to arbitrary number of function levels?
-
-    Replace OP_INT, OP_FLOAT, OP_STRING, OP_FUN with just OP_CONSTANT since they all
+    Replace OP_INT, OP_FLOAT, OP_STRING, with just OP_CONSTANT since they all
         just grab values from the constants table at runtime, so the code is all the same
+
+    Read about Garbage collection again and take notes:
     
     Intern strings - have vm hold a table of ObjString*/ObjString* (value) so that copies of
         strings aren't created.  Interning can be done at both compile and runtime.

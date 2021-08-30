@@ -81,17 +81,17 @@ static struct Sig* compile_literal(struct Compiler* compiler, struct Node* node)
     switch(literal->name.type) {
         case TOKEN_INT: {
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
-            emit_bytes(compiler, OP_INT, add_constant(compiler, to_integer(integer)));
+            emit_bytes(compiler, OP_CONSTANT, add_constant(compiler, to_integer(integer)));
             return make_prim_sig(VAL_INT);
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
-            emit_bytes(compiler, OP_FLOAT, add_constant(compiler, to_float(f)));
+            emit_bytes(compiler, OP_CONSTANT, add_constant(compiler, to_float(f)));
             return make_prim_sig(VAL_FLOAT);
         }
         case TOKEN_STRING: {
             struct ObjString* str = make_string(literal->name.start, literal->name.length);
-            emit_bytes(compiler, OP_STRING, add_constant(compiler, to_string(str)));
+            emit_bytes(compiler, OP_CONSTANT, add_constant(compiler, to_string(str)));
             return make_prim_sig(VAL_STRING);
         }
         case TOKEN_TRUE: {
