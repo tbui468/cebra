@@ -30,6 +30,7 @@ const char* op_to_string(OpCode op) {
         case OP_GET_LOCAL: return "OP_GET_LOCAL";
         case OP_SET_UPVALUE: return "OP_SET_UPVALUE";
         case OP_GET_UPVALUE: return "OP_GET_UPVALUE";
+        case OP_CLOSE_UPVALUE: return "OP_CLOSE_UPVALUE";
         case OP_ADD: return "OP_ADD";
         case OP_SUBTRACT: return "OP_SUBTRACT";
         case OP_MULTIPLY: return "OP_MULTIPLY";

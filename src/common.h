@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 //#define DEBUG_DISASSEMBLE
-//#define DEBUG_TRACE
+#define DEBUG_TRACE
 //#define DEBUG_AST
 
 

@@ -21,6 +21,7 @@ typedef struct {
     Token name;
     struct Sig* sig;
     int depth;
+    bool is_captured;
 } Local;
 
 struct Compiler {

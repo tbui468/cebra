@@ -27,6 +27,7 @@ static void push(VM* vm, Value value) {
 ResultCode init_vm(VM* vm) {
     vm->stack_top = &vm->stack[0];
     vm->frame_count = 0;
+    vm->open_upvalues = NULL;
     return RESULT_SUCCESS;
 }
 
@@ -65,6 +66,40 @@ static void print_trace(VM* vm, OpCode op) {
     printf("\n*************************\n");
 }
 
+static struct ObjUpvalue* capture_upvalue(VM* vm, Value* location) {
+
+    if (vm->open_upvalues == NULL) {
+        struct ObjUpvalue* new_upvalue = make_upvalue(location);
+        vm->open_upvalues = new_upvalue;
+        return new_upvalue;
+    }
+
+    struct ObjUpvalue* current = vm->open_upvalues;
+    struct ObjUpvalue* next = current->next;
+    while (next != NULL && location > current->location) {
+        current = next;
+        next = next->next;
+    }
+
+    if (location == current->location) {
+        return current;
+    }
+
+    struct ObjUpvalue* new_upvalue = make_upvalue(location);
+    current->next = new_upvalue;
+    new_upvalue->next = next;
+    return new_upvalue;
+}
+
+static void close_upvalues(VM* vm, Value* location) {
+    struct ObjUpvalue* current = vm->open_upvalues;
+    while (current != NULL && current->location >= location) {
+        current->closed = *location;
+        current->location = &current->closed;
+        current = current->next;
+    }
+}
+
 ResultCode execute_frame(VM* vm, CallFrame* frame) {
     uint8_t op = READ_TYPE(frame, uint8_t);
     switch(op) {
@@ -92,12 +127,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 bool is_local = READ_TYPE(frame, uint8_t);
                 int idx = READ_TYPE(frame, uint8_t);
                 if (is_local) {
-                    Value* value = &frame->locals[idx];
-                    func->upvalues[func->upvalue_count] = make_upvalue(value);
+                    Value* location = &frame->locals[idx];
+                    func->upvalues[func->upvalue_count++] = capture_upvalue(vm, location);
                 } else {
-                    func->upvalues[func->upvalue_count] = frame->function->upvalues[idx];
+                    func->upvalues[func->upvalue_count++] = frame->function->upvalues[idx];
                 }
-                func->upvalue_count++;
             }
             break;
         }/*
@@ -181,12 +215,17 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_GET_UPVALUE: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
-            push(vm, *(frame->function->upvalues[slot]->value));
+            push(vm, *(frame->function->upvalues[slot]->location));
             break;
         }
         case OP_SET_UPVALUE: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
-            *frame->function->upvalues[slot]->value = peek(vm, 0);
+            *frame->function->upvalues[slot]->location = peek(vm, 0);
+            break;
+        }
+        case OP_CLOSE_UPVALUE: {
+            close_upvalues(vm, vm->stack_top - 1);
+            pop(vm);
             break;
         }
         case OP_JUMP_IF_FALSE: {
@@ -238,12 +277,15 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_RETURN: {
             Value ret = ret = pop(vm);
+            close_upvalues(vm, frame->locals + 1);
             vm->stack_top = frame->locals;
             vm->frame_count--;
             if (ret.type != VAL_NIL) push(vm, ret);
             break;
         }
+
     } 
+
 #ifdef DEBUG_TRACE
     print_trace(vm, op);
 #endif

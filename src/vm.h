@@ -18,6 +18,7 @@ typedef struct {
     Value* stack_top;
     CallFrame frames[256];
     int frame_count;
+    struct ObjUpvalue* open_upvalues;
 } VM;
 
 ResultCode init_vm(VM* vm);

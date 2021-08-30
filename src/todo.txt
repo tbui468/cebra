@@ -1,14 +1,9 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
-    Get rid of find_local() only used in class right now which needs to be rewritten anyway
-        run all correctness tests to make sure it still works
+    Cascading function calls and making a temporary variable to hold a function is resulting 
+        in different outcomes (it shouldn't).  Need print_disassebmly for all chunks
 
-    Upvalues also need to be closed if popped off the stack while captured.  So we need 
-        a way for locals in compiler to know if they're captured when popping scopes.
-        How about when ending function scopes???
-
-    Duplicate upvalues also need to be eliminated (have vm hold a linked list of ObjUpvalues
-        and check before creating a new one)
+    Why isn't OP_CLOSE_UPVALUE showing up in trace?
 
     Read chapter on upvalues carefully - summarize/write pseudo code
         Notes: we have two arrays of upvalues - one for compile time and one for runtime
@@ -115,7 +110,6 @@ TODO:  There's no way around using upvalues - will need to implement them for co
                 when the function ends (does it work the same in my code?)
 
     Revert back to relative stack indices (before implementing upvalues)
-
 
     Nystrom wraps all functions in closure objects at runtime (since the captured
     variable depends on when the function declaration is executed at runtime)

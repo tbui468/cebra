@@ -7,7 +7,9 @@
 
 struct ObjUpvalue {
     struct Obj base;
-    Value* value;
+    Value* location;
+    Value closed;
+    struct ObjUpvalue* next;
 };
 
 struct ObjFunction {
@@ -19,6 +21,6 @@ struct ObjFunction {
 };
 
 struct ObjFunction* make_function(Chunk chunk, int arity);
-struct ObjUpvalue* make_upvalue(Value* value);
+struct ObjUpvalue* make_upvalue(Value* location);
 
 #endif// CEBRA_OBJ_FUNCTION_H

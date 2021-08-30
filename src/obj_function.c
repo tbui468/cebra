@@ -15,13 +15,15 @@ struct ObjFunction* make_function(Chunk chunk, int arity) {
     return obj;
 }
 
-struct ObjUpvalue* make_upvalue(Value* value) {
+struct ObjUpvalue* make_upvalue(Value* location) {
     struct ObjUpvalue* obj = ALLOCATE_OBJ(struct ObjUpvalue);
     obj->base.type = OBJ_UPVALUE;
     obj->base.next = NULL;
     insert_object((struct Obj*)obj);
 
-    obj->value = value;
+    obj->location = location;
+    obj->closed = to_nil();
+    obj->next = NULL;
 
     return obj;
 }

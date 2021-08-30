@@ -202,6 +202,7 @@ static void set_local(struct Compiler* compiler, Token name, struct Sig* sig, in
     local.name = name;
     local.sig = sig;
     local.depth = compiler->scope_depth;
+    local.is_captured = false;
     compiler->locals[index] = local;
 }
 
@@ -258,6 +259,7 @@ static int resolve_upvalue(struct Compiler* compiler, Token name) {
 
     int local_index = resolve_local(compiler->enclosing, name);
     if (local_index != -1) {
+        compiler->enclosing->locals[local_index].is_captured = true;
         struct Upvalue upvalue;
         upvalue.index = local_index;
         upvalue.is_local = true;
@@ -277,19 +279,6 @@ static int resolve_upvalue(struct Compiler* compiler, Token name) {
     return -1;
 }
 
-//TODO: get rid of this and replace all calls with resolve local
-static int find_local(struct Compiler* compiler, Token name) {
-    for (int i = compiler->locals_count - 1; i >= 0; i--) {
-        Local* local = &compiler->locals[i];
-        if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
-            return i;
-        }
-    }
-
-    add_error(compiler, name, "Local variable not declared.");
-
-    return -1;
-}
 
 static void start_scope(struct Compiler* compiler) {
     compiler->scope_depth++;
@@ -298,12 +287,17 @@ static void start_scope(struct Compiler* compiler) {
 static void end_scope(struct Compiler* compiler) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
-        if (local->depth == compiler->scope_depth) {
-            compiler->locals_count--;
-            emit_byte(compiler, OP_POP);
-        }else{
+        if (local->depth < compiler->scope_depth) {
             break;
         }
+
+        if (local->is_captured) {
+            emit_byte(compiler, OP_CLOSE_UPVALUE);
+        } else {
+            emit_byte(compiler, OP_POP);
+        }
+
+        compiler->locals_count--;
     }
 
     compiler->scope_depth--;
@@ -323,7 +317,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             if (dv->sig->type == SIG_CLASS) {
                 SigClass* sc = (SigClass*)(dv->sig);
                 emit_byte(compiler, OP_INSTANCE);
-                int class_idx = find_local(compiler, sc->klass);
+                int class_idx = resolve_local(compiler, sc->klass);
                 if (class_idx == -1) return make_prim_sig(VAL_NIL);
                 emit_byte(compiler, class_idx);
                 add_local(compiler, dv->name, dv->sig);
