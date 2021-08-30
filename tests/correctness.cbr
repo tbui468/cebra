@@ -349,3 +349,28 @@
         print "Open upvalues, Depth 3, Cascade: Failed!"
     }
 }
+
+{
+    print ""
+    print "***********Closures: Closed Upvalues************"
+    outer: () -> () -> string = () -> () -> string {
+        x: string = "outside"
+        inner: () -> string = () -> string{
+            -> x
+        }
+        -> inner
+    }
+
+    closure: () -> string = outer()
+    if closure() == "outside" {
+        print "Closed Upvalues: Passed!"
+    } else {
+        print "Closed Upvalues: Failed!"
+    }
+
+    if outer()() == "outside" {
+        print "Closed Upvalues, Cascade: Passed!"
+    } else {
+        print "Closed Upvalues, Cascade: Failed!"
+    }
+}

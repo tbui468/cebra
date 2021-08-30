@@ -1,9 +1,7 @@
 TODO:  There's no way around using upvalues - will need to implement them for core functionality
 
-    Cascading function calls and making a temporary variable to hold a function is resulting 
-        in different outcomes (it shouldn't).  Need print_disassebmly for all chunks
-
-    Why isn't OP_CLOSE_UPVALUE showing up in trace?
+    Why isn't OP_CLOSE_UPVALUE showing up in trace?  Try printing disassebly of all functions
+        to see.  Could it be because function body is parsed as a block()?  
 
     Read chapter on upvalues carefully - summarize/write pseudo code
         Notes: we have two arrays of upvalues - one for compile time and one for runtime
