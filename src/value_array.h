@@ -11,6 +11,6 @@ struct ValueArray {
 
 void init_value_array(struct ValueArray* va);
 void free_value_array(struct ValueArray* va);
-void add_value(struct ValueArray* va, Value value);
+int add_value(struct ValueArray* va, Value value);
 
 #endif// CEBRA_VALUE_ARRAY_H

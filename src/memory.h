@@ -31,6 +31,7 @@ void* allocate_obj(size_t size);
 void* allocate_char(size_t size);
 void init_memory_manager();
 void print_memory();
+void collect_garbage();
 
 //placeholder until GC in place
 void free_objects();

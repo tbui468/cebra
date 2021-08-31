@@ -313,15 +313,8 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
         execute_frame(vm, frame);
     }
 
-    //TODO: testing mm.objects - loooks good to me.  Free them here for now until GC works
-    free_objects();
-    struct Obj* obj = mm.objects;
-    int count = 0;
-    while (obj != NULL) {
-        count++;
-        obj = obj->next;
-    }
-    printf("Total Objects: %d\n", count);
+    //TODO: checking if it all works
+    collect_garbage();
 
     return RESULT_SUCCESS;
 }

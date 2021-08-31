@@ -21,6 +21,7 @@ struct ObjString* make_string(const char* start, int length) {
     struct ObjString* obj = ALLOCATE_OBJ(struct ObjString);
     obj->base.type = OBJ_STRING;
     obj->base.next = NULL;
+    obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
     obj->chars = chars;
     obj->length = length;
@@ -33,6 +34,7 @@ struct ObjString* take_string(char* chars, int length) {
     struct ObjString* obj = ALLOCATE_OBJ(struct ObjString);
     obj->base.type = OBJ_STRING;
     obj->base.next = NULL;
+    obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
     obj->chars = chars;
     obj->length = length;

@@ -1,85 +1,97 @@
-TODO:  There's no way around using upvalues - will need to implement them for core functionality
+TODO:
 
-    Why isn't OP_CLOSE_UPVALUE showing up in trace?  Try printing disassebly of all functions
-        to see.  Could it be because function body is parsed as a block()?  And then 
-        it's added to the parameter node_list for compilation. But isn't the OP_CLOSE_UPVALUE
-        being emitted?
+    HIGH PRIORITY:
+    We want to call the garbage collector whenever we allocate memory, but
+        our memory allocation is split into a bunch of functions - need to
+        combine them into one so that calling collect_garbage is not spread
+        out all over the place.  Make sure current marking and freeing of
+        objects still works after this change is made.
 
-        If it's really because returning from a function calls close_upvalue on all open
-        upvalues, think of some code using scopes where OP_CLOSE_UPVALUE is called by itself
+    mark_roots() currently marks everything - we only want it to mark the actual roots
+        how to we determine roots?
+        memory.c needs access to the VM...
+            Values on the stack with heap allocated memory
+            ObjFunction* in the callframes (wait, aren't these on the stack too?)
+                upvalues array
+                constants table
 
-    Replace OP_INT, OP_FLOAT, OP_STRING, with just OP_CONSTANT since they all
-        just grab values from the constants table at runtime, so the code is all the same
+    Big problem: Nystrom keeps allocated objects safe by pushing them onto
+        the VM stack when a memory allocation may happen so that the GC doesn't 
+        sweep them, BUT we don't have access to the VM in the compiler, so
+        we can't do that.  One option is to create a 'compiler stack' in the
+        compiler and then push any Values/Obj we want to keep safe during potential
+        allocations onto there, and then pop when done.  We just need to mark
+        this stack as a root.
 
     Read about Garbage collection again and take notes:
     
-    Intern strings - have vm hold a table of ObjString*/ObjString* (value) so that copies of
-        strings aren't created.  Interning can be done at both compile and runtime.
-        Just put some code inside make_string/take_string so that it doesn't
-        add a new key/value pair if if the key already exists in the table.
-
+        Write a barebones marking root/tracing reference system to see if it
+            frees all memory by the end of the program.  Then build from there.
+        
+        Reachability
+            1. Roots are reachable without needing a reference
+            2. Reachible values/objects can be reached using a reference in a root
+            3. All other values/objects can be collected by the GC 
+        Mark-Sweep Garbage Collection
+            Make a DEBUG_STRESS_GC macro that calls the GC everytime
+            make a function in memory.h/c called collect_garbage()
+                and run it.  Should run whenever we allocate memory
+                BUT not when we free (since the GC will need to free memory)
+            Consider making a DEBUG_LOG_GC macro to print out info about
+                what the garbage collector is doing (can integrate with
+                current memory manager)
+        Marking the Roots
+            Need to mark all objects (including values, which hold sometimes wrap and object)
+                put a new field in Obj called is_marked
+            Mark values on the stack (BUT check to see if they're heap allocated -
+                recall that some objects (booleans, nil, etc) are stack allocated
+                and we don't need to worry about them
+            Nystrom then creates a function to mark objects in the hash table,
+                but we don't have globals, so no necessary...yet.
+            Mark the ObjFunctions in the callframes
+            Mark the ObjUpvalues inside ObjFunction upvalues array
+            Create a new function, mark_compiler_roots() to mark roots in the compiler phase
+                Only the ObjFunction created needs to be marked
+        Tracing Object References
+            ObjFunctions have list of ObjUpvalue* and constants table that need marking
+            Use a tricolor abstraction to make sure we don't loop while marking references
+            -> continue reading about how I want to structure the working list
+        Sweeping Unused Objects
+        When to Collect
+        Garbage Collection Bugs
+    
     Get NODE_CLASS working with new defs table - in call frames
       should just need to use OP_SET/GET_DEF since they all use Values
 
     OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
      basic problem: how to go from ObjClass -> Table necessary for instance?
 
-  MONDAY
-  Make ObjInstance for storing instances
-  Add ObjInstance* to Value and any supporting functions
-  Check that sample class compiles
-  Make Table (hash table) for instances to store class fields and methods
-  Make dot notation work for getting/setting instance fields
-  Make methods callable using dot notation
 
-  Make NODE_DECL_CLASS (should take in Token name, and NodeList props)
-  test to see if it compiles
-  dot notation for OP_GET_PROP, OP_SET_PROP
-  Classes
-      Don't really need a closure, right? - Yes we do.  Since the class methods need to see instance fields
-      will need a hash table for struct properties
-      will need ObjInstance (each one should have own hash table)
+    Clear up the warnings (especially with switch statements) before doing garbage collection
 
-      Class declaration
-          Dog :: class {
-              a: int = 5
-              Dog :: () -> this {
+    in compiler, CALL and CASCADE CALL share a lot of code - pull that into a function
 
-              }
-              b :: () -> {
-                  print a
-              }
-          }
+    Native functions - start with clock() for measuring time
 
-  Struct Getters and Setters
-      including type checking
-
-  Clear up the warnings (especially with switch statements) before doing garbage collection
-
-  in compiler, CALL and CASCADE CALL share a lot of code - pull that into a function
-
-  Having to call free_sig on almost all signatures in compile_node is a bit much
+    Having to call free_sig on almost all signatures in compile_node is a bit much
       and super prone to errors
 
-  Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
+    Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
       add code inside memory.h - all allocations should go through there
       mark and sweep or reference counting?
 
-  Closures - nested functions and structs won't work unless these are implemented
 
-  Implement deleting from hash table - need to use tombstones
+    Implement deleting from hash table - need to use tombstones
 
-  Intern strings - create a "strings" table in vm
+    Intern strings - create a "strings" table in vm
 
-  Test Edge cases by writing toy programs - save these programs as correctness tests
+    Test Edge cases by writing toy programs - save these programs as correctness tests
 
-  Stress test by writing script to load nyc_subway data - compare runtime to python pandas
+    Stress test by writing script to load nyc_subway data - compare runtime to python pandas
 
-  Write benchmarking code to use with chrome://tracing to find hotspots
+    Write benchmarking code to use with chrome://tracing to find hotspots
 
-  Why are if /else so much slower than just if (think of the fibonacci example
-
-
+    Why are if /else so much slower than just if (think of the fibonacci example
 
 
 StatementList should be DeclList - all programs are a list of declarations

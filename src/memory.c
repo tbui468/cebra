@@ -61,3 +61,44 @@ void free_objects() {
     }
     mm.objects = NULL;
 }
+
+static void mark_roots() {
+    //mark Values in stack with memory allocation
+    //TODO: just marking all objects for now to test if we have everything
+    //      should really just be marking objects on the stack (that have heap 
+    //      allocated memory) and ... other stuff...
+    struct Obj* obj = mm.objects;
+    while (obj != NULL) {
+        obj->is_marked = true;
+        obj = obj->next;
+    }
+}
+
+static void sweep() {
+    struct Obj* previous = NULL;
+    struct Obj* current = mm.objects;
+    while (current != NULL) {
+        if (current->is_marked) {
+            current->is_marked = false;
+            previous = current;
+            current = current->next;
+        } else {
+            if (previous == NULL) {
+                struct Obj* next = current->next;
+                free_object(current);
+                current = next;
+            } else {
+                previous->next = current->next;
+                free_object(current);
+                current = previous->next;
+            }
+        }
+    }
+}
+
+void collect_garbage() {
+    //free_objects();
+    mark_roots();
+    //trace_references();
+    sweep();
+}

@@ -1,6 +1,8 @@
 #ifndef CEBRA_OBJ_H
 #define CEBRA_OBJ_H
 
+#include <stdbool.h>
+
 typedef enum {
     OBJ_STRING,
     OBJ_FUNCTION,
@@ -12,6 +14,7 @@ typedef enum {
 struct Obj {
     ObjType type;
     struct Obj* next;
+    bool is_marked;
 };
 
 

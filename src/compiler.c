@@ -31,8 +31,7 @@ static void grow_capacity(struct Compiler* compiler) {
 }
 
 static int add_constant(struct Compiler* compiler, Value value) {
-    add_value(&compiler->function->chunk.constants, value);
-    return compiler->function->chunk.constants.count - 1;
+    return add_value(&compiler->function->chunk.constants, value);
 }
 
 static void emit_byte(struct Compiler* compiler, uint8_t byte) {

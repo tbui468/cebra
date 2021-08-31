@@ -13,7 +13,7 @@ void free_value_array(struct ValueArray* va) {
     FREE_ARRAY(va->values, Value, va->capacity);
 }
 
-void add_value(struct ValueArray* va, Value value) {
+int add_value(struct ValueArray* va, Value value) {
     if (va->count + 1 > va->capacity) {
         int new_capacity = va->capacity == 0 ? 8 : va->capacity * 2;
         va->values = GROW_ARRAY(va->values, Value, new_capacity, va->capacity);
@@ -21,5 +21,5 @@ void add_value(struct ValueArray* va, Value value) {
     }
 
     va->values[va->count] = value;
-    va->count++;
+    return va->count++;
 }
