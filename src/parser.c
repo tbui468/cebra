@@ -220,17 +220,20 @@ static struct Sig* read_sig() {
         return make_fun_sig(params, ret);
     }
 
-    if (match(TOKEN_INT_TYPE) ||
-        match(TOKEN_FLOAT_TYPE) ||
-        match(TOKEN_STRING_TYPE) ||
-        match(TOKEN_BOOL_TYPE)) {
-        
-        return make_prim_sig(get_value_type(parser.previous));
-    }
+    if (match(TOKEN_INT_TYPE)) 
+        return make_prim_sig(VAL_INT);
 
-    if (match(TOKEN_IDENTIFIER)) {
+    if (match(TOKEN_FLOAT_TYPE))
+        return make_prim_sig(VAL_FLOAT);
+    
+    if (match(TOKEN_BOOL_TYPE))
+        return make_prim_sig(VAL_BOOL);
+    
+    if (match(TOKEN_STRING_TYPE))
+        return make_prim_sig(VAL_STRING);
+
+    if (match(TOKEN_IDENTIFIER)) 
         return make_class_sig(parser.previous);
-    }
 
     return make_prim_sig(VAL_NIL);
 }

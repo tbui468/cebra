@@ -6,6 +6,11 @@ MemoryManager mm;
 
 void* realloc_mem(void* ptr, size_t new_size, size_t old_size) {
     mm.bytes_allocated += (new_size - old_size);
+
+#ifdef DEBUG_STRESS_GC
+    collect_garbage();
+#endif
+
     return realloc(ptr, new_size);
 }
 
@@ -14,10 +19,11 @@ void free_mem(void* ptr, size_t size) {
     return free(ptr);
 }
 
-void init_memory_manager() {
+void init_memory_manager(VM* vm) {
     mm.bytes_allocated = 0;
     mm.bytes_freed = 0;
     mm.objects = NULL;
+    mm.vm = vm;
 }
 
 void print_memory() {
@@ -37,15 +43,15 @@ void free_objects() {
 }
 
 static void mark_roots() {
-    //mark Values in stack with memory allocation
-    //TODO: just marking all objects for now to test if we have everything
-    //      should really just be marking objects on the stack (that have heap 
-    //      allocated memory) and ... other stuff...
+    for (Value* slot = mm.vm->stack; slot < mm.vm->stack_top; slot++) {
+        mark_value(slot);
+    }
+    /*
     struct Obj* obj = mm.objects;
     while (obj != NULL) {
         obj->is_marked = true;
         obj = obj->next;
-    }
+    }*/
 }
 
 static void sweep() {
@@ -72,7 +78,7 @@ static void sweep() {
 
 void collect_garbage() {
     //free_objects();
-//    mark_roots();
+    mark_roots();
     //trace_references();
     sweep();
 }

@@ -28,8 +28,8 @@ typedef struct {
     union {
         int32_t integer_type;
         double float_type;
-        struct ObjString* string_type;
         bool boolean_type;
+        struct ObjString* string_type;
         struct ObjFunction* function_type;
         struct ObjClass* class_type;
         struct ObjInstance* instance_type;
@@ -56,7 +56,8 @@ Value mod_values(Value a, Value b);
 Value equal_values(Value a, Value b);
 void print_value(Value a);
 const char* value_type_to_string(ValueType type);
-ValueType get_value_type(Token token);
+
+void mark_value(Value* value);
 
 #endif// CEBRA_VALUE_H
 

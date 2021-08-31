@@ -4,6 +4,9 @@
 #include "value.h"
 #include "memory.h"
 #include "obj_string.h"
+#include "obj_function.h"
+#include "obj_class.h"
+#include "obj_instance.h"
 
 
 Value to_float(double num) {
@@ -158,14 +161,20 @@ void print_value(Value a) {
         case VAL_FLOAT:
             printf("%f", a.as.float_type);
             break;
-        case VAL_STRING:
-            printf("%s", a.as.string_type->chars);
-            break;
         case VAL_BOOL:
             printf("%s", a.as.boolean_type ? "true" : "false");
             break;
+        case VAL_STRING:
+            printf("%s", a.as.string_type->chars);
+            break;
         case VAL_FUNCTION:
             printf("%s", "<fun>");
+            break;
+        case VAL_CLASS:
+            printf("%s", "<class>");
+            break;
+        case VAL_INSTANCE:
+            printf("%s", "<instance>");
             break;
         case VAL_NIL:
             printf("%s", "<Nil>");
@@ -177,18 +186,43 @@ const char* value_type_to_string(ValueType type) {
     switch(type) {
         case VAL_INT: return "VAL_INT";
         case VAL_FLOAT: return "VAL_FLOAT";
-        case VAL_STRING: return "VAL_STRING";
         case VAL_BOOL: return "VAL_BOOL";
+        case VAL_STRING: return "VAL_STRING";
+        case VAL_FUNCTION: return "VAL_FUNCTION";
+        case VAL_CLASS: return "VAL_CLASS";
+        case VAL_INSTANCE: return "VAL_INSTANCE";
         case VAL_NIL: return "VAL_NIL";
     }
 }
 
-ValueType get_value_type(Token token) {
-    switch(token.type) {
-        case TOKEN_INT_TYPE: return VAL_INT;
-        case TOKEN_FLOAT_TYPE: return VAL_FLOAT;
-        case TOKEN_STRING_TYPE: return VAL_STRING;
-        case TOKEN_BOOL_TYPE: return VAL_BOOL;
-        case TOKEN_NIL_TYPE: return VAL_NIL;
+void mark_value(Value* value) {
+    switch(value->type) {
+        case VAL_STRING: {
+            struct ObjString* obj = value->as.string_type;
+            obj->base.is_marked = true;
+            break;
+        }
+        case VAL_FUNCTION: {
+            struct ObjFunction* obj = value->as.function_type;
+            obj->base.is_marked = true;
+            break;
+        }
+        case VAL_CLASS: {
+            struct ObjClass* obj = value->as.class_type;
+            obj->base.is_marked = true;
+            break;
+        }
+        case VAL_INSTANCE: {
+            struct ObjInstance* obj = value->as.instance_type;
+            obj->base.is_marked = true;
+            break;
+        }
+        //Values with stack allocated data
+        //doesn't need to be garbage collected
+        case VAL_INT:
+        case VAL_FLOAT:
+        case VAL_BOOL:
+        case VAL_NIL:
+            break;
     }
 }

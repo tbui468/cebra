@@ -39,9 +39,7 @@ ResultCode run_source(VM* vm, const char* source) {
 }
 
 
-ResultCode repl() {
-    VM vm;
-    init_vm(&vm);
+ResultCode repl(VM* vm) {
     int MAX_CHARS = 256;
     char input_line[MAX_CHARS];
     while(true) {
@@ -53,10 +51,8 @@ ResultCode repl() {
 
         //if not a complete statement expression, should keep reading
 
-        run_source(&vm, &input_line[0]);
+        run_source(vm, &input_line[0]);
     }
-
-    free_vm(&vm);
 
     return RESULT_SUCCESS;
 }
@@ -73,28 +69,28 @@ const char* read_file(const char* path) {
     return buffer;
 }
 
-ResultCode run_script(const char* path) {
-    VM vm;
-    init_vm(&vm);
+ResultCode run_script(VM* vm, const char* path) {
 
     const char* source = read_file(path);
-    run_source(&vm, source);
+    run_source(vm, source);
 
     free((void*)source);
-    free_vm(&vm);
 
     return RESULT_SUCCESS;
 }
 
 int main(int argc, char** argv) {
 
-    init_memory_manager();
+    VM vm;
+    init_vm(&vm);
+
+    init_memory_manager(&vm);
 
     ResultCode result = RESULT_SUCCESS;
     if (argc == 1) {
-        result = repl();
+        result = repl(&vm);
     } else if (argc == 2) {
-        result = run_script(argv[1]);
+        result = run_script(&vm, argv[1]);
     }
 
     if (result == RESULT_FAILED) {
@@ -102,6 +98,8 @@ int main(int argc, char** argv) {
     }
 
     print_memory();
+
+    free_vm(&vm);
 
     return 0;
 }

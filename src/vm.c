@@ -313,8 +313,5 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
         execute_frame(vm, frame);
     }
 
-    //TODO: checking if it all works
-    collect_garbage();
-
     return RESULT_SUCCESS;
 }
