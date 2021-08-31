@@ -9,11 +9,6 @@ void* allocate_node(size_t size) {
     return realloc(NULL, size);
 }
 
-ValueType* allocate_value_type(int len) {
-    mm.compiler_bytes_allocated += sizeof(ValueType) * len;
-    return (ValueType*)realloc(NULL, sizeof(ValueType) * len);
-}
-
 void* allocate_obj(size_t size) {
     mm.object_bytes_allocated += size;
     return realloc(NULL, size);
@@ -98,7 +93,7 @@ static void sweep() {
 
 void collect_garbage() {
     //free_objects();
-    mark_roots();
+//    mark_roots();
     //trace_references();
     sweep();
 }
