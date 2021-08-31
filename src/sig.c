@@ -29,7 +29,7 @@ void add_sig(SigList* sl, struct Sig* sig) {
 }
 
 struct Sig* make_prim_sig(ValueType type) {
-    SigPrim* sig_prim = ALLOCATE_NODE(SigPrim);
+    SigPrim* sig_prim = ALLOCATE(SigPrim);
 
     sig_prim->base.type = SIG_PRIM;
     sig_prim->type = type;
@@ -38,7 +38,7 @@ struct Sig* make_prim_sig(ValueType type) {
 }
 
 struct Sig* make_fun_sig(SigList params, struct Sig* ret) {
-    SigFun* sig_fun = ALLOCATE_NODE(SigFun);
+    SigFun* sig_fun = ALLOCATE(SigFun);
 
     sig_fun->base.type = SIG_FUN;
     sig_fun->params = params;
@@ -48,7 +48,7 @@ struct Sig* make_fun_sig(SigList params, struct Sig* ret) {
 }
 
 struct Sig* make_class_sig(Token klass) {
-    SigClass* sc = ALLOCATE_NODE(SigClass);
+    SigClass* sc = ALLOCATE(SigClass);
 
     sc->base.type = SIG_CLASS;
     sc->klass = klass;
@@ -142,17 +142,17 @@ void free_sig(struct Sig* sig) {
     switch(sig->type) {
         case SIG_PRIM:
             SigPrim* sig_prim = (SigPrim*)sig;
-            FREE_NODE(sig_prim, SigPrim);
+            FREE(sig_prim, SigPrim);
             break;
         case SIG_FUN:
             SigFun* sig_fun = (SigFun*)sig;
             free_sig_list(&sig_fun->params);
             free_sig(sig_fun->ret);
-            FREE_NODE(sig_fun, SigFun);
+            FREE(sig_fun, SigFun);
             break;
         case SIG_CLASS:
             SigClass* sc = (SigClass*)sig;
-            FREE_NODE(sc, SigClass);
+            FREE(sc, SigClass);
             break;
     }
 }

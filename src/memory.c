@@ -3,50 +3,29 @@
 
 MemoryManager mm;
 
-//make a memory tracker here
-void* allocate_node(size_t size) {
-    mm.node_bytes_allocated += size;
-    return realloc(NULL, size);
+
+void* realloc_mem(void* ptr, size_t new_size, size_t old_size) {
+    mm.bytes_allocated += (new_size - old_size);
+    return realloc(ptr, new_size);
 }
 
-void* allocate_obj(size_t size) {
-    mm.object_bytes_allocated += size;
-    return realloc(NULL, size);
-}
-
-void* allocate_char(size_t size) {
-    mm.char_bytes_allocated += size;
-    return realloc(NULL, size);
+void free_mem(void* ptr, size_t size) {
+    mm.bytes_freed += size;
+    return free(ptr);
 }
 
 void init_memory_manager() {
-    mm.node_bytes_allocated = 0;
-    mm.node_bytes_freed = 0;
-    mm.array_bytes_allocated = 0;
-    mm.array_bytes_freed = 0;
-    mm.object_bytes_allocated = 0;
-    mm.object_bytes_freed = 0;
-    mm.char_bytes_allocated = 0;
-    mm.char_bytes_freed = 0;
-    mm.compiler_bytes_allocated = 0;
-    mm.compiler_bytes_freed = 0;
+    mm.bytes_allocated = 0;
+    mm.bytes_freed = 0;
     mm.objects = NULL;
 }
 
 void print_memory() {
-    printf("node bytes allocated: %d\n", mm.node_bytes_allocated);
-    printf("node bytes freed: %d\n", mm.node_bytes_freed);
-    printf("array bytes allocated bytes: %d\n", mm.array_bytes_allocated);
-    printf("array bytes freed bytes: %d\n", mm.array_bytes_freed);
-    printf("object bytes allocated bytes: %d\n", mm.object_bytes_allocated);
-    printf("object bytes freed bytes: %d\n", mm.object_bytes_freed);
-    printf("char bytes allocated bytes: %d\n", mm.char_bytes_allocated);
-    printf("char bytes freed bytes: %d\n", mm.char_bytes_freed);
-    printf("compiler bytes allocated bytes: %d\n", mm.compiler_bytes_allocated);
-    printf("compiler bytes freed bytes: %d\n", mm.compiler_bytes_freed);
+    printf("bytes allocated: %d\n", mm.bytes_allocated);
+    printf("bytes freed: %d\n", mm.bytes_freed);
 }
 
-
+//TODO: remove later - only to check that all memory is being tracked and cleared
 void free_objects() {
     struct Obj* obj = mm.objects;
     while (obj != NULL) {

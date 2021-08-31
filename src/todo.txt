@@ -1,16 +1,5 @@
 TODO:
 
-    HIGH PRIORITY:
-    We want to call the garbage collector whenever we allocate memory, but
-        our memory allocation is split into a bunch of functions - need to
-        combine them into one so that calling collect_garbage is not spread
-        out all over the place.  Make sure current marking and freeing of
-        objects still works after this change is made.  There are way too 
-        many different macros for freeing and allocation...
-
-        Try to do this myself, then if I get stuck or want some guidance, look 
-        at how Nystom did this in clox - memory.h and memory.c
-
     mark_roots() currently marks everything - we only want it to mark the actual roots
         how to we determine roots?
         memory.c needs access to the VM...

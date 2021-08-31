@@ -81,7 +81,8 @@ Value add_values(Value a, Value b) {
         struct ObjString* right = b.as.string_type;
 
         int length =  left->length + right->length;
-        char* concat = ALLOCATE_CHAR(length + 1);
+        char* concat = ALLOCATE_ARRAY(char);
+        concat = GROW_ARRAY(concat, char, length + 1, 0);
         memcpy(concat, left->chars, left->length);
         memcpy(concat + left->length, right->chars, right->length);
         concat[length] = '\0';

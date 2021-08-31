@@ -5,27 +5,19 @@
 #include "value.h"
 #include "obj.h"
 
-//vm memory
-#define ALLOCATE_CHAR(len) ((char*)allocate_char(sizeof(char) * (len)))
-#define FREE_CHAR(ptr, len) (free((char*)ptr), mm.char_bytes_freed += len)
+//Replace all former allocatio macros with the four new ones (GROW_ARRAY is the same)
 
-#define ALLOCATE_OBJ(type) ((type*)allocate_obj(sizeof(type)))
-#define FREE_OBJ(ptr, type) (free((type*)ptr), mm.object_bytes_freed += sizeof(type))
+#define ALLOCATE(type) ((type*)realloc_mem(NULL, sizeof(type), 0))
+#define ALLOCATE_ARRAY(type) ((type*)realloc_mem(NULL, 0, 0))
+#define GROW_ARRAY(ptr, type, new_count, old_count) \
+    ((type*)realloc_mem((void*)ptr, sizeof(type) * new_count, sizeof(type) * old_count))
 
-//ALLOCATE/FREE NODE also takes care of Sig nodes (along with AST nodes)
-#define ALLOCATE_NODE(type) (type*)allocate_node(sizeof(type))
-#define FREE_NODE(ptr, type) (free((type*)ptr), mm.node_bytes_freed += sizeof(type))
+#define FREE(ptr, type) (free_mem((void*)ptr, sizeof(type)))
+#define FREE_ARRAY(ptr, type, count) (free_mem((void*)ptr, sizeof(type) * count))
 
-#define ALLOCATE_ARRAY(type) ((type*)realloc(NULL, 0))
-#define GROW_ARRAY(ptr, type, new_capacity, old_capacity) \
-            ((mm.array_bytes_allocated += sizeof(type) * (new_capacity - old_capacity), \
-             (type*)realloc(ptr, sizeof(type) * new_capacity)))
-#define FREE_ARRAY(ptr, type, capacity) (free((type*)ptr), mm.array_bytes_freed += sizeof(type) * capacity)
-             
+void* realloc_mem(void* ptr, size_t new_size, size_t old_size);
+void free_mem(void* ptr, size_t size);
 
-void* allocate_node(size_t size);
-void* allocate_obj(size_t size);
-void* allocate_char(size_t size);
 void init_memory_manager();
 void print_memory();
 void collect_garbage();
@@ -34,16 +26,8 @@ void collect_garbage();
 void free_objects();
 
 typedef struct {
-    int node_bytes_allocated;
-    int node_bytes_freed;
-    int array_bytes_allocated;
-    int array_bytes_freed;
-    int object_bytes_allocated;
-    int object_bytes_freed;
-    int char_bytes_allocated;
-    int char_bytes_freed;
-    int compiler_bytes_allocated;
-    int compiler_bytes_freed;
+    int bytes_allocated;
+    int bytes_freed;
     struct Obj* objects;
 } MemoryManager;
 

@@ -20,28 +20,28 @@ void free_object(struct Obj* obj) {
     switch(obj->type) {
         case OBJ_STRING:
             struct ObjString* obj_string = (struct ObjString*)obj;
-            FREE_CHAR(obj_string->chars, obj_string->length + 1);
-            FREE_OBJ(obj_string, struct ObjString);
+            FREE_ARRAY(obj_string->chars, char, obj_string->length + 1);
+            FREE(obj_string, struct ObjString);
             break;
         case OBJ_FUNCTION:
             struct ObjFunction* obj_fun = (struct ObjFunction*)obj;
             free_chunk(&obj_fun->chunk);
-            FREE_OBJ(obj_fun, struct ObjFunction);
+            FREE(obj_fun, struct ObjFunction);
             break;
         case OBJ_CLASS:
             struct ObjClass* oc = (struct ObjClass*)obj;
             free_chunk(&oc->chunk);
-            FREE_OBJ(oc, struct ObjClass);
+            FREE(oc, struct ObjClass);
             break;
         case OBJ_INSTANCE:
             struct ObjInstance* oi = (struct ObjInstance*)obj;
 //            free_table(&oi->props);
-            FREE_OBJ(oi, struct ObjInstance);
+            FREE(oi, struct ObjInstance);
             break;
         case OBJ_UPVALUE:
             struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
             //shouldn't free value since that's not owned by ObjUpvalue
-            FREE_OBJ(uv, struct ObjUpvalue);
+            FREE(uv, struct ObjUpvalue);
             break;
     }
 }
