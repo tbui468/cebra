@@ -78,7 +78,7 @@ static void sweep() {
 
 void collect_garbage() {
     //free_objects();
-    mark_roots();
+//    mark_roots();
     //trace_references();
     sweep();
 }

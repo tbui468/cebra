@@ -40,7 +40,19 @@ void free_object(struct Obj* obj) {
             break;
         case OBJ_UPVALUE:
             struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
-            //shouldn't free value since that's not owned by ObjUpvalue
+            //free the value if closed
+            if (IS_STRING(uv->closed)) {
+                free_object((struct Obj*)(uv->closed.as.string_type));
+            }
+            if (IS_FUNCTION(uv->closed)) {
+                free_object((struct Obj*)uv->closed.as.function_type);
+            }
+            if (IS_CLASS(uv->closed)) {
+                free_object((struct Obj*)uv->closed.as.class_type);
+            }
+            if (IS_INSTANCE(uv->closed)) {
+                free_object((struct Obj*)uv->closed.as.instance_type);
+            }
             FREE(uv, struct ObjUpvalue);
             break;
     }

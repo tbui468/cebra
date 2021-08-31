@@ -65,21 +65,21 @@ Value to_nil() {
 }
 
 Value negate_value(Value value) {
-    if (value.type == VAL_INT) {
+    if (IS_INT(value)) {
         return to_integer(-value.as.integer_type);
-    } else if (value.type == VAL_FLOAT) {
+    } else if (IS_FLOAT(value)) {
         return to_float(-value.as.float_type);
-    } else if (value.type == VAL_BOOL) {
+    } else if (IS_BOOL(value)) {
         return to_boolean(!value.as.boolean_type);
     }
 }
 
 Value add_values(Value a, Value b) {
-    if (b.type == VAL_INT) {
+    if (IS_INT(b)) {
         return to_integer(a.as.integer_type + b.as.integer_type);
-    } else if (b.type == VAL_FLOAT) {
+    } else if (IS_FLOAT(b)) {
         return to_float(a.as.float_type + b.as.float_type);
-    } else if (b.type == VAL_STRING) {
+    } else if (IS_STRING(b)) {
         struct ObjString* left = a.as.string_type;
         struct ObjString* right = b.as.string_type;
 
@@ -95,21 +95,21 @@ Value add_values(Value a, Value b) {
     }
 }
 Value subtract_values(Value a, Value b) {
-    if (b.type == VAL_INT) {
+    if (IS_INT(b)) {
         return to_integer(a.as.integer_type - b.as.integer_type);
     } else {
         return to_float(a.as.float_type - b.as.float_type);
     }
 }
 Value multiply_values(Value a, Value b) {
-    if (b.type == VAL_INT) {
+    if (IS_INT(b)) {
         return to_integer(a.as.integer_type * b.as.integer_type);
     } else {
         return to_float(a.as.float_type * b.as.float_type);
     }
 }
 Value divide_values(Value a, Value b) {
-    if (b.type == VAL_INT) {
+    if (IS_INT(b)) {
         return to_integer(a.as.integer_type / b.as.integer_type);
     } else {
         return to_float(a.as.float_type / b.as.float_type);
@@ -117,7 +117,7 @@ Value divide_values(Value a, Value b) {
 }
 
 Value less_values(Value a, Value b) {
-    if (b.type == VAL_INT) {
+    if (IS_INT(b)) {
         return to_boolean(a.as.integer_type < b.as.integer_type);
     } else {
         return to_boolean(a.as.float_type < b.as.float_type);
@@ -125,7 +125,7 @@ Value less_values(Value a, Value b) {
 }
 
 Value greater_values(Value a, Value b) {
-    if (b.type == VAL_INT) {
+    if (IS_INT(b)) {
         return to_boolean(a.as.integer_type > b.as.integer_type);
     } else {
         return to_boolean(a.as.float_type > b.as.float_type);
@@ -192,6 +192,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_CLASS: return "VAL_CLASS";
         case VAL_INSTANCE: return "VAL_INSTANCE";
         case VAL_NIL: return "VAL_NIL";
+        default: return "Unrecognized VAL_TYPE";
     }
 }
 

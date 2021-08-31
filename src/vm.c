@@ -313,5 +313,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
         execute_frame(vm, frame);
     }
 
+    collect_garbage();
+
     return RESULT_SUCCESS;
 }
