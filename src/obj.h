@@ -21,6 +21,7 @@ struct Obj {
 void insert_object(struct Obj* ptr);
 int free_object(struct Obj* obj);
 void mark_object(struct Obj* obj);
+void print_object(struct Obj* obj);
 
 #endif// CEBRA_OBJ_H
 

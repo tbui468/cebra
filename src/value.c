@@ -196,34 +196,30 @@ const char* value_type_to_string(ValueType type) {
     }
 }
 
-void mark_value(Value* value) {
+struct Obj* get_object(Value* value) {
     switch(value->type) {
         case VAL_STRING: {
             struct ObjString* obj = value->as.string_type;
-            obj->base.is_marked = true;
-            break;
+            return (struct Obj*)obj;
         }
         case VAL_FUNCTION: {
             struct ObjFunction* obj = value->as.function_type;
-            obj->base.is_marked = true;
-            break;
+            return (struct Obj*)obj;
         }
         case VAL_CLASS: {
             struct ObjClass* obj = value->as.class_type;
-            obj->base.is_marked = true;
-            break;
+            return (struct Obj*)obj;
         }
         case VAL_INSTANCE: {
             struct ObjInstance* obj = value->as.instance_type;
-            obj->base.is_marked = true;
-            break;
+            return (struct Obj*)obj;
         }
         //Values with stack allocated data
-        //doesn't need to be garbage collected
+        //don't need to be garbage collected
         case VAL_INT:
         case VAL_FLOAT:
         case VAL_BOOL:
         case VAL_NIL:
-            break;
+            return NULL;
     }
 }

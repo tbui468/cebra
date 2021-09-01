@@ -97,8 +97,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    printf("*****************\n");
-    free_objects();
+//    printf("*****************\n");
+//    free_objects();
     print_memory();
 
     free_vm(&vm);

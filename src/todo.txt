@@ -4,91 +4,31 @@ DOCUMENTATION:
 
 IMPLEMENTATION:
 
-    compiler_and_run() in VM should really follow same structure as compile_function
-        inside Compiler - it doesn't need to be a special case.  This is just making
-        the use of cc very confusing.  Clean them up while keeping in mind about how
-        cc will be used
+    Problem with sweep() was that ObjFunction allocates memory twice in constructor -
+        once for ObjFunction itself and once for chunk, which it owns.  This
+        triggers the GC right inside the make_function() function before it 
+        is added to a root (cc/vm->stack) but after it is added to mm.objects - so
+        it's unmarked and gets freed.  I just moved adding it to the mm.objects linked
+        list to the end of the function, but that's not really robust.
 
-        Move chunk initialization into ObjFunction ... if possible
+        How can we prevent problems like this in the future?  The goal is to preserve
+            a new object we create until it can be safely stored in a reachable root...
 
-    mark_roots()
-        Values on the stack with heap allocated memory (DONE)
-            this also includes ObjFunction
-            since we keep upvalues/constants in ObjFunction (unlike Nystrom who
-                created an ObjClosure), marking the stack takes care of this for us
-        Open ObjUpvalues held by VM.  
-            How is this different from the upvalues inside ObjFunction?
-            Answer: this is a root directly reachable by the vm.
-                they could be marked again when we trace references in ObjFunction
-        ObjFunction inside compiler (since GC can be triggered anytime
-            there is any memory allocation), including any enclosing compilers.
-            this requires access to the current compiler.  Could make
-            a global 'current' compiler* in compiler.c and extern it in compiler.h
-                so that the memory module has access to current compiler
+    Complete trace_references() in memory.c.   See notes in function stub for more info.
+        Do I want to include ObjString for functions to track names?
+        Not until needed.
 
-        marking the roots should also push the 'grey' objects onto the
-            working list for tracing references in the next step
+    Read when to collect garbage to see how often GC should be called
 
-    trace_references()
-        need to make a working list of 'gray' objects - could be a stack
-        grab first gray off stack and blacken by marking all white 
-            references as gray (set is_marked = true) and push them on the stack.  
-        repeat until no more grey objects in stack.  
+    Read GC bugs to make sure I don't miss any small details that Nystrom caught
 
-        Objects with references to trace:
-            ObjFunction
-                chunk->constants
-                upvalues
-                name (Nystrom does this: ObjString* with function name - we don't have this but it could be useful)
-                    if also may make some code easier to write/understand since I recall
-                    thinking about whether we needed to give ObjFunction a reference to ObjString
-                    but decided against it for some reason)
-            ObjUpvalue
-                closed (only if it's not VAL_NIL, which is default for open upvalues)
+    Redo class and instances
+        OLD NOTES: 
+        Get NODE_CLASS working with new defs table - in call frames
+          should just need to use OP_SET/GET_DEF since they all use Values
 
-    Read about Garbage collection again and take notes:
-    
-        Write a barebones marking root/tracing reference system to see if it
-            frees all memory by the end of the program.  Then build from there.
-        
-        Reachability
-            1. Roots are reachable without needing a reference
-            2. Reachable values/objects can be reached using a reference in a root
-            3. All other values/objects can be collected by the GC 
-        Mark-Sweep Garbage Collection
-            Make a DEBUG_STRESS_GC macro that calls the GC everytime
-            make a function in memory.h/c called collect_garbage()
-                and run it.  Should run whenever we allocate memory
-                BUT not when we free (since the GC will need to free memory)
-            Consider making a DEBUG_LOG_GC macro to print out info about
-                what the garbage collector is doing (can integrate with
-                current memory manager)
-        Marking the Roots
-            Need to mark all objects (including values, which hold sometimes wrap and object)
-                put a new field in Obj called is_marked
-            Mark values on the stack (BUT check to see if they're heap allocated -
-                recall that some objects (booleans, nil, etc) are stack allocated
-                and we don't need to worry about them
-            Nystrom then creates a function to mark objects in the hash table,
-                but we don't have globals, so no necessary...yet.
-            Mark the ObjFunctions in the callframes
-            Mark the ObjUpvalues inside ObjFunction upvalues array
-            Create a new function, mark_compiler_roots() to mark roots in the compiler phase
-                Only the ObjFunction created needs to be marked
-        Tracing Object References
-            ObjFunctions have list of ObjUpvalue* and constants table that need marking
-            Use a tricolor abstraction to make sure we don't loop while marking references
-            -> continue reading about how I want to structure the working list
-        Sweeping Unused Objects
-        When to Collect
-        Garbage Collection Bugs
-    
-    Get NODE_CLASS working with new defs table - in call frames
-      should just need to use OP_SET/GET_DEF since they all use Values
-
-    OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
-     basic problem: how to go from ObjClass -> Table necessary for instance?
-
+        OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
+         basic problem: how to go from ObjClass -> Table necessary for instance?
 
     Clear up the warnings (especially with switch statements) before doing garbage collection
 
@@ -98,11 +38,6 @@ IMPLEMENTATION:
 
     Having to call free_sig on almost all signatures in compile_node is a bit much
       and super prone to errors
-
-    Garbage Collection - need to keep linked list of all allocated objects (in vm makes the most sense)
-      add code inside memory.h - all allocations should go through there
-      mark and sweep or reference counting?
-
 
     Implement deleting from hash table - need to use tombstones
 

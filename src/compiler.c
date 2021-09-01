@@ -342,10 +342,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             DeclFun* df = (DeclFun*)node;
             add_local(compiler, df->name, df->sig);
 
-            struct Compiler func_comp;
             struct ObjFunction* f = make_function(df->parameters.count);
+            struct Compiler func_comp;
             init_compiler(&func_comp, f);
             func_comp.enclosing = compiler;
+            cc = &func_comp;
 
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
@@ -374,6 +375,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                 emit_byte(compiler, func_comp.upvalues[i].index);
             }
 
+            cc = func_comp.enclosing;
             return make_prim_sig(VAL_NIL);
         }
                             /*

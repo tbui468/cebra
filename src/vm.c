@@ -286,10 +286,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 }
 
 ResultCode compile_and_run(VM* vm, NodeList* nl) {
-    struct Compiler script_compiler;
 
     struct ObjFunction* script = make_function(0);
+    struct Compiler script_compiler;
     init_compiler(&script_compiler, script);
+    cc = &script_compiler;
 
     ResultCode compile_result = compile_script(&script_compiler, nl);
 
@@ -308,6 +309,8 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];
         execute_frame(vm, frame);
     }
+
+    cc = NULL;
 
     return RESULT_SUCCESS;
 }

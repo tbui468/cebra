@@ -64,7 +64,7 @@ Value equal_values(Value a, Value b);
 void print_value(Value a);
 const char* value_type_to_string(ValueType type);
 
-void mark_value(Value* value);
+struct Obj* get_object(Value* value);
 
 #endif// CEBRA_VALUE_H
 

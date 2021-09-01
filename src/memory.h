@@ -16,10 +16,12 @@
 void* realloc_mem(void* ptr, size_t new_size, size_t old_size);
 int free_mem(void* ptr, size_t size);
 
-
 void init_memory_manager(VM* vm);
 void print_memory();
 void collect_garbage();
+
+void push_gray(struct Obj* object);
+struct Obj* pop_gray();
 
 //placeholder until GC in place
 //this frees all objects in the mm
@@ -30,6 +32,9 @@ typedef struct {
     int bytes_freed;
     struct Obj* objects;
     VM* vm;
+    struct Obj** grays;
+    int gray_capacity;
+    int gray_count;
 } MemoryManager;
 
 extern MemoryManager mm;

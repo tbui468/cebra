@@ -8,11 +8,12 @@ struct ObjFunction* make_function(int arity) {
     obj->base.type = OBJ_FUNCTION;
     obj->base.next = NULL;
     obj->base.is_marked = false;
-    insert_object((struct Obj*)obj);
 
     obj->arity = arity;
     init_chunk(&obj->chunk);
     obj->upvalue_count = 0;
+
+    insert_object((struct Obj*)obj); //Need to 
 
     return obj;
 }

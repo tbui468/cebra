@@ -45,20 +45,43 @@ int free_object(struct Obj* obj) {
             //free the value if closed
             if (IS_STRING(uv->closed)) {
                 bytes_freed += free_object((struct Obj*)(uv->closed.as.string_type));
-            }
-            if (IS_FUNCTION(uv->closed)) {
+            } else if (IS_FUNCTION(uv->closed)) {
                 bytes_freed += free_object((struct Obj*)uv->closed.as.function_type);
-            }
-            if (IS_CLASS(uv->closed)) {
+            } else if (IS_CLASS(uv->closed)) {
                 bytes_freed += free_object((struct Obj*)uv->closed.as.class_type);
-            }
-            if (IS_INSTANCE(uv->closed)) {
+            }else if (IS_INSTANCE(uv->closed)) {
                 bytes_freed += free_object((struct Obj*)uv->closed.as.instance_type);
             }
             bytes_freed += FREE(uv, struct ObjUpvalue);
             break;
     }
     return bytes_freed;
+}
+
+
+void print_object(struct Obj* obj) {
+    switch(obj->type) {
+        case OBJ_STRING:
+            printf("OBJ_STRING: ");
+            break;
+        case OBJ_FUNCTION:
+            printf("OBJ_FUNCTION: ");
+            break;
+        case OBJ_CLASS:
+            printf("OBJ_CLASS: ");
+            break;
+        case OBJ_INSTANCE:
+            printf("OBJ_INSTANCE: ");
+            break;
+        case OBJ_UPVALUE:
+            printf("OBJ_UPVALUE: ");
+            break;
+    }
+    if (obj->is_marked) {
+        printf("is marked, ");
+    } else {
+        printf("NOT marked, ");
+    }
 }
 
 
