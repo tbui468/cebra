@@ -13,9 +13,11 @@ void init_chunk(Chunk* chunk) {
     init_value_array(&chunk->constants);
 }
 
-void free_chunk(Chunk* chunk) {
-    free_value_array(&chunk->constants);
-    FREE_ARRAY(chunk->codes, OpCode, chunk->capacity);
+int free_chunk(Chunk* chunk) {
+    int bytes_freed = 0;
+    bytes_freed += free_value_array(&chunk->constants);
+    bytes_freed += FREE_ARRAY(chunk->codes, OpCode, chunk->capacity);
+    return bytes_freed;
 }
 
 const char* op_to_string(OpCode op) {

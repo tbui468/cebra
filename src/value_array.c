@@ -9,8 +9,8 @@ void init_value_array(struct ValueArray* va) {
 }
 
 //Only freeing the array - GC needs to take are of Objects
-void free_value_array(struct ValueArray* va) {
-    FREE_ARRAY(va->values, Value, va->capacity);
+int free_value_array(struct ValueArray* va) {
+    return FREE_ARRAY(va->values, Value, va->capacity);
 }
 
 int add_value(struct ValueArray* va, Value value) {

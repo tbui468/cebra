@@ -286,18 +286,14 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 }
 
 ResultCode compile_and_run(VM* vm, NodeList* nl) {
-    struct Compiler root_compiler;
+    struct Compiler script_compiler;
 
-    //TODO: could move chunk initialization to inside make_function 
-    Chunk chunk;
-    init_chunk(&chunk);
-    struct ObjFunction* script = make_function(chunk, 0);
-    init_compiler(&root_compiler, script);
+    struct ObjFunction* script = make_function(0);
+    init_compiler(&script_compiler, script);
 
-    ResultCode compile_result = compile_ast(&root_compiler, nl);
+    ResultCode compile_result = compile_script(&script_compiler, nl);
 
     if (compile_result == RESULT_FAILED) {
-        free_chunk(&chunk);
         return RESULT_FAILED; 
     }
 
@@ -312,8 +308,6 @@ ResultCode compile_and_run(VM* vm, NodeList* nl) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];
         execute_frame(vm, frame);
     }
-
-    collect_garbage();
 
     return RESULT_SUCCESS;
 }

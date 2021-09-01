@@ -20,7 +20,7 @@ struct ObjFunction {
     int upvalue_count;
 };
 
-struct ObjFunction* make_function(Chunk chunk, int arity);
+struct ObjFunction* make_function(int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 
 #endif// CEBRA_OBJ_FUNCTION_H

@@ -5,7 +5,7 @@
 #include "obj_function.h"
 #include "obj_class.h"
 
-
+struct Compiler* cc = NULL;
 struct Sig* compile_node(struct Compiler* compiler, struct Node* node, SigList* ret_sigs);
 static SigList compile_function(struct Compiler* compiler, NodeList* nl);
 
@@ -343,9 +343,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             add_local(compiler, df->name, df->sig);
 
             struct Compiler func_comp;
-            Chunk chunk;
-            init_chunk(&chunk);
-            struct ObjFunction* f = make_function(chunk, df->parameters.count);
+            struct ObjFunction* f = make_function(df->parameters.count);
             init_compiler(&func_comp, f);
             func_comp.enclosing = compiler;
 
@@ -661,7 +659,7 @@ static SigList compile_function(struct Compiler* compiler, NodeList* nl) {
     return ret_sigs;
 }
 
-ResultCode compile_ast(struct Compiler* compiler, NodeList* nl) {
+ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
     SigList sl = compile_function(compiler, nl);
     free_sig_list(&sl);
 

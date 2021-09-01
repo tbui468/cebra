@@ -2,7 +2,6 @@
 #define CEBRA_MEMORY_H
 
 #include <stdlib.h>
-//#include "value.h"
 #include "obj.h"
 #include "vm.h"
 
@@ -15,7 +14,7 @@
 #define FREE_ARRAY(ptr, type, count) (free_mem((void*)ptr, sizeof(type) * count))
 
 void* realloc_mem(void* ptr, size_t new_size, size_t old_size);
-void free_mem(void* ptr, size_t size);
+int free_mem(void* ptr, size_t size);
 
 
 void init_memory_manager(VM* vm);

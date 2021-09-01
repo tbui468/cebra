@@ -1,27 +1,50 @@
-TODO:
+DOCUMENTATION:
+    Look at how Nystrom design docs for Wren
+    The embedded compiler/vm in browser is neat
 
-    create DEBUG_STRESS_GC to run GC whenever we allocate memory so that we can debug
-        try it to see what happens
-        All AST nodes and Sig nodes are freed directly in main, compiler, and vm so
-            we don't need to worry about them.  Just the Objects and Values that 
-            wrap some Objects.
+IMPLEMENTATION:
 
-    mark_roots() currently marks everything - we only want it to mark the actual roots
-        how to we determine roots?
-        memory.c needs access to the VM...
-            Values on the stack with heap allocated memory
-            ObjFunction* in the callframes (wait, aren't these on the stack too?)
-                upvalues array
-                constants table
+    compiler_and_run() in VM should really follow same structure as compile_function
+        inside Compiler - it doesn't need to be a special case.  This is just making
+        the use of cc very confusing.  Clean them up while keeping in mind about how
+        cc will be used
 
-    Big problem: Nystrom keeps allocated objects safe by pushing them onto
-        the VM stack when a memory allocation may happen so that the GC doesn't 
-        sweep them, BUT we don't have access to the VM in the compiler, so
-        we can't do that.  One option is to create a 'compiler stack' in the
-        compiler and then push any Values/Obj we want to keep safe during potential
-        allocations onto there, and then pop when done.  We just need to mark
-        this stack as a root.  Or we need to thread the vm into the compiler
-        function calls
+        Move chunk initialization into ObjFunction ... if possible
+
+    mark_roots()
+        Values on the stack with heap allocated memory (DONE)
+            this also includes ObjFunction
+            since we keep upvalues/constants in ObjFunction (unlike Nystrom who
+                created an ObjClosure), marking the stack takes care of this for us
+        Open ObjUpvalues held by VM.  
+            How is this different from the upvalues inside ObjFunction?
+            Answer: this is a root directly reachable by the vm.
+                they could be marked again when we trace references in ObjFunction
+        ObjFunction inside compiler (since GC can be triggered anytime
+            there is any memory allocation), including any enclosing compilers.
+            this requires access to the current compiler.  Could make
+            a global 'current' compiler* in compiler.c and extern it in compiler.h
+                so that the memory module has access to current compiler
+
+        marking the roots should also push the 'grey' objects onto the
+            working list for tracing references in the next step
+
+    trace_references()
+        need to make a working list of 'gray' objects - could be a stack
+        grab first gray off stack and blacken by marking all white 
+            references as gray (set is_marked = true) and push them on the stack.  
+        repeat until no more grey objects in stack.  
+
+        Objects with references to trace:
+            ObjFunction
+                chunk->constants
+                upvalues
+                name (Nystrom does this: ObjString* with function name - we don't have this but it could be useful)
+                    if also may make some code easier to write/understand since I recall
+                    thinking about whether we needed to give ObjFunction a reference to ObjString
+                    but decided against it for some reason)
+            ObjUpvalue
+                closed (only if it's not VAL_NIL, which is default for open upvalues)
 
     Read about Garbage collection again and take notes:
     
@@ -30,7 +53,7 @@ TODO:
         
         Reachability
             1. Roots are reachable without needing a reference
-            2. Reachible values/objects can be reached using a reference in a root
+            2. Reachable values/objects can be reached using a reference in a root
             3. All other values/objects can be collected by the GC 
         Mark-Sweep Garbage Collection
             Make a DEBUG_STRESS_GC macro that calls the GC everytime

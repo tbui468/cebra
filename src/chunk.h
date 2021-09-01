@@ -43,7 +43,7 @@ typedef struct {
 } Chunk;
 
 void init_chunk(Chunk* chunk);
-void free_chunk(Chunk* chunk);
+int free_chunk(Chunk* chunk);
 void disassemble_chunk(Chunk* chunk);
 
 #endif// CEBRA_CHUNK_H

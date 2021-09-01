@@ -36,8 +36,10 @@ struct Compiler {
     struct Compiler* enclosing;
 };
 
+extern struct Compiler* cc;
+
 void init_compiler(struct Compiler* compiler, struct ObjFunction* function);
-ResultCode compile_ast(struct Compiler* compiler, NodeList* nl);
+ResultCode compile_script(struct Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(struct Compiler* compiler);
 

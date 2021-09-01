@@ -19,7 +19,8 @@ struct Obj {
 
 
 void insert_object(struct Obj* ptr);
-void free_object(struct Obj* obj);
+int free_object(struct Obj* obj);
+void mark_object(struct Obj* obj);
 
 #endif// CEBRA_OBJ_H
 
