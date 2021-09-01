@@ -99,6 +99,7 @@ int main(int argc, char** argv) {
 
 //    printf("*****************\n");
 //    free_objects();
+    collect_garbage();
     print_memory();
 
     free_vm(&vm);

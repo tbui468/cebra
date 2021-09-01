@@ -90,7 +90,9 @@ static struct Sig* compile_literal(struct Compiler* compiler, struct Node* node)
         }
         case TOKEN_STRING: {
             struct ObjString* str = make_string(literal->name.start, literal->name.length);
+            push(mm.vm, to_string(str));
             emit_bytes(compiler, OP_CONSTANT, add_constant(compiler, to_string(str)));
+            pop(mm.vm);
             return make_prim_sig(VAL_STRING);
         }
         case TOKEN_TRUE: {

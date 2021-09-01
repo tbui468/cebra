@@ -17,6 +17,7 @@ void* realloc_mem(void* ptr, size_t new_size, size_t old_size);
 int free_mem(void* ptr, size_t size);
 
 void init_memory_manager(VM* vm);
+void free_memory_manager();
 void print_memory();
 void collect_garbage();
 

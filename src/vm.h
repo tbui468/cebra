@@ -25,4 +25,7 @@ ResultCode init_vm(VM* vm);
 ResultCode free_vm(VM* vm);
 ResultCode compile_and_run(VM* vm, NodeList* nl);
 
+Value pop(VM* vm);
+void push(VM* vm, Value value);
+
 #endif// CEBRA_VM_H

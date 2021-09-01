@@ -62,7 +62,9 @@ int free_object(struct Obj* obj) {
 void print_object(struct Obj* obj) {
     switch(obj->type) {
         case OBJ_STRING:
-            printf("OBJ_STRING: ");
+            printf("OBJ_STRING - ");
+            print_value(to_string((struct ObjString*)obj));
+            printf(": ");
             break;
         case OBJ_FUNCTION:
             printf("OBJ_FUNCTION: ");
@@ -75,6 +77,9 @@ void print_object(struct Obj* obj) {
             break;
         case OBJ_UPVALUE:
             printf("OBJ_UPVALUE: ");
+            break;
+        default:
+            printf("Invalid Object: ");
             break;
     }
     if (obj->is_marked) {

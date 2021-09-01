@@ -5,16 +5,17 @@
 
 struct ObjFunction* make_function(int arity) {
     struct ObjFunction* obj = ALLOCATE(struct ObjFunction);
+    push(mm.vm, to_function(obj));
     obj->base.type = OBJ_FUNCTION;
     obj->base.next = NULL;
     obj->base.is_marked = false;
+    insert_object((struct Obj*)obj);
 
     obj->arity = arity;
     init_chunk(&obj->chunk);
     obj->upvalue_count = 0;
 
-    insert_object((struct Obj*)obj); //Need to 
-
+    pop(mm.vm);
     return obj;
 }
 

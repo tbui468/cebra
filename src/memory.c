@@ -13,7 +13,7 @@ void push_gray(struct Obj* object) {
 
         mm.gray_capacity = new_capacity;
     }
-   
+
    mm.grays[mm.gray_count] = object;
    mm.gray_count++;
 }
@@ -85,20 +85,22 @@ static void mark_vm_roots() {
 
 static void mark_compiler_roots() {
     struct Compiler* current = cc;
-    while (cc != NULL) {
+    while (current != NULL) {
         mark_object((struct Obj*)(current->function));
-        push_gray((struct Obj*)current);
+        push_gray((struct Obj*)(current->function));
         current = current->enclosing;
     }
 }
 
-//if marked, do nothing
-//if not marked, mark and then push to gray stack
 static void trace_references() {
+    printf("Starting grays: %d\n", mm.gray_count);
     while (mm.gray_count > 0) {
+        printf("grays: %d\n", mm.gray_count);
         struct Obj* obj = pop_gray();
+        printf("type: %d, ", obj->type);
         switch(obj->type) {
             case OBJ_FUNCTION: {
+                printf("in function\n");
                 struct ObjFunction* fun = (struct ObjFunction*)obj;
                 //upvalues
                 for (int i = 0; i < fun->upvalue_count; i++) {
@@ -121,6 +123,7 @@ static void trace_references() {
                 break;
             }
             case OBJ_UPVALUE: {
+                printf("in upvalue\n");
                 struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
                 //closed value
                 struct Obj* closed_obj = get_object(&uv->closed);
@@ -130,8 +133,15 @@ static void trace_references() {
                 }
                 break;
             }
+            case OBJ_STRING: {
+                printf("in string\n");
+                break;
+            }
+            default: {
+            }
         }
     }
+    printf("\n");
 }
 
 static int sweep() {
@@ -158,29 +168,31 @@ static int sweep() {
     return bytes_freed;
 }
 
-void collect_garbage() {
-#ifdef DEBUG_LOG_GC
-    printf("- Start GC\n");
+static void print_marks() {
     struct Obj* current = mm.objects;
     while (current != NULL) {
         print_object(current);
         current = current->next;
     }
     printf("\n");
+}
+
+void collect_garbage() {
+#ifdef DEBUG_LOG_GC
+    printf("- Start GC\n");
+    printf("\n");
+    print_marks();
 #endif 
     printf("marking vm roots\n");
     mark_vm_roots();
+    print_marks();
     printf("marking compiler roots\n");
     mark_compiler_roots();
+    print_marks();
     printf("tracing references\n");
     trace_references();
+    print_marks();
 
-    current = mm.objects;
-    while (current != NULL) {
-        print_object(current);
-        current = current->next;
-    }
-    printf("\n");
     printf("Stack: ");
     Value* start = mm.vm->stack;
     while (start < mm.vm->stack_top) {

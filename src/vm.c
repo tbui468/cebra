@@ -10,18 +10,18 @@
     (frame->ip += (int)sizeof(type), (type)frame->function->chunk.codes[frame->ip - (int)sizeof(type)])
 
 
-static Value pop(VM* vm) {
+Value pop(VM* vm) {
     vm->stack_top--;
     return *vm->stack_top;
 }
 
-static Value peek(VM* vm, int depth) {
-    return *(vm->stack_top - 1 - depth);
-}
-
-static void push(VM* vm, Value value) {
+void push(VM* vm, Value value) {
     *vm->stack_top = value;
     vm->stack_top++;
+}
+
+static Value peek(VM* vm, int depth) {
+    return *(vm->stack_top - 1 - depth);
 }
 
 ResultCode init_vm(VM* vm) {
