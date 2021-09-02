@@ -120,6 +120,9 @@ static void trace_references() {
                         push_gray(val_obj);
                     }
                 }
+                //ObjString* name
+                mark_object((struct Obj*)(fun->name));
+                push_gray((struct Obj*)(fun->name));
                 break;
             }
             case OBJ_UPVALUE: {

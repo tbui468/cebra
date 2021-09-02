@@ -67,7 +67,9 @@ void print_object(struct Obj* obj) {
             printf(": ");
             break;
         case OBJ_FUNCTION:
-            printf("OBJ_FUNCTION: ");
+            printf("OBJ_FUNCTION - ");
+            print_value(to_function((struct ObjFunction*)obj));
+            printf(": ");
             break;
         case OBJ_CLASS:
             printf("OBJ_CLASS: ");
@@ -77,6 +79,8 @@ void print_object(struct Obj* obj) {
             break;
         case OBJ_UPVALUE:
             printf("OBJ_UPVALUE: ");
+            print_value(((struct ObjUpvalue*)obj)->closed);
+            printf(" ");
             break;
         default:
             printf("Invalid Object: ");

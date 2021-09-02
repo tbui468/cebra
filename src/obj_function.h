@@ -14,13 +14,14 @@ struct ObjUpvalue {
 
 struct ObjFunction {
     struct Obj base;
+    struct ObjString* name;
     int arity;
     Chunk chunk;
     struct ObjUpvalue* upvalues[256];
     int upvalue_count;
 };
 
-struct ObjFunction* make_function(int arity);
+struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 
 #endif// CEBRA_OBJ_FUNCTION_H

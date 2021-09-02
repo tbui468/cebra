@@ -168,7 +168,9 @@ void print_value(Value a) {
             printf("%s", a.as.string_type->chars);
             break;
         case VAL_FUNCTION:
-            printf("%s", "<fun>");
+            printf("%s", "<fun: ");
+            printf("%s", a.as.function_type->name->chars);
+            printf(">");
             break;
         case VAL_CLASS:
             printf("%s", "<class>");

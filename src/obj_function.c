@@ -3,7 +3,7 @@
 #include "obj_function.h"
 
 
-struct ObjFunction* make_function(int arity) {
+struct ObjFunction* make_function(struct ObjString* name, int arity) {
     struct ObjFunction* obj = ALLOCATE(struct ObjFunction);
     push(mm.vm, to_function(obj));
     obj->base.type = OBJ_FUNCTION;
@@ -11,6 +11,7 @@ struct ObjFunction* make_function(int arity) {
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
 
+    obj->name = name;
     obj->arity = arity;
     init_chunk(&obj->chunk);
     obj->upvalue_count = 0;

@@ -344,7 +344,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             DeclFun* df = (DeclFun*)node;
             add_local(compiler, df->name, df->sig);
 
-            struct ObjFunction* f = make_function(df->parameters.count);
+            struct ObjString* name = make_string(df->name.start, df->name.length);
+            push(mm.vm, to_string(name));
+            struct ObjFunction* f = make_function(name, df->parameters.count);
+            pop(mm.vm);
             struct Compiler func_comp;
             init_compiler(&func_comp, f);
             func_comp.enclosing = compiler;
