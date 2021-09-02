@@ -28,7 +28,7 @@ int free_object(struct Obj* obj) {
         case OBJ_FUNCTION:
             struct ObjFunction* obj_fun = (struct ObjFunction*)obj;
             bytes_freed += free_chunk(&obj_fun->chunk);
-            bytes_freed += free_object((struct Obj*)(obj_fun->name));
+            //bytes_freed += free_object((struct Obj*)(obj_fun->name));
             bytes_freed += FREE(obj_fun, struct ObjFunction);
             break;
         case OBJ_CLASS:
@@ -43,6 +43,7 @@ int free_object(struct Obj* obj) {
             break;
         case OBJ_UPVALUE:
             struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
+            /*
             //free the value if closed
             if (IS_STRING(uv->closed)) {
                 bytes_freed += free_object((struct Obj*)(uv->closed.as.string_type));
@@ -52,7 +53,7 @@ int free_object(struct Obj* obj) {
                 bytes_freed += free_object((struct Obj*)uv->closed.as.class_type);
             }else if (IS_INSTANCE(uv->closed)) {
                 bytes_freed += free_object((struct Obj*)uv->closed.as.instance_type);
-            }
+            }*/
             bytes_freed += FREE(uv, struct ObjUpvalue);
             break;
     }

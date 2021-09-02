@@ -143,27 +143,38 @@ static void trace_references() {
     }
 }
 
+static void object_count() {
+    struct Obj* current = mm.objects;
+    int count = 0;
+    while (current != NULL) {
+        count++;
+        current = current->next; 
+    }
+    printf("Objects: %d\n", count);
+}
+
+//FOUND THE PROBLEM (I think)
+//need to update mm.objects after removing one
 static int sweep() {
     struct Obj* previous = NULL;
     struct Obj* current = mm.objects;
     int bytes_freed = 0;
     while (current != NULL) {
         if (current->is_marked) {
-            printf("1");
             current->is_marked = false;
             previous = current;
             current = current->next;
         } else {
             if (previous == NULL) {
-                printf("2");
                 struct Obj* next = current->next;
                 bytes_freed += free_object(current);
                 current = next;
+                mm.objects = current;
             } else {
-                printf("3");
                 previous->next = current->next;
                 bytes_freed += free_object(current);
                 current = previous->next;
+                mm.objects = current;
             }
         }
     }

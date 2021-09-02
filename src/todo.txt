@@ -3,28 +3,16 @@ DOCUMENTATION:
     The embedded compiler/vm in browser is neat
 
 IMPLEMENTATION:
-    
-    Sweep is not working - it keeps stalling.  Nothing being marked looks 
-        find though.  May be related to problem with closing upvalues above.
+
+    Linked list implementation in close_upvalue() in VM and sweep() in 
+        memory.c are ugly and error prone - fix them up.    
 
     When a function returns, it closes any upvalues, but we don't
         see the call to OP_CLOSE_UPVALUE - need to add more instructions to
         disassemble chunk OR somehow make returning from a function call
         OP_CLOSE_UPVALUE
 
-    Final garbage collection call at the end of main() doesn't clear all memory...
-        seems strange that final call to trace_reference (an upvalue) marks
-        a function and string - is that what we expect?  Look at memory.c.
-        Also, recall that we are calling collect_garbage() in main()
-
-        Maybe it's time to add a ObjString to functions so that we can print
-            the function names for debugging
-
-    Complete trace_references() in memory.c.   See notes in function stub for more info.
-        Do I want to include ObjString for functions to track names?
-        Not until needed.
-
-    Implement free_memory_manager() to clear the grays list
+    Implement free_memory_manager() to free memory in grays list
 
     Read when to collect garbage to see how often GC should be called
 

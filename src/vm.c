@@ -288,7 +288,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 
 ResultCode compile_and_run(VM* vm, NodeList* nl) {
 
-    struct ObjString* name = take_string("script", 6);
+    struct ObjString* name = make_string("script", 6);
     push(vm, to_string(name));
     struct ObjFunction* script = make_function(name, 0);
     pop(vm);
