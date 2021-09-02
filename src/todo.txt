@@ -3,19 +3,12 @@ DOCUMENTATION:
     The embedded compiler/vm in browser is neat
 
 IMPLEMENTATION:
+    Sweep is not working.  
 
     When a function returns, it closes any upvalues, but we don't
         see the call to OP_CLOSE_UPVALUE - need to add more instructions to
         disassemble chunk OR somehow make returning from a function call
         OP_CLOSE_UPVALUE
-
-    Printing new Function name is crashing when GC is enabled...
-
-    One upvalue is in the objects list - what is the upvalue holding???
-        the upvalue is a function - which makes sense.  Then the function needs
-        to mark
-
-    Why are still open upvalues in vm.open_upvalues when the script is over?
 
     Final garbage collection call at the end of main() doesn't clear all memory...
         seems strange that final call to trace_reference (an upvalue) marks

@@ -97,11 +97,11 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-//    printf("*****************\n");
 //    free_objects();
-//    print_memory();
-//    collect_garbage();
-//    print_memory();
+    printf("*****************\n");
+    print_memory();
+    collect_garbage();
+    print_memory();
 
     free_vm(&vm);
 

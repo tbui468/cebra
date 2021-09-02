@@ -97,6 +97,7 @@ static void close_upvalues(VM* vm, Value* location) {
         current->closed = *location;
         current->location = &current->closed;
         current = current->next;
+        vm->open_upvalues = current;
     }
 }
 
@@ -269,7 +270,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_RETURN: {
             Value ret = ret = pop(vm);
-            close_upvalues(vm, frame->locals + 1);
+            close_upvalues(vm, frame->locals); 
             vm->stack_top = frame->locals;
             vm->frame_count--;
             if (ret.type != VAL_NIL) push(vm, ret);

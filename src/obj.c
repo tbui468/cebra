@@ -28,6 +28,7 @@ int free_object(struct Obj* obj) {
         case OBJ_FUNCTION:
             struct ObjFunction* obj_fun = (struct ObjFunction*)obj;
             bytes_freed += free_chunk(&obj_fun->chunk);
+            bytes_freed += free_object((struct Obj*)(obj_fun->name));
             bytes_freed += FREE(obj_fun, struct ObjFunction);
             break;
         case OBJ_CLASS:

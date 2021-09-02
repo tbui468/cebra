@@ -76,11 +76,14 @@ static void mark_vm_roots() {
     }
 
     struct ObjUpvalue* current = mm.vm->open_upvalues;
+    int count = 0;
     while (current != NULL) {
+        count++;
         mark_object((struct Obj*)current);
         push_gray((struct Obj*)current);
         current = current->next;
     }    
+    printf("Open upvalues: %d\n", count);
 }
 
 static void mark_compiler_roots() {
@@ -93,14 +96,10 @@ static void mark_compiler_roots() {
 }
 
 static void trace_references() {
-    printf("Starting grays: %d\n", mm.gray_count);
     while (mm.gray_count > 0) {
-        printf("grays: %d\n", mm.gray_count);
         struct Obj* obj = pop_gray();
-        printf("type: %d, ", obj->type);
         switch(obj->type) {
             case OBJ_FUNCTION: {
-                printf("in function\n");
                 struct ObjFunction* fun = (struct ObjFunction*)obj;
                 //upvalues
                 for (int i = 0; i < fun->upvalue_count; i++) {
@@ -126,7 +125,6 @@ static void trace_references() {
                 break;
             }
             case OBJ_UPVALUE: {
-                printf("in upvalue\n");
                 struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
                 //closed value
                 struct Obj* closed_obj = get_object(&uv->closed);
@@ -137,14 +135,12 @@ static void trace_references() {
                 break;
             }
             case OBJ_STRING: {
-                printf("in string\n");
                 break;
             }
             default: {
             }
         }
     }
-    printf("\n");
 }
 
 static int sweep() {
@@ -153,15 +149,18 @@ static int sweep() {
     int bytes_freed = 0;
     while (current != NULL) {
         if (current->is_marked) {
+            printf("1");
             current->is_marked = false;
             previous = current;
             current = current->next;
         } else {
             if (previous == NULL) {
+                printf("2");
                 struct Obj* next = current->next;
                 bytes_freed += free_object(current);
                 current = next;
             } else {
+                printf("3");
                 previous->next = current->next;
                 bytes_freed += free_object(current);
                 current = previous->next;
@@ -180,10 +179,23 @@ static void print_marks() {
     printf("\n");
 }
 
+static void print_stack() {
+    printf("Stack: ");
+    Value* start = mm.vm->stack;
+    while (start < mm.vm->stack_top) {
+        printf("[ ");
+        print_value(*start);
+        printf(" ]");
+        start++;
+    }
+    printf("\n");
+}
+
 void collect_garbage() {
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
     printf("\n");
+    print_stack();
     print_marks();
 #endif 
     printf("marking vm roots\n");
@@ -195,17 +207,6 @@ void collect_garbage() {
     printf("tracing references\n");
     trace_references();
     print_marks();
-
-    printf("Stack: ");
-    Value* start = mm.vm->stack;
-    while (start < mm.vm->stack_top) {
-        printf("[ ");
-        print_value(*start);
-        printf(" ]");
-        start++;
-    }
-    printf("\n");
-
     printf("sweeping\n");
     int bytes_freed = sweep();
 #ifdef DEBUG_LOG_GC
