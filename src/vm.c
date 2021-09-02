@@ -92,12 +92,10 @@ static struct ObjUpvalue* capture_upvalue(VM* vm, Value* location) {
 }
 
 static void close_upvalues(VM* vm, Value* location) {
-    struct ObjUpvalue* current = vm->open_upvalues;
-    while (current != NULL && current->location >= location) {
-        current->closed = *(vm->open_upvalues->location);
-        current->location = &current->closed;
-        current = current->next;
-        vm->open_upvalues = current;
+    while (vm->open_upvalues != NULL && vm->open_upvalues->location >= location) {
+        vm->open_upvalues->closed = *(vm->open_upvalues->location);
+        vm->open_upvalues->location = &vm->open_upvalues->closed; 
+        vm->open_upvalues = vm->open_upvalues->next;
     }
 }
 
@@ -149,9 +147,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_ADD: {
-            Value b = pop(vm);
-            Value a = pop(vm);
-            push(vm, add_values(a, b));
+            Value b = peek(vm, 0);
+            Value a = peek(vm, 1);
+            Value result = add_values(a, b);
+            pop(vm);
+            pop(vm);
+            push(vm, result);
             break;
         }
         case OP_SUBTRACT: {

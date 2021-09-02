@@ -58,20 +58,14 @@ void init_memory_manager(VM* vm) {
     mm.gray_count = 0;
 }
 
+
+void free_memory_manager() {
+    free((void*)mm.grays);
+}
+
 void print_memory() {
     printf("bytes allocated: %d\n", mm.bytes_allocated);
     printf("bytes freed: %d\n", mm.bytes_freed);
-}
-
-//TODO: remove later - only to check that all memory is being tracked and cleared
-void free_objects() {
-    struct Obj* obj = mm.objects;
-    while (obj != NULL) {
-        struct Obj* current = obj;
-        obj = obj->next;
-        free_object(current);
-    }
-    mm.objects = NULL;
 }
 
 static void mark_vm_roots() {
@@ -150,18 +144,6 @@ static void trace_references() {
     }
 }
 
-static void object_count() {
-    struct Obj* current = mm.objects;
-    int count = 0;
-    while (current != NULL) {
-        count++;
-        current = current->next; 
-    }
-    printf("Objects: %d\n", count);
-}
-
-//FOUND THE PROBLEM (I think)
-//need to update mm.objects after removing one
 static int sweep() {
     struct Obj* previous = NULL;
     struct Obj* current = mm.objects;
@@ -212,20 +194,11 @@ static void print_stack() {
 void collect_garbage() {
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
-    printf("\n");
     print_stack();
-    print_marks();
 #endif 
-//    printf("marking vm roots\n");
     mark_vm_roots();
-//    print_marks();
-//    printf("marking compiler roots\n");
     mark_compiler_roots();
-//    print_marks();
-//    printf("tracing references\n");
     trace_references();
-//    print_marks();
-//    printf("sweeping\n");
     int bytes_freed = sweep();
 #ifdef DEBUG_LOG_GC
     printf("Bytes freed: %d\n", bytes_freed);

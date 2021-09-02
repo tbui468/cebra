@@ -27,10 +27,6 @@ Value pop_root();
 void push_gray(struct Obj* object);
 struct Obj* pop_gray();
 
-//placeholder until GC in place
-//this frees all objects in the mm
-void free_objects();
-
 typedef struct {
     int bytes_allocated;
     int bytes_freed;
