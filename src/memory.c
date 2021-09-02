@@ -23,6 +23,14 @@ struct Obj* pop_gray() {
     return mm.grays[mm.gray_count];
 }
 
+void push_root(Value value) {
+    push(mm.vm, value);
+}
+
+Value pop_root() {
+    return pop(mm.vm);
+}
+
 void* realloc_mem(void* ptr, size_t new_size, size_t old_size) {
     mm.bytes_allocated += (new_size - old_size);
 
@@ -83,7 +91,6 @@ static void mark_vm_roots() {
         push_gray((struct Obj*)current);
         current = current->next;
     }    
-    printf("Open upvalues: %d\n", count);
 }
 
 static void mark_compiler_roots() {
@@ -209,16 +216,16 @@ void collect_garbage() {
     print_stack();
     print_marks();
 #endif 
-    printf("marking vm roots\n");
+//    printf("marking vm roots\n");
     mark_vm_roots();
-    print_marks();
-    printf("marking compiler roots\n");
+//    print_marks();
+//    printf("marking compiler roots\n");
     mark_compiler_roots();
-    print_marks();
-    printf("tracing references\n");
+//    print_marks();
+//    printf("tracing references\n");
     trace_references();
-    print_marks();
-    printf("sweeping\n");
+//    print_marks();
+//    printf("sweeping\n");
     int bytes_freed = sweep();
 #ifdef DEBUG_LOG_GC
     printf("Bytes freed: %d\n", bytes_freed);

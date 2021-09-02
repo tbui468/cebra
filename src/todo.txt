@@ -10,7 +10,13 @@ IMPLEMENTATION:
     When a function returns, it closes any upvalues, but we don't
         see the call to OP_CLOSE_UPVALUE - need to add more instructions to
         disassemble chunk OR somehow make returning from a function call
-        OP_CLOSE_UPVALUE
+        OP_CLOSE_UPVALUE for clarity.  Is there any situation where
+        OP_CLOSE_UPVALUE actually gets called (rather than OP_RETURN 
+        just doing all the work?)
+
+    Considering making wrapper functions around push(), pop() when
+    doing it to avoid the GC for clarity.  Could call it push_root()
+    pop_root()
 
     Implement free_memory_manager() to free memory in grays list
 

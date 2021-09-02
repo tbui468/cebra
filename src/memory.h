@@ -21,6 +21,9 @@ void free_memory_manager();
 void print_memory();
 void collect_garbage();
 
+void push_root(Value value);
+Value pop_root();
+
 void push_gray(struct Obj* object);
 struct Obj* pop_gray();
 

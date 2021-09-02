@@ -5,7 +5,7 @@
 
 struct ObjFunction* make_function(struct ObjString* name, int arity) {
     struct ObjFunction* obj = ALLOCATE(struct ObjFunction);
-    push(mm.vm, to_function(obj));
+    push_root(to_function(obj));
     obj->base.type = OBJ_FUNCTION;
     obj->base.next = NULL;
     obj->base.is_marked = false;
@@ -16,7 +16,7 @@ struct ObjFunction* make_function(struct ObjString* name, int arity) {
     init_chunk(&obj->chunk);
     obj->upvalue_count = 0;
 
-    pop(mm.vm);
+    pop_root();
     return obj;
 }
 
