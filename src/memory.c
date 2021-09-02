@@ -32,24 +32,29 @@ Value pop_root() {
 }
 
 void* realloc_mem(void* ptr, size_t new_size, size_t old_size) {
-    mm.bytes_allocated += (new_size - old_size);
+    mm.allocated += (new_size - old_size);
 
 #ifdef DEBUG_STRESS_GC
     collect_garbage();
+#else
+    if (mm.allocated > mm.next_gc) {
+        collect_garbage();
+        mm.next_gc = mm.allocated * 2;
+    }
 #endif
 
     return realloc(ptr, new_size);
 }
 
 int free_mem(void* ptr, size_t size) {
-    mm.bytes_freed += size;
+    mm.allocated -= size;
     free(ptr);
     return size;
 }
 
 void init_memory_manager(VM* vm) {
-    mm.bytes_allocated = 0;
-    mm.bytes_freed = 0;
+    mm.allocated = 0;
+    mm.next_gc = 1024 * 1024;
     mm.objects = NULL;
     mm.vm = vm;
     //NOTE: using system realloc since we don't want GC to collect within a GC collection
@@ -64,8 +69,7 @@ void free_memory_manager() {
 }
 
 void print_memory() {
-    printf("bytes allocated: %d\n", mm.bytes_allocated);
-    printf("bytes freed: %d\n", mm.bytes_freed);
+    printf("bytes allocated: %d\n", mm.allocated);
 }
 
 static void mark_vm_roots() {
@@ -194,6 +198,7 @@ static void print_stack() {
 void collect_garbage() {
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
+    printf("Bytes allocated: %d\n", mm.allocated);
     print_stack();
 #endif 
     mark_vm_roots();

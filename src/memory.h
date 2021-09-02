@@ -28,8 +28,8 @@ void push_gray(struct Obj* object);
 struct Obj* pop_gray();
 
 typedef struct {
-    int bytes_allocated;
-    int bytes_freed;
+    int allocated;
+    int next_gc;
     struct Obj* objects;
     VM* vm;
     struct Obj** grays;

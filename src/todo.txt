@@ -4,13 +4,6 @@ DOCUMENTATION:
 
 IMPLEMENTATION:
 
-    Read when to collect garbage to see how often GC should be called
-        track current bytes allocated
-        if allocated > next_collection
-            collect garbage
-            update allocated
-            next_collection = allocated * factor
-
     Redo class and instances
         Will want to make an ObjClosure
             I avoided it earlier, but this will make it easier to implement
