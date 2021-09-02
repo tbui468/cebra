@@ -94,7 +94,7 @@ static struct ObjUpvalue* capture_upvalue(VM* vm, Value* location) {
 static void close_upvalues(VM* vm, Value* location) {
     struct ObjUpvalue* current = vm->open_upvalues;
     while (current != NULL && current->location >= location) {
-        current->closed = *location;
+        current->closed = *(vm->open_upvalues->location);
         current->location = &current->closed;
         current = current->next;
         vm->open_upvalues = current;

@@ -3,7 +3,9 @@ DOCUMENTATION:
     The embedded compiler/vm in browser is neat
 
 IMPLEMENTATION:
-    Sweep is not working.  
+    
+    Sweep is not working - it keeps stalling.  Nothing being marked looks 
+        find though.  May be related to problem with closing upvalues above.
 
     When a function returns, it closes any upvalues, but we don't
         see the call to OP_CLOSE_UPVALUE - need to add more instructions to
