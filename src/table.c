@@ -25,8 +25,8 @@ void init_table(struct Table* table) {
     reset_table_capacity(table, 8);
 }
 
-void free_table(struct Table* table) {
-    FREE_ARRAY(table->pairs, struct Pair, table->capacity);
+int free_table(struct Table* table) {
+    return FREE_ARRAY(table->pairs, struct Pair, table->capacity);
 }
 
 static struct Table copy_table(struct Table* table) {

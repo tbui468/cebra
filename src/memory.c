@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "memory.h"
 #include "obj_function.h"
+#include "obj_class.h"
 
 MemoryManager mm;
 
@@ -129,6 +130,22 @@ static void trace_references() {
                 push_gray((struct Obj*)(fun->name));
                 break;
             }
+            case OBJ_CLASS: {
+                struct ObjClass* oc = (struct ObjClass*)obj;
+                for (int i = 0; i < oc->properties.capacity; i++) {
+                    struct Pair* pair = &oc->properties.pairs[i];
+                    if (pair->key != NULL) {
+                        mark_object((struct Obj*)(pair->key));
+                        push_gray((struct Obj*)(pair->key));
+                        struct Obj* obj = get_object(&pair->value);
+                        mark_object(obj);
+                        push_gray(obj);
+                    }
+                }
+                mark_object((struct Obj*)(oc->name));
+                push_gray((struct Obj*)(oc->name));
+                break;
+            }
             case OBJ_UPVALUE: {
                 struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
                 //closed value
@@ -195,6 +212,16 @@ static void print_stack() {
     printf("\n");
 }
 
+static void print_objects() {
+    int count = 0;
+    struct Obj* current = mm.objects;
+    while (current != NULL) {
+        count++;
+        current = current->next;
+    }
+    printf("Object count: %d\n", count);
+}
+
 void collect_garbage() {
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
@@ -206,6 +233,7 @@ void collect_garbage() {
     trace_references();
     int bytes_freed = sweep();
 #ifdef DEBUG_LOG_GC
+    print_objects();
     printf("Bytes freed: %d\n", bytes_freed);
     printf("- End GC\n\n");
 #endif 

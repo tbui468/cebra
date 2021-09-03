@@ -10,20 +10,24 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        Need to add ObjClass to GC, and properties table to trace_reference()
-            check that GC clears it all up if it's called at end of main()
+        304 bytes not freed
+            Sig?
+            Object?
 
         Parser should create the correct SigClass* for DeclClass and
             then put it inside the AST node.  The compiler can just
             then read out the Sig* and add it to the locals along with
             the Token name.  SigClass should hold a table of Sig* (wrapped
             in a Value) of each property and method with their names
-            as keys.
+            as keys.  Duck typing.
 
         Intern strings before implementing ObjInstance since we will
             need a lot of repeat strings.  Need to think about weak 
             references and the GC.  Reread that section in GC about
-            bugs with the GC.
+            bugs with the GC.  Will also need a way to delete entries
+            in a hash table since we need to delete dangling pointer
+            when the key (no value in interned strings table) of
+            the strings table is marked.  
 
         For ObjInstance, just find the correct class and copy
             the table over (ObjString* can be just a pointer copy, but

@@ -28,31 +28,22 @@ int free_object(struct Obj* obj) {
         case OBJ_FUNCTION:
             struct ObjFunction* obj_fun = (struct ObjFunction*)obj;
             bytes_freed += free_chunk(&obj_fun->chunk);
-            //bytes_freed += free_object((struct Obj*)(obj_fun->name));
             bytes_freed += FREE(obj_fun, struct ObjFunction);
             break;
         case OBJ_CLASS:
             struct ObjClass* oc = (struct ObjClass*)obj;
+            //NOTE: this only frees the table entries - the key and any heap allocated values will
+            //be freed by the GC
+            bytes_freed += free_table(&oc->properties);
             bytes_freed += FREE(oc, struct ObjClass);
             break;
         case OBJ_INSTANCE:
             struct ObjInstance* oi = (struct ObjInstance*)obj;
-//            free_table(&oi->props);
+//            bytes_freed += free_table(&oi->props);
             bytes_freed += FREE(oi, struct ObjInstance);
             break;
         case OBJ_UPVALUE:
             struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
-            /*
-            //free the value if closed
-            if (IS_STRING(uv->closed)) {
-                bytes_freed += free_object((struct Obj*)(uv->closed.as.string_type));
-            } else if (IS_FUNCTION(uv->closed)) {
-                bytes_freed += free_object((struct Obj*)uv->closed.as.function_type);
-            } else if (IS_CLASS(uv->closed)) {
-                bytes_freed += free_object((struct Obj*)uv->closed.as.class_type);
-            }else if (IS_INSTANCE(uv->closed)) {
-                bytes_freed += free_object((struct Obj*)uv->closed.as.instance_type);
-            }*/
             bytes_freed += FREE(uv, struct ObjUpvalue);
             break;
     }

@@ -262,7 +262,7 @@ static struct Node* var_declaration(bool require_assign) {
     if (sig->type == SIG_CLASS) {
         consume(TOKEN_EQUAL, "Expect '=' after class declaration.");
         struct Sig* right_sig = read_sig();
-        free(right_sig);
+        free_sig(right_sig);
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
         NodeList nl;
         init_node_list(&nl);

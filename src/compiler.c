@@ -352,6 +352,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             struct ObjString* name = make_string(df->name.start, df->name.length);
             push_root(to_string(name));
             struct ObjFunction* f = make_function(name, df->parameters.count);
+            push_root(to_function(f));
             pop_root();
             struct Compiler func_comp;
             init_compiler(&func_comp, f);
@@ -386,18 +387,21 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             }
 
             cc = func_comp.enclosing;
+            pop_root();
             return make_prim_sig(VAL_NIL);
         }
         case NODE_DECL_CLASS: {
+                                  /*
             DeclClass* dc = (DeclClass*)node;
 
             struct ObjString* name = make_string(dc->name.start, dc->name.length);
             push_root(to_string(name));
             struct ObjClass* klass = make_class(name);
-            pop_root();
-
+            push_root(to_class(klass));
             add_local(compiler, dc->name, dc->sig);
             emit_bytes(compiler, OP_CLASS, add_constant(compiler, to_class(klass)));
+            pop_root();
+            pop_root();
 
             for (int i = 0; i < dc->decls.count; i++) {
                 struct Node* node = dc->decls.nodes[i];
@@ -421,6 +425,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                     }
                 }
 
+                push_root(to_string(name));
 
                 SigList class_ret_sigs;
                 init_sig_list(&class_ret_sigs);
@@ -428,9 +433,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                 free_sig(sig);
                 free_sig_list(&class_ret_sigs);
                 emit_bytes(compiler, OP_ADD_PROP, add_constant(compiler, to_string(name)));
+                pop_root();
             }
 
-
+*/
             return make_prim_sig(VAL_NIL);
         }
         //statements

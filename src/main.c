@@ -100,8 +100,9 @@ int main(int argc, char** argv) {
 //    free_objects();
 
     printf("*****************\n");
-//    print_memory();
-//    collect_garbage();
+#ifdef DEBUG_STRESS_GC
+    collect_garbage();
+#endif
     print_memory();
 
     free_vm(&vm);

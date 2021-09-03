@@ -341,6 +341,7 @@ void free_node(struct Node* node) {
         case NODE_DECL_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             free_node_list(&dc->decls);
+            free_sig(dc->sig);
             FREE(dc, DeclClass);
             break;
         }
