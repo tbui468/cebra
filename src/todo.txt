@@ -2,20 +2,53 @@ DOCUMENTATION:
     Look at how Nystrom design docs for Wren
     The embedded compiler/vm in browser is neat
 
+ADDING FEATURES:
+    Add correctness tests for new features
+    Pass all correctness.cbr tests
+    Check that ALL memory is freed if GC is called at end of main()
+    TODO: need a way to test type checking
+
 IMPLEMENTATION:
 
-    Redo class and instances
-        Will want to make an ObjClosure
-            I avoided it earlier, but this will make it easier to implement
-                classes (for properties and methods, in particular)
-            Abstract functionality out of ObjFunction, and refactor to 
-                make sure it all works before redoing ObjClass/ObjInstance
-        OLD NOTES: 
-        Get NODE_CLASS working with new defs table - in call frames
-          should just need to use OP_SET/GET_DEF since they all use Values
+        Need to add ObjClass to GC, and properties table to trace_reference()
+            check that GC clears it all up if it's called at end of main()
 
-        OP_INSTANCE in vm.c needs to be completed - look at notes in vm.c OP_INSTANCE
-         basic problem: how to go from ObjClass -> Table necessary for instance?
+        Parser should create the correct SigClass* for DeclClass and
+            then put it inside the AST node.  The compiler can just
+            then read out the Sig* and add it to the locals along with
+            the Token name.  SigClass should hold a table of Sig* (wrapped
+            in a Value) of each property and method with their names
+            as keys.
+
+        Intern strings before implementing ObjInstance since we will
+            need a lot of repeat strings.  Need to think about weak 
+            references and the GC.  Reread that section in GC about
+            bugs with the GC.
+
+        For ObjInstance, just find the correct class and copy
+            the table over (ObjString* can be just a pointer copy, but
+            Value should be a deep copy).  Might be a good idea to intern 
+            strings before this.  Have VM (or Memory Manager) keep a Table of
+            ObjString*, and reuse them
+
+        Inheritance syntax and implementation
+
+    Does NODE_DECl_VAR only for primitive types, or is it for functions/classes too?
+
+    How about assigning functions to other functions?
+        I don't think we support this right now:
+        my_fun: () -> = other_fun
+
+
+    Allow shorthand for declaration types:
+        a := 1
+        b := "dogg"
+        c := () -> int {
+            -> 3
+        }
+        Dog := class {
+            name := "Mittens"
+        }
 
     Clear up the warnings (especially with switch statements)
 

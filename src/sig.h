@@ -32,7 +32,7 @@ typedef struct {
 
 typedef struct {
     struct Sig base;
-    Token klass; //not using 'class' in case we want to compile in c++
+    Token klass; //not using '
 } SigClass;
 
 void init_sig_list(SigList* sl);

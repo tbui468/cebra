@@ -33,7 +33,6 @@ int free_object(struct Obj* obj) {
             break;
         case OBJ_CLASS:
             struct ObjClass* oc = (struct ObjClass*)obj;
-            bytes_freed += free_chunk(&oc->chunk);
             bytes_freed += FREE(oc, struct ObjClass);
             break;
         case OBJ_INSTANCE:

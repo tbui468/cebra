@@ -125,11 +125,21 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 }
             }
             break;
-        }/*
+        }
         case OP_CLASS: {
             push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
             break;
-        }*/
+        }
+        case OP_ADD_PROP: {
+            //This op only gets added after a class property/method is compiled into a local variable
+            //current stack: [script]...[class][prop]
+            push_root(read_constant(frame, READ_TYPE(frame, uint8_t)));
+            struct ObjClass* klass = peek(vm, 2).as.class_type;
+            set_table(&klass->properties, peek(vm, 0).as.string_type, peek(vm, 1));
+            pop_root();
+            pop(vm);
+            break;
+        }
         case OP_INSTANCE: {
                               /*
             uint8_t class_idx = READ_TYPE(frame, uint8_t) + frame->stack_offset;

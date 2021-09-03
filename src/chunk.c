@@ -24,6 +24,8 @@ const char* op_to_string(OpCode op) {
     switch(op) {
         case OP_CONSTANT: return "OP_CONSTANT";
         case OP_FUN: return "OP_FUN";
+        case OP_CLASS: return "OP_CLASS";
+        case OP_ADD_PROP: return "OP_ADD_PROP";
         case OP_NIL: return "OP_NIL";
         case OP_PRINT: return "OP_PRINT";
         case OP_SET_LOCAL: return "OP_SET_LOCAL";

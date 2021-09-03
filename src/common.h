@@ -9,10 +9,10 @@
 #include <stdint.h>
 
 //#define DEBUG_DISASSEMBLE
-//#define DEBUG_TRACE
+#define DEBUG_TRACE
 //#define DEBUG_AST
 //#define DEBUG_STRESS_GC
-#define DEBUG_LOG_GC
+//#define DEBUG_LOG_GC
 
 
 #endif// CEBRA_COMMON_H

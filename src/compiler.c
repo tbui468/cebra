@@ -314,7 +314,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
 
-            //class type
+            //TODO: instance
+            /*
             if (dv->sig->type == SIG_CLASS) {
                 SigClass* sc = (SigClass*)(dv->sig);
                 emit_byte(compiler, OP_INSTANCE);
@@ -329,7 +330,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
                 //match or a "local not found" error will be added
 
                 return make_prim_sig(VAL_NIL);
-            }
+            }*/
+
+            //TODO: class (so that Dog class can be passed around like any other variable)
+
+            //TODO: function (so that functions can be assigned to variables (functions can only be assigned to function calls now))
 
             //primitive type
             struct Sig* sig = compile_node(compiler, dv->right, NULL);
@@ -383,28 +388,51 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, Si
             cc = func_comp.enclosing;
             return make_prim_sig(VAL_NIL);
         }
-                            /*
         case NODE_DECL_CLASS: {
             DeclClass* dc = (DeclClass*)node;
+
+            struct ObjString* name = make_string(dc->name.start, dc->name.length);
+            push_root(to_string(name));
+            struct ObjClass* klass = make_class(name);
+            pop_root();
+
             add_local(compiler, dc->name, dc->sig);
-
-            struct Compiler class_comp;
-            Chunk chunk;
-            init_chunk(&chunk);
-            init_compiler(&class_comp, &chunk);
-            class_comp.enclosing = compiler;
-            set_local(&class_comp, dc->name, dc->sig, 0);
-
-            SigList ret_sigs = compile_function(&class_comp, &dc->decls);
-            if (ret_sigs.count > 0) {
-                add_error(compiler, dc->name, "Cannot have return statement '->' inside class definition.");
-            }
-            free_sig_list(&ret_sigs);
-
-            struct ObjClass* klass = make_class(chunk);
             emit_bytes(compiler, OP_CLASS, add_constant(compiler, to_class(klass)));
+
+            for (int i = 0; i < dc->decls.count; i++) {
+                struct Node* node = dc->decls.nodes[i];
+                struct ObjString* name;
+                //TODO: should move this into ast.h/c
+                switch (node->type) {
+                    case NODE_DECL_VAR: {
+                        DeclVar* dv = (DeclVar*)node;
+                        name = make_string(dv->name.start, dv->name.length);
+                        break;
+                    }
+                    case NODE_DECL_FUN: {
+                        DeclFun* df = (DeclFun*)node;
+                        name = make_string(df->name.start, df->name.length);
+                        break;
+                    }
+                    case NODE_DECL_CLASS: {
+                        DeclClass* dc = (DeclClass*)node;
+                        name = make_string(dc->name.start, dc->name.length);
+                        break;
+                    }
+                }
+
+
+                SigList class_ret_sigs;
+                init_sig_list(&class_ret_sigs);
+                struct Sig* sig = compile_node(compiler, node, &class_ret_sigs);
+                free_sig(sig);
+                free_sig_list(&class_ret_sigs);
+                emit_bytes(compiler, OP_ADD_PROP, add_constant(compiler, to_string(name)));
+            }
+
+
             return make_prim_sig(VAL_NIL);
-        }*/
+        }
         //statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
@@ -667,8 +695,8 @@ static SigList compile_function(struct Compiler* compiler, NodeList* nl) {
 }
 
 ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
-    SigList sl = compile_function(compiler, nl);
-    free_sig_list(&sl);
+    SigList ret_sigs = compile_function(compiler, nl);
+    free_sig_list(&ret_sigs); //not currently using return value(s) of script
 
     if (compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {

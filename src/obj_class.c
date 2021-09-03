@@ -2,13 +2,17 @@
 #include "memory.h"
 
 
-struct ObjClass* make_class(Chunk chunk) {
+struct ObjClass* make_class(struct ObjString* name) {
     struct ObjClass* obj = ALLOCATE(struct ObjClass);
+    push_root(to_class(obj));
     obj->base.type = OBJ_CLASS;
     obj->base.next = NULL;
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
-    obj->chunk = chunk;
 
+    obj->name = name;
+    init_table(&obj->properties);
+
+    pop_root();
     return obj;
 }

@@ -31,6 +31,7 @@ typedef enum {
     OP_JUMP_BACK,
     OP_CALL,
     OP_CLASS,
+    OP_ADD_PROP,
     OP_INSTANCE,
     OP_RETURN
 } OpCode;

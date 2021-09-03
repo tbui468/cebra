@@ -3,13 +3,15 @@
 
 #include "chunk.h"
 #include "obj.h"
+#include "table.h"
 
-struct ObjClass{
+struct ObjClass {
     struct Obj base;
-    Chunk chunk;
+    struct ObjString* name;
+    struct Table properties;
 };
 
-struct ObjClass* make_class(Chunk chunk);
+struct ObjClass* make_class(struct ObjString* name);
 
 
 #endif// CEBRA_OBJ_CLASS_H

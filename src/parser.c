@@ -232,8 +232,13 @@ static struct Sig* read_sig() {
     if (match(TOKEN_STRING_TYPE))
         return make_prim_sig(VAL_STRING);
 
-    if (match(TOKEN_IDENTIFIER)) 
+    if (match(TOKEN_CLASS)) {
+        if (match(TOKEN_LESS)) {
+            consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
+            return make_class_sig(parser.previous);
+        }
         return make_class_sig(parser.previous);
+    }
 
     return make_prim_sig(VAL_NIL);
 }
@@ -255,13 +260,16 @@ static struct Node* var_declaration(bool require_assign) {
     struct Sig* sig = read_sig();
 
     if (sig->type == SIG_CLASS) {
-        if (require_assign || match(TOKEN_EQUAL)) {
-            consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
-            struct Node* value = instantiate_class();
-            return make_decl_var(name, sig, value);
+        consume(TOKEN_EQUAL, "Expect '=' after class declaration.");
+        struct Sig* right_sig = read_sig();
+        free(right_sig);
+        consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+        NodeList nl;
+        init_node_list(&nl);
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            add_node(&nl, declaration());
         }
-        
-        return make_decl_var(name, sig, NULL);
+        return make_decl_class(name, nl, sig);
     }
 
     if (sig->type == SIG_FUN) {
@@ -329,18 +337,6 @@ static struct Node* declaration() {
         return make_expr_stmt(make_set_var(name, expression()));
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
         return make_expr_stmt(call_expression());
-    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
-        match(TOKEN_IDENTIFIER);
-        Token name = parser.previous;
-        match(TOKEN_COLON_COLON);
-        match(TOKEN_CLASS);
-        consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
-        NodeList nl;
-        init_node_list(&nl);
-        while (!match(TOKEN_RIGHT_BRACE)) {
-            add_node(&nl, declaration());
-        }
-        return make_decl_class(name, nl, NULL); //TODO: need to make sig instead of using NULL
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {
