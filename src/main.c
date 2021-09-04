@@ -108,5 +108,7 @@ int main(int argc, char** argv) {
     free_vm(&vm);
     free_memory_manager();
 
+    print_memory();
+
     return 0;
 }

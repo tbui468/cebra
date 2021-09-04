@@ -27,6 +27,8 @@ Value pop_root();
 void push_gray(struct Obj* object);
 struct Obj* pop_gray();
 
+void insert_sig(struct Sig* sig);
+
 typedef struct {
     int allocated;
     int next_gc;
@@ -35,6 +37,7 @@ typedef struct {
     struct Obj** grays;
     int gray_capacity;
     int gray_count;
+    struct Sig* signatures;
 } MemoryManager;
 
 extern MemoryManager mm;

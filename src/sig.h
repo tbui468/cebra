@@ -5,6 +5,7 @@
 #include "table.h"
 
 typedef enum {
+    SIG_LIST,
     SIG_PRIM,
     SIG_FUN,
     SIG_CLASS
@@ -12,37 +13,38 @@ typedef enum {
 
 struct Sig {
     SigType type;
+    struct Sig* next;
 };
 
-typedef struct {
+struct SigList {
+    struct Sig base;
     struct Sig** sigs;
     int count;
     int capacity;
-} SigList;
+};
 
-typedef struct {
+struct SigPrim {
     struct Sig base;
     ValueType type;
-} SigPrim;
+};
 
-typedef struct {
+struct SigFun {
     struct Sig base;
-    SigList params;
+    struct Sig* params;
     struct Sig* ret;
-} SigFun;
+};
 
 struct SigClass {
     struct Sig base;
     struct Table props;
 };
 
-void init_sig_list(SigList* sl);
-void free_sig_list(SigList* sl);
-void add_sig(SigList* sl, struct Sig* sig);
 
+struct Sig* make_list_sig();
+void add_sig(struct SigList* sl, struct Sig* sig);
 struct Sig* make_prim_sig(ValueType type);
-struct Sig* make_fun_sig(SigList params, struct Sig* ret);
-struct Sig* make_class_sig();
+struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret);
+struct Sig* make_class_sig(); //TODO: This should take in a struct Table of props
 
 bool is_duck(struct SigClass* sub, struct SigClass* super);
 bool same_sig(struct Sig* sig1, struct Sig* sig2);

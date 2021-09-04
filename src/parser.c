@@ -207,11 +207,10 @@ static struct Node* block() {
 
 static struct Sig* read_sig() {
     if (match(TOKEN_LEFT_PAREN)) {
-        SigList params;
-        init_sig_list(&params);
+        struct Sig* params = make_list_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                add_sig(&params, read_sig());
+                add_sig((struct SigList*)params, read_sig());
             } while(match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
         }
@@ -262,7 +261,6 @@ static struct Node* var_declaration(bool require_assign) {
     if (sig->type == SIG_CLASS) {
         consume(TOKEN_EQUAL, "Expect '=' after class declaration.");
         struct Sig* right_sig = read_sig();
-        free_sig(right_sig);
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
         NodeList nl;
         init_node_list(&nl);
@@ -283,14 +281,12 @@ static struct Node* var_declaration(bool require_assign) {
         NodeList params;
         init_node_list(&params);
 
-        SigList param_sig;
-        init_sig_list(&param_sig); 
+        struct Sig* param_sig = make_list_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Node* var_decl = var_declaration(false);
                 DeclVar* vd = (DeclVar*)var_decl;
-                struct Sig* prim_sig = make_prim_sig(((SigPrim*)vd->sig)->type);
-                add_sig(&param_sig, prim_sig);
+                add_sig((struct SigList*)param_sig, vd->sig);
                 add_node(&params, var_decl);
             } while (match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
@@ -306,7 +302,6 @@ static struct Node* var_declaration(bool require_assign) {
         if (!same_sig(fun_sig, sig)) {
             add_error(name, "Function declaration type must match definition type.");
         }
-        free_sig(sig); //signature should be same as fun_sig at this point, so redundant
         return make_decl_fun(name, params, fun_sig, body);
     }
 

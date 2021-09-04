@@ -5,6 +5,12 @@
 
 MemoryManager mm;
 
+
+void insert_sig(struct Sig* sig) {
+    sig->next = mm.signatures;
+    mm.signatures = sig;    
+}
+
 void push_gray(struct Obj* object) {
     //NOTE: using system realloc since we don't want GC to collect within a GC collection
     if (mm.gray_count + 1 > mm.gray_capacity) {
@@ -62,11 +68,18 @@ void init_memory_manager(VM* vm) {
     mm.grays = (struct Obj**)realloc(NULL, 0);
     mm.gray_capacity = 0;
     mm.gray_count = 0;
+    mm.signatures = NULL;
 }
 
 
 void free_memory_manager() {
     free((void*)mm.grays);
+
+    while (mm.signatures != NULL) {
+        struct Sig* previous = mm.signatures;
+        mm.signatures = mm.signatures->next;
+        free_sig(previous);
+    }
 }
 
 void print_memory() {

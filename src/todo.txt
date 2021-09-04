@@ -10,11 +10,14 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        All the copying of sigs is really bad (since now SigClass props (a table), 
-        needs to be copied too.  Should make a linked list
-        of Sigs in the compiler and then free them at the end of compilation.
-        
-        
+
+        free_sig(struct Sig*) should now just free itself - any other sigs
+        it owns will be on the linked list and be freed later (or already)
+
+        Add new Sig* to mm.signatures
+
+        make sure all correctness tests are passed, and DEBUG_STRESS_GC works
+        and all bytes allocated are at 0 
 
         GOAL:
         The goal here is to have a way to store Class Sigs in the compiler so

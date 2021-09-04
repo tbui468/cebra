@@ -326,7 +326,6 @@ void free_node(struct Node* node) {
             if (decl_var->right != NULL) {
                 free_node(decl_var->right);
             }
-            free_sig(decl_var->sig);
             FREE(decl_var, DeclVar);
             break;
         }
@@ -334,14 +333,12 @@ void free_node(struct Node* node) {
             DeclFun* df = (DeclFun*)node;
             free_node_list(&df->parameters);
             free_node(df->body);
-            free_sig(df->sig);
             FREE(df, DeclFun);
             break;
         }
         case NODE_DECL_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             free_node_list(&dc->decls);
-            free_sig(dc->sig);
             FREE(dc, DeclClass);
             break;
         }
