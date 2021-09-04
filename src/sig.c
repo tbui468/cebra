@@ -47,11 +47,11 @@ struct Sig* make_fun_sig(SigList params, struct Sig* ret) {
     return (struct Sig*)sig_fun;
 }
 
-struct Sig* make_class_sig(Token klass) {
-    SigClass* sc = ALLOCATE(SigClass);
+struct Sig* make_class_sig() {
+    struct SigClass* sc = ALLOCATE(struct SigClass);
 
     sc->base.type = SIG_CLASS;
-    sc->klass = klass;
+    init_table(&sc->props);
 
     return (struct Sig*)sc;
 }
@@ -66,6 +66,12 @@ bool same_sig_list(SigList* sl1, SigList* sl2) {
     return true;
 }
 
+bool is_duck(struct SigClass* sub, struct SigClass* super) {
+    //grab each key in sub, and check if inside super (using tables as hash set rather than map)
+    //no quick way of doing this since the tables are different, so we can't just use find_entry
+    //to go directly to the correct bucket.
+}
+
 bool same_sig(struct Sig* sig1, struct Sig* sig2) {
     if (sig1 == NULL || sig2 == NULL) return false;
     if (sig1->type != sig2->type) return false;
@@ -78,10 +84,9 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
             bool params_same = same_sig_list(&((SigFun*)sig1)->params, &((SigFun*)sig2)->params);
             return ret_same && params_same;
         case SIG_CLASS:
-            SigClass* sc1 = (SigClass*)sig1;
-            SigClass* sc2 = (SigClass*)sig2;
-            if (sc1->klass.length != sc2->klass.length) return false;
-            return memcmp(sc1->klass.start, sc2->klass.start, sc1->klass.length) == 0;
+            struct SigClass* sc1 = (struct SigClass*)sig1;
+            struct SigClass* sc2 = (struct SigClass*)sig2;
+            return is_duck(sc1, sc2) && is_duck(sc2, sc1);
     }
 }
 
@@ -105,8 +110,11 @@ struct Sig* copy_sig(struct Sig* sig) {
             SigFun* sf = (SigFun*)sig;
             return make_fun_sig(copy_sig_list(&sf->params), copy_sig(sf->ret));
         case SIG_CLASS:
+            /*
             SigClass* sc = (SigClass*)sig;
-            return make_class_sig(copy_token(sc->klass));
+            Table 
+            Sig* copy = make_class_sig*/
+            return NULL;
     }
 }
 
@@ -151,8 +159,9 @@ void free_sig(struct Sig* sig) {
             FREE(sig_fun, SigFun);
             break;
         case SIG_CLASS:
-            SigClass* sc = (SigClass*)sig;
-            FREE(sc, SigClass);
+            struct SigClass* sc = (struct SigClass*)sig;
+            free_table(&sc->props);
+            FREE(sc, struct SigClass);
             break;
     }
 }

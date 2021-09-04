@@ -64,6 +64,13 @@ Value to_nil() {
     return value;
 }
 
+Value to_sig(struct Sig* sig) {
+    Value value;
+    value.type = VAL_SIG;
+    value.as.sig_type = sig;
+    return value;
+}
+
 Value negate_value(Value value) {
     if (IS_INT(value)) {
         return to_integer(-value.as.integer_type);
@@ -222,6 +229,7 @@ struct Obj* get_object(Value* value) {
         case VAL_FLOAT:
         case VAL_BOOL:
         case VAL_NIL:
+        case VAL_SIG:
             return NULL;
     }
 }

@@ -235,9 +235,9 @@ static struct Sig* read_sig() {
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
-            return make_class_sig(parser.previous);
+            return make_class_sig();
         }
-        return make_class_sig(parser.previous);
+        return make_class_sig();
     }
 
     return make_prim_sig(VAL_NIL);

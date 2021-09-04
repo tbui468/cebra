@@ -13,6 +13,7 @@
 #define IS_CLASS(value) (value.type == VAL_CLASS)
 #define IS_INSTANCE(value) (value.type == VAL_INSTANCE)
 #define IS_NIL(value) (value.type == VAL_NIL)
+#define IS_SIG(value) (value.type == VAL_SIG)
 
 struct ObjInstance;
 struct ObjFunction;
@@ -28,6 +29,7 @@ typedef enum {
     VAL_CLASS,
     VAL_INSTANCE,
     VAL_NIL,
+    VAL_SIG
 } ValueType;
 
 typedef struct {
@@ -40,6 +42,7 @@ typedef struct {
         struct ObjFunction* function_type;
         struct ObjClass* class_type;
         struct ObjInstance* instance_type;
+        struct Sig* sig_type;
     } as;
 } Value;
 
@@ -51,6 +54,7 @@ Value to_boolean(bool b);
 Value to_function(struct ObjFunction* obj);
 Value to_class(struct ObjClass* obj);
 Value to_instance(struct ObjInstance* obj);
+Value to_sig(struct Sig* sig);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);
