@@ -37,7 +37,6 @@ typedef struct {
     struct Obj** grays;
     int gray_capacity;
     int gray_count;
-    struct Sig* signatures;
 } MemoryManager;
 
 extern MemoryManager mm;

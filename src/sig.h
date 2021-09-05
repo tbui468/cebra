@@ -40,6 +40,8 @@ struct SigClass {
 };
 
 
+void insert_sig(struct Sig* sig);
+
 struct Sig* make_list_sig();
 void add_sig(struct SigList* sl, struct Sig* sig);
 struct Sig* make_prim_sig(ValueType type);

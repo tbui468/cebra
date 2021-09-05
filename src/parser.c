@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "ast.h"
 #include "lexer.h"
+#include "memory.h"
 
 Parser parser;
 
@@ -265,7 +266,39 @@ static struct Node* var_declaration(bool require_assign) {
         NodeList nl;
         init_node_list(&nl);
         while (!match(TOKEN_RIGHT_BRACE)) {
-            add_node(&nl, declaration());
+            //add class signature entries to table here
+            struct Node* decl = var_declaration(true);
+            struct Sig* prop_sig;
+            const char* prop_id_chars;
+            int prop_id_length;
+            switch (decl->type) {
+                case NODE_DECL_VAR:
+                    DeclVar* dv = (DeclVar*)decl;
+                    prop_sig = dv->sig;
+                    prop_id_chars = dv->name.start;
+                    prop_id_length = dv->name.length;
+                    break;
+                case NODE_DECL_FUN:
+                    DeclFun* df = (DeclFun*)decl;
+                    prop_sig = df->sig;
+                    prop_id_chars = df->name.start;
+                    prop_id_length = df->name.length;
+                    break;
+                case NODE_DECL_CLASS:
+                    DeclClass* dc = (DeclClass*)decl;
+                    prop_sig = dc->sig;
+                    prop_id_chars = dc->name.start;
+                    prop_id_length = dc->name.length;
+                    break;
+                default:
+                    add_error(name, "Only primitive, function or class definitions allowed in class body.");
+                    return NULL;
+            }
+            struct ObjString* name = make_string(prop_id_chars, prop_id_length);
+            push_root(to_string(name));
+            set_table(&((struct SigClass*)sig)->props, name, to_sig(prop_sig));
+            pop_root();
+            add_node(&nl, decl);
         }
         return make_decl_class(name, nl, sig);
     }

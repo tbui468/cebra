@@ -34,11 +34,13 @@ struct Compiler {
     CompileError errors[256];
     int error_count;
     struct Compiler* enclosing;
+    struct Sig* signatures;
 };
 
-extern struct Compiler* cc;
+extern struct Compiler* current_compiler;
 
 void init_compiler(struct Compiler* compiler, struct ObjFunction* function);
+void free_compiler(struct Compiler* compiler);
 ResultCode compile_script(struct Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(struct Compiler* compiler);

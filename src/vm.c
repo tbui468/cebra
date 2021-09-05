@@ -297,40 +297,25 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
     return RESULT_SUCCESS;
 }
 
-ResultCode compile_and_run(VM* vm, NodeList* nl) {
-    printf("1");
-    struct ObjString* name = make_string("script", 6);
-    push_root(to_string(name));
-    struct ObjFunction* script = make_function(name, 0);
-    pop_root();
-    printf("2");
-    struct Compiler script_compiler;
-    init_compiler(&script_compiler, script);
-    cc = &script_compiler;
+ResultCode compile_and_run(VM* vm, NodeList* nl, struct Compiler* script_compiler) {
 
-    printf("3");
-    ResultCode compile_result = compile_script(&script_compiler, nl);
+    ResultCode compile_result = compile_script(script_compiler, nl);
 
     if (compile_result == RESULT_FAILED) {
         return RESULT_FAILED; 
     }
 
-    printf("4");
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(&chunk);
 #endif
 
-    printf("5");
-    push(vm, to_function(script));
-    call(vm, script);
+    push(vm, to_function(script_compiler->function));
+    call(vm, script_compiler->function);
 
-    printf("6");
     while (vm->frame_count > 0) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];
         execute_frame(vm, frame);
     }
-
-    cc = NULL;
 
     return RESULT_SUCCESS;
 }

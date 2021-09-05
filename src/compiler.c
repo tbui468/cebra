@@ -5,7 +5,7 @@
 #include "obj_function.h"
 #include "obj_class.h"
 
-struct Compiler* cc = NULL;
+struct Compiler* current_compiler = NULL;
 struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs);
 static struct SigList* compile_function(struct Compiler* compiler, NodeList* nl);
 
@@ -349,7 +349,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct Compiler func_comp;
             init_compiler(&func_comp, f);
             func_comp.enclosing = compiler;
-            cc = &func_comp;
+            current_compiler = &func_comp;
 
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
@@ -377,7 +377,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 emit_byte(compiler, func_comp.upvalues[i].index);
             }
 
-            cc = func_comp.enclosing;
+            current_compiler = func_comp.enclosing;
+            free_compiler(&func_comp);
             pop_root();
             return make_prim_sig(VAL_NIL);
         }
@@ -647,6 +648,15 @@ void init_compiler(struct Compiler* compiler, struct ObjFunction* function) {
     compiler->function = function;
     compiler->enclosing = NULL;
     compiler->upvalue_count = 0;
+    compiler->signatures = NULL;
+}
+
+void free_compiler(struct Compiler* compiler) {
+    while (compiler->signatures != NULL) {
+        struct Sig* previous = compiler->signatures;
+        compiler->signatures = compiler->signatures->next;
+        free_sig(previous);
+    }
 }
 
 static struct SigList* compile_function(struct Compiler* compiler, NodeList* nl) {

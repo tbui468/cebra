@@ -5,12 +5,6 @@
 
 MemoryManager mm;
 
-
-void insert_sig(struct Sig* sig) {
-    sig->next = mm.signatures;
-    mm.signatures = sig;    
-}
-
 void push_gray(struct Obj* object) {
     //NOTE: using system realloc since we don't want GC to collect within a GC collection
     if (mm.gray_count + 1 > mm.gray_capacity) {
@@ -68,18 +62,12 @@ void init_memory_manager(VM* vm) {
     mm.grays = (struct Obj**)realloc(NULL, 0);
     mm.gray_capacity = 0;
     mm.gray_count = 0;
-    mm.signatures = NULL;
 }
 
 
 void free_memory_manager() {
     free((void*)mm.grays);
 
-    while (mm.signatures != NULL) {
-        struct Sig* previous = mm.signatures;
-        mm.signatures = mm.signatures->next;
-        free_sig(previous);
-    }
 }
 
 void print_memory() {
@@ -106,10 +94,26 @@ static void mark_vm_roots() {
 }
 
 static void mark_compiler_roots() {
-    struct Compiler* current = cc;
+    struct Compiler* current = current_compiler;
     while (current != NULL) {
         mark_object((struct Obj*)(current->function));
         push_gray((struct Obj*)(current->function));
+
+        struct Sig* sig = current_compiler->signatures;
+        while (sig != NULL) {
+            if (sig->type == SIG_CLASS) {
+                struct SigClass* sc = (struct SigClass*)sig;
+                for (int i = 0; i < sc->props.capacity; i++) {
+                    struct Pair* pair = &sc->props.pairs[i];
+                    if (pair->key != NULL) {
+                        mark_object((struct Obj*)(pair->key));
+                        push_gray((struct Obj*)(pair->key));
+                    }
+                }                    
+            }
+            sig = sig->next;
+        }
+
         current = current->enclosing;
     }
 }

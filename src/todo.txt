@@ -10,54 +10,8 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-
-        free_sig(struct Sig*) should now just free itself - any other sigs
-        it owns will be on the linked list and be freed later (or already)
-
-        Add new Sig* to mm.signatures
-
-        make sure all correctness tests are passed, and DEBUG_STRESS_GC works
-        and all bytes allocated are at 0 
-
-        GOAL:
-        The goal here is to have a way to store Class Sigs in the compiler so
-        that any subsequent instances of that class can be properly 
-        typechecked...
-
-        Since we want to use the same strings in both SigClass
-        and properties in ObjClass, we should intern strings.  Implement
-        this next.  Check by using the same string multiple times and see
-        if we only have one ObjString* in the mm.objects linked list.
-        
-        was planning to add a table of Sigs (wrapped in Value) of type
-        SigClass.  This makes it easy to add to locals, but requires
-        a lot of management to clear.  Free the value sigs (when are the 
-        sigs cleared again?).  Free the table.  But don't free the 
-        keys, ObjString*.  Let the GC take care of that.
-
-        Added sig_type to union in Value.h, and a to_sig(struct Sig* sig)
-        to value.h/c, but not sure this is a good idea.  
-
-        problem: if we use a table of Sigs in SigClass, we will
-        need to clear the table properly - before clearing table,
-        need to clear the Sig* values, but NOT the ObjString*.  But the
-        we need to add the locals in compiler to roots...this is confusing.
-
-        Parser should create the correct SigClass* for DeclClass and
-            then put it inside the AST node.  The compiler can just
-            then read out the Sig* and add it to the locals along with
-            the Token name.  SigClass should hold a table of Sig* (wrapped
-            in a Value) of each property and method with their names
-            as keys.  Duck typing.  create duck_type(Sig* sub, Sig* super)
-            to see if sub is a subset of super.
-
-        Intern strings before implementing ObjInstance since we will
-            need a lot of repeat strings.  Need to think about weak 
-            references and the GC.  Reread that section in GC about
-            bugs with the GC.  Will also need a way to delete entries
-            in a hash table since we need to delete dangling pointer
-            when the key (no value in interned strings table) of
-            the strings table is marked.  
+        Check that compiled class is working correctly by printing out
+            class details using print ClassName
 
         For ObjInstance, just find the correct class and copy
             the table over (ObjString* can be just a pointer copy, but

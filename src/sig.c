@@ -2,6 +2,12 @@
 #include <string.h>
 #include "sig.h"
 #include "memory.h"
+#include "compiler.h"
+
+void insert_sig(struct Sig* sig) {
+    sig->next = current_compiler->signatures;
+    current_compiler->signatures = sig;    
+}
 
 void add_sig(struct SigList* sl, struct Sig* sig) {
     if (sl->count + 1 > sl->capacity) {

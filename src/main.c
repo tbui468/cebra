@@ -6,10 +6,19 @@
 #include "node_list.h"
 #include "memory.h"
 #include "table.h"
+#include "obj_function.h"
 
 
 
 ResultCode run_source(VM* vm, const char* source) {
+
+    struct ObjString* name = make_string("script", 6);
+    push_root(to_string(name));
+    struct ObjFunction* script = make_function(name, 0);
+    pop_root();
+    struct Compiler script_compiler;
+    init_compiler(&script_compiler, script);
+    current_compiler = &script_compiler;
 
     //create list of declarations (AST)
     NodeList nl;
@@ -26,7 +35,7 @@ ResultCode run_source(VM* vm, const char* source) {
     print_node_list(&nl);
 #endif
 
-    ResultCode run_result = compile_and_run(vm, &nl);
+    ResultCode run_result = compile_and_run(vm, &nl, &script_compiler);
 
     if (run_result == RESULT_FAILED) {
         free_node_list(&nl);
@@ -34,6 +43,9 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 
     free_node_list(&nl);
+
+    current_compiler = NULL;
+    free_compiler(&script_compiler);
 
     return RESULT_SUCCESS;
 }
