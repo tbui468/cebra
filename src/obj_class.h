@@ -8,7 +8,7 @@
 struct ObjClass {
     struct Obj base;
     struct ObjString* name;
-    struct Table properties;
+    struct Table props;
 };
 
 struct ObjClass* make_class(struct ObjString* name);

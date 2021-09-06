@@ -34,7 +34,7 @@ int free_object(struct Obj* obj) {
             struct ObjClass* oc = (struct ObjClass*)obj;
             //NOTE: this only frees the table entries - the key and any heap allocated values will
             //be freed by the GC
-            bytes_freed += free_table(&oc->properties);
+            bytes_freed += free_table(&oc->props);
             bytes_freed += FREE(oc, struct ObjClass);
             break;
         case OBJ_INSTANCE:

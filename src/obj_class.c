@@ -11,7 +11,7 @@ struct ObjClass* make_class(struct ObjString* name) {
     insert_object((struct Obj*)obj);
 
     obj->name = name;
-    init_table(&obj->properties);
+    init_table(&obj->props);
 
     pop_root();
     return obj;

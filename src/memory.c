@@ -149,8 +149,8 @@ static void trace_references() {
             }
             case OBJ_CLASS: {
                 struct ObjClass* oc = (struct ObjClass*)obj;
-                for (int i = 0; i < oc->properties.capacity; i++) {
-                    struct Pair* pair = &oc->properties.pairs[i];
+                for (int i = 0; i < oc->props.capacity; i++) {
+                    struct Pair* pair = &oc->props.pairs[i];
                     if (pair->key != NULL) {
                         mark_object((struct Obj*)(pair->key));
                         push_gray((struct Obj*)(pair->key));

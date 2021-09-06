@@ -383,7 +383,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             return make_prim_sig(VAL_NIL);
         }
         case NODE_DECL_CLASS: {
-                                  /*
+/*
+    struct Node base;
+    Token name;
+    NodeList decls;
+    struct Sig* sig;*/
             DeclClass* dc = (DeclClass*)node;
 
             struct ObjString* name = make_string(dc->name.start, dc->name.length);
@@ -392,41 +396,40 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             push_root(to_class(klass));
             add_local(compiler, dc->name, dc->sig);
             emit_bytes(compiler, OP_CLASS, add_constant(compiler, to_class(klass)));
-            pop_root();
-            pop_root();
 
             for (int i = 0; i < dc->decls.count; i++) {
                 struct Node* node = dc->decls.nodes[i];
-                struct ObjString* name;
+                struct ObjString* prop_name;
                 //TODO: should move this into ast.h/c
                 switch (node->type) {
                     case NODE_DECL_VAR: {
                         DeclVar* dv = (DeclVar*)node;
-                        name = make_string(dv->name.start, dv->name.length);
+                        prop_name = make_string(dv->name.start, dv->name.length);
                         break;
                     }
                     case NODE_DECL_FUN: {
                         DeclFun* df = (DeclFun*)node;
-                        name = make_string(df->name.start, df->name.length);
+                        prop_name = make_string(df->name.start, df->name.length);
                         break;
                     }
                     case NODE_DECL_CLASS: {
                         DeclClass* dc = (DeclClass*)node;
-                        name = make_string(dc->name.start, dc->name.length);
+                        prop_name = make_string(dc->name.start, dc->name.length);
                         break;
                     }
                 }
 
-                push_root(to_string(name));
+                push_root(to_string(prop_name));
 
-                SigList class_ret_sigs; //REDO THIS: not using this format anymore
-                init_sig_list(&class_ret_sigs);
-                struct Sig* sig = compile_node(compiler, node, &class_ret_sigs);
-                emit_bytes(compiler, OP_ADD_PROP, add_constant(compiler, to_string(name)));
+                struct Sig* class_ret_sigs = make_list_sig();
+                struct Sig* sig = compile_node(compiler, node, (struct SigList*)class_ret_sigs);
+                emit_bytes(compiler, OP_ADD_PROP, add_constant(compiler, to_string(prop_name)));
                 pop_root();
             }
 
-*/
+            pop_root();
+            pop_root();
+
             return make_prim_sig(VAL_NIL);
         }
         //statements

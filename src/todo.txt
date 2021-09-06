@@ -10,9 +10,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        Check that compiled class is working correctly by printing out
-            class details using print ClassName
-
         For ObjInstance, just find the correct class and copy
             the table over (ObjString* can be just a pointer copy, but
             Value should be a deep copy).  Might be a good idea to intern 
