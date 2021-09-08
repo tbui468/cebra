@@ -8,7 +8,8 @@ typedef enum {
     SIG_LIST,
     SIG_PRIM,
     SIG_FUN,
-    SIG_CLASS
+    SIG_CLASS,
+    SIG_INSTANCE
 } SigType;
 
 struct Sig {
@@ -36,9 +37,14 @@ struct SigFun {
 
 struct SigClass {
     struct Sig base;
+    Token klass;
     struct Table props;
 };
 
+struct SigInstance {
+    struct Sig base;
+    Token klass;
+};
 
 void insert_sig(struct Sig* sig);
 
@@ -46,7 +52,8 @@ struct Sig* make_list_sig();
 void add_sig(struct SigList* sl, struct Sig* sig);
 struct Sig* make_prim_sig(ValueType type);
 struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret);
-struct Sig* make_class_sig(); //TODO: This should take in a struct Table of props
+struct Sig* make_class_sig(Token klass);
+struct Sig* make_instance_sig(Token klass);
 
 bool is_duck(struct SigClass* sub, struct SigClass* super);
 bool same_sig(struct Sig* sig1, struct Sig* sig2);

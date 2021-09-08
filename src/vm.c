@@ -4,6 +4,7 @@
 #include "obj_string.h"
 #include "obj_function.h"
 #include "obj_class.h"
+#include "obj_instance.h"
 
 
 #define READ_TYPE(frame, type) \
@@ -136,19 +137,17 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push_root(read_constant(frame, READ_TYPE(frame, uint8_t)));
             struct ObjClass* klass = peek(vm, 2).as.class_type;
             set_table(&klass->props, peek(vm, 0).as.string_type, peek(vm, 1));
+            print_table(&klass->props);
             pop_root();
             pop(vm);
             break;
         }
         case OP_INSTANCE: {
-                              /*
-            uint8_t class_idx = READ_TYPE(frame, uint8_t) + frame->stack_offset;
-            Value klass = vm->stack[class_idx];
-
-            //Table table = ????? //TODO: how to go from klass to this?
-
-            ObjInstance* inst = make_instance(table);
-            push(vm, to_instance(inst));*/
+            uint8_t idx = READ_TYPE(frame, uint8_t);
+            struct ObjClass* klass = frame->locals[idx].as.class_type;
+            struct Table props = copy_table(&klass->props);
+            struct ObjInstance* inst = make_instance(props);
+            push(vm, to_instance(inst));
             break;
         }
         case OP_NEGATE: {

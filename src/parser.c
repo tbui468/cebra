@@ -206,17 +206,17 @@ static struct Node* block() {
     return make_block(name, body);
 }
 
-static struct Sig* read_sig() {
+static struct Sig* read_sig(Token name) {
     if (match(TOKEN_LEFT_PAREN)) {
         struct Sig* params = make_list_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                add_sig((struct SigList*)params, read_sig());
+                add_sig((struct SigList*)params, read_sig(name));
             } while(match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
         }
         consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.");
-        struct Sig* ret = read_sig();
+        struct Sig* ret = read_sig(name);
         return make_fun_sig(params, ret);
     }
 
@@ -235,33 +235,39 @@ static struct Sig* read_sig() {
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
-            return make_class_sig();
+            return make_class_sig(name); //TODO: add superclassses here later
         }
-        return make_class_sig();
+        return make_class_sig(name);
+    }
+
+    if (match(TOKEN_IDENTIFIER)) {
+        return make_instance_sig(parser.previous);
     }
 
     return make_prim_sig(VAL_NIL);
-}
-
-//TODO: class constructor arguments go here.  Temporary stub
-static struct Node* instantiate_class() {
-    consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
-    Token klass = parser.previous;
-    consume(TOKEN_LEFT_PAREN, "Expect '(' after class name.");
-    consume(TOKEN_LEFT_PAREN, "Expect ')' after '('.");
-
-    return NULL;
 }
 
 static struct Node* var_declaration(bool require_assign) {
     match(TOKEN_IDENTIFIER);
     Token name = parser.previous;
     consume(TOKEN_COLON, "Expect ':' after identifier.");
-    struct Sig* sig = read_sig();
+    struct Sig* sig = read_sig(name);
+
+    if (sig->type == SIG_INSTANCE) {
+        consume(TOKEN_EQUAL, "Expect '=' after class name.");
+        consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
+        Token def_klass = parser.previous;
+        consume(TOKEN_LEFT_PAREN, "Expect '(' after class name.");
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after '('.");
+
+        Token decl_klass = ((struct SigInstance*)sig)->klass;
+
+        return make_inst_class(name, decl_klass, def_klass);
+    }
 
     if (sig->type == SIG_CLASS) {
         consume(TOKEN_EQUAL, "Expect '=' after class declaration.");
-        struct Sig* right_sig = read_sig();
+        struct Sig* right_sig = read_sig(name);
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
         NodeList nl;
         init_node_list(&nl);
@@ -327,7 +333,7 @@ static struct Node* var_declaration(bool require_assign) {
 
         consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
 
-        struct Sig* ret_sig = read_sig();
+        struct Sig* ret_sig = read_sig(name);
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
         struct Node* body = block();

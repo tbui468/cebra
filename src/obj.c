@@ -39,7 +39,7 @@ int free_object(struct Obj* obj) {
             break;
         case OBJ_INSTANCE:
             struct ObjInstance* oi = (struct ObjInstance*)obj;
-//            bytes_freed += free_table(&oi->props);
+            bytes_freed += free_table(&oi->props);
             bytes_freed += FREE(oi, struct ObjInstance);
             break;
         case OBJ_UPVALUE:
@@ -87,6 +87,7 @@ void print_object(struct Obj* obj) {
 
 
 void mark_object(struct Obj* obj) {
+    if (obj == NULL) return;
     obj->is_marked = true;
 }
 

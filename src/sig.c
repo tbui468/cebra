@@ -53,21 +53,47 @@ struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret) {
     return (struct Sig*)sig_fun;
 }
 
-struct Sig* make_class_sig() {
+struct Sig* make_class_sig(Token klass) {
     struct SigClass* sc = ALLOCATE(struct SigClass);
 
     sc->base.type = SIG_CLASS;
+    sc->klass = klass;
     init_table(&sc->props);
 
     insert_sig((struct Sig*)sc);
     return (struct Sig*)sc;
 }
 
+struct Sig* make_instance_sig(Token klass) {
+    struct SigInstance* si = ALLOCATE(struct SigInstance);
+
+    si->base.type = SIG_INSTANCE;
+    si->klass = klass;
+
+    insert_sig((struct Sig*)si);
+    return (struct Sig*)si;
+}
+
 bool is_duck(struct SigClass* sub, struct SigClass* super) {
-    //grab each key in sub, and check if inside super (using tables as hash set rather than map)
-    //no quick way of doing this since the tables are different, so we can't just use find_entry
-    //to go directly to the correct bucket.
-    return false;
+    for (int i = 0; i < sub->props.capacity; i++) {
+        struct Pair* sub_pair = &sub->props.pairs[i];
+        if (sub_pair->key != NULL) {
+            Value super_value;
+            get_from_table(&super->props, sub_pair->key, &super_value);
+            if (IS_NIL(super_value)) return false;
+
+            struct Sig* sub_sig = sub_pair->value.as.sig_type;
+            struct Sig* super_sig = super_value.as.sig_type;
+            if (IS_CLASS(sub_pair->value) && IS_CLASS(super_value)) {
+                if (!is_duck((struct SigClass*)sub_sig, (struct SigClass*)super_sig)) {
+                    return false;
+                }
+            } else {
+                if (!same_sig(sub_sig, super_sig)) return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool same_sig(struct Sig* sig1, struct Sig* sig2) {
@@ -95,35 +121,6 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
             return is_duck(sc1, sc2) && is_duck(sc2, sc1);
     }
 }
-
-/*
-struct Sig* copy_sig(struct Sig* sig);
-
-static struct SigList copy_sig_list(struct SigList* sl) {
-    struct SigList copy;
-    init_sig_list(&copy);
-    for (int i = 0; i < sl->count; i++) {
-        add_sig(&copy, copy_sig(sl->sigs[i]));
-    }
-    return copy;
-}
-
-struct Sig* copy_sig(struct Sig* sig) {
-    switch(sig->type) {
-        case SIG_PRIM:
-            SigPrim* sp = (SigPrim*)sig;
-            return make_prim_sig(sp->type);
-        case SIG_FUN:
-            SigFun* sf = (SigFun*)sig;
-            return make_fun_sig(copy_sig_list(&sf->params), copy_sig(sf->ret));
-        case SIG_CLASS:
-            
-           // SigClass* sc = (SigClass*)sig;
-            //Table 
-            //Sig* copy = make_class_sig
-            return NULL;
-    }
-}*/
 
 bool sig_is_type(struct Sig* sig, ValueType type) {
     if (sig->type != SIG_PRIM) return false;
@@ -175,6 +172,10 @@ void free_sig(struct Sig* sig) {
             struct SigClass* sc = (struct SigClass*)sig;
             free_table(&sc->props);
             FREE(sc, struct SigClass);
+            break;
+        case SIG_INSTANCE:
+            struct SigInstance* si = (struct SigInstance*)sig;
+            FREE(si, struct SigInstance);
             break;
     }
 }

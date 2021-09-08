@@ -6,9 +6,9 @@
 
 struct ObjInstance {
     struct Obj base;
-    struct Table* props; //both for both data and methods
+    struct Table props;
 };
 
-struct ObjInstance* make_instance(struct Table* table);
+struct ObjInstance* make_instance(struct Table table);
 
 #endif// CEBRA_OBJ_INSTANCE_H

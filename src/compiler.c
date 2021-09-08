@@ -307,24 +307,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
 
-            //TODO: instance
-            /*
-            if (dv->sig->type == SIG_CLASS) {
-                SigClass* sc = (SigClass*)(dv->sig);
-                emit_byte(compiler, OP_INSTANCE);
-                int class_idx = resolve_local(compiler, sc->klass);
-                if (class_idx == -1) return make_prim_sig(VAL_NIL);
-                emit_byte(compiler, class_idx);
-                add_local(compiler, dv->name, dv->sig);
-
-                //NOTE: don't need to check class types here
-                //since we are looking up the class by
-                //declaration type anyway, so they will
-                //match or a "local not found" error will be added
-
-                return make_prim_sig(VAL_NIL);
-            }*/
-
             //TODO: class (so that Dog class can be passed around like any other variable)
 
             //TODO: function (so that functions can be assigned to variables (functions can only be assigned to function calls now))
@@ -383,11 +365,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             return make_prim_sig(VAL_NIL);
         }
         case NODE_DECL_CLASS: {
-/*
-    struct Node base;
-    Token name;
-    NodeList decls;
-    struct Sig* sig;*/
             DeclClass* dc = (DeclClass*)node;
 
             struct ObjString* name = make_string(dc->name.start, dc->name.length);
@@ -429,6 +406,25 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             pop_root();
             pop_root();
+
+            return make_prim_sig(VAL_NIL);
+        }
+        case NODE_INST_CLASS: {
+            InstClass* ic = (InstClass*)node;
+            int decl_idx = resolve_local(compiler, ic->decl_klass);
+            int def_idx = resolve_local(compiler, ic->def_klass);
+            if (decl_idx == -1 || def_idx == -1) return make_prim_sig(VAL_NIL);
+
+            struct SigClass* decl_sig = (struct SigClass*)resolve_sig(compiler, ic->decl_klass);
+            struct Sig* inst_sig = resolve_sig(compiler, ic->def_klass);
+            struct SigClass* def_sig = (struct SigClass*)inst_sig;
+            if (!is_duck(decl_sig, def_sig)) {
+                add_error(compiler, ic->name, "Declaration type and class constructor type must match.");
+            }
+
+            emit_byte(compiler, OP_INSTANCE);
+            emit_byte(compiler, def_idx);
+            add_local(compiler, ic->name, inst_sig);
 
             return make_prim_sig(VAL_NIL);
         }

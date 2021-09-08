@@ -6,6 +6,7 @@
 MemoryManager mm;
 
 void push_gray(struct Obj* object) {
+    if (object == NULL) return;
     //NOTE: using system realloc since we don't want GC to collect within a GC collection
     if (mm.gray_count + 1 > mm.gray_capacity) {
         int new_capacity = mm.gray_capacity == 0 ? 8 : mm.gray_capacity * 2;

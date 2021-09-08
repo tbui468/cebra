@@ -69,6 +69,7 @@ void print_value(Value a);
 const char* value_type_to_string(ValueType type);
 
 struct Obj* get_object(Value* value);
+Value copy_value(Value* value);
 
 #endif// CEBRA_VALUE_H
 

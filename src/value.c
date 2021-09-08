@@ -206,7 +206,7 @@ const char* value_type_to_string(ValueType type) {
 }
 
 struct Obj* get_object(Value* value) {
-    switch(value->type) {
+    switch (value->type) {
         case VAL_STRING: {
             struct ObjString* obj = value->as.string_type;
             return (struct Obj*)obj;
@@ -231,5 +231,24 @@ struct Obj* get_object(Value* value) {
         case VAL_NIL:
         case VAL_SIG:
             return NULL;
+    }
+}
+
+
+Value copy_value(Value* value) {
+    switch (value->type) {
+        case VAL_INT:
+            return to_integer(value->as.integer_type);
+        case VAL_FLOAT:
+            return to_float(value->as.float_type);
+        case VAL_BOOL:
+            return to_boolean(value->as.boolean_type);
+            break;
+        case VAL_STRING:
+            struct ObjString* str = value->as.string_type;
+            struct ObjString* copy = make_string(str->chars, str->length);
+            return to_string(copy);
+        default:
+            break;
     }
 }

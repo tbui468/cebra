@@ -10,13 +10,25 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        For ObjInstance, just find the correct class and copy
-            the table over (ObjString* can be just a pointer copy, but
-            Value should be a deep copy).  Might be a good idea to intern 
-            strings before this.  Have VM (or Memory Manager) keep a Table of
-            ObjString*, and reuse them
+        Get instances working when class is an upvalue
+
+        Implement OP_INSTANCE in vm
+            For ObjInstance, just find the correct class and copy
+                the table over (ObjString* can be just a pointer copy, but
+                Value should be a deep copy).  Might be a good idea to intern 
+                strings before this.  Have VM (or Memory Manager) keep a Table of
+                ObjString*, and reuse them
+
+        Do classes and class instances work with upvalues?????
+            not using them in compiler.c
+
+        copy_value(Value* value) - 
+            add functions/classes/instances for better class instances
+
+        Implement getting and setting properties using dot syntax for instances
 
         Inheritance syntax and implementation
+            fill out the rest of copy_value(Value* value) for class methods
 
     Does NODE_DECl_VAR only for primitive types, or is it for functions/classes too?
 

@@ -8,7 +8,7 @@ void print_token(Token token) {
         case TOKEN_STAR: printf("TOKEN_STAR"); break;
         case TOKEN_SLASH: printf("TOKEN_SLASH"); break;
         case TOKEN_PRINT: printf("TOKEN_PRINT"); break;
-        case TOKEN_IDENTIFIER: printf("TOKEN_IDENTIFIER"); break;
+        case TOKEN_IDENTIFIER: printf("TOKEN_IDENTIFIER [%.*s]", token.length, token.start); break;
         case TOKEN_LEFT_PAREN: printf("TOKEN_LEFT_PAREN"); break;
         case TOKEN_RIGHT_PAREN: printf("TOKEN_RIGHT_PAREN"); break;
         case TOKEN_LEFT_BRACE: printf("TOKEN_LEFT_BRACE"); break;

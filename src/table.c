@@ -29,7 +29,7 @@ int free_table(struct Table* table) {
     return FREE_ARRAY(table->pairs, struct Pair, table->capacity);
 }
 
-static struct Table copy_table(struct Table* table) {
+struct Table copy_table(struct Table* table) {
     struct Table copy;
     init_table(&copy);
     reset_table_capacity(&copy, table->capacity); 
@@ -40,7 +40,6 @@ static struct Table copy_table(struct Table* table) {
             set_table(&copy, pair->key, pair->value);
         }
     }
-
     return copy;
 }
 
