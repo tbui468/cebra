@@ -137,7 +137,6 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push_root(read_constant(frame, READ_TYPE(frame, uint8_t)));
             struct ObjClass* klass = peek(vm, 2).as.class_type;
             set_table(&klass->props, peek(vm, 0).as.string_type, peek(vm, 1));
-            print_table(&klass->props);
             pop_root();
             pop(vm);
             break;

@@ -327,7 +327,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             push_root(to_string(name));
             struct ObjFunction* f = make_function(name, df->parameters.count);
             push_root(to_function(f));
-            pop_root();
             struct Compiler func_comp;
             init_compiler(&func_comp, f);
             func_comp.enclosing = compiler;
@@ -361,6 +360,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             current_compiler = func_comp.enclosing;
             free_compiler(&func_comp);
+            pop_root();
             pop_root();
             return make_prim_sig(VAL_NIL);
         }
@@ -401,6 +401,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 struct Sig* class_ret_sigs = make_list_sig();
                 struct Sig* sig = compile_node(compiler, node, (struct SigList*)class_ret_sigs);
                 emit_bytes(compiler, OP_ADD_PROP, add_constant(compiler, to_string(prop_name)));
+                compiler->locals_count--;
                 pop_root();
             }
 

@@ -202,7 +202,6 @@ static int sweep() {
                 previous->next = current->next;
                 bytes_freed += free_object(current);
                 current = previous->next;
-                mm.objects = current;
             }
         }
     }
@@ -235,6 +234,7 @@ static void print_objects() {
     struct Obj* current = mm.objects;
     while (current != NULL) {
         count++;
+        print_object(current);
         current = current->next;
     }
     printf("Object count: %d\n", count);
@@ -249,9 +249,11 @@ void collect_garbage() {
     mark_vm_roots();
     mark_compiler_roots();
     trace_references();
-    int bytes_freed = sweep();
 #ifdef DEBUG_LOG_GC
     print_objects();
+#endif 
+    int bytes_freed = sweep();
+#ifdef DEBUG_LOG_GC
     printf("Bytes freed: %d\n", bytes_freed);
     printf("- End GC\n\n");
 #endif 

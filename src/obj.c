@@ -54,14 +54,14 @@ int free_object(struct Obj* obj) {
 void print_object(struct Obj* obj) {
     switch(obj->type) {
         case OBJ_STRING:
-            printf("OBJ_STRING - ");
+            printf("OBJ_STRING [");
             print_value(to_string((struct ObjString*)obj));
-            printf(": ");
+            printf("] : ");
             break;
         case OBJ_FUNCTION:
-            printf("OBJ_FUNCTION - ");
+            printf("OBJ_FUNCTION [");
             print_value(to_function((struct ObjFunction*)obj));
-            printf(": ");
+            printf("] : ");
             break;
         case OBJ_CLASS:
             printf("OBJ_CLASS: ");

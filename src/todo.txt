@@ -9,8 +9,30 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+        'f', 'age' and 'name' ObjString* being swept by GC right aftr Function 'fun'
+            is popped off the stack
+
+        Functions don't work for some reason (even though all tests pass)
+            GET_LOCAL for getting function has an index of 21 for some reason...
+            also, this works find when the class declaration is commented out
+
+            manually removing locals by decrementing local_count in for loop
+                compiling class properties causes weird bug where 
+                printing a string doesn't work correctly.
+                problem with GC.  When it's completely turned off, this bug doesn't exist
+
+            Note: this problem arose after decrementing local_count in compiler
+                when definining class (since we want locals to match stack in vm)
+
+            ANOTHER PROBLEM: a lot of memory is not being freed
+                it's the class definition that's not being freed
+                Something wrong with class definitions - if only property is
+                name: string = "Mittens", then it crashes while running
+                some of the time...
 
         Get instances working when class is an upvalue
+            why is there allocated memory remaining at end
+            when instance is created inside a function?
 
         Implement OP_INSTANCE in vm
             For ObjInstance, just find the correct class and copy
