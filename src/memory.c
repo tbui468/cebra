@@ -100,7 +100,7 @@ static void mark_compiler_roots() {
         mark_object((struct Obj*)(current->function));
         push_gray((struct Obj*)(current->function));
 
-        struct Sig* sig = current_compiler->signatures;
+        struct Sig* sig = current->signatures;
         while (sig != NULL) {
             if (sig->type == SIG_CLASS) {
                 struct SigClass* sc = (struct SigClass*)sig;

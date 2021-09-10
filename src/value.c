@@ -188,6 +188,12 @@ void print_value(Value a) {
         case VAL_NIL:
             printf("%s", "<Nil>");
             break;
+        case VAL_SIG:
+            printf("%s", "<sig>");
+            break;
+        default:
+            printf("Invalid value");
+            break;
     }
 }
 
@@ -201,6 +207,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_CLASS: return "VAL_CLASS";
         case VAL_INSTANCE: return "VAL_INSTANCE";
         case VAL_NIL: return "VAL_NIL";
+        case VAL_SIG: return "VAL_SIG";
         default: return "Unrecognized VAL_TYPE";
     }
 }
