@@ -10,32 +10,31 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        table in class decl/def are both not printing correctly in compiler.c
-            in NODE_INST_CLASS.
-            what should be inside these tables?  Properties.
-            FOUND IT!  The keys are being swept by GC - confirmed:
-                it works find if DEBUG_STRESS_GC is off
-                this table is being stored in SigClass inside locals/upvalues in compiler
-                go throught Signatures and mark any SigClass tables
+        compiler the ast nodes in compiler.c
+        interpret OP_GET_PROP, OP_SET_PROP in vm.c
+
+        should add option to have GetVar be a statement:
+            a: int = 5
+            a
+            //this should just pop the 'a'.  Is this a good idea??? 
+
+        Write class declaration tests
+
+        Write class instantiation tests
+
+        Write instance getter tests
+        
+        Write instance setter tests
 
         Get instances working when class is an upvalue
             why is there allocated memory remaining at end
             when instance is created inside a function?
-
-        Implement OP_INSTANCE in vm
-            For ObjInstance, just find the correct class and copy
-                the table over (ObjString* can be just a pointer copy, but
-                Value should be a deep copy).  Might be a good idea to intern 
-                strings before this.  Have VM (or Memory Manager) keep a Table of
-                ObjString*, and reuse them
 
         Do classes and class instances work with upvalues?????
             not using them in compiler.c
 
         copy_value(Value* value) - 
             add functions/classes/instances for better class instances
-
-        Implement getting and setting properties using dot syntax for instances
 
         Inheritance syntax and implementation
             fill out the rest of copy_value(Value* value) for class methods

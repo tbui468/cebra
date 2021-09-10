@@ -183,6 +183,7 @@ Token next_token() {
         case '{':   return new_token(TOKEN_LEFT_BRACE);
         case '}':   return new_token(TOKEN_RIGHT_BRACE);
         case ',':   return new_token(TOKEN_COMMA);
+        case '.':   return new_token(TOKEN_DOT);
         case ':':   
             if (peek_char() == ':') {
                 next_char();

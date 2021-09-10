@@ -165,6 +165,25 @@ struct Node* make_logical(Token name, struct Node* left, struct Node* right) {
     return (struct Node*)logical;
 }
 
+struct Node* make_get_prop(Token inst_name, Token prop_name) {
+    GetProp* get_prop = ALLOCATE(GetProp);
+    get_prop->inst_name = inst_name;
+    get_prop->prop_name = prop_name;
+    get_prop->base.type = NODE_GET_PROP;
+
+    return (struct Node*)get_prop;
+}
+
+struct Node* make_set_prop(Token inst_name, Token prop_name, struct Node* right) {
+    SetProp* set_prop = ALLOCATE(SetProp);
+    set_prop->inst_name = inst_name;
+    set_prop->prop_name = prop_name;
+    set_prop->right = right;
+    set_prop->base.type = NODE_GET_PROP;
+
+    return (struct Node*)set_prop;
+}
+
 struct Node* make_get_var(Token name) {
     GetVar* get_var = ALLOCATE(GetVar);
     get_var->name = name;
@@ -308,24 +327,28 @@ void print_node(struct Node* node) {
             printf(")");
             break;
         }
+        case NODE_GET_PROP: {
+            printf("GetProp stub");
+            break;
+        }
+        case NODE_SET_PROP: {
+            printf("SetProp stub");
+            break;
+        }
         case NODE_GET_VAR: {
-            //TODO: fill this in
-            printf("GetVar");
+            printf("GetVar stub");
             break;
         }
         case NODE_SET_VAR: {
-            //TODO: fill this in
-            printf("SetVar");
+            printf("SetVar stub");
             break;
         }
         case NODE_CALL: {
-            //TODO: fill this in
-            printf("Call");
+            printf("Call stub");
             break;
         }
         case NODE_CASCADE_CALL: {
-            //TODO: fill this in
-            printf("Call");
+            printf("Call stub");
             break;
         }
     } 
@@ -437,6 +460,17 @@ void free_node(struct Node* node) {
             Unary* unary = (Unary*)node;
             free_node(unary->right);
             FREE(unary, Unary);
+            break;
+        }
+        case NODE_GET_PROP: {
+            GetProp* get_prop = (GetProp*)node;
+            FREE(get_prop, GetProp);
+            break;
+        }
+        case NODE_SET_PROP: {
+            SetProp* set_prop = (SetProp*)node;
+            free_node(set_prop->right);
+            FREE(set_prop, SetProp);
             break;
         }
         case NODE_GET_VAR: {

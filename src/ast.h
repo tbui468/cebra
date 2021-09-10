@@ -17,6 +17,8 @@ typedef enum {
     NODE_DECL_VAR,
     NODE_DECL_CLASS,
     NODE_INST_CLASS,
+    NODE_GET_PROP,
+    NODE_SET_PROP,
     NODE_GET_VAR,
     NODE_SET_VAR,
     NODE_BLOCK,
@@ -151,6 +153,19 @@ typedef struct {
 
 typedef struct {
     struct Node base;
+    Token inst_name;
+    Token prop_name;
+} GetProp;
+
+typedef struct {
+    struct Node base;
+    Token inst_name;
+    Token prop_name;
+    struct Node* right;
+} SetProp;
+
+typedef struct {
+    struct Node base;
     Token name;
 } GetVar;
 
@@ -193,6 +208,8 @@ struct Node* make_cascade_call(Token name, struct Node* function, NodeList argum
 struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig);
 struct Node* make_expr_stmt(struct Node* expr);
 struct Node* make_inst_class(Token name, Token decl_klass, Token def_klass);
+struct Node* make_get_prop(Token inst_name, Token prop_name);
+struct Node* make_set_prop(Token inst_name, Token prop_name, struct Node* right);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

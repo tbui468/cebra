@@ -89,6 +89,18 @@ static struct Node* primary() {
         match(TOKEN_STRING) || match(TOKEN_TRUE) ||
         match(TOKEN_FALSE)) {
         return make_literal(parser.previous);
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_DOT, TOKEN_IDENTIFIER)) {
+        match(TOKEN_IDENTIFIER);
+        Token inst_name = parser.previous;
+        match(TOKEN_DOT);
+        match(TOKEN_IDENTIFIER);
+        Token prop_name = parser.previous;
+
+        if (match(TOKEN_EQUAL)) {
+            return make_set_prop(inst_name, prop_name, expression());
+        }
+    
+        return make_get_prop(inst_name, prop_name);
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
@@ -364,6 +376,18 @@ static struct Node* declaration() {
         return make_print(name, expression());
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
         return var_declaration(true);
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_DOT, TOKEN_IDENTIFIER)) {
+        match(TOKEN_IDENTIFIER);
+        Token inst_name = parser.previous;
+        match(TOKEN_DOT);
+        match(TOKEN_IDENTIFIER);
+        Token prop_name = parser.previous;
+
+        if (match(TOKEN_EQUAL)) {
+            return make_expr_stmt(make_set_prop(inst_name, prop_name, expression()));
+        }
+
+        return make_expr_stmt(make_get_prop(inst_name, prop_name));
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
         match(TOKEN_IDENTIFIER);
         Token name = parser.previous;
