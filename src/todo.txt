@@ -10,8 +10,20 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        compiler the ast nodes in compiler.c
-        interpret OP_GET_PROP, OP_SET_PROP in vm.c
+        property names are being added as constants, but they really shouldn't be
+
+        compile the ast nodes in compiler.c
+            need to emit ObjString* (prop) to
+            vm, but we shouldn't create a bunch
+            of strings...  Interning strings
+            seems like a good idea now
+
+            Or, how else can property names
+                be sent to the vm?  No reason
+                we can't just create a new string
+                each time.  
+
+        interpret OP_SET_PROP in vm
 
         should add option to have GetVar be a statement:
             a: int = 5

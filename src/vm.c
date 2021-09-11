@@ -205,6 +205,18 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, equal_values(a, b));
             break;
         }
+        case OP_GET_PROP: {
+            struct ObjInstance* inst = peek(vm, 0).as.instance_type;
+            struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint8_t)).as.string_type;
+            Value prop = to_nil();
+            get_from_table(&inst->props, prop_name, &prop);
+            pop(vm);
+            push(vm, prop);
+            break;
+        }
+        case OP_SET_PROP: {
+            break;
+        }
         case OP_GET_LOCAL: {
             uint8_t slot = READ_TYPE(frame, uint8_t);
             push(vm, frame->locals[slot]);

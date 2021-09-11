@@ -327,6 +327,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             push_root(to_string(name));
             struct ObjFunction* f = make_function(name, df->parameters.count);
             push_root(to_function(f));
+
             struct Compiler func_comp;
             init_compiler(&func_comp, f);
             func_comp.enclosing = compiler;
@@ -348,7 +349,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     add_error(compiler, df->name, "Return type must match signature in function declaration.");
                 }
             }
-
 
             int f_idx = add_constant(compiler, to_function(f));
             emit_bytes(compiler, OP_FUN, f_idx);
@@ -536,6 +536,42 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_BINARY:       return compile_binary(compiler, node);
         case NODE_LOGICAL:      return compile_logical(compiler, node);
         case NODE_UNARY:        return compile_unary(compiler, node);
+        case NODE_GET_PROP: {
+            GetProp* gp = (GetProp*)node;
+            int idx = resolve_local(compiler, gp->inst_name);
+            if (idx != -1) {
+                emit_byte(compiler, OP_GET_LOCAL);
+                emit_byte(compiler, idx);
+                emit_byte(compiler, OP_GET_PROP);
+                struct ObjString* name = make_string(gp->prop_name.start, gp->prop_name.length);
+                push_root(to_string(name));
+                emit_byte(compiler, add_constant(compiler, to_string(name))); 
+                pop_root();
+                return resolve_sig(compiler, gp->inst_name);
+            }
+
+            int upvalue_idx = resolve_upvalue(compiler, gp->inst_name);
+            if (upvalue_idx != -1) {
+                emit_byte(compiler, OP_GET_UPVALUE);
+                emit_byte(compiler, upvalue_idx);
+                emit_byte(compiler, OP_GET_PROP);
+                struct ObjString* name = make_string(gp->prop_name.start, gp->prop_name.length);
+                push_root(to_string(name));
+                emit_byte(compiler, add_constant(compiler, to_string(name))); 
+                pop_root();
+                return resolve_sig(compiler, gp->inst_name);
+            }
+
+            add_error(compiler, gp->inst_name, "Instance doesn't exist");
+            return make_prim_sig(VAL_NIL);
+        }
+        case NODE_SET_PROP: {
+            SetProp* sp = (SetProp*)node;
+            //compile_node(sp->right)
+            //emit idx for instance
+            //emit name of property
+            return make_prim_sig(VAL_NIL);
+        }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
             int idx = resolve_local(compiler, gv->name);
