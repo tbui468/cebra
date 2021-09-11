@@ -412,20 +412,38 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         }
         case NODE_INST_CLASS: {
             InstClass* ic = (InstClass*)node;
+
             int decl_idx = resolve_local(compiler, ic->decl_klass);
             int def_idx = resolve_local(compiler, ic->def_klass);
-            if (decl_idx == -1 || def_idx == -1) return make_prim_sig(VAL_NIL);
-
-            struct SigClass* decl_sig = (struct SigClass*)resolve_sig(compiler, ic->decl_klass);
-            struct Sig* inst_sig = resolve_sig(compiler, ic->def_klass);
-            struct SigClass* def_sig = (struct SigClass*)inst_sig;
-            if (!is_duck(decl_sig, def_sig)) {
-                add_error(compiler, ic->name, "Declaration type and class constructor type must match.");
+            if (decl_idx != -1 && def_idx != -1) {
+                struct SigClass* decl_sig = (struct SigClass*)resolve_sig(compiler, ic->decl_klass);
+                struct Sig* inst_sig = resolve_sig(compiler, ic->def_klass);
+                struct SigClass* def_sig = (struct SigClass*)inst_sig;
+                if (!is_duck(decl_sig, def_sig)) {
+                    add_error(compiler, ic->name, "Declaration type and class constructor type must match.");
+                }
+                emit_bytes(compiler, OP_GET_LOCAL, def_idx);
+                emit_byte(compiler, OP_INSTANCE);
+                add_local(compiler, ic->name, inst_sig);
+                return make_prim_sig(VAL_NIL);
             }
 
-            emit_byte(compiler, OP_INSTANCE);
-            emit_byte(compiler, def_idx);
-            add_local(compiler, ic->name, inst_sig);
+            int decl_upvalue_idx = resolve_upvalue(compiler, ic->decl_klass);
+            int def_upvalue_idx = resolve_upvalue(compiler, ic->def_klass);
+            if (decl_upvalue_idx != -1 && def_upvalue_idx != -1) {
+                struct SigClass* decl_sig = (struct SigClass*)resolve_sig(compiler, ic->decl_klass);
+                struct Sig* inst_sig = resolve_sig(compiler, ic->def_klass);
+                struct SigClass* def_sig = (struct SigClass*)inst_sig;
+                if (!is_duck(decl_sig, def_sig)) {
+                    add_error(compiler, ic->name, "Declaration type and class constructor type must match.");
+                }
+                emit_bytes(compiler, OP_GET_UPVALUE, def_upvalue_idx);
+                emit_byte(compiler, OP_INSTANCE);
+                add_local(compiler, ic->name, inst_sig);
+                return make_prim_sig(VAL_NIL);
+            }
+
+            add_error(compiler, ic->name, "Classes not defined.");
 
             return make_prim_sig(VAL_NIL);
         }

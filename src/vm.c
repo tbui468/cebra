@@ -142,8 +142,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_INSTANCE: {
-            uint8_t idx = READ_TYPE(frame, uint8_t);
-            struct ObjClass* klass = frame->locals[idx].as.class_type;
+            struct ObjClass* klass = pop(vm).as.class_type;
             struct Table props = copy_table(&klass->props);
             struct ObjInstance* inst = make_instance(props);
             push(vm, to_instance(inst));
