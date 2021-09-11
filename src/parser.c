@@ -376,23 +376,6 @@ static struct Node* declaration() {
         return make_print(name, expression());
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
         return var_declaration(true);
-    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_DOT, TOKEN_IDENTIFIER)) {
-        match(TOKEN_IDENTIFIER);
-        Token inst_name = parser.previous;
-        match(TOKEN_DOT);
-        match(TOKEN_IDENTIFIER);
-        Token prop_name = parser.previous;
-
-        if (match(TOKEN_EQUAL)) {
-            return make_expr_stmt(make_set_prop(inst_name, prop_name, expression()));
-        }
-
-        return make_expr_stmt(make_get_prop(inst_name, prop_name));
-    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
-        match(TOKEN_IDENTIFIER);
-        Token name = parser.previous;
-        match(TOKEN_EQUAL);
-        return make_expr_stmt(make_set_var(name, expression()));
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
         return make_expr_stmt(call_expression());
     } else if (match(TOKEN_LEFT_BRACE)) {
@@ -440,7 +423,7 @@ static struct Node* declaration() {
         return make_return(name, right);
     }
 
-    return expression();
+    return make_expr_stmt(expression());
 }
 
 static void add_error(Token token, const char* message) {

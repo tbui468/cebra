@@ -215,6 +215,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_SET_PROP: {
+            //[new value][inst]
+            struct ObjInstance* inst = peek(vm, 0).as.instance_type;
+            Value value = peek(vm, 1);
+            struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint8_t)).as.string_type;
+            set_table(&inst->props, prop_name, value);
+            pop(vm);
             break;
         }
         case OP_GET_LOCAL: {

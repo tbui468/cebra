@@ -179,7 +179,7 @@ struct Node* make_set_prop(Token inst_name, Token prop_name, struct Node* right)
     set_prop->inst_name = inst_name;
     set_prop->prop_name = prop_name;
     set_prop->right = right;
-    set_prop->base.type = NODE_GET_PROP;
+    set_prop->base.type = NODE_SET_PROP;
 
     return (struct Node*)set_prop;
 }

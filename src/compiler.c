@@ -567,9 +567,33 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         }
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;
-            //compile_node(sp->right)
-            //emit idx for instance
-            //emit name of property
+            struct Sig* then_sig = compile_node(compiler, sp->right, ret_sigs);
+
+            int idx = resolve_local(compiler, sp->inst_name);
+            if (idx != -1) {
+                emit_byte(compiler, OP_GET_LOCAL);
+                emit_byte(compiler, idx);
+                emit_byte(compiler, OP_SET_PROP);
+                struct ObjString* name = make_string(sp->prop_name.start, sp->prop_name.length);
+                push_root(to_string(name));
+                emit_byte(compiler, add_constant(compiler, to_string(name))); 
+                pop_root();
+                return resolve_sig(compiler, sp->inst_name);
+            }
+
+            int upvalue_idx = resolve_upvalue(compiler, sp->inst_name);
+            if (upvalue_idx != -1) {
+                emit_byte(compiler, OP_GET_UPVALUE);
+                emit_byte(compiler, upvalue_idx);
+                emit_byte(compiler, OP_SET_PROP);
+                struct ObjString* name = make_string(sp->prop_name.start, sp->prop_name.length);
+                push_root(to_string(name));
+                emit_byte(compiler, add_constant(compiler, to_string(name))); 
+                pop_root();
+                return resolve_sig(compiler, sp->inst_name);
+            }
+
+            add_error(compiler, sp->inst_name, "Instance doesn't exist");
             return make_prim_sig(VAL_NIL);
         }
         case NODE_GET_VAR: {
