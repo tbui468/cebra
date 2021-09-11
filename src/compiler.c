@@ -565,7 +565,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 push_root(to_string(name));
                 emit_byte(compiler, add_constant(compiler, to_string(name))); 
                 pop_root();
-                return resolve_sig(compiler, gp->inst_name);
+
+                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, gp->inst_name);
+                Value sig_val;
+                get_from_table(&sig_class->props, name, &sig_val);
+                return sig_val.as.sig_type;
             }
 
             int upvalue_idx = resolve_upvalue(compiler, gp->inst_name);
@@ -577,7 +581,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 push_root(to_string(name));
                 emit_byte(compiler, add_constant(compiler, to_string(name))); 
                 pop_root();
-                return resolve_sig(compiler, gp->inst_name);
+
+                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, gp->inst_name);
+                Value sig_val;
+                get_from_table(&sig_class->props, name, &sig_val);
+                return sig_val.as.sig_type;
             }
 
             add_error(compiler, gp->inst_name, "Instance doesn't exist");
@@ -596,7 +604,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 push_root(to_string(name));
                 emit_byte(compiler, add_constant(compiler, to_string(name))); 
                 pop_root();
-                return resolve_sig(compiler, sp->inst_name);
+
+                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, sp->inst_name);
+                Value sig_val;
+                get_from_table(&sig_class->props, name, &sig_val);
+                return sig_val.as.sig_type;
             }
 
             int upvalue_idx = resolve_upvalue(compiler, sp->inst_name);
@@ -608,7 +620,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 push_root(to_string(name));
                 emit_byte(compiler, add_constant(compiler, to_string(name))); 
                 pop_root();
-                return resolve_sig(compiler, sp->inst_name);
+
+                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, sp->inst_name);
+                Value sig_val;
+                get_from_table(&sig_class->props, name, &sig_val);
+                return sig_val.as.sig_type;
             }
 
             add_error(compiler, sp->inst_name, "Instance doesn't exist");

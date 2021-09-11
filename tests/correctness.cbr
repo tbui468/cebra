@@ -374,3 +374,26 @@
         print "Closed Upvalues, Cascade: Failed!"
     }
 }
+
+{
+    print ""
+    print "***********Classes************"
+    Dog: class = class {
+        name: string = "Mittens"
+        age: int = 3
+        length: float = 100.2
+    }
+
+    dog: Dog = Dog()
+    if dog.name == "Mittens" {
+        print "Get Property: Passed!"
+    } else {
+        print "Get Property: Failed!"
+    }
+    dog.name = "Bubbles"
+    if dog.name == "Bubbles" {
+        print "Set Property: Passed!"
+    } else {
+        print "Set Property: Failed!"
+    }
+}

@@ -10,13 +10,27 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        Write class declaration tests
 
-        Write class instantiation tests
+fun: () -> () -> = () -> () -> {
 
-        Write instance getter tests
-        
-        Write instance setter tests
+    Dog: class = class {
+        name: string = "Mittens"
+        age: int = 2
+        f: float = 2.32
+    }
+
+    inner: () -> = () -> {
+        d: Dog = Dog()
+        print d.name
+    }
+
+    -> inner
+}
+
+a: () -> = fun()
+a()
+
+        Write instance getter/setter tests with upvalued instances
 
         property names are being added as constants for both OP_GET_PROP
         and OP_SET_PROP, but they aren't really constants.  What other
