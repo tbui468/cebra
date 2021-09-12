@@ -10,25 +10,19 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-
-fun: () -> () -> = () -> () -> {
-
-    Dog: class = class {
-        name: string = "Mittens"
-        age: int = 2
-        f: float = 2.32
-    }
-
-    inner: () -> = () -> {
-        d: Dog = Dog()
-        print d.name
-    }
-
-    -> inner
+Dog: class = class {
+    name: string = "Mittens"
+    age: int = 3
+    length: float = 100.2
 }
 
-a: () -> = fun()
-a()
+make_dog: () -> Dog = () -> Dog {
+    dog: Dog = Dog()
+    -> dog
+}
+
+print make_dog().name
+d: Dog = make_dog()
 
     constructors
         both these ways of calling make_dog should work:
