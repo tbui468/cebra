@@ -2,6 +2,8 @@ DOCUMENTATION:
     Look at how Nystrom design docs for Wren
     The embedded compiler/vm in browser is neat
 
+    INSIDE CALLS BRANCH
+
 ADDING FEATURES:
     Add correctness tests for new features
     Pass all correctness.cbr tests
@@ -45,6 +47,9 @@ d: Dog = make_dog()
             if no identifier (for second and third call), call the function currently
             on the stack with the given arguments.  Change NODE_CASCADE with just
             the arguments.  NODE_CALL, NODE_CASCADE, NODE_CASCADE
+
+                Just use NODE_CALL, but set Token name to a null value (start is NULL, an length = 0)
+                for cascading calls
 
             Do the same with properties and dot notation.  dog.name should be two
             nodes: NODE_GET_LOCAL (dog) and then NODE_GET_PROP(.name). 
