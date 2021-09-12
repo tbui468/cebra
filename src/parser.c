@@ -253,7 +253,7 @@ static struct Sig* read_sig(Token name) {
     }
 
     if (match(TOKEN_IDENTIFIER)) {
-        return make_instance_sig(parser.previous);
+        return make_identifier_sig(parser.previous);
     }
 
     return make_prim_sig(VAL_NIL);
@@ -265,16 +265,16 @@ static struct Node* var_declaration(bool require_assign) {
     consume(TOKEN_COLON, "Expect ':' after identifier.");
     struct Sig* sig = read_sig(name);
 
-    if (sig->type == SIG_INSTANCE) {
+    if (sig->type == SIG_IDENTIFIER) {
         consume(TOKEN_EQUAL, "Expect '=' after class name.");
         consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
         Token def_klass = parser.previous;
         consume(TOKEN_LEFT_PAREN, "Expect '(' after class name.");
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after '('.");
 
-        Token decl_klass = ((struct SigInstance*)sig)->klass;
+        Token decl_identifier = ((struct SigIdentifier*)sig)->identifier;
 
-        return make_inst_class(name, decl_klass, def_klass);
+        return make_inst_class(name, decl_identifier, def_klass);
     }
 
     if (sig->type == SIG_CLASS) {

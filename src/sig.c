@@ -64,11 +64,11 @@ struct Sig* make_class_sig(Token klass) {
     return (struct Sig*)sc;
 }
 
-struct Sig* make_instance_sig(Token klass) {
-    struct SigInstance* si = ALLOCATE(struct SigInstance);
+struct Sig* make_identifier_sig(Token identifier) {
+    struct SigIdentifier* si = ALLOCATE(struct SigIdentifier);
 
-    si->base.type = SIG_INSTANCE;
-    si->klass = klass;
+    si->base.type = SIG_IDENTIFIER;
+    si->identifier = identifier;
 
     insert_sig((struct Sig*)si);
     return (struct Sig*)si;
@@ -119,6 +119,11 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
             struct SigClass* sc1 = (struct SigClass*)sig1;
             struct SigClass* sc2 = (struct SigClass*)sig2;
             return is_duck(sc1, sc2) && is_duck(sc2, sc1);
+        case SIG_IDENTIFIER:
+            struct SigIdentifier* si1 = (struct SigIdentifier*)sig1; 
+            struct SigIdentifier* si2 = (struct SigIdentifier*)sig2; 
+            if (si1->identifier.length != si2->identifier.length) return false;
+            return memcmp(si1->identifier.start, si2->identifier.start, si1->identifier.length) == 0;
     }
 }
 
@@ -150,6 +155,12 @@ void print_sig(struct Sig* sig) {
         case SIG_CLASS:
             printf("SigClass Stub");
             break;
+        case SIG_IDENTIFIER:
+            printf("SigIdentifier Stub");
+            break;
+        default:
+            printf("Invalid sig");
+            break;
     }
 }
 
@@ -173,9 +184,9 @@ void free_sig(struct Sig* sig) {
             free_table(&sc->props);
             FREE(sc, struct SigClass);
             break;
-        case SIG_INSTANCE:
-            struct SigInstance* si = (struct SigInstance*)sig;
-            FREE(si, struct SigInstance);
+        case SIG_IDENTIFIER:
+            struct SigIdentifier* si = (struct SigIdentifier*)sig;
+            FREE(si, struct SigIdentifier);
             break;
     }
 }

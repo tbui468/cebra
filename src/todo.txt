@@ -30,24 +30,55 @@ fun: () -> () -> = () -> () -> {
 a: () -> = fun()
 a()
 
-        Write instance getter/setter tests with upvalued instances
+    constructors
+        both these ways of calling make_dog should work:
+        try tracing to see what works.
+            make_dog: () -> Dog {
+                dog: Dog = Dog()
+                -> dog
+            }
+            print make_dog().name
+            d: Dog = make_dog()
 
-        property names are being added as constants for both OP_GET_PROP
-        and OP_SET_PROP, but they aren't really constants.  What other
-        way could this be done more clearly.  Interning!!!
+        for the print statement, we currently don't support
+        dot notation with return values from function calls.
+        NOTE: currently breaks in parser - specifically in call_expression()
+            need to be able to recognize dot notation (for both setting/getting)
+            with function calls and cascading function calls
 
-        add methods
-            copy_value(Value* value) - 
-                add functions/classes/instances for better class instances
+            should try to simplify calls and cascading calls like so:
+            a()()("dog", 3): if an identifier is there ('a'), then call that function
+            if no identifier (for second and third call), call the function currently
+            on the stack with the given arguments.  Change NODE_CASCADE with just
+            the arguments.  NODE_CALL, NODE_CASCADE, NODE_CASCADE
 
-        Inheritance syntax and implementation
-            fill out the rest of copy_value(Value* value) for class methods
+            Do the same with properties and dot notation.  dog.name should be two
+            nodes: NODE_GET_LOCAL (dog) and then NODE_GET_PROP(.name). 
+
+            This will allow the same notation use with functions too:
+            a().name will be a() followed by a property getter/setter .name
+            NODE_CALL, NODE_GET_PROP
+
+        for the variable declaration, classes, instances and functions
+        are not currently supported.
+
+    property names are being added as constants for both OP_GET_PROP
+    and OP_SET_PROP, but they aren't really constants.  What other
+    way could this be done more clearly.  Interning!!!
+
+    add methods
+        copy_value(Value* value) - 
+            add functions/classes/instances for better class instances
+
+    Inheritance syntax and implementation
+        fill out the rest of copy_value(Value* value) for class methods
 
     Does NODE_DECl_VAR only for primitive types, or is it for functions/classes too?
+        add ability to assign variables to classes, function, instances
 
-    How about assigning functions to other functions?
-        I don't think we support this right now:
-        my_fun: () -> = other_fun
+        How about assigning functions to other functions?
+            I don't think we support this right now:
+            my_fun: () -> = other_fun
 
     Allow shorthand for declaration types:
         a := 1

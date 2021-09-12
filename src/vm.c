@@ -313,7 +313,6 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 }
 
 ResultCode compile_and_run(VM* vm, NodeList* nl, struct Compiler* script_compiler) {
-
     ResultCode compile_result = compile_script(script_compiler, nl);
 
     if (compile_result == RESULT_FAILED) {

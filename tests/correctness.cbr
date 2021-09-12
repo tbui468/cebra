@@ -396,4 +396,35 @@
     } else {
         print "Set Property: Failed!"
     }
+
+    increment: () -> = () -> {
+        dog.age = dog.age + 1
+    }
+
+    increment()
+
+    if dog.age == 4 {
+        print "Instance Upvalue: Passed!"
+    } else {
+        print "Instance Upvalue: Failed!"
+    }
+
+    outer: () -> () -> = () -> () -> {
+        Cat: class = class {
+            name: string = "Whiskey"
+            age: int = 2
+        }
+        inner: () -> = () -> {
+            c: Cat = Cat()
+            if c.name == "Whiskey" and c.age == 2 {
+                print "Class upvalue: Passed!"
+            } else {
+                print "Class upvalue: Failed!"
+            } 
+        } 
+        -> inner
+    }
+
+    outer()()
+    
 }

@@ -344,8 +344,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 add_error(compiler, df->name, "Return type must match signature in function declaration.");
             }
 
+            struct Sig* ret_sig = resolve_sig(compiler, ((struct SigIdentifier*)sigfun->ret)->identifier);
             for (int i = 0; i < inner_ret_sigs->count; i++) {
-                if (!same_sig(sigfun->ret, inner_ret_sigs->sigs[i])) {
+                if (!same_sig(ret_sig, inner_ret_sigs->sigs[i])) {
                     add_error(compiler, df->name, "Return type must match signature in function declaration.");
                 }
             }
