@@ -28,7 +28,6 @@ typedef enum {
     NODE_DECL_FUN,
     NODE_RETURN,
     NODE_CALL,
-    NODE_CASCADE_CALL,
     NODE_EXPR_STMT
 } NodeType;
 
@@ -153,14 +152,14 @@ typedef struct {
 
 typedef struct {
     struct Node base;
-    Token inst_name;
-    Token prop_name;
+    struct Node* inst;
+    Token prop;
 } GetProp;
 
 typedef struct {
     struct Node base;
-    Token inst_name;
-    Token prop_name;
+    struct Node* inst;
+    Token prop;
     struct Node* right;
 } SetProp;
 
@@ -171,22 +170,16 @@ typedef struct {
 
 typedef struct {
     struct Node base;
-    Token name;
+    struct Node* left;
     struct Node* right;
 } SetVar;
 
 typedef struct {
     struct Node base;
     Token name;
+    struct Node* left;
     NodeList arguments;
 } Call;
-
-typedef struct {
-    struct Node base;
-    Token name;
-    struct Node* function;
-    NodeList arguments;
-} CascadeCall;
 
 
 struct Node* make_literal(Token name);
@@ -196,20 +189,19 @@ struct Node* make_logical(Token name, struct Node* left, struct Node* right);
 struct Node* make_print(Token name, struct Node* right);
 struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right);
 struct Node* make_get_var(Token name);
-struct Node* make_set_var(Token name, struct Node* right);
+struct Node* make_set_var(struct Node* left, struct Node* right);
 struct Node* make_block(Token name, NodeList dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
 struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
-struct Node* make_call(Token name, NodeList arguments);
-struct Node* make_cascade_call(Token name, struct Node* function, NodeList arguments);
+struct Node* make_call(Token name, struct Node* left, NodeList arguments);
 struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig);
 struct Node* make_expr_stmt(struct Node* expr);
 struct Node* make_inst_class(Token name, Token decl_klass, Token def_klass);
-struct Node* make_get_prop(Token inst_name, Token prop_name);
-struct Node* make_set_prop(Token inst_name, Token prop_name, struct Node* right);
+struct Node* make_get_prop(struct Node* inst, Token prop);
+struct Node* make_set_prop(struct Node* inst, Token prop, struct Node* right);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

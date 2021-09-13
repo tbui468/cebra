@@ -24,6 +24,15 @@ void print_token(Token token) {
     printf("\n");
 }
 
+Token make_dummy_token() {
+    Token dummy;
+    dummy.type = TOKEN_DUMMY;
+    dummy.line = 0;
+    dummy.start = NULL;
+    dummy.length = 0;
+    return dummy;
+}
+
 Token copy_token(Token token) {
     Token copy;
     copy.type = token.type;

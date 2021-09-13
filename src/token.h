@@ -43,6 +43,7 @@ typedef enum {
     TOKEN_COMMA,
     TOKEN_CLASS,
     TOKEN_DOT,
+    TOKEN_DUMMY,
     TOKEN_EOF,
 } TokenType;
 
@@ -56,6 +57,7 @@ typedef struct {
 
 
 void print_token(Token token);
+Token make_dummy_token();
 Token copy_token(Token token);
 
 #endif// CEBRA_TOKEN_H

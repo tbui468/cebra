@@ -2,8 +2,6 @@ DOCUMENTATION:
     Look at how Nystrom design docs for Wren
     The embedded compiler/vm in browser is neat
 
-    INSIDE CALLS BRANCH
-
 ADDING FEATURES:
     Add correctness tests for new features
     Pass all correctness.cbr tests
@@ -25,6 +23,51 @@ make_dog: () -> Dog = () -> Dog {
 
 print make_dog().name
 d: Dog = make_dog()
+
+
+c: () -> (int) -> int = () -> (int) -> int {
+    d: (int) -> int = (n: int) -> int {
+        -> n * 2
+    }
+    -> d
+}
+
+make_get_prop should have two parameters, struct Node* inst and Token prop
+
+GetProp - get instance identifier, then follow that up with an arbitrary number of
+        TOKEN_DOT + TOKEN_IDENTIFIER.  Emit a bunch of OP_GET_PROP.  
+        BUT, if TOKEN_DOT + TOKEN_IDENTIFIER is followed by TOKEN_EQUAL, then
+        put it inside an OP_SET_PROP instead (the left side should be an instance)
+
+        Note: The first parameter is a struct Node* (GetVar)
+            and the second is a Token prop
+        struct Node* inst = make_get_prop(instance, prop)
+        make_get_prop(inst, prop), 
+        make_set_prop(instance, prop, value)
+
+Call - GetVar or GetProp (can't set function to a value, no no SetVar or SetProp), followed
+        by a variable number of calls (parentheses with arguments)
+        dog.bark()()(), or dog.mouth.bark()(), bark()(), bark()
+
+
+//problem: printing the result of c(), when it shoud be printing result of c()(4)
+//  could have Call take in multiple lists of arguments (and no token)
+//  and also make identifiers for functions just be a GET_LOCAL 
+print c()(4)
+
+    could make SetVar take in two Node* - left and right, where right is an expression as usual,
+        and left is simply a GetVar* node with the token corresponding the variable.  This can
+        then be taken out during compilation of SetVar*.  This would let us get rid of the 
+        free_node call in parser - which is messy since we don't free nodes in the parser normally
+
+    //problem: printing the result of c(), when it shoud be printing result of c()(4)
+        parser seeing that declaration as a print c(), and then a separate (4) declaration
+    //  could have Call take in multiple lists of arguments (and no token) since
+            all the cascading calls have to be called together as a single expression
+            when calling a function, set compiler->previous_fun_sig if NULL
+            and then set set to NULL after all cascades are done
+    //  and just put the function on the stack using GET_LOCAL/GET_UPVALUE
+    print c()(4)
 
     constructors
         both these ways of calling make_dog should work:
