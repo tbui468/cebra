@@ -68,7 +68,6 @@ static uint16_t read_short(Chunk* chunk, int code_idx) {
 }
 
 void disassemble_chunk(struct ObjFunction* function) {
-    printf("*********************\n");
     printf("%.*s\n", function->name->length, function->name->chars);
     Chunk* chunk = &function->chunk;
     int i = 0;

@@ -266,13 +266,13 @@ static struct Node* var_declaration(bool require_assign) {
     if (sig->type == SIG_IDENTIFIER) {
         consume(TOKEN_EQUAL, "Expect '=' after class name.");
         consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
-        Token def_klass = parser.previous;
+        Token klass = parser.previous;
         consume(TOKEN_LEFT_PAREN, "Expect '(' after class name.");
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after '('.");
 
-        Token decl_identifier = ((struct SigIdentifier*)sig)->identifier;
+        Token klass_type = ((struct SigIdentifier*)sig)->identifier;
 
-        return make_inst_class(name, decl_identifier, def_klass);
+        return make_inst_class(name, klass_type, make_get_var(klass));
     }
 
     if (sig->type == SIG_CLASS) {

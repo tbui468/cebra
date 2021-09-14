@@ -37,11 +37,11 @@ struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig) {
     return (struct Node*)dc;
 }
 
-struct Node* make_inst_class(Token name, Token decl_klass, Token def_klass) {
+struct Node* make_inst_class(Token name, Token klass_type, struct Node* klass) {
     InstClass* ic = ALLOCATE(InstClass);
     ic->name = name;
-    ic->decl_klass = decl_klass;
-    ic->def_klass = def_klass;
+    ic->klass_type = klass_type;
+    ic->klass = klass;
     ic->sig = NULL; //filled in by compiler since class definition needed
     ic->base.type = NODE_INST_CLASS;
 
@@ -369,6 +369,7 @@ void free_node(struct Node* node) {
         }
         case NODE_INST_CLASS: {
             InstClass* ic = (InstClass*)node;
+            free_node(ic->klass);
             FREE(ic, InstClass);
             break;
         }
