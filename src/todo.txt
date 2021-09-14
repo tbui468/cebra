@@ -32,77 +32,18 @@ c: () -> (int) -> int = () -> (int) -> int {
     -> d
 }
 
-make_get_prop should have two parameters, struct Node* inst and Token prop
+Setting properties doesn't work - look at assignment() inside parser.c
 
-GetProp - get instance identifier, then follow that up with an arbitrary number of
-        TOKEN_DOT + TOKEN_IDENTIFIER.  Emit a bunch of OP_GET_PROP.  
-        BUT, if TOKEN_DOT + TOKEN_IDENTIFIER is followed by TOKEN_EQUAL, then
-        put it inside an OP_SET_PROP instead (the left side should be an instance)
-
-        Note: The first parameter is a struct Node* (GetVar)
-            and the second is a Token prop
-        struct Node* inst = make_get_prop(instance, prop)
-        make_get_prop(inst, prop), 
-        make_set_prop(instance, prop, value)
-
+Redo Call in ast.h and ast.c - functions aren't working anymore
 Call - GetVar or GetProp (can't set function to a value, no no SetVar or SetProp), followed
         by a variable number of calls (parentheses with arguments)
         dog.bark()()(), or dog.mouth.bark()(), bark()(), bark()
 
+    check that this works:
+        a = dog.age = 10
 
-//problem: printing the result of c(), when it shoud be printing result of c()(4)
-//  could have Call take in multiple lists of arguments (and no token)
-//  and also make identifiers for functions just be a GET_LOCAL 
-print c()(4)
-
-    could make SetVar take in two Node* - left and right, where right is an expression as usual,
-        and left is simply a GetVar* node with the token corresponding the variable.  This can
-        then be taken out during compilation of SetVar*.  This would let us get rid of the 
-        free_node call in parser - which is messy since we don't free nodes in the parser normally
-
-    //problem: printing the result of c(), when it shoud be printing result of c()(4)
-        parser seeing that declaration as a print c(), and then a separate (4) declaration
-    //  could have Call take in multiple lists of arguments (and no token) since
-            all the cascading calls have to be called together as a single expression
-            when calling a function, set compiler->previous_fun_sig if NULL
-            and then set set to NULL after all cascades are done
-    //  and just put the function on the stack using GET_LOCAL/GET_UPVALUE
-    print c()(4)
-
-    constructors
-        both these ways of calling make_dog should work:
-        try tracing to see what works.
-            make_dog: () -> Dog {
-                dog: Dog = Dog()
-                -> dog
-            }
-            print make_dog().name
-            d: Dog = make_dog()
-
-        for the print statement, we currently don't support
-        dot notation with return values from function calls.
-        NOTE: currently breaks in parser - specifically in call_expression()
-            need to be able to recognize dot notation (for both setting/getting)
-            with function calls and cascading function calls
-
-            should try to simplify calls and cascading calls like so:
-            a()()("dog", 3): if an identifier is there ('a'), then call that function
-            if no identifier (for second and third call), call the function currently
-            on the stack with the given arguments.  Change NODE_CASCADE with just
-            the arguments.  NODE_CALL, NODE_CASCADE, NODE_CASCADE
-
-                Just use NODE_CALL, but set Token name to a null value (start is NULL, an length = 0)
-                for cascading calls
-
-            Do the same with properties and dot notation.  dog.name should be two
-            nodes: NODE_GET_LOCAL (dog) and then NODE_GET_PROP(.name). 
-
-            This will allow the same notation use with functions too:
-            a().name will be a() followed by a property getter/setter .name
-            NODE_CALL, NODE_GET_PROP
-
-        for the variable declaration, classes, instances and functions
-        are not currently supported.
+    for the variable declaration, classes, instances and functions
+    are not currently supported.
 
     property names are being added as constants for both OP_GET_PROP
     and OP_SET_PROP, but they aren't really constants.  What other

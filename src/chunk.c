@@ -24,10 +24,15 @@ const char* op_to_string(OpCode op) {
     switch(op) {
         case OP_CONSTANT: return "OP_CONSTANT";
         case OP_FUN: return "OP_FUN";
-        case OP_CLASS: return "OP_CLASS";
-        case OP_ADD_PROP: return "OP_ADD_PROP";
         case OP_NIL: return "OP_NIL";
         case OP_PRINT: return "OP_PRINT";
+        case OP_TRUE: return "OP_TRUE";
+        case OP_FALSE: return "OP_FALSE";
+        case OP_LESS: return "OP_LESS";
+        case OP_GREATER: return "OP_GREATER";
+        case OP_EQUAL: return "OP_EQUAL";
+        case OP_GET_PROP: return "OP_GET_PROP";
+        case OP_SET_PROP: return "OP_SET_PROP";
         case OP_SET_LOCAL: return "OP_SET_LOCAL";
         case OP_GET_LOCAL: return "OP_GET_LOCAL";
         case OP_SET_UPVALUE: return "OP_SET_UPVALUE";
@@ -40,17 +45,17 @@ const char* op_to_string(OpCode op) {
         case OP_MOD: return "OP_MOD";
         case OP_NEGATE: return "OP_NEGATE";
         case OP_POP: return "OP_POP";
-        case OP_TRUE: return "OP_TRUE";
-        case OP_FALSE: return "OP_FALSE";
-        case OP_GREATER: return "OP_GREATER";
-        case OP_LESS: return "OP_LESS";
         case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE";
         case OP_JUMP_IF_TRUE: return "OP_JUMP_IF_TRUE";
         case OP_JUMP: return "OP_JUMP";
         case OP_JUMP_BACK: return "OP_JUMP_BACK";
         case OP_CALL: return "OP_CALL";
+        case OP_CLASS: return "OP_CLASS";
+        case OP_ADD_PROP: return "OP_ADD_PROP";
+        case OP_INSTANCE: return "OP_INSTANCE";
         case OP_RETURN: return "OP_RETURN";
         default: return "Unrecognized op";
+
     }
 }
 
@@ -71,7 +76,6 @@ void disassemble_chunk(Chunk* chunk) {
             case OP_CONSTANT: {
                 int idx = read_byte(chunk, i++);
                 print_value(chunk->constants.values[idx]);
-                printf("\n");
                 break;
             }
             case OP_FUN: {
@@ -83,12 +87,27 @@ void disassemble_chunk(Chunk* chunk) {
                 printf("%s", op_to_string(op));
                 break;
             }
+            case OP_ADD_PROP: {
+                int slot = read_byte(chunk, i++);
+                printf("[%d]", slot);
+                break;
+            }
             case OP_GET_LOCAL: {
                 int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;
             }
             case OP_SET_LOCAL: {
+                int slot = read_byte(chunk, i++);
+                printf("[%d]", slot);
+                break;
+            }
+            case OP_GET_PROP: {
+                int slot = read_byte(chunk, i++);
+                printf("[%d]", slot);
+                break;
+            }
+            case OP_SET_PROP: {
                 int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;

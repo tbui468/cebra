@@ -133,7 +133,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_ADD_PROP: {
             //This op only gets added after a class property/method is compiled into a local variable
-            //current stack: [script]...[class][prop]
+            //current stack: [script]...[class][value]
             push_root(read_constant(frame, READ_TYPE(frame, uint8_t)));
             struct ObjClass* klass = peek(vm, 2).as.class_type;
             set_table(&klass->props, peek(vm, 0).as.string_type, peek(vm, 1));
@@ -207,14 +207,13 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_GET_PROP: {
             struct ObjInstance* inst = peek(vm, 0).as.instance_type;
             struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint8_t)).as.string_type;
-            Value prop = to_nil();
-            get_from_table(&inst->props, prop_name, &prop);
+            Value prop_val = to_nil();
+            get_from_table(&inst->props, prop_name, &prop_val);
             pop(vm);
-            push(vm, prop);
+            push(vm, prop_val);
             break;
         }
         case OP_SET_PROP: {
-            //[new value][inst]
             struct ObjInstance* inst = peek(vm, 0).as.instance_type;
             Value value = peek(vm, 1);
             struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint8_t)).as.string_type;
@@ -320,7 +319,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl, struct Compiler* script_compile
     }
 
 #ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(&chunk);
+    disassemble_chunk(&script_compiler->function->chunk);
 #endif
 
     push(vm, to_function(script_compiler->function));

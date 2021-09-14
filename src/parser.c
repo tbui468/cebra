@@ -124,9 +124,6 @@ static struct Node* call_dot() {
             (match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN))) {
         if (parser.previous.type == TOKEN_DOT) {
             consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.");
-            //NOTE: Need to skip this and return to assignment() if TOKEN_DOT is followed by TOKEN_IDENTIFER and TOKEN_EQUAL
-            //  since it's SetProp, and we need the inst, prop and rhs expression for SetProp
-            //if (left->type != NODE_GET_VAR) add_error(((GetVar*)left)->name, "Left side must be instance name");
             left = make_get_prop(left, parser.previous);
         } else { //TOKEN_PAREN
             //if (left->type != NODE_GET_VAR) add_error(((GetVar*)left)->name, "Left side must be function name");
@@ -222,10 +219,14 @@ static struct Node* assignment() {
     struct Node* left = or();
 
     while (match(TOKEN_EQUAL) || peek_three(TOKEN_DOT, TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
-        if (left->type == NODE_GET_VAR) {
+        if (parser.previous.type == TOKEN_EQUAL) {
             left = make_set_var(left, expression());
         } else {
-            left = make_set_prop(left, parser.previous, expression());
+            match(TOKEN_DOT);
+            match(TOKEN_IDENTIFIER);
+            Token prop = parser.previous;
+            consume(TOKEN_EQUAL, "Expect '='");
+            left = make_set_prop(left, prop, expression());
         }
     }
 

@@ -337,6 +337,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             add_node(&df->parameters, df->body);
             struct SigList* inner_ret_sigs = compile_function(&func_comp, &df->parameters);
 
+#ifdef DEBUG_DISASSEMBLE
+    disassemble_chunk(&func_comp.function->chunk);
+#endif
+
             copy_errors(compiler, &func_comp);
 
             struct SigFun* sigfun = (struct SigFun*)df->sig;
@@ -562,6 +566,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             GetProp* gp = (GetProp*)node;
             struct SigClass* sig_inst = (struct SigClass*)compile_node(compiler, gp->inst, ret_sigs);
 
+
             emit_byte(compiler, OP_GET_PROP);
             struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
             push_root(to_string(name));
@@ -580,12 +585,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         }
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;
-            struct SigClass* sig_inst = (struct SigClass*)compile_node(compiler, sp->inst, ret_sigs);
             struct Sig* right_sig = compile_node(compiler, sp->right, ret_sigs);
+            struct SigClass* sig_inst = (struct SigClass*)compile_node(compiler, sp->inst, ret_sigs);
 
             struct ObjString* name = make_string(sp->prop.start, sp->prop.length);
             push_root(to_string(name));
-            emit_byte(compiler, add_constant(compiler, to_string(name))); 
+            emit_bytes(compiler, OP_SET_PROP, add_constant(compiler, to_string(name))); 
             pop_root();
 
             Value sig_val = to_nil();
