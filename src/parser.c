@@ -69,41 +69,12 @@ static NodeList argument_list() {
     return args;
 }
 
-static struct Node* call_expression() {
-    match(TOKEN_IDENTIFIER);
-    struct Node* left = make_get_var(parser.previous);
-    match(TOKEN_LEFT_PAREN);
-    Token name = parser.previous;
-    return make_call(name, left, argument_list());
-}
-
-/*
-static struct Node* cascade_expression() {
-    return make_call(make_dummy_token(), argument_list());
-}*/
 
 static struct Node* primary() {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
         match(TOKEN_STRING) || match(TOKEN_TRUE) ||
         match(TOKEN_FALSE)) {
         return make_literal(parser.previous);
-        /*
-    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_DOT, TOKEN_IDENTIFIER)) {
-        match(TOKEN_IDENTIFIER);
-        Token inst_name = parser.previous;
-        match(TOKEN_DOT);
-        match(TOKEN_IDENTIFIER);
-        Token prop_name = parser.previous;
-
-        if (match(TOKEN_EQUAL)) {
-            return make_set_prop(inst_name, prop_name, expression());
-        }
-    
-        return make_get_prop(inst_name, prop_name);
-    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
-        return call_expression();
-    } else if (peek_one(TOKEN_LEFT_PAREN)) {
-        return cascade_expression();*/
     } else if (match(TOKEN_IDENTIFIER)) {
         Token name = parser.previous;
         return make_get_var(name);
@@ -403,20 +374,6 @@ static struct Node* declaration() {
         return make_print(name, expression());
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
         return var_declaration(true);
-        /*
-    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
-        struct Node* ce = call_expression();
-        if (peek_one(TOKEN_LEFT_PAREN)) {
-            return ce;
-        }
-        return make_expr_stmt(ce);*/
-        /*
-    } else if (peek_one(TOKEN_LEFT_PAREN)) {
-        struct Node* ce = cascade_expression();
-        if (peek_one(TOKEN_LEFT_PAREN)) {
-            return ce;
-        }
-        return make_expr_stmt(ce);*/
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {
