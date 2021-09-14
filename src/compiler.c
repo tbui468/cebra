@@ -337,6 +337,16 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             add_node(&df->parameters, df->body);
             struct SigList* inner_ret_sigs = compile_function(&func_comp, &df->parameters);
 
+#ifdef DEBUG_DISASSEMBLE
+    disassemble_chunk(func_comp.function);
+    int i = 0;
+    printf("********************\n");
+    while (i < func_comp.function->chunk.count) {
+        OpCode op = func_comp.function->chunk.codes[i++];
+        printf("[ %s ]\n", op_to_string(op));
+    }
+#endif
+
             copy_errors(compiler, &func_comp);
 
             struct SigFun* sigfun = (struct SigFun*)df->sig;
@@ -560,79 +570,45 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_UNARY:        return compile_unary(compiler, node);
         case NODE_GET_PROP: {
             GetProp* gp = (GetProp*)node;
-            int idx = resolve_local(compiler, gp->inst_name);
-            if (idx != -1) {
-                emit_byte(compiler, OP_GET_LOCAL);
-                emit_byte(compiler, idx);
-                emit_byte(compiler, OP_GET_PROP);
-                struct ObjString* name = make_string(gp->prop_name.start, gp->prop_name.length);
-                push_root(to_string(name));
-                emit_byte(compiler, add_constant(compiler, to_string(name))); 
-                pop_root();
+            struct SigClass* sig_inst = (struct SigClass*)compile_node(compiler, gp->inst, ret_sigs);
 
-                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, gp->inst_name);
-                Value sig_val;
-                get_from_table(&sig_class->props, name, &sig_val);
-                return sig_val.as.sig_type;
+
+            emit_byte(compiler, OP_GET_PROP);
+            struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
+            push_root(to_string(name));
+            emit_byte(compiler, add_constant(compiler, to_string(name))); 
+            pop_root();
+
+            Value sig_val = to_nil();
+            get_from_table(&sig_inst->props, name, &sig_val);
+
+            if (IS_NIL(sig_val)) {
+                add_error(compiler, gp->prop, "Property doesn't exist on instance");
+                return make_prim_sig(VAL_NIL);
             }
 
-            int upvalue_idx = resolve_upvalue(compiler, gp->inst_name);
-            if (upvalue_idx != -1) {
-                emit_byte(compiler, OP_GET_UPVALUE);
-                emit_byte(compiler, upvalue_idx);
-                emit_byte(compiler, OP_GET_PROP);
-                struct ObjString* name = make_string(gp->prop_name.start, gp->prop_name.length);
-                push_root(to_string(name));
-                emit_byte(compiler, add_constant(compiler, to_string(name))); 
-                pop_root();
-
-                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, gp->inst_name);
-                Value sig_val;
-                get_from_table(&sig_class->props, name, &sig_val);
-                return sig_val.as.sig_type;
-            }
-
-            add_error(compiler, gp->inst_name, "Instance doesn't exist");
-            return make_prim_sig(VAL_NIL);
+            return sig_val.as.sig_type;
         }
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;
-            struct Sig* then_sig = compile_node(compiler, sp->right, ret_sigs);
+            struct Sig* right_sig = compile_node(compiler, sp->right, ret_sigs);
+            struct SigClass* sig_inst = (struct SigClass*)compile_node(compiler, sp->inst, ret_sigs);
 
-            int idx = resolve_local(compiler, sp->inst_name);
-            if (idx != -1) {
-                emit_byte(compiler, OP_GET_LOCAL);
-                emit_byte(compiler, idx);
-                emit_byte(compiler, OP_SET_PROP);
-                struct ObjString* name = make_string(sp->prop_name.start, sp->prop_name.length);
-                push_root(to_string(name));
-                emit_byte(compiler, add_constant(compiler, to_string(name))); 
-                pop_root();
+            struct ObjString* name = make_string(sp->prop.start, sp->prop.length);
+            push_root(to_string(name));
+            emit_bytes(compiler, OP_SET_PROP, add_constant(compiler, to_string(name))); 
+            pop_root();
 
-                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, sp->inst_name);
-                Value sig_val;
-                get_from_table(&sig_class->props, name, &sig_val);
-                return sig_val.as.sig_type;
+            Value sig_val = to_nil();
+            get_from_table(&sig_inst->props, name, &sig_val);
+
+            if (!same_sig(sig_val.as.sig_type, right_sig)) {
+                add_error(compiler, sp->prop, "Property and assignment types must match.");
+                return make_prim_sig(VAL_NIL);
             }
 
-            int upvalue_idx = resolve_upvalue(compiler, sp->inst_name);
-            if (upvalue_idx != -1) {
-                emit_byte(compiler, OP_GET_UPVALUE);
-                emit_byte(compiler, upvalue_idx);
-                emit_byte(compiler, OP_SET_PROP);
-                struct ObjString* name = make_string(sp->prop_name.start, sp->prop_name.length);
-                push_root(to_string(name));
-                emit_byte(compiler, add_constant(compiler, to_string(name))); 
-                pop_root();
+            return right_sig;
 
-                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, sp->inst_name);
-                Value sig_val;
-                get_from_table(&sig_class->props, name, &sig_val);
-                return sig_val.as.sig_type;
-            }
-
-            add_error(compiler, sp->inst_name, "Instance doesn't exist");
-            return make_prim_sig(VAL_NIL);
         }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
@@ -658,11 +634,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             SetVar* sv = (SetVar*)node;
             struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
 
-            int idx = resolve_local(compiler, sv->name);
+            Token var = ((GetVar*)(sv->left))->name;
+            struct Sig* var_sig = resolve_sig(compiler, var);
+            int idx = resolve_local(compiler, var);
             if (idx != -1) {
-                struct Sig* var_sig = resolve_sig(compiler, sv->name);
-                if (!same_sig(right_sig, var_sig)) {
-                    add_error(compiler, sv->name, "Right side type must match variable type.");
+                if (!same_sig(var_sig, right_sig)) {
+                    add_error(compiler, var, "Right side type must match variable type.");
                 }
 
                 emit_byte(compiler, OP_SET_LOCAL);
@@ -670,12 +647,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 return right_sig;
             }
 
-            int upvalue_idx = resolve_upvalue(compiler, sv->name);
+            int upvalue_idx = resolve_upvalue(compiler, var);
             if (upvalue_idx != -1) {
-
-                struct Sig* var_sig = resolve_sig(compiler, sv->name);
-                if (!same_sig(right_sig, var_sig)) {
-                    add_error(compiler, sv->name, "Right side type must match variable type.");
+                if (!same_sig(var_sig, right_sig)) {
+                    add_error(compiler, var, "Right side type must match variable type.");
                 }
 
                 emit_byte(compiler, OP_SET_UPVALUE);
@@ -683,21 +658,25 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 return right_sig;
             }
 
-            add_error(compiler, sv->name, "Local variable not declared.");
+            add_error(compiler, var, "Local variable not declared.");
             return make_prim_sig(VAL_NIL);
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
 
-            emit_byte(compiler, OP_GET_LOCAL);
-            int idx =  resolve_local(compiler, call->name);
-            if (idx == -1) return make_prim_sig(VAL_NIL);
-            emit_byte(compiler, idx);
+            struct Sig* sig = compile_node(compiler, call->left, ret_sigs);
+            struct SigFun* sig_fun = (struct SigFun*)sig;
 
-            struct Sig* sig = resolve_sig(compiler, call->name);
-            struct SigList* params = (struct SigList*)(((struct SigFun*)sig)->params);
-            if (params->count != call->arguments.count) {
-                add_error(compiler, call->name, "Argument count must match declaration.");
+            if (sig_fun->base.type != SIG_FUN) {
+                add_error(compiler, call->name, "Calls must be used on a function type.");
+                return make_prim_sig(VAL_NIL);
+            }
+
+            struct SigList* params = (struct SigList*)(sig_fun->params);
+
+            if (call->arguments.count != params->count) {
+                add_error(compiler, call->name, "Argument count must match function parameter count.");
+                return make_prim_sig(VAL_NIL);
             }
 
             int min = call->arguments.count < params->count ? call->arguments.count : params->count;
@@ -711,30 +690,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
 
-            return ((struct SigFun*)sig)->ret;
-        }
-        case NODE_CASCADE_CALL: {
-            CascadeCall* cc = (CascadeCall*)node;
-            struct Sig* fun_sig = compile_node(compiler, cc->function, NULL);
-
-            //TODO: most of this is a repeat of code in CALL - combine it
-            struct SigList* params = (struct SigList*)(((struct SigFun*)fun_sig)->params);
-            if (params->count != cc->arguments.count) {
-                add_error(compiler, cc->name, "Argument count must match declaration.");
-            }
-
-            int min = cc->arguments.count < params->count ? cc->arguments.count : params->count;
-            for (int i = 0; i < min; i++) {
-                struct Sig* arg_sig = compile_node(compiler, cc->arguments.nodes[i], ret_sigs);
-                if (!same_sig(arg_sig, params->sigs[i])) {
-                    add_error(compiler, cc->name, "Argument type must match parameter type.");
-                }
-            }
-
-            emit_byte(compiler, OP_CALL);
-            emit_byte(compiler, (uint8_t)(cc->arguments.count));
-
-            return ((struct SigFun*)fun_sig)->ret;
+            return sig_fun->ret;
         }
     } 
 }

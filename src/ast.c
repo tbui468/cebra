@@ -165,19 +165,19 @@ struct Node* make_logical(Token name, struct Node* left, struct Node* right) {
     return (struct Node*)logical;
 }
 
-struct Node* make_get_prop(Token inst_name, Token prop_name) {
+struct Node* make_get_prop(struct Node* inst, Token prop) {
     GetProp* get_prop = ALLOCATE(GetProp);
-    get_prop->inst_name = inst_name;
-    get_prop->prop_name = prop_name;
+    get_prop->inst = inst;
+    get_prop->prop = prop;
     get_prop->base.type = NODE_GET_PROP;
 
     return (struct Node*)get_prop;
 }
 
-struct Node* make_set_prop(Token inst_name, Token prop_name, struct Node* right) {
+struct Node* make_set_prop(struct Node* inst, Token prop, struct Node* right) {
     SetProp* set_prop = ALLOCATE(SetProp);
-    set_prop->inst_name = inst_name;
-    set_prop->prop_name = prop_name;
+    set_prop->inst = inst;
+    set_prop->prop = prop;
     set_prop->right = right;
     set_prop->base.type = NODE_SET_PROP;
 
@@ -192,34 +192,25 @@ struct Node* make_get_var(Token name) {
     return (struct Node*)get_var;
 }
 
-struct Node* make_set_var(Token name, struct Node* right) {
+struct Node* make_set_var(struct Node* left, struct Node* right) {
     SetVar* set_var = ALLOCATE(SetVar);
-    set_var->name = name;
+    set_var->left = left;
     set_var->right = right;
     set_var->base.type = NODE_SET_VAR;
 
     return (struct Node*)set_var;
 }
 
-struct Node* make_call(Token name, NodeList arguments) {
+struct Node* make_call(Token name, struct Node* left, NodeList arguments) {
     Call* call = ALLOCATE(Call);
     call->name = name;
+    call->left = left;
     call->arguments = arguments;
     call->base.type = NODE_CALL;
 
     return (struct Node*)call;
 }
 
-
-struct Node* make_cascade_call(Token name, struct Node* function, NodeList arguments) {
-    CascadeCall* call = ALLOCATE(CascadeCall);
-    call->name = name;
-    call->function = function;
-    call->arguments = arguments;
-    call->base.type = NODE_CASCADE_CALL;
-
-    return (struct Node*)call;
-}
 
 /*
  * Utility
@@ -347,10 +338,6 @@ void print_node(struct Node* node) {
             printf("Call stub");
             break;
         }
-        case NODE_CASCADE_CALL: {
-            printf("Call stub");
-            break;
-        }
     } 
 }
 
@@ -464,11 +451,13 @@ void free_node(struct Node* node) {
         }
         case NODE_GET_PROP: {
             GetProp* get_prop = (GetProp*)node;
+            free_node(get_prop->inst);
             FREE(get_prop, GetProp);
             break;
         }
         case NODE_SET_PROP: {
             SetProp* set_prop = (SetProp*)node;
+            free_node(set_prop->inst);
             free_node(set_prop->right);
             FREE(set_prop, SetProp);
             break;
@@ -480,21 +469,16 @@ void free_node(struct Node* node) {
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
+            free_node(sv->left);
             free_node(sv->right);
             FREE(sv, SetVar);
             break;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
+            free_node(call->left);
             free_node_list(&call->arguments);
             FREE(call, Call);
-            break;
-        }
-        case NODE_CASCADE_CALL: {
-            CascadeCall* call = (CascadeCall*)node;
-            free_node(call->function);
-            free_node_list(&call->arguments);
-            FREE(call, CascadeCall);
             break;
         }
     } 

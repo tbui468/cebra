@@ -2,8 +2,6 @@ DOCUMENTATION:
     Look at how Nystrom design docs for Wren
     The embedded compiler/vm in browser is neat
 
-    INSIDE CALLS BRANCH
-
 ADDING FEATURES:
     Add correctness tests for new features
     Pass all correctness.cbr tests
@@ -26,40 +24,49 @@ make_dog: () -> Dog = () -> Dog {
 print make_dog().name
 d: Dog = make_dog()
 
-    constructors
-        both these ways of calling make_dog should work:
-        try tracing to see what works.
-            make_dog: () -> Dog {
-                dog: Dog = Dog()
-                -> dog
-            }
-            print make_dog().name
-            d: Dog = make_dog()
 
-        for the print statement, we currently don't support
-        dot notation with return values from function calls.
-        NOTE: currently breaks in parser - specifically in call_expression()
-            need to be able to recognize dot notation (for both setting/getting)
-            with function calls and cascading function calls
+c: (int) -> = (i: int) -> {
+    if i == 2 {
+        print "Integer Parameter: Passed!"
+    } else {
+        print "Integer Parameter: Failed!"
+    }
+}
+c(2)
+fib: (int) -> int = (i: int) -> int {
+    if i < 2 {
+        -> i
+    }
+    -> fib(i - 1) + fib(i - 2)
+}
+if fib(10) == 55 {
+    print "Recursion: Passed!"
+} else {
+    print "Recursion: Failed!"
+}
 
-            should try to simplify calls and cascading calls like so:
-            a()()("dog", 3): if an identifier is there ('a'), then call that function
-            if no identifier (for second and third call), call the function currently
-            on the stack with the given arguments.  Change NODE_CASCADE with just
-            the arguments.  NODE_CALL, NODE_CASCADE, NODE_CASCADE
 
-                Just use NODE_CALL, but set Token name to a null value (start is NULL, an length = 0)
-                for cascading calls
+c: () -> (int) -> int = () -> (int) -> int {
+    d: (int) -> int = (n: int) -> int {
+        -> n * 2
+    }
+    -> d
+}
 
-            Do the same with properties and dot notation.  dog.name should be two
-            nodes: NODE_GET_LOCAL (dog) and then NODE_GET_PROP(.name). 
+Get cascading calls working for functions
+    keep in mind that we need them working for functions too
+    how about this?  Just make calls take in one argument list, BUT
+    if we see an open '(' as the next token, don't wrap it in a expr_stmt
 
-            This will allow the same notation use with functions too:
-            a().name will be a() followed by a property getter/setter .name
-            NODE_CALL, NODE_GET_PROP
+Call - GetVar or GetProp (can't set function to a value, no no SetVar or SetProp), followed
+        by a variable number of calls (parentheses with arguments)
+        dog.bark()()(), or dog.mouth.bark()(), bark()(), bark()
 
-        for the variable declaration, classes, instances and functions
-        are not currently supported.
+    check that this works:
+        a = dog.age = 10
+
+    for the variable declaration, classes, instances and functions
+    are not currently supported.
 
     property names are being added as constants for both OP_GET_PROP
     and OP_SET_PROP, but they aren't really constants.  What other

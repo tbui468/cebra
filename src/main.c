@@ -23,7 +23,6 @@ ResultCode run_source(VM* vm, const char* source) {
     //create list of declarations (AST)
     NodeList nl;
     init_node_list(&nl);
-
     ResultCode parse_result = parse(source, &nl);
 
     if (parse_result == RESULT_FAILED) {

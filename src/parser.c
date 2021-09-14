@@ -57,7 +57,6 @@ static bool peek_three(TokenType type1, TokenType type2, TokenType type3) {
 
 
 static NodeList argument_list() {
-    match(TOKEN_LEFT_PAREN);
     NodeList args;
     init_node_list(&args);
     if (!match(TOKEN_RIGHT_PAREN)) {
@@ -70,46 +69,13 @@ static NodeList argument_list() {
     return args;
 }
 
-static struct Node* call_expression() {
-    match(TOKEN_IDENTIFIER);
-    Token name = parser.previous;
-    NodeList args = argument_list();
-    struct Node* call = make_call(name, args);
-
-    while (peek_one(TOKEN_LEFT_PAREN)) {
-        //TODO: parser.previous really should be the left paren
-        call = make_cascade_call(parser.previous, call, argument_list());
-    }
-
-    return call;
-}
 
 static struct Node* primary() {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
         match(TOKEN_STRING) || match(TOKEN_TRUE) ||
         match(TOKEN_FALSE)) {
         return make_literal(parser.previous);
-    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_DOT, TOKEN_IDENTIFIER)) {
-        match(TOKEN_IDENTIFIER);
-        Token inst_name = parser.previous;
-        match(TOKEN_DOT);
-        match(TOKEN_IDENTIFIER);
-        Token prop_name = parser.previous;
-
-        if (match(TOKEN_EQUAL)) {
-            return make_set_prop(inst_name, prop_name, expression());
-        }
-    
-        return make_get_prop(inst_name, prop_name);
-    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
-        match(TOKEN_IDENTIFIER);
-        Token name = parser.previous;
-        match(TOKEN_EQUAL);
-        return make_set_var(name, expression());
-    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
-        return call_expression();
-    } else if (peek_one(TOKEN_IDENTIFIER)) {
-        match(TOKEN_IDENTIFIER);
+    } else if (match(TOKEN_IDENTIFIER)) {
         Token name = parser.previous;
         return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
@@ -121,14 +87,28 @@ static struct Node* primary() {
     return NULL;
 }
 
-static struct Node* unary() {
-    if (match(TOKEN_MINUS) || match(TOKEN_BANG)) {
-        Token name = parser.previous;
-        struct Node* value = unary();
-        return make_unary(name, value);
+static struct Node* call_dot() {
+    struct Node* left = primary();
+
+    while (!peek_three(TOKEN_DOT, TOKEN_IDENTIFIER, TOKEN_EQUAL) && 
+            (match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN))) {
+        if (parser.previous.type == TOKEN_DOT) {
+            consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.");
+            left = make_get_prop(left, parser.previous);
+        } else { //TOKEN_PAREN
+            left = make_call(parser.previous, left, argument_list());
+        }
     }
 
-    return primary();
+    return left;
+}
+
+static struct Node* unary() {
+    if (match(TOKEN_MINUS) || match(TOKEN_BANG)) {
+        return make_unary(parser.previous, unary());
+    }
+
+    return call_dot();
 }
 
 static struct Node* factor() {
@@ -204,8 +184,26 @@ static struct Node* or() {
     return left;
 }
 
+static struct Node* assignment() {
+    struct Node* left = or();
+
+    while (match(TOKEN_EQUAL) || peek_three(TOKEN_DOT, TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
+        if (parser.previous.type == TOKEN_EQUAL) {
+            left = make_set_var(left, expression());
+        } else {
+            match(TOKEN_DOT);
+            match(TOKEN_IDENTIFIER);
+            Token prop = parser.previous;
+            consume(TOKEN_EQUAL, "Expect '='");
+            left = make_set_prop(left, prop, expression());
+        }
+    }
+
+    return left;
+}
+
 static struct Node* expression() {
-    return or();
+    return assignment();
 }
 
 static struct Node* block() {
@@ -376,8 +374,6 @@ static struct Node* declaration() {
         return make_print(name, expression());
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
         return var_declaration(true);
-    } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
-        return make_expr_stmt(call_expression());
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {
