@@ -609,41 +609,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             return right_sig;
 
-            /*
-            int idx = resolve_local(compiler, sp->inst_name);
-            if (idx != -1) {
-                emit_byte(compiler, OP_GET_LOCAL);
-                emit_byte(compiler, idx);
-                emit_byte(compiler, OP_SET_PROP);
-                struct ObjString* name = make_string(sp->prop_name.start, sp->prop_name.length);
-                push_root(to_string(name));
-                emit_byte(compiler, add_constant(compiler, to_string(name))); 
-                pop_root();
-
-                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, sp->inst_name);
-                Value sig_val;
-                get_from_table(&sig_class->props, name, &sig_val);
-                return sig_val.as.sig_type;
-            }
-
-            int upvalue_idx = resolve_upvalue(compiler, sp->inst_name);
-            if (upvalue_idx != -1) {
-                emit_byte(compiler, OP_GET_UPVALUE);
-                emit_byte(compiler, upvalue_idx);
-                emit_byte(compiler, OP_SET_PROP);
-                struct ObjString* name = make_string(sp->prop_name.start, sp->prop_name.length);
-                push_root(to_string(name));
-                emit_byte(compiler, add_constant(compiler, to_string(name))); 
-                pop_root();
-
-                struct SigClass* sig_class = (struct SigClass*)resolve_sig(compiler, sp->inst_name);
-                Value sig_val;
-                get_from_table(&sig_class->props, name, &sig_val);
-                return sig_val.as.sig_type;
-            }
-
-            add_error(compiler, sp->inst_name, "Instance doesn't exist");
-            return make_prim_sig(VAL_NIL);*/
         }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
@@ -725,46 +690,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments.count));
 
-            compiler->previous_call_sig = ((struct SigFun*)sig)->ret;
-
             return sig_fun->ret;
-
-            /*
-
-            if (call->name.type != TOKEN_DUMMY) {
-                emit_byte(compiler, OP_GET_LOCAL);
-                int idx =  resolve_local(compiler, call->name);
-                if (idx == -1) return make_prim_sig(VAL_NIL);
-                emit_byte(compiler, idx);
-
-                struct Sig* sig = resolve_sig(compiler, call->name);
-                struct SigList* params = (struct SigList*)(((struct SigFun*)sig)->params);
-                if (params->count != call->arguments.count) {
-                    add_error(compiler, call->name, "Argument count must match declaration.");
-                }
-
-                int min = call->arguments.count < params->count ? call->arguments.count : params->count;
-                for (int i = 0; i < min; i++) {
-                    struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
-                    if (!same_sig(arg_sig, params->sigs[i])) {
-                        add_error(compiler, call->name, "Argument type must match parameter type.");
-                    }
-                }
-
-                emit_byte(compiler, OP_CALL);
-                emit_byte(compiler, (uint8_t)(call->arguments.count));
-
-                compiler->previous_call_sig = ((struct SigFun*)sig)->ret;
-
-                return ((struct SigFun*)sig)->ret;
-            }
-
-            emit_byte(compiler, OP_CALL);
-            emit_byte(compiler, (uint8_t)(call->arguments.count));
-
-            compiler->previous_call_sig = ((struct SigFun*)compiler->previous_call_sig)->ret;
-
-            return compiler->previous_call_sig;*/
         }
     } 
 }
@@ -777,7 +703,6 @@ void init_compiler(struct Compiler* compiler, struct ObjFunction* function) {
     compiler->enclosing = NULL;
     compiler->upvalue_count = 0;
     compiler->signatures = NULL;
-    compiler->previous_call_sig = NULL;
 }
 
 void free_compiler(struct Compiler* compiler) {
