@@ -338,7 +338,13 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct SigList* inner_ret_sigs = compile_function(&func_comp, &df->parameters);
 
 #ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(&func_comp.function->chunk);
+    disassemble_chunk(func_comp.function);
+    int i = 0;
+    printf("********************\n");
+    while (i < func_comp.function->chunk.count) {
+        OpCode op = func_comp.function->chunk.codes[i++];
+        printf("[ %s ]\n", op_to_string(op));
+    }
 #endif
 
             copy_errors(compiler, &func_comp);
@@ -693,6 +699,38 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_CALL: {
             Call* call = (Call*)node;
 
+            struct Sig* sig = compile_node(compiler, call->left, ret_sigs);
+            struct SigFun* sig_fun = (struct SigFun*)sig;
+
+            if (sig_fun->base.type != SIG_FUN) {
+                add_error(compiler, call->name, "Calls must be used on a function type.");
+                return make_prim_sig(VAL_NIL);
+            }
+
+            struct SigList* params = (struct SigList*)(sig_fun->params);
+
+            if (call->arguments.count != params->count) {
+                add_error(compiler, call->name, "Argument count must match function parameter count.");
+                return make_prim_sig(VAL_NIL);
+            }
+
+            int min = call->arguments.count < params->count ? call->arguments.count : params->count;
+            for (int i = 0; i < min; i++) {
+                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
+                if (!same_sig(arg_sig, params->sigs[i])) {
+                    add_error(compiler, call->name, "Argument type must match parameter type.");
+                }
+            }
+
+            emit_byte(compiler, OP_CALL);
+            emit_byte(compiler, (uint8_t)(call->arguments.count));
+
+            compiler->previous_call_sig = ((struct SigFun*)sig)->ret;
+
+            return sig_fun->ret;
+
+            /*
+
             if (call->name.type != TOKEN_DUMMY) {
                 emit_byte(compiler, OP_GET_LOCAL);
                 int idx =  resolve_local(compiler, call->name);
@@ -726,7 +764,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             compiler->previous_call_sig = ((struct SigFun*)compiler->previous_call_sig)->ret;
 
-            return compiler->previous_call_sig;
+            return compiler->previous_call_sig;*/
         }
     } 
 }

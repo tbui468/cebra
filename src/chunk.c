@@ -67,7 +67,10 @@ static uint16_t read_short(Chunk* chunk, int code_idx) {
     return (uint16_t)chunk->codes[code_idx];
 }
 
-void disassemble_chunk(Chunk* chunk) {
+void disassemble_chunk(struct ObjFunction* function) {
+    printf("*********************\n");
+    printf("%.*s\n", function->name->length, function->name->chars);
+    Chunk* chunk = &function->chunk;
     int i = 0;
     while (i < chunk->count) {
         OpCode op = chunk->codes[i++];
@@ -79,7 +82,12 @@ void disassemble_chunk(Chunk* chunk) {
                 break;
             }
             case OP_FUN: {
-                int idx = read_byte(chunk, i++);
+                int fun_idx = read_byte(chunk, i++);
+                int upvalue_count = read_byte(chunk, i++);
+                for (int i = 0; i < upvalue_count; i++) {
+                    int uv_local = read_byte(chunk, i++);
+                    int uv_idx = read_byte(chunk, i++);
+                }
                 printf("<fun>"); 
                 break;
             }

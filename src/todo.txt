@@ -25,6 +25,27 @@ print make_dog().name
 d: Dog = make_dog()
 
 
+c: (int) -> = (i: int) -> {
+    if i == 2 {
+        print "Integer Parameter: Passed!"
+    } else {
+        print "Integer Parameter: Failed!"
+    }
+}
+c(2)
+fib: (int) -> int = (i: int) -> int {
+    if i < 2 {
+        -> i
+    }
+    -> fib(i - 1) + fib(i - 2)
+}
+if fib(10) == 55 {
+    print "Recursion: Passed!"
+} else {
+    print "Recursion: Failed!"
+}
+
+
 c: () -> (int) -> int = () -> (int) -> int {
     d: (int) -> int = (n: int) -> int {
         -> n * 2
@@ -32,9 +53,11 @@ c: () -> (int) -> int = () -> (int) -> int {
     -> d
 }
 
-Setting properties doesn't work - look at assignment() inside parser.c
+Get cascading calls working for functions
+    keep in mind that we need them working for functions too
+    how about this?  Just make calls take in one argument list, BUT
+    if we see an open '(' as the next token, don't wrap it in a expr_stmt
 
-Redo Call in ast.h and ast.c - functions aren't working anymore
 Call - GetVar or GetProp (can't set function to a value, no no SetVar or SetProp), followed
         by a variable number of calls (parentheses with arguments)
         dog.bark()()(), or dog.mouth.bark()(), bark()(), bark()

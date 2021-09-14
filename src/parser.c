@@ -57,7 +57,6 @@ static bool peek_three(TokenType type1, TokenType type2, TokenType type3) {
 
 
 static NodeList argument_list() {
-//    match(TOKEN_LEFT_PAREN);
     NodeList args;
     init_node_list(&args);
     if (!match(TOKEN_RIGHT_PAREN)) {
@@ -126,7 +125,6 @@ static struct Node* call_dot() {
             consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.");
             left = make_get_prop(left, parser.previous);
         } else { //TOKEN_PAREN
-            //if (left->type != NODE_GET_VAR) add_error(((GetVar*)left)->name, "Left side must be function name");
             left = make_call(parser.previous, left, argument_list());
         }
     }
@@ -405,12 +403,13 @@ static struct Node* declaration() {
         return make_print(name, expression());
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
         return var_declaration(true);
+        /*
     } else if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) {
         struct Node* ce = call_expression();
         if (peek_one(TOKEN_LEFT_PAREN)) {
             return ce;
         }
-        return make_expr_stmt(ce);
+        return make_expr_stmt(ce);*/
         /*
     } else if (peek_one(TOKEN_LEFT_PAREN)) {
         struct Node* ce = cascade_expression();

@@ -319,7 +319,7 @@ ResultCode compile_and_run(VM* vm, NodeList* nl, struct Compiler* script_compile
     }
 
 #ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(&script_compiler->function->chunk);
+    disassemble_chunk(script_compiler->function);
 #endif
 
     push(vm, to_function(script_compiler->function));
