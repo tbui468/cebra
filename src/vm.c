@@ -311,19 +311,10 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
     return RESULT_SUCCESS;
 }
 
-ResultCode compile_and_run(VM* vm, NodeList* nl, struct Compiler* script_compiler) {
-    ResultCode compile_result = compile_script(script_compiler, nl);
+ResultCode run(VM* vm, struct ObjFunction* script) {
 
-    if (compile_result == RESULT_FAILED) {
-        return RESULT_FAILED; 
-    }
-
-#ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(script_compiler->function);
-#endif
-
-    push(vm, to_function(script_compiler->function));
-    call(vm, script_compiler->function);
+    push(vm, to_function(script));
+    call(vm, script);
 
     while (vm->frame_count > 0) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];

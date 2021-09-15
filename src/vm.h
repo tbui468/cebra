@@ -23,7 +23,8 @@ typedef struct {
 
 ResultCode init_vm(VM* vm);
 ResultCode free_vm(VM* vm);
-ResultCode compile_and_run(VM* vm, NodeList* nl, struct Compiler* script_compiler);
+ResultCode run(VM* vm, struct ObjFunction* script);
+
 
 Value pop(VM* vm);
 void push(VM* vm, Value value);

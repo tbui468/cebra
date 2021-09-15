@@ -29,15 +29,35 @@ ResultCode run_source(VM* vm, const char* source) {
     print_node_list(&nl);
 #endif
 
-    ResultCode run_result = compile_and_run(vm, &nl, &script_compiler);
 
-    if (run_result == RESULT_FAILED) {
+    ResultCode compile_result = compile_script(&script_compiler, &nl);
+
+    if (compile_result == RESULT_FAILED) {
         free_node_list(&nl);
+        free_compiler(&script_compiler);
+        return RESULT_FAILED; 
+    }
+
+#ifdef DEBUG_DISASSEMBLE
+    disassemble_chunk(script_compiler->function);
+#endif
+
+    if (compile_result == RESULT_FAILED) {
+        free_node_list(&nl);
+        free_compiler(&script_compiler);
         return RESULT_FAILED; 
     }
 
     free_node_list(&nl);
     free_compiler(&script_compiler);
+
+    ResultCode run_result = run(vm, script_compiler.function);
+
+    if (run_result == RESULT_FAILED) {
+        free_node_list(&nl);
+        free_compiler(&script_compiler);
+        return RESULT_FAILED; 
+    }
 
     return RESULT_SUCCESS;
 }
