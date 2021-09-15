@@ -39,7 +39,7 @@ struct Compiler {
 
 extern struct Compiler* current_compiler;
 
-void init_compiler(struct Compiler* compiler, struct ObjFunction* function);
+void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count);
 void free_compiler(struct Compiler* compiler);
 ResultCode compile_script(struct Compiler* compiler, NodeList* nl);
 const char* op_to_string(OpCode op);

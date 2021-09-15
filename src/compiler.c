@@ -297,6 +297,10 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
+static struct Sig* compile_method(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs) {
+    //almost the same as compiling functions, but after checking locals, check instance for variables
+    //  (and don't use upvalues????)
+}
 
 static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs) {
     if (node == NULL) {
@@ -323,15 +327,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             DeclFun* df = (DeclFun*)node;
             add_local(compiler, df->name, df->sig);
 
-            struct ObjString* name = make_string(df->name.start, df->name.length);
-            push_root(to_string(name));
-            struct ObjFunction* f = make_function(name, df->parameters.count);
-            push_root(to_function(f));
-
             struct Compiler func_comp;
-            init_compiler(&func_comp, f);
-            func_comp.enclosing = compiler;
-            current_compiler = &func_comp;
+            init_compiler(&func_comp, df->name.start, df->name.length, df->parameters.count);
 
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
@@ -367,7 +364,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
             }
 
-            int f_idx = add_constant(compiler, to_function(f));
+            int f_idx = add_constant(compiler, to_function(func_comp.function));
             emit_bytes(compiler, OP_FUN, f_idx);
             emit_byte(compiler, func_comp.upvalue_count);
             for (int i = 0; i < func_comp.upvalue_count; i++) {
@@ -375,10 +372,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 emit_byte(compiler, func_comp.upvalues[i].index);
             }
 
-            current_compiler = func_comp.enclosing;
             free_compiler(&func_comp);
-            pop_root();
-            pop_root();
+
             return make_prim_sig(VAL_NIL);
         }
         case NODE_DECL_CLASS: {
@@ -673,14 +668,20 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
     } 
 }
 
-void init_compiler(struct Compiler* compiler, struct ObjFunction* function) {
+void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count) {
+    struct ObjString* name = make_string(start, length);
+    push_root(to_string(name));
     compiler->scope_depth = 0;
     compiler->locals_count = 1; //first slot is for function def
     compiler->error_count = 0;
-    compiler->function = function;
+    compiler->function = make_function(name, parameter_count);
+    push_root(to_function(compiler->function));
     compiler->enclosing = NULL;
     compiler->upvalue_count = 0;
     compiler->signatures = NULL;
+
+    compiler->enclosing = current_compiler;
+    current_compiler = compiler;
 }
 
 void free_compiler(struct Compiler* compiler) {
@@ -689,6 +690,9 @@ void free_compiler(struct Compiler* compiler) {
         compiler->signatures = compiler->signatures->next;
         free_sig(previous);
     }
+    current_compiler = compiler->enclosing;
+    pop_root();
+    pop_root();
 }
 
 static struct SigList* compile_function(struct Compiler* compiler, NodeList* nl) {

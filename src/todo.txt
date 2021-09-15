@@ -10,6 +10,9 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Look at compile_method() in compiler.c - should we do it this way?
+        or look at how Nystrom does it
+
     methods in classes can't see fields (name, age, etc) during method compilation
         and is adding error.  Could make each class its own compiler so that
         methods capture the environment - would that still work with instances?
@@ -18,10 +21,15 @@ IMPLEMENTATION:
         Or add this keyword (this.name, this.age, etc)
 
         Or have an extra field in function called type that specifies
-            if the function is a regular function or a method. If it's a method,
-            if a method, then looking for identifier goes as follows:
+            if the function is a regular function or a method.
+            if a method, then looking for identifier follows these steps:
                 look in locals for identifier
                 look in instance properties for identifier
+        
+        Pull closures out of function and reuse them in instances???
+
+        What do we actually need?  Each instance should have the same methods
+            as those defined in the class, BUT it 
 
     add methods
         copy_value(Value* value) - 

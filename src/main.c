@@ -12,13 +12,8 @@
 
 ResultCode run_source(VM* vm, const char* source) {
 
-    struct ObjString* name = make_string("script", 6);
-    push_root(to_string(name));
-    struct ObjFunction* script = make_function(name, 0);
-    pop_root();
     struct Compiler script_compiler;
-    init_compiler(&script_compiler, script);
-    current_compiler = &script_compiler;
+    init_compiler(&script_compiler, "script", 6, 0);
 
     //create list of declarations (AST)
     NodeList nl;
@@ -42,8 +37,6 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 
     free_node_list(&nl);
-
-    current_compiler = NULL;
     free_compiler(&script_compiler);
 
     return RESULT_SUCCESS;
