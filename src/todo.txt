@@ -10,33 +10,34 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Look at compile_method() in compiler.c - should we do it this way?
-        or look at how Nystrom does it
+    Make struct instantiation the same as a variable declaration + assignment
+        d: Dog = Dog() 
+        reason: we want to be able to write code like this:
+            -> Dog()
+        or
+            fun(Dog(), 3)
 
-    methods in classes can't see fields (name, age, etc) during method compilation
-        and is adding error.  Could make each class its own compiler so that
-        methods capture the environment - would that still work with instances?
-        wouldn't the upvalues need to be copied too?
+        and a generalized format will allow anonymous structs, instances, functions later
 
-        Or add this keyword (this.name, this.age, etc)
+    Allow struct instantiation to have arguments that set fields
+        by order of declaration.  Use must include all arguments, but
+        may leave them empty if the default value is desired
 
-        Or have an extra field in function called type that specifies
-            if the function is a regular function or a method.
-            if a method, then looking for identifier follows these steps:
-                look in locals for identifier
-                look in instance properties for identifier
-        
-        Pull closures out of function and reuse them in instances???
+        Dog: struct = struct {
+            name: string = "Mittens"
+            age: int = 3
+            length: float = 12.3
+        }
 
-        What do we actually need?  Each instance should have the same methods
-            as those defined in the class, BUT it 
+        Dog("Bubbles", 23, 1.32)
+        Dog(, 23, 1.32)
+        Dog(,,) is the same as Dog()
 
-    add methods
-        copy_value(Value* value) - 
-            add functions/classes/instances for better class instances
+    change class keyword to struct
 
-    Inheritance syntax and implementation
-        fill out the rest of copy_value(Value* value) for class methods
+    Make functions usable as parameters and return types
+
+    Make structs usable as parameters and return types
 
     Native functions - where should they be defined?
 

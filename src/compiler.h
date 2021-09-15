@@ -38,6 +38,7 @@ struct Compiler {
 };
 
 extern struct Compiler* current_compiler;
+extern struct Compiler* class_compiler;
 
 void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count);
 void free_compiler(struct Compiler* compiler);

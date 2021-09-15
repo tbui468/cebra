@@ -136,7 +136,12 @@ bool sig_is_type(struct Sig* sig, ValueType type) {
 void print_sig(struct Sig* sig) {
     switch(sig->type) {
         case SIG_LIST:
-            printf("SigList Stub");
+            struct SigList* sl = (struct SigList*)sig;
+            printf("(");
+            for (int i = 0; i < sl->count; i++) {
+                print_sig(sl->sigs[i]);
+            }
+            printf(")");
             break;
         case SIG_PRIM:
             struct SigPrim* sp = (struct SigPrim*)sig;

@@ -459,5 +459,16 @@
     } else {
         print "Cascade Property Assignment: Failed!"
     }
+
+    dog3: Dog = Dog()
+    dog_age: (Dog) -> = (d: Dog) -> {
+        d.age = 10
+    }
+    dog_age(dog3)
+    if dog3.age == 10 {
+        print "Instance as Parameter: Passed!"
+    } else {
+        print "Instance as Parameter: Failed!"
+    }
     
 }

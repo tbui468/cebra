@@ -245,7 +245,7 @@ static struct Sig* read_sig(Token name) {
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
-            return make_class_sig(name); //TODO: add superclassses here later
+            return make_class_sig(name);
         }
         return make_class_sig(name);
     }
@@ -263,7 +263,7 @@ static struct Node* var_declaration(bool require_assign) {
     consume(TOKEN_COLON, "Expect ':' after identifier.");
     struct Sig* sig = read_sig(name);
 
-    if (sig->type == SIG_IDENTIFIER) {
+    if (sig->type == SIG_IDENTIFIER && peek_one(TOKEN_EQUAL)) {
         consume(TOKEN_EQUAL, "Expect '=' after class name.");
         consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
         Token klass = parser.previous;
@@ -271,7 +271,6 @@ static struct Node* var_declaration(bool require_assign) {
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after '('.");
 
         Token klass_type = ((struct SigIdentifier*)sig)->identifier;
-
         return make_inst_class(name, klass_type, make_get_var(klass));
     }
 
@@ -329,7 +328,7 @@ static struct Node* var_declaration(bool require_assign) {
         consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
         NodeList params;
         init_node_list(&params);
-
+        
         struct Sig* param_sig = make_list_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
@@ -346,9 +345,11 @@ static struct Node* var_declaration(bool require_assign) {
         struct Sig* ret_sig = read_sig(name);
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+
         struct Node* body = block();
-        struct Sig* fun_sig = make_fun_sig(param_sig, ret_sig);
-        if (!same_sig(fun_sig, sig)) {
+        struct Sig* fun_sig = make_fun_sig(param_sig, ret_sig); 
+
+        if (!same_sig(fun_sig, sig)) { 
             add_error(name, "Function declaration type must match definition type.");
         }
         return make_decl_fun(name, params, fun_sig, body);

@@ -6,6 +6,7 @@
 #include "obj_class.h"
 
 struct Compiler* current_compiler = NULL;
+struct Compiler* class_compiler = NULL;
 struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs);
 static struct SigList* compile_function(struct Compiler* compiler, NodeList* nl);
 
@@ -297,11 +298,6 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
-static struct Sig* compile_method(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs) {
-    //almost the same as compiling functions, but after checking locals, check instance for variables
-    //  (and don't use upvalues????)
-}
-
 static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs) {
     if (node == NULL) {
         return make_prim_sig(VAL_NIL);
@@ -332,7 +328,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
-            struct SigList* inner_ret_sigs = compile_function(&func_comp, &df->parameters);
+            struct SigList* inner_ret_sigs = compile_function(&func_comp, &df->parameters); 
 
 #ifdef DEBUG_DISASSEMBLE
     printf("-disassemble start\n");
@@ -544,8 +540,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_UNARY:        return compile_unary(compiler, node);
         case NODE_GET_PROP: {
             GetProp* gp = (GetProp*)node;
-            struct SigClass* sig_inst = (struct SigClass*)compile_node(compiler, gp->inst, ret_sigs);
-
+            struct Sig* sig_inst = compile_node(compiler, gp->inst, ret_sigs);
+            if (sig_inst->type == SIG_IDENTIFIER) {
+                sig_inst = resolve_sig(compiler, ((struct SigIdentifier*)sig_inst)->identifier);
+            }
 
             emit_byte(compiler, OP_GET_PROP);
             struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
@@ -554,7 +552,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             pop_root();
 
             Value sig_val = to_nil();
-            get_from_table(&sig_inst->props, name, &sig_val);
+            get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
 
             if (IS_NIL(sig_val)) {
                 add_error(compiler, gp->prop, "Property doesn't exist on instance");
@@ -566,7 +564,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;
             struct Sig* right_sig = compile_node(compiler, sp->right, ret_sigs);
-            struct SigClass* sig_inst = (struct SigClass*)compile_node(compiler, sp->inst, ret_sigs);
+            struct Sig* sig_inst = compile_node(compiler, sp->inst, ret_sigs);
+            if (sig_inst->type == SIG_IDENTIFIER) {
+                sig_inst = resolve_sig(compiler, ((struct SigIdentifier*)sig_inst)->identifier);
+            }
 
             struct ObjString* name = make_string(sp->prop.start, sp->prop.length);
             push_root(to_string(name));
@@ -574,7 +575,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             pop_root();
 
             Value sig_val = to_nil();
-            get_from_table(&sig_inst->props, name, &sig_val);
+            get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
 
             if (!same_sig(sig_val.as.sig_type, right_sig)) {
                 add_error(compiler, sp->prop, "Property and assignment types must match.");
@@ -653,10 +654,16 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 return make_prim_sig(VAL_NIL);
             }
 
-            int min = call->arguments.count < params->count ? call->arguments.count : params->count;
+            int min = call->arguments.count < params->count ? call->arguments.count : params->count; //Why is this needed?
             for (int i = 0; i < min; i++) {
                 struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
-                if (!same_sig(arg_sig, params->sigs[i])) {
+
+                struct Sig* param_sig = params->sigs[i];
+                if (param_sig->type == SIG_IDENTIFIER) {
+                    param_sig = resolve_sig(compiler, ((struct SigIdentifier*)param_sig)->identifier);
+                }
+
+                if (!same_sig(arg_sig, param_sig)) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
             }

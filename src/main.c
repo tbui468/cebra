@@ -15,10 +15,11 @@ ResultCode run_source(VM* vm, const char* source) {
     struct Compiler script_compiler;
     init_compiler(&script_compiler, "script", 6, 0);
 
-    //create list of declarations (AST)
+    printf("Before parser\n");
     NodeList nl;
     init_node_list(&nl);
     ResultCode parse_result = parse(source, &nl);
+    printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
         free_node_list(&nl);
@@ -29,8 +30,9 @@ ResultCode run_source(VM* vm, const char* source) {
     print_node_list(&nl);
 #endif
 
-
+    printf("Before compiler\n");
     ResultCode compile_result = compile_script(&script_compiler, &nl);
+    printf("After compiler\n");
 
     if (compile_result == RESULT_FAILED) {
         free_node_list(&nl);
