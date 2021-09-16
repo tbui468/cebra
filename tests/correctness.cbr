@@ -506,6 +506,4 @@
         print "Instance as Return: Failed!"
     }
 
-    print "this is the end"
-    
 }

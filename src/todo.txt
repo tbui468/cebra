@@ -13,6 +13,8 @@ IMPLEMENTATION:
     Generalize class as parameters and class as return
         hitting the 255 byte limit for adding constants
         need to change indices of constants to be shorts (or even 4 byte ints)
+        create emit_short()
+        replace emit_bytes with emit_byte two times - it's confusing having two
 
     When compile_node() is called, should check if return value is NULL
         make all errors return NULL, rather than a signature of type NIL

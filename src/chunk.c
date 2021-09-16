@@ -76,7 +76,8 @@ void disassemble_chunk(struct ObjFunction* function) {
         printf("%04d    [ %s ] ", i - 1, op_to_string(op));
         switch(op) {
             case OP_CONSTANT: {
-                int idx = read_byte(chunk, i++);
+                int idx = read_short(chunk, i);
+                i += 2;
                 print_value(chunk->constants.values[idx]);
                 break;
             }

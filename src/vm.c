@@ -104,7 +104,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
     uint8_t op = READ_TYPE(frame, uint8_t);
     switch(op) {
         case OP_CONSTANT: {
-            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint16_t)));
             break;
         }
         case OP_NIL: {
@@ -112,7 +112,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_FUN: {
-            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint16_t)));
             struct ObjFunction* func = peek(vm, 0).as.function_type;
             int total_upvalues = READ_TYPE(frame, uint8_t);
             for (int i = 0; i < total_upvalues; i++) {
@@ -128,13 +128,13 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_CLASS: {
-            push(vm, read_constant(frame, READ_TYPE(frame, uint8_t)));
+            push(vm, read_constant(frame, READ_TYPE(frame, uint16_t)));
             break;
         }
         case OP_ADD_PROP: {
             //This op only gets added after a class property/method is compiled into a local variable
             //current stack: [script]...[class][value]
-            push_root(read_constant(frame, READ_TYPE(frame, uint8_t)));
+            push_root(read_constant(frame, READ_TYPE(frame, uint16_t)));
             struct ObjClass* klass = peek(vm, 2).as.class_type;
             set_table(&klass->props, peek(vm, 0).as.string_type, peek(vm, 1));
             pop_root();
@@ -206,7 +206,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_GET_PROP: {
             struct ObjInstance* inst = peek(vm, 0).as.instance_type;
-            struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint8_t)).as.string_type;
+            struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
             Value prop_val = to_nil();
             get_from_table(&inst->props, prop_name, &prop_val);
             pop(vm);
@@ -216,7 +216,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_SET_PROP: {
             struct ObjInstance* inst = peek(vm, 0).as.instance_type;
             Value value = peek(vm, 1);
-            struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint8_t)).as.string_type;
+            struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
             set_table(&inst->props, prop_name, value);
             pop(vm);
             break;

@@ -44,6 +44,15 @@ static void emit_byte(struct Compiler* compiler, uint8_t byte) {
     compiler->function->chunk.count++;
 }
 
+static void emit_short(struct Compiler* compiler, uint16_t bytes) {
+    if (compiler->function->chunk.count + 2 > compiler->function->chunk.capacity) {
+        grow_capacity(compiler);
+    }
+
+    memcpy(&compiler->function->chunk.codes[compiler->function->chunk.count], &bytes, sizeof(uint16_t));
+    compiler->function->chunk.count += 2;
+}
+
 static void emit_bytes(struct Compiler* compiler, uint8_t byte1, uint8_t byte2) {
     emit_byte(compiler, byte1);
     emit_byte(compiler, byte2);
@@ -61,15 +70,6 @@ static void patch_jump(struct Compiler* compiler, int index) {
     memcpy(&compiler->function->chunk.codes[index - 2], &destination, sizeof(uint16_t));
 }
 
-static void emit_short(struct Compiler* compiler, uint16_t num) {
-    if (compiler->function->chunk.count + (int)sizeof(int16_t) > compiler->function->chunk.capacity) {
-        grow_capacity(compiler);
-    }
-
-    memcpy(&compiler->function->chunk.codes[compiler->function->chunk.count], &num, sizeof(int16_t));
-    compiler->function->chunk.count += sizeof(int16_t);
-}
-
 static void emit_jump_by(struct Compiler* compiler, OpCode op, int index) {
     emit_byte(compiler, op);
     emit_short(compiler, (uint16_t)index);
@@ -81,18 +81,21 @@ static struct Sig* compile_literal(struct Compiler* compiler, struct Node* node)
     switch(literal->name.type) {
         case TOKEN_INT: {
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
-            emit_bytes(compiler, OP_CONSTANT, add_constant(compiler, to_integer(integer)));
+            emit_byte(compiler, OP_CONSTANT); 
+            emit_short(compiler, add_constant(compiler, to_integer(integer)));
             return make_prim_sig(VAL_INT);
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
-            emit_bytes(compiler, OP_CONSTANT, add_constant(compiler, to_float(f)));
+            emit_byte(compiler, OP_CONSTANT);
+            emit_short(compiler, add_constant(compiler, to_float(f)));
             return make_prim_sig(VAL_FLOAT);
         }
         case TOKEN_STRING: {
             struct ObjString* str = make_string(literal->name.start, literal->name.length);
             push_root(to_string(str));
-            emit_bytes(compiler, OP_CONSTANT, add_constant(compiler, to_string(str)));
+            emit_byte(compiler, OP_CONSTANT);
+            emit_short(compiler, add_constant(compiler, to_string(str)));
             pop_root();
             return make_prim_sig(VAL_STRING);
         }
@@ -370,7 +373,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             }
 
             int f_idx = add_constant(compiler, to_function(func_comp.function));
-            emit_bytes(compiler, OP_FUN, f_idx);
+            emit_byte(compiler, OP_FUN);
+            emit_short(compiler, f_idx);
             emit_byte(compiler, func_comp.upvalue_count);
             for (int i = 0; i < func_comp.upvalue_count; i++) {
                 emit_byte(compiler, func_comp.upvalues[i].is_local);
@@ -389,7 +393,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct ObjClass* klass = make_class(name);
             push_root(to_class(klass));
             //add_local(compiler, dc->name, dc->sig);
-            emit_bytes(compiler, OP_CLASS, add_constant(compiler, to_class(klass)));
+            emit_byte(compiler, OP_CLASS);
+            emit_short(compiler, add_constant(compiler, to_class(klass)));
 
             for (int i = 0; i < dc->decls.count; i++) {
                 struct Node* node = dc->decls.nodes[i];
@@ -417,7 +422,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
                 struct Sig* class_ret_sigs = make_list_sig();
                 struct Sig* sig = compile_node(compiler, node, (struct SigList*)class_ret_sigs);
-                emit_bytes(compiler, OP_ADD_PROP, add_constant(compiler, to_string(prop_name)));
+                emit_byte(compiler, OP_ADD_PROP);
+                emit_short(compiler, add_constant(compiler, to_string(prop_name)));
                 compiler->locals_count--;
                 pop_root();
             }
@@ -558,7 +564,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             emit_byte(compiler, OP_GET_PROP);
             struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
             push_root(to_string(name));
-            emit_byte(compiler, add_constant(compiler, to_string(name))); 
+            emit_short(compiler, add_constant(compiler, to_string(name))); 
             pop_root();
 
             Value sig_val = to_nil();
@@ -581,7 +587,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             struct ObjString* name = make_string(sp->prop.start, sp->prop.length);
             push_root(to_string(name));
-            emit_bytes(compiler, OP_SET_PROP, add_constant(compiler, to_string(name))); 
+            emit_byte(compiler, OP_SET_PROP);
+            emit_short(compiler, add_constant(compiler, to_string(name))); 
             pop_root();
 
             Value sig_val = to_nil();
