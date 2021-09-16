@@ -383,7 +383,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             free_compiler(&func_comp);
 
-            return make_prim_sig(VAL_NIL);
+            return sigfun;
         }
         case NODE_DECL_CLASS: {
             DeclClass* dc = (DeclClass*)node;
