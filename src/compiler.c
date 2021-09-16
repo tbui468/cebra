@@ -358,9 +358,13 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             if (ret_sig->type == SIG_IDENTIFIER) {
                 ret_sig = resolve_sig(compiler, ((struct SigIdentifier*)ret_sig)->identifier);
             }
-
+            
             for (int i = 0; i < inner_ret_sigs->count; i++) {
-                if (!same_sig(ret_sig, inner_ret_sigs->sigs[i])) {
+                struct Sig* inner_sig = inner_ret_sigs->sigs[i];
+                if (inner_sig->type == SIG_IDENTIFIER) {
+                    inner_sig = resolve_sig(compiler, ((struct SigIdentifier*)inner_sig)->identifier);
+                }
+                if (!same_sig(ret_sig, inner_sig)) {
                     add_error(compiler, df->name, "Return type must match signature in function declaration.");
                 }
             }
@@ -673,6 +677,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             int min = call->arguments.count < params->count ? call->arguments.count : params->count; //Why is this needed?
             for (int i = 0; i < min; i++) {
                 struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
+                if (arg_sig->type == SIG_IDENTIFIER) {
+                    arg_sig = resolve_sig(compiler, ((struct SigIdentifier*)arg_sig)->identifier);
+                }
 
                 struct Sig* param_sig = params->sigs[i];
                 if (param_sig->type == SIG_IDENTIFIER) {

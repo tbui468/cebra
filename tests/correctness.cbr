@@ -246,6 +246,29 @@
 
 {
     print ""
+    print "***********Functions as Function Parameters************"
+
+    add: (int, int) -> int = (a: int, b: int) -> int {
+        -> a + b
+    }
+
+    mul: (int, int) -> int = (a: int, b: int) -> int {
+        -> a * b
+    }
+
+    fun: (int, int, (int, int)->int) -> int = (a: int, b: int, c: (int, int)->int) -> int {
+        -> c(a, b)
+    }
+
+    if fun(2, 3, add) == 5 and fun(5, 4, mul) == 20 {
+        print "Passing function as Argument: Passed!"    
+    } else {
+        print "Passing function as Argument: Failed!"    
+    }
+}
+
+{
+    print ""
     print "***********Cascading Calls************"
 
     a: () -> () -> () -> int = () -> () -> () -> int {
