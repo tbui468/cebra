@@ -18,6 +18,8 @@ typedef struct {
     Token next_next;
     ParseError errors[256];
     int error_count;
+    Token current_class;
+    struct Sig* current_sig;
 } Parser;
 
 ResultCode parse(const char* source, NodeList* nl);

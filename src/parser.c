@@ -9,7 +9,7 @@ static struct Node* expression();
 static struct Node* declaration();
 static void add_error(Token token, const char* message);
 static struct Node* block();
-static struct Sig* read_sig(Token name);
+static struct Sig* read_sig();
 static struct Node* var_declaration(bool require_assign);
 
 static void print_all_tokens() {
@@ -100,7 +100,7 @@ static struct Node* primary() {
 
             consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
 
-            struct Sig* ret_sig = read_sig(make_dummy_token());
+            struct Sig* ret_sig = read_sig();
 
             consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
 
@@ -113,6 +113,47 @@ static struct Node* primary() {
         struct Node* expr = expression();
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
         return expr;
+    } else if (match(TOKEN_CLASS)) {
+        struct Sig* right_sig = read_sig();
+        consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+        NodeList nl;
+        init_node_list(&nl);
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            //add class signature entries to table here
+            struct Node* decl = var_declaration(true);
+            struct Sig* prop_sig;
+            const char* prop_id_chars;
+            int prop_id_length;
+            switch (decl->type) {
+                case NODE_DECL_VAR:
+                    DeclVar* dv = (DeclVar*)decl;
+                    prop_sig = dv->sig;
+                    prop_id_chars = dv->name.start;
+                    prop_id_length = dv->name.length;
+                    break;
+                case NODE_DECL_FUN:
+                    DeclFun* df = (DeclFun*)decl;
+                    prop_sig = df->sig;
+                    prop_id_chars = df->name.start;
+                    prop_id_length = df->name.length;
+                    break;
+                case NODE_DECL_CLASS:
+                    DeclClass* dc = (DeclClass*)decl;
+                    prop_sig = dc->sig;
+                    prop_id_chars = dc->name.start;
+                    prop_id_length = dc->name.length;
+                    break;
+                default:
+                    add_error(parser.current_class, "Only primitive, function or class definitions allowed in class body.");
+                    return NULL;
+            }
+            struct ObjString* name = make_string(prop_id_chars, prop_id_length);
+            push_root(to_string(name));
+            set_table(&((struct SigClass*)(parser.current_sig))->props, name, to_sig(prop_sig));
+            pop_root();
+            add_node(&nl, decl);
+        }
+        return make_decl_class(parser.current_class, nl, parser.current_sig);
     }
 
     return NULL;
@@ -247,17 +288,17 @@ static struct Node* block() {
     return make_block(name, body);
 }
 
-static struct Sig* read_sig(Token name) {
+static struct Sig* read_sig() {
     if (match(TOKEN_LEFT_PAREN)) {
         struct Sig* params = make_list_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                add_sig((struct SigList*)params, read_sig(name));
+                add_sig((struct SigList*)params, read_sig());
             } while(match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
         }
         consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.");
-        struct Sig* ret = read_sig(name);
+        struct Sig* ret = read_sig();
         return make_fun_sig(params, ret);
     }
 
@@ -274,11 +315,7 @@ static struct Sig* read_sig(Token name) {
         return make_prim_sig(VAL_STRING);
 
     if (match(TOKEN_CLASS)) {
-        if (match(TOKEN_LESS)) {
-            consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
-            return make_class_sig(name);
-        }
-        return make_class_sig(name);
+        return make_class_sig(parser.current_class);
     }
 
     if (match(TOKEN_IDENTIFIER)) {
@@ -292,11 +329,19 @@ static struct Node* var_declaration(bool require_assign) {
     match(TOKEN_IDENTIFIER);
     Token name = parser.previous;
     consume(TOKEN_COLON, "Expect ':' after identifier.");
-    struct Sig* sig = read_sig(name);
+    bool is_class = peek_one(TOKEN_CLASS);
+    struct Sig* sig = read_sig();
+
+    if (is_class) {
+        parser.current_class = name;
+        parser.current_sig = sig;
+    }
+
+    /*
 
     if (sig->type == SIG_CLASS) {
         consume(TOKEN_EQUAL, "Expect '=' after class declaration.");
-        struct Sig* right_sig = read_sig(name);
+        struct Sig* right_sig = read_sig();
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
         NodeList nl;
         init_node_list(&nl);
@@ -335,44 +380,7 @@ static struct Node* var_declaration(bool require_assign) {
             pop_root();
             add_node(&nl, decl);
         }
-        return make_decl_class(name, nl, sig);
-    }
-/*
-    if (sig->type == SIG_FUN) {
-        consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
-
-        if (peek_one(TOKEN_IDENTIFIER)) {
-            return make_decl_var(name, sig, expression());
-        }
-
-        consume(TOKEN_LEFT_PAREN, "Expect '(' before parameters.");
-        NodeList params;
-        init_node_list(&params);
-        
-        struct Sig* param_sig = make_list_sig();
-        if (!match(TOKEN_RIGHT_PAREN)) {
-            do {
-                struct Node* var_decl = var_declaration(false);
-                DeclVar* vd = (DeclVar*)var_decl;
-                add_sig((struct SigList*)param_sig, vd->sig);
-                add_node(&params, var_decl);
-            } while (match(TOKEN_COMMA));
-            consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
-        }
-
-        consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
-
-        struct Sig* ret_sig = read_sig(name);
-
-        consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
-
-        struct Node* body = block();
-        struct Sig* fun_sig = make_fun_sig(param_sig, ret_sig); 
-
-        if (!same_sig(fun_sig, sig)) { 
-            add_error(name, "Function declaration type must match definition type.");
-        }
-        return make_decl_fun(name, params, fun_sig, body);
+        return make_decl_class(parser.current_class, nl, sig);
     }*/
 
     if (require_assign) {
@@ -455,6 +463,8 @@ static void init_parser(const char* source) {
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
+    parser.current_class = make_dummy_token();
+    parser.current_sig = NULL;
 }
 
 

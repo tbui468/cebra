@@ -388,7 +388,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             push_root(to_string(name));
             struct ObjClass* klass = make_class(name);
             push_root(to_class(klass));
-            add_local(compiler, dc->name, dc->sig);
+            //add_local(compiler, dc->name, dc->sig);
             emit_bytes(compiler, OP_CLASS, add_constant(compiler, to_class(klass)));
 
             for (int i = 0; i < dc->decls.count; i++) {

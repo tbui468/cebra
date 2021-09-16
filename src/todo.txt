@@ -10,39 +10,9 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Fix problems with instances not type checking correctly in correctness.cbr
-        after switching decl_sig and def_sig in NODE_DECL_VAR by 
-        moving add_local() to the beginning (for recursion to work), but
-        now the wrong signature is used.  
-
-        Shouldn't allow declaration types to differ from definition -
-            should just duck type it when passing in as argument/return
-
-    Add this test to correctness.cbr
-        add: (int, int) -> int = (a: int, b: int) -> int {
-            -> a + b
-        }
-
-        mul: (int, int) -> int = (a: int, b: int) -> int {
-            -> a * b
-        }
-
-        print add(3, 3)
-        print mul(3, 3)
-
-        fun: ((int, int)->int) -> int = (a: (int, int)->int) -> int {
-            ->a(3, 3)
-        }
-
-        fun := (a: (int, int)->int) -> int {
-
-        }
-
-        print fun(add)
-        print fun(mul)
-
     Generalize class as parameters and class as return
-        classes currently break because of decl_sig/def_sig problems
+        hitting the 255 byte limit for adding constants
+        need to change indices of constants to be shorts (or even 4 byte ints)
 
     When compile_node() is called, should check if return value is NULL
         make all errors return NULL, rather than a signature of type NIL
