@@ -10,14 +10,9 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Make struct instantiation the same as a variable declaration + assignment
-        d: Dog = Dog() 
-        reason: we want to be able to write code like this:
-            -> Dog()
-        or
-            fun(Dog(), 3)
+    Generalize function as parameters and function as return
 
-        and a generalized format will allow anonymous structs, instances, functions later
+    Generalize class as parameters and class as return
 
     Allow struct instantiation to have arguments that set fields
         by order of declaration.  Use must include all arguments, but

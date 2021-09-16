@@ -313,8 +313,18 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             //primitive type
             struct Sig* sig = compile_node(compiler, dv->right, NULL);
-            add_local(compiler, dv->name, dv->sig);
-            if (!sig_is_type(sig, VAL_NIL) && !same_sig(sig, dv->sig)) {
+            if (sig->type == SIG_IDENTIFIER) {
+                sig = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
+            }
+
+            struct Sig* decl_sig = dv->sig;
+            if (decl_sig->type == SIG_IDENTIFIER) {
+                decl_sig = resolve_sig(compiler, ((struct SigIdentifier*)decl_sig)->identifier);
+            }
+
+            add_local(compiler, dv->name, decl_sig);
+
+            if (!sig_is_type(sig, VAL_NIL) && !same_sig(sig, decl_sig)) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
             return make_prim_sig(VAL_NIL);
@@ -541,6 +551,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_GET_PROP: {
             GetProp* gp = (GetProp*)node;
             struct Sig* sig_inst = compile_node(compiler, gp->inst, ret_sigs);
+            if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
+
             if (sig_inst->type == SIG_IDENTIFIER) {
                 sig_inst = resolve_sig(compiler, ((struct SigIdentifier*)sig_inst)->identifier);
             }
@@ -603,11 +615,14 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             add_error(compiler, gv->name, "Local variable not declared.");
 
-            return make_prim_sig(VAL_NIL);
+            return NULL;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
+            if (right_sig->type == SIG_IDENTIFIER) {
+                right_sig = resolve_sig(compiler, ((struct SigIdentifier*)right_sig)->identifier);
+            }
 
             Token var = ((GetVar*)(sv->left))->name;
             struct Sig* var_sig = resolve_sig(compiler, var);
@@ -640,13 +655,19 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             Call* call = (Call*)node;
 
             struct Sig* sig = compile_node(compiler, call->left, ret_sigs);
-            struct SigFun* sig_fun = (struct SigFun*)sig;
 
-            if (sig_fun->base.type != SIG_FUN) {
+            if (sig->type == SIG_CLASS) {
+                struct SigClass* sig_class = (struct SigClass*)sig;
+                emit_byte(compiler, OP_INSTANCE);
+                return sig;
+            }
+
+            if (sig->type != SIG_FUN) {
                 add_error(compiler, call->name, "Calls must be used on a function type.");
                 return make_prim_sig(VAL_NIL);
             }
 
+            struct SigFun* sig_fun = (struct SigFun*)sig;
             struct SigList* params = (struct SigList*)(sig_fun->params);
 
             if (call->arguments.count != params->count) {

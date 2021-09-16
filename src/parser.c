@@ -263,6 +263,7 @@ static struct Node* var_declaration(bool require_assign) {
     consume(TOKEN_COLON, "Expect ':' after identifier.");
     struct Sig* sig = read_sig(name);
 
+    /*
     if (sig->type == SIG_IDENTIFIER && peek_one(TOKEN_EQUAL)) {
         consume(TOKEN_EQUAL, "Expect '=' after class name.");
         consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
@@ -272,7 +273,7 @@ static struct Node* var_declaration(bool require_assign) {
 
         Token klass_type = ((struct SigIdentifier*)sig)->identifier;
         return make_inst_class(name, klass_type, make_get_var(klass));
-    }
+    }*/
 
     if (sig->type == SIG_CLASS) {
         consume(TOKEN_EQUAL, "Expect '=' after class declaration.");
@@ -357,13 +358,11 @@ static struct Node* var_declaration(bool require_assign) {
 
     if (require_assign) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
-        struct Node* value = expression();
-        return make_decl_var(name, sig, value);
+        return make_decl_var(name, sig, expression());
     }
 
     if (match(TOKEN_EQUAL)) {
-        struct Node* value = expression();
-        return make_decl_var(name, sig, value);
+        return make_decl_var(name, sig, expression());
     } else {
         return make_decl_var(name, sig, NULL); 
     }

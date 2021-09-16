@@ -41,7 +41,7 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 
 #ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(script_compiler->function);
+    disassemble_chunk(script_compiler.function);
 #endif
 
     if (compile_result == RESULT_FAILED) {

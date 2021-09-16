@@ -470,5 +470,17 @@
     } else {
         print "Instance as Parameter: Failed!"
     }
+
+    dog_factory: () -> Dog = () -> Dog {
+        d: Dog = Dog()
+        d.age = 100
+        -> d
+    }
+
+    if dog_factory().age == 100 {
+        print "Instance as Return: Passed!"
+    } else {
+        print "Instance as Return: Failed!"
+    }
     
 }
