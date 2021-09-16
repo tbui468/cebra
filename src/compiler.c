@@ -306,12 +306,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
+            add_local(compiler, dv->name, dv->sig);
 
-            //TODO: class (so that Dog class can be passed around like any other variable)
-
-            //TODO: function (so that functions can be assigned to variables (functions can only be assigned to function calls now))
-
-            //primitive type
             struct Sig* sig = compile_node(compiler, dv->right, NULL);
             if (sig->type == SIG_IDENTIFIER) {
                 sig = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
@@ -322,8 +318,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 decl_sig = resolve_sig(compiler, ((struct SigIdentifier*)decl_sig)->identifier);
             }
 
-            add_local(compiler, dv->name, decl_sig);
-
             if (!sig_is_type(sig, VAL_NIL) && !same_sig(sig, decl_sig)) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
@@ -331,7 +325,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
-            add_local(compiler, df->name, df->sig);
+            //add_local(compiler, df->name, df->sig);
 
             struct Compiler func_comp;
             init_compiler(&func_comp, df->name.start, df->name.length, df->parameters.count);
@@ -599,6 +593,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
+
             int idx = resolve_local(compiler, gv->name);
             if (idx != -1) {
                 emit_byte(compiler, OP_GET_LOCAL);

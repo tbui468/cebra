@@ -8,6 +8,9 @@ Parser parser;
 static struct Node* expression();
 static struct Node* declaration();
 static void add_error(Token token, const char* message);
+static struct Node* block();
+static struct Sig* read_sig(Token name);
+static struct Node* var_declaration(bool require_assign);
 
 static void print_all_tokens() {
     printf("******start**********\n");
@@ -79,6 +82,34 @@ static struct Node* primary() {
         Token name = parser.previous;
         return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
+        if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
+            peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
+            NodeList params;
+            init_node_list(&params);
+            
+            struct Sig* param_sig = make_list_sig();
+            if (!match(TOKEN_RIGHT_PAREN)) {
+                do {
+                    struct Node* var_decl = var_declaration(false);
+                    DeclVar* vd = (DeclVar*)var_decl;
+                    add_sig((struct SigList*)param_sig, vd->sig);
+                    add_node(&params, var_decl);
+                } while (match(TOKEN_COMMA));
+                consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+            }
+
+            consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameters.");
+
+            struct Sig* ret_sig = read_sig(make_dummy_token());
+
+            consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+
+            struct Node* body = block();
+            struct Sig* fun_sig = make_fun_sig(param_sig, ret_sig); 
+
+            return make_decl_fun(make_dummy_token(), params, fun_sig, body);
+        }
+
         struct Node* expr = expression();
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
         return expr;
@@ -263,18 +294,6 @@ static struct Node* var_declaration(bool require_assign) {
     consume(TOKEN_COLON, "Expect ':' after identifier.");
     struct Sig* sig = read_sig(name);
 
-    /*
-    if (sig->type == SIG_IDENTIFIER && peek_one(TOKEN_EQUAL)) {
-        consume(TOKEN_EQUAL, "Expect '=' after class name.");
-        consume(TOKEN_IDENTIFIER, "Expect class constructor after '='.");
-        Token klass = parser.previous;
-        consume(TOKEN_LEFT_PAREN, "Expect '(' after class name.");
-        consume(TOKEN_RIGHT_PAREN, "Expect ')' after '('.");
-
-        Token klass_type = ((struct SigIdentifier*)sig)->identifier;
-        return make_inst_class(name, klass_type, make_get_var(klass));
-    }*/
-
     if (sig->type == SIG_CLASS) {
         consume(TOKEN_EQUAL, "Expect '=' after class declaration.");
         struct Sig* right_sig = read_sig(name);
@@ -318,7 +337,7 @@ static struct Node* var_declaration(bool require_assign) {
         }
         return make_decl_class(name, nl, sig);
     }
-
+/*
     if (sig->type == SIG_FUN) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
 
@@ -354,7 +373,7 @@ static struct Node* var_declaration(bool require_assign) {
             add_error(name, "Function declaration type must match definition type.");
         }
         return make_decl_fun(name, params, fun_sig, body);
-    }
+    }*/
 
     if (require_assign) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");

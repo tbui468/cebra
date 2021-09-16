@@ -10,9 +10,43 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Generalize function as parameters and function as return
+    Fix problems with instances not type checking correctly in correctness.cbr
+        after switching decl_sig and def_sig in NODE_DECL_VAR by 
+        moving add_local() to the beginning (for recursion to work), but
+        now the wrong signature is used.  
+
+        Shouldn't allow declaration types to differ from definition -
+            should just duck type it when passing in as argument/return
+
+    Add this test to correctness.cbr
+        add: (int, int) -> int = (a: int, b: int) -> int {
+            -> a + b
+        }
+
+        mul: (int, int) -> int = (a: int, b: int) -> int {
+            -> a * b
+        }
+
+        print add(3, 3)
+        print mul(3, 3)
+
+        fun: ((int, int)->int) -> int = (a: (int, int)->int) -> int {
+            ->a(3, 3)
+        }
+
+        fun := (a: (int, int)->int) -> int {
+
+        }
+
+        print fun(add)
+        print fun(mul)
 
     Generalize class as parameters and class as return
+        classes currently break because of decl_sig/def_sig problems
+
+    When compile_node() is called, should check if return value is NULL
+        make all errors return NULL, rather than a signature of type NIL
+        NIL type signatures are valid, whereas NULL will signal an error
 
     Allow struct instantiation to have arguments that set fields
         by order of declaration.  Use must include all arguments, but
@@ -30,37 +64,14 @@ IMPLEMENTATION:
 
     change class keyword to struct
 
-    Make functions usable as parameters and return types
-
-    Make structs usable as parameters and return types
-
     Native functions - where should they be defined?
-
-    moving classes, instances and functions around by assigning them
-    to variables is not currently supported.
-
-        //Functions
-        a: () -> = () -> {
-            print "hi"
-        }
-
-        b: () -> = a
-
-        a() //should print the same thing as b()
-        b() //should print the same thing as a()
-
-        //Classes
-        Dog: class = class {
-            name: string = "Mittens"
-        }
-
-        Dog2: class = Dog
-        d: Dog2 = Dog2() //same as Dog()
-
-        //Instances
-        dog1: Dog = Dog()
-        dog2: Dog = dog1 (point to same instance)
-        dog3: Dog = copy(dog1) (create a copy)
+        print()
+        copy()
+        clock()
+        string()
+        int()
+        float()
+        bool()
 
     property names are being added as constants for both OP_GET_PROP
     and OP_SET_PROP, but they aren't really constants.  What other
