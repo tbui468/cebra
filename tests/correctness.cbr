@@ -303,6 +303,21 @@
 
 {
     print ""
+    print "***********Anonymous Functions************"
+
+    op: (int, int, (int, int) -> int) -> int = (a: int, b: int, c: (int, int) -> int) -> int {
+        -> c(a, b)
+    }
+
+    if op(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 {
+        print "Anonymous Function: Passed!"
+    } else {
+        print "Anonymous Function: Failed!"
+    }
+}
+
+{
+    print ""
     print "***********1 Depth Closures************"
 
     a: int = 0
