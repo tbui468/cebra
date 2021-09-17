@@ -11,13 +11,33 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    replace print keyword with print(arg) native function
+    //fun: () -> = () -> {
+    //    print("hi")
+    //}
+    outer: () -> () -> string = () -> () -> string {
+        x: string = "outside"
+        inner: () -> string = () -> string {
+            -> x
+        }
+        -> inner
+    }
 
-    Native functions - defined in vm init
-        print structs
-        print inst
-        print functions
-        print native functions
+    closure: () -> string = outer()
+    if closure() == "outside" {
+        print("Closed Upvalues: Passed!")
+    } else {
+        print("Closed Upvalues: Failed!")
+    }
+
+    Also, function names are all screwed up - need a way to get
+        function names passed down recursive descent from 
+        var_declaration() to primary().  Functions can also
+        be enclosed, so simply setting a field on parser won't work -
+        need a linked list at very least or stack
+    
+    Closed Upvalue tests fail when running all tests, but they
+        pass when run in isolation. OP_GET_UPVALUE is getting a function
+        instead of the closed upvalue (string)
 
     Change NODE_DECL_FUN, NODE_DECL_CLASS, NODE_INST_CLASS to just
         NODE_FUN, NODE_CLASS, NODE_INST since NODE_DECL_VAR is the

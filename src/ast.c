@@ -60,15 +60,6 @@ struct Node* make_expr_stmt(struct Node* expr) {
     return (struct Node*)es;
 }
 
-struct Node* make_print(Token name, struct Node* right) {
-    Print* print = ALLOCATE(Print);
-    print->name = name;
-    print->right = right;
-    print->base.type = NODE_PRINT;
-
-    return (struct Node*)print;
-}
-
 struct Node* make_block(Token name, NodeList dl) {
     Block* block = ALLOCATE(Block);
     block->name = name;
@@ -247,13 +238,6 @@ void print_node(struct Node* node) {
             printf("Expr Stmt");
             break;
         }
-        case NODE_PRINT: {
-            Print* print = (Print*)node;
-            printf("( %.*s ", print->name.length, print->name.start);
-            print_node(print->right);
-            printf(")");
-            break;
-        }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             printf("( Block");
@@ -378,12 +362,6 @@ void free_node(struct Node* node) {
             ExprStmt* es = (ExprStmt*)node;
             free_node(es->expr);
             FREE(es, ExprStmt);
-            break;
-        }
-        case NODE_PRINT: {
-            Print* print = (Print*)node;
-            free_node(print->right);
-            FREE(print, Print);
             break;
         }
         case NODE_BLOCK: {

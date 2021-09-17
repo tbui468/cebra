@@ -340,16 +340,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct SigList* inner_ret_sigs = compile_function(&func_comp, &df->parameters); 
 
 #ifdef DEBUG_DISASSEMBLE
-    printf("-disassemble start\n");
-    printf("Error count: %d\n", func_comp.error_count);
     disassemble_chunk(func_comp.function);
-    int i = 0;
-    printf("-------------------\n");
-    while (i < func_comp.function->chunk.count) {
-        OpCode op = func_comp.function->chunk.codes[i++];
-        printf("[ %s ]\n", op_to_string(op));
-    }
-    printf("-disassemble end\n");
 #endif
 
             copy_errors(compiler, &func_comp);
@@ -437,12 +428,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             if (!sig_is_type(sig, VAL_NIL)) {
                 emit_byte(compiler, OP_POP);
             }
-            return make_prim_sig(VAL_NIL);
-        }
-        case NODE_PRINT: {
-            Print* print = (Print*)node;
-            struct Sig* type = compile_node(compiler, print->right, ret_sigs);
-            emit_byte(compiler, OP_PRINT);
             return make_prim_sig(VAL_NIL);
         }
         case NODE_BLOCK: {
@@ -770,7 +755,7 @@ ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
     str_sig->opt = int_sig;
     int_sig->opt = float_sig;
     add_sig((struct SigList*)sl, str_sig);
-    define_native(compiler, "my_print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
+    define_native(compiler, "print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
 
     struct SigList* ret_sigs = compile_function(compiler, nl);
 

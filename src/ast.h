@@ -13,7 +13,6 @@ typedef enum {
     NODE_UNARY,
     NODE_BINARY,
     NODE_LOGICAL,
-    NODE_PRINT,
     NODE_DECL_VAR,
     NODE_DECL_CLASS,
     NODE_INST_CLASS,
@@ -78,12 +77,6 @@ typedef struct {
     struct Node* expr;
 } ExprStmt;
 
-
-typedef struct {
-    struct Node base;
-    Token name;
-    struct Node* right;
-} Print;
 
 typedef struct {
     struct Node base;
@@ -186,7 +179,6 @@ struct Node* make_literal(Token name);
 struct Node* make_unary(Token name, struct Node* right);
 struct Node* make_binary(Token name, struct Node* left, struct Node* right);
 struct Node* make_logical(Token name, struct Node* left, struct Node* right);
-struct Node* make_print(Token name, struct Node* right);
 struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right);
 struct Node* make_get_var(Token name);
 struct Node* make_set_var(struct Node* left, struct Node* right);

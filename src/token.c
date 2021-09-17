@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "token.h"
 
 void print_token(Token token) {
@@ -20,7 +21,6 @@ void print_token(Token token) {
         case TOKEN_LESS_EQUAL: printf("TOKEN_LESS_EQUAL"); break;
         case TOKEN_GREATER: printf("TOKEN_GREATER"); break;
         case TOKEN_GREATER_EQUAL: printf("TOKEN_GREATER_EQUAL"); break;
-        case TOKEN_PRINT: printf("TOKEN_PRINT"); break;
         case TOKEN_IDENTIFIER: printf("TOKEN_IDENTIFIER [%.*s]", token.length, token.start); break;
         case TOKEN_PLUS: printf("TOKEN_PLUS"); break;
         case TOKEN_MINUS: printf("TOKEN_MINUS"); break;

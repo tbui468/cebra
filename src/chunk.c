@@ -68,7 +68,7 @@ static uint16_t read_short(Chunk* chunk, int code_idx) {
 }
 
 void disassemble_chunk(struct ObjFunction* function) {
-    printf("%.*s\n", function->name->length, function->name->chars);
+    printf("<%.*s>\n", function->name->length, function->name->chars);
     Chunk* chunk = &function->chunk;
     int i = 0;
     while (i < chunk->count) {
@@ -82,7 +82,8 @@ void disassemble_chunk(struct ObjFunction* function) {
                 break;
             }
             case OP_FUN: {
-                int fun_idx = read_byte(chunk, i++);
+                int fun_idx = read_short(chunk, i);
+                i += 2;
                 int upvalue_count = read_byte(chunk, i++);
                 for (int i = 0; i < upvalue_count; i++) {
                     int uv_local = read_byte(chunk, i++);
@@ -96,6 +97,16 @@ void disassemble_chunk(struct ObjFunction* function) {
                 break;
             }
             case OP_ADD_PROP: {
+                int slot = read_byte(chunk, i++);
+                printf("[%d]", slot);
+                break;
+            }
+            case OP_GET_UPVALUE: {
+                int slot = read_byte(chunk, i++);
+                printf("[%d]", slot);
+                break;
+            }
+            case OP_SET_UPVALUE: {
                 int slot = read_byte(chunk, i++);
                 printf("[%d]", slot);
                 break;

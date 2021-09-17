@@ -283,11 +283,6 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             pop(vm);
             break;
         }
-        case OP_PRINT: {
-            print_value(pop(vm));
-            printf("\n");
-            break;
-        }
         case OP_CALL: {
             int arity = (int)READ_TYPE(frame, uint8_t);
             Value value = peek(vm, arity);
@@ -297,7 +292,9 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             if (value.type == VAL_NATIVE) {
                 Value (*native)(int, Value*) = value.as.native_type->function;
                 Value result = native(arity, vm->stack_top - arity);
-                pop(vm);
+                for (int i = 0; i < arity + 1; i++) {
+                    pop(vm);
+                }
                 if (result.type != VAL_NIL) {
                     push(vm, result);
                 }
