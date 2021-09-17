@@ -76,9 +76,11 @@ static struct ObjUpvalue* capture_upvalue(VM* vm, Value* location) {
         return new_upvalue;
     }
 
+    struct ObjUpvalue* previous = NULL;
     struct ObjUpvalue* current = vm->open_upvalues;
     struct ObjUpvalue* next = current->next;
     while (next != NULL && location > current->location) {
+        previous = current;
         current = next;
         next = next->next;
     }
@@ -88,8 +90,17 @@ static struct ObjUpvalue* capture_upvalue(VM* vm, Value* location) {
     }
 
     struct ObjUpvalue* new_upvalue = make_upvalue(location);
-    current->next = new_upvalue;
-    new_upvalue->next = next;
+    if (location > current->location) {
+        new_upvalue->next = current;
+        if (previous == NULL) {
+            vm->open_upvalues = new_upvalue;
+        } else {
+            previous->next = new_upvalue;
+        }
+    } else {
+        current->next = new_upvalue;
+        new_upvalue->next = next;
+    }
     return new_upvalue;
 }
 
@@ -302,7 +313,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_RETURN: {
-            Value ret = ret = pop(vm);
+            Value ret = pop(vm);
             close_upvalues(vm, frame->locals); 
             vm->stack_top = frame->locals;
             vm->frame_count--;

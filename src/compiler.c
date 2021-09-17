@@ -735,10 +735,10 @@ static Value print_native(int arg_count, Value* args) {
             break;
         case VAL_INT:
             printf("%d\n", value.as.integer_type);
-           break;
+            break;
         case VAL_FLOAT:
             printf("%f\n", value.as.float_type);
-          break; 
+            break; 
     }
     return to_nil();
 }

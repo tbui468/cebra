@@ -14,7 +14,7 @@ typedef struct {
 } CallFrame;
 
 typedef struct {
-    Value stack[256];
+    Value stack[256]; //don't want to dynamically allocate memory since this is GC safeplace
     Value* stack_top;
     CallFrame frames[256];
     int frame_count;
