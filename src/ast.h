@@ -15,7 +15,6 @@ typedef enum {
     NODE_LOGICAL,
     NODE_DECL_VAR,
     NODE_CLASS,
-    NODE_INST,
     NODE_GET_PROP,
     NODE_SET_PROP,
     NODE_GET_VAR,
@@ -59,14 +58,6 @@ typedef struct {
     NodeList decls;
     struct Sig* sig;
 } DeclClass;
-
-typedef struct {
-    struct Node base;
-    Token name;
-    Token klass_type;
-    struct Node* klass;
-    struct Sig* sig;
-} InstClass;
 
 /*
  * Statements
@@ -191,7 +182,6 @@ struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, struct Node* left, NodeList arguments);
 struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig);
 struct Node* make_expr_stmt(struct Node* expr);
-struct Node* make_inst_class(Token name, Token klass_type, struct Node* klass);
 struct Node* make_get_prop(struct Node* inst, Token prop);
 struct Node* make_set_prop(struct Node* inst, Token prop, struct Node* right);
 

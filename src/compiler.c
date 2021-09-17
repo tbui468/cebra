@@ -414,7 +414,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             pop_root();
 
             return make_prim_sig(VAL_NIL);
-        }
+        }/*
         case NODE_INST: {
             InstClass* ic = (InstClass*)node;
 
@@ -426,7 +426,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             emit_byte(compiler, OP_INSTANCE);
             add_local(compiler, ic->name, klass_sig);
             return make_prim_sig(VAL_NIL);
-        }
+        }*/
         //statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;

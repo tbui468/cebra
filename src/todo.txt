@@ -5,13 +5,20 @@ DOCUMENTATION:
 
 ADDING FEATURES:
     Add correctness tests for new features
-    Pass all correctness.cbr tests
     Check that ALL memory is freed if GC is called at end of main()
+    Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
 
     maps and lists use [] notation for setting/getting
+
+        a: List<int> = List<int>()
+        SigList - conflicting name with list of signatures
+        SigMap
+
+        list is a Cebra struct (for tracking size) and c-array that 
+            can dynamically grow
 
     Allow shorthand for declaration types:
         a := 1

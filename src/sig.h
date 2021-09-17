@@ -45,6 +45,7 @@ struct SigClass {
 struct SigIdentifier {
     struct Sig base;
     Token identifier;
+    struct Sig* type;
 };
 
 void insert_sig(struct Sig* sig);
@@ -54,7 +55,7 @@ void add_sig(struct SigList* sl, struct Sig* sig);
 struct Sig* make_prim_sig(ValueType type);
 struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret);
 struct Sig* make_class_sig(Token klass);
-struct Sig* make_identifier_sig(Token identifier);
+struct Sig* make_identifier_sig(Token identifier, struct Sig* type);
 
 bool is_duck(struct SigClass* sub, struct SigClass* super);
 bool same_sig(struct Sig* sig1, struct Sig* sig2);

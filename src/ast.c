@@ -37,17 +37,6 @@ struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig) {
     return (struct Node*)dc;
 }
 
-struct Node* make_inst_class(Token name, Token klass_type, struct Node* klass) {
-    InstClass* ic = ALLOCATE(InstClass);
-    ic->name = name;
-    ic->klass_type = klass_type;
-    ic->klass = klass;
-    ic->sig = NULL; //filled in by compiler since class definition needed
-    ic->base.type = NODE_INST;
-
-    return (struct Node*)ic;
-}
-
 /*
  * Statements
  */
@@ -228,10 +217,6 @@ void print_node(struct Node* node) {
             printf("( DeclClass ");
             break;
         }
-        case NODE_INST: {
-            printf("( InstClass Stub  )");
-            break;
-        }
         //Statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
@@ -349,12 +334,6 @@ void free_node(struct Node* node) {
             DeclClass* dc = (DeclClass*)node;
             free_node_list(&dc->decls);
             FREE(dc, DeclClass);
-            break;
-        }
-        case NODE_INST: {
-            InstClass* ic = (InstClass*)node;
-            free_node(ic->klass);
-            FREE(ic, InstClass);
             break;
         }
         //Statements

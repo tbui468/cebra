@@ -302,7 +302,13 @@ static struct Sig* read_sig(Token var_name) {
     }
 
     if (match(TOKEN_IDENTIFIER)) {
-        return make_identifier_sig(parser.previous);
+        Token identifier = parser.previous;
+        if (match(TOKEN_LESS)) {
+            struct Sig* type = read_sig(var_name);
+            consume(TOKEN_GREATER, "Expect '>' after type."); 
+            return make_identifier_sig(identifier, type);
+        }
+        return make_identifier_sig(identifier, NULL);
     }
 
     return make_prim_sig(VAL_NIL);
