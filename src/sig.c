@@ -27,6 +27,7 @@ struct Sig* make_list_sig() {
     sig_list->capacity = 0;
 
     sig_list->base.type = SIG_LIST;
+    sig_list->base.opt = NULL;
 
     insert_sig((struct Sig*)sig_list);
     return (struct Sig*)sig_list;
@@ -36,6 +37,7 @@ struct Sig* make_prim_sig(ValueType type) {
     struct SigPrim* sig_prim = ALLOCATE(struct SigPrim);
 
     sig_prim->base.type = SIG_PRIM;
+    sig_prim->base.opt = NULL;
     sig_prim->type = type;
     
     insert_sig((struct Sig*)sig_prim);
@@ -46,6 +48,7 @@ struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret) {
     struct SigFun* sig_fun = ALLOCATE(struct SigFun);
 
     sig_fun->base.type = SIG_FUN;
+    sig_fun->base.opt = NULL;
     sig_fun->params = params;
     sig_fun->ret = ret;
     
@@ -57,6 +60,7 @@ struct Sig* make_class_sig(Token klass) {
     struct SigClass* sc = ALLOCATE(struct SigClass);
 
     sc->base.type = SIG_CLASS;
+    sc->base.opt = NULL;
     sc->klass = klass;
     init_table(&sc->props);
 
@@ -68,6 +72,7 @@ struct Sig* make_identifier_sig(Token identifier) {
     struct SigIdentifier* si = ALLOCATE(struct SigIdentifier);
 
     si->base.type = SIG_IDENTIFIER;
+    si->base.opt = NULL;
     si->identifier = identifier;
 
     insert_sig((struct Sig*)si);
@@ -109,8 +114,18 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
                 if (!same_sig(sl1->sigs[i], sl2->sigs[i])) return false;
             }
             return true;
-        case SIG_PRIM:
-            return ((struct SigPrim*)sig1)->type == ((struct SigPrim*)sig2)->type;
+        case SIG_PRIM: {
+            struct Sig* left = sig1;
+            while (left != NULL) {
+                struct Sig* right = sig2;
+                while (right != NULL) {
+                    if (((struct SigPrim*)left)->type == ((struct SigPrim*)right)->type) return true;
+                    right = right->opt;
+                }
+                left = left->opt;
+            }
+            return false;
+        }
         case SIG_FUN:
             struct SigFun* sf1 = (struct SigFun*)sig1;
             struct SigFun* sf2 = (struct SigFun*)sig2;
@@ -130,7 +145,13 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
 bool sig_is_type(struct Sig* sig, ValueType type) {
     if (sig->type != SIG_PRIM) return false;
 
-    return ((struct SigPrim*)sig)->type == type;
+    struct Sig* current = sig;
+    while (current != NULL) {
+        if (((struct SigPrim*)sig)->type == type) return true; 
+        current = current->opt;
+    }
+
+    return false;
 }
 
 void print_sig(struct Sig* sig) {

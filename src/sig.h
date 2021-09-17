@@ -15,6 +15,7 @@ typedef enum {
 struct Sig {
     SigType type;
     struct Sig* next;
+    struct Sig* opt;
 };
 
 struct SigList {

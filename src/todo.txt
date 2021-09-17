@@ -11,12 +11,13 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    replace print keyword with print(arg) native function
+
     Native functions - defined in vm init
-        print()
-        clock()
-        
-        make new ObjNative
-        look at crafting interpreters to see how Nystrom set this up
+        print structs
+        print inst
+        print functions
+        print native functions
 
     Change NODE_DECL_FUN, NODE_DECL_CLASS, NODE_INST_CLASS to just
         NODE_FUN, NODE_CLASS, NODE_INST since NODE_DECL_VAR is the
@@ -24,10 +25,12 @@ IMPLEMENTATION:
 
     replace PRINT with native function print()
 
+    write tests for clock() and print()
+
     find python native function list (for early python versions)
         and add those functions
 
-    maps and lists
+    maps and lists use [] notation for setting/getting
 
     When compile_node() is called, should check if return value is NULL
         make all errors return NULL, rather than a signature of type NIL

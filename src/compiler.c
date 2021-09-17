@@ -735,6 +735,23 @@ static Value clock_native(int arg_count, Value* args) {
     return to_float((double)clock() / CLOCKS_PER_SEC);
 }
 
+static Value print_native(int arg_count, Value* args) {
+    Value value = args[0];
+    switch(value.type) {
+        case VAL_STRING:
+            struct ObjString* str = value.as.string_type;
+            printf("%.*s\n", str->length, str->chars);
+            break;
+        case VAL_INT:
+            printf("%d\n", value.as.integer_type);
+           break;
+        case VAL_FLOAT:
+            printf("%f\n", value.as.float_type);
+          break; 
+    }
+    return to_nil();
+}
+
 static struct Sig* define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Sig* sig) {
     add_local(compiler, make_artificial_token(name), sig);
     emit_byte(compiler, OP_NATIVE);
@@ -746,6 +763,14 @@ static struct Sig* define_native(struct Compiler* compiler, const char* name, Va
 
 ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
     define_native(compiler, "clock", clock_native, make_fun_sig(make_list_sig(), make_prim_sig(VAL_INT)));
+    struct Sig* sl = make_list_sig();
+    struct Sig* str_sig = make_prim_sig(VAL_STRING);
+    struct Sig* int_sig = make_prim_sig(VAL_INT);
+    struct Sig* float_sig = make_prim_sig(VAL_FLOAT);
+    str_sig->opt = int_sig;
+    int_sig->opt = float_sig;
+    add_sig((struct SigList*)sl, str_sig);
+    define_native(compiler, "my_print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
 
     struct SigList* ret_sigs = compile_function(compiler, nl);
 
