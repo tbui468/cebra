@@ -11,11 +11,27 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Native functions - defined in vm init
+        print()
+        clock()
+        
+        make new ObjNative
+        look at crafting interpreters to see how Nystrom set this up
+
+    Change NODE_DECL_FUN, NODE_DECL_CLASS, NODE_INST_CLASS to just
+        NODE_FUN, NODE_CLASS, NODE_INST since NODE_DECL_VAR is the
+        variable declaration now
+
+    replace PRINT with native function print()
+
+    find python native function list (for early python versions)
+        and add those functions
+
+    maps and lists
+
     When compile_node() is called, should check if return value is NULL
         make all errors return NULL, rather than a signature of type NIL
         NIL type signatures are valid, whereas NULL will signal an error
-
-    make_fun_decl() first parameter is unused now (just a dummy token) - remove it
 
     Allow struct instantiation to have arguments that set fields
         by order of declaration.  Use must include all arguments, but
@@ -30,22 +46,6 @@ IMPLEMENTATION:
         Dog("Bubbles", 23, 1.32)
         Dog(, 23, 1.32)
         Dog(,,) is the same as Dog()
-
-    change class keyword to struct
-
-    Native functions - where should they be defined?
-        print()
-        copy()
-        clock()
-        string()
-        int()
-        float()
-        bool()
-
-    find python native function list (for early python versions)
-        and add those functions
-
-    maps and lists
 
     property names are being added as constants for both OP_GET_PROP
     and OP_SET_PROP, but they aren't really constants.  What other

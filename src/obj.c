@@ -46,6 +46,10 @@ int free_object(struct Obj* obj) {
             struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
             bytes_freed += FREE(uv, struct ObjUpvalue);
             break;
+        case OBJ_NATIVE:
+            struct ObjNative* nat = (struct ObjNative*)obj;
+            bytes_freed += FREE(nat, struct ObjNative);
+            break;
     }
     return bytes_freed;
 }
@@ -73,6 +77,11 @@ void print_object(struct Obj* obj) {
             printf("OBJ_UPVALUE: ");
             print_value(((struct ObjUpvalue*)obj)->closed);
             printf(" ");
+            break;
+        case OBJ_NATIVE:
+            printf("OBJ_NATIVE [");
+            print_value(to_native((struct ObjNative*)obj));
+            printf("] : ");
             break;
         default:
             printf("Invalid Object: ");

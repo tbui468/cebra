@@ -71,6 +71,13 @@ Value to_sig(struct Sig* sig) {
     return value;
 }
 
+Value to_native(struct ObjNative* obj) {
+    Value value;
+    value.type = VAL_NATIVE;
+    value.as.native_type = obj;
+    return value;
+}
+
 Value negate_value(Value value) {
     if (IS_INT(value)) {
         return to_integer(-value.as.integer_type);
@@ -191,6 +198,9 @@ void print_value(Value a) {
         case VAL_SIG:
             printf("%s", "<sig>");
             break;
+        case VAL_NATIVE:
+            printf("%s", "<native>");
+            break;
         default:
             printf("Invalid value");
             break;
@@ -208,6 +218,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_INSTANCE: return "VAL_INSTANCE";
         case VAL_NIL: return "VAL_NIL";
         case VAL_SIG: return "VAL_SIG";
+        case VAL_NATIVE: return "VAL_NATIVE";
         default: return "Unrecognized VAL_TYPE";
     }
 }
@@ -228,6 +239,10 @@ struct Obj* get_object(Value* value) {
         }
         case VAL_INSTANCE: {
             struct ObjInstance* obj = value->as.instance_type;
+            return (struct Obj*)obj;
+        }
+        case VAL_NATIVE: {
+            struct ObjNative* obj = value->as.native_type;
             return (struct Obj*)obj;
         }
         //Values with stack allocated data

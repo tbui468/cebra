@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <string.h>
+#include <time.h>
+
 #include "compiler.h"
 #include "memory.h"
 #include "obj_string.h"
@@ -328,7 +331,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         }
         case NODE_DECL_FUN: {
             DeclFun* df = (DeclFun*)node;
-            //add_local(compiler, df->name, df->sig);
 
             struct Compiler func_comp;
             init_compiler(&func_comp, df->name.start, df->name.length, df->parameters.count);
@@ -383,7 +385,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             free_compiler(&func_comp);
 
-            return sigfun;
+            return df->sig;
         }
         case NODE_DECL_CLASS: {
             DeclClass* dc = (DeclClass*)node;
@@ -392,31 +394,14 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             push_root(to_string(name));
             struct ObjClass* klass = make_class(name);
             push_root(to_class(klass));
-            //add_local(compiler, dc->name, dc->sig);
+
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(klass)));
 
             for (int i = 0; i < dc->decls.count; i++) {
                 struct Node* node = dc->decls.nodes[i];
-                struct ObjString* prop_name;
-                //TODO: should move this into ast.h/c
-                switch (node->type) {
-                    case NODE_DECL_VAR: {
-                        DeclVar* dv = (DeclVar*)node;
-                        prop_name = make_string(dv->name.start, dv->name.length);
-                        break;
-                    }
-                    case NODE_DECL_FUN: {
-                        DeclFun* df = (DeclFun*)node;
-                        prop_name = make_string(df->name.start, df->name.length);
-                        break;
-                    }
-                    case NODE_DECL_CLASS: {
-                        DeclClass* dc = (DeclClass*)node;
-                        prop_name = make_string(dc->name.start, dc->name.length);
-                        break;
-                    }
-                }
+                DeclVar* dv = (DeclVar*)node;
+                struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
 
                 push_root(to_string(prop_name));
 
@@ -746,7 +731,22 @@ static struct SigList* compile_function(struct Compiler* compiler, NodeList* nl)
     return (struct SigList*)ret_sigs;
 }
 
+static Value clock_native(int arg_count, Value* args) {
+    return to_float((double)clock() / CLOCKS_PER_SEC);
+}
+
+static struct Sig* define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Sig* sig) {
+    add_local(compiler, make_artificial_token(name), sig);
+    emit_byte(compiler, OP_NATIVE);
+    Value native = to_native(make_native(function));
+    push_root(native);
+    emit_short(compiler, add_constant(compiler, native));
+    pop_root();
+}
+
 ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
+    define_native(compiler, "clock", clock_native, make_fun_sig(make_list_sig(), make_prim_sig(VAL_INT)));
+
     struct SigList* ret_sigs = compile_function(compiler, nl);
 
     if (compiler->error_count > 0) {

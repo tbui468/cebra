@@ -82,9 +82,6 @@ static Token read_keyword(char c) {
         case 'b':
             if (match_string("ool")) return new_token(TOKEN_BOOL_TYPE);
             break;
-        case 'c':
-            if (match_string("lass")) return new_token(TOKEN_CLASS);
-            break;
         case 'e':
             if (match_string("lse")) return new_token(TOKEN_ELSE);
             break;
@@ -105,6 +102,7 @@ static Token read_keyword(char c) {
             break;
         case 's':
             if (match_string("tring")) return new_token(TOKEN_STRING_TYPE);
+            if (match_string("truct")) return new_token(TOKEN_CLASS);
             break;
         case 't':
             if (match_string("rue")) return new_token(TOKEN_TRUE);

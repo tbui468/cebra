@@ -54,8 +54,8 @@ const char* op_to_string(OpCode op) {
         case OP_ADD_PROP: return "OP_ADD_PROP";
         case OP_INSTANCE: return "OP_INSTANCE";
         case OP_RETURN: return "OP_RETURN";
+        case OP_NATIVE: return "OP_NATIVE";
         default: return "Unrecognized op";
-
     }
 }
 
@@ -146,6 +146,12 @@ void disassemble_chunk(struct ObjFunction* function) {
             }
             case OP_CALL: {
                 int slot = read_byte(chunk, i++);
+                printf("[%d]", slot);
+                break;
+            }
+            case OP_NATIVE: {
+                int slot = read_short(chunk, i);
+                i += 2;
                 printf("[%d]", slot);
                 break;
             }

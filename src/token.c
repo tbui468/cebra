@@ -60,6 +60,15 @@ Token make_dummy_token() {
     return dummy;
 }
 
+Token make_artificial_token(const char* name) {
+    Token art;
+    art.type = TOKEN_DUMMY;
+    art.line = 0;
+    art.start = name;
+    art.length = strlen(name);
+    return art;
+}
+
 Token copy_token(Token token) {
     Token copy;
     copy.type = token.type;

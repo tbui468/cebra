@@ -33,3 +33,18 @@ struct ObjUpvalue* make_upvalue(Value* location) {
 
     return obj;
 }
+
+
+struct ObjNative* make_native(Value (*function)(int, Value*)) {
+    struct ObjNative* obj = ALLOCATE(struct ObjNative);
+    push_root(to_native(obj));
+    obj->base.type = OBJ_NATIVE;
+    obj->base.next = NULL;
+    obj->base.is_marked = false;
+    insert_object((struct Obj*)obj);
+
+    obj->function = function;
+
+    pop_root();
+    return obj;
+}

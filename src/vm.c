@@ -29,6 +29,7 @@ ResultCode init_vm(VM* vm) {
     vm->stack_top = &vm->stack[0];
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
+
     return RESULT_SUCCESS;
 }
 
@@ -289,8 +290,18 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_CALL: {
             int arity = (int)READ_TYPE(frame, uint8_t);
-            struct ObjFunction* function = peek(vm, arity).as.function_type;
-            call(vm, function);
+            Value value = peek(vm, arity);
+            if (value.type == VAL_FUNCTION) {
+                call(vm, value.as.function_type);
+            }
+            if (value.type == VAL_NATIVE) {
+                Value (*native)(int, Value*) = value.as.native_type->function;
+                Value result = native(arity, vm->stack_top - arity);
+                pop(vm);
+                if (result.type != VAL_NIL) {
+                    push(vm, result);
+                }
+            }
             break;
         }
         case OP_RETURN: {
@@ -301,7 +312,10 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             if (ret.type != VAL_NIL) push(vm, ret);
             break;
         }
-
+        case OP_NATIVE: {
+            push(vm, read_constant(frame, READ_TYPE(frame, uint16_t)));
+            break;
+        }
     } 
 
 #ifdef DEBUG_TRACE

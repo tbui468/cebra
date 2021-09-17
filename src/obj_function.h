@@ -21,7 +21,13 @@ struct ObjFunction {
     int upvalue_count;
 };
 
+struct ObjNative {
+    struct Obj base;
+    Value (*function)(int, Value*);
+};
+
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
+struct ObjNative* make_native(Value (*function)(int, Value*));
 
 #endif// CEBRA_OBJ_FUNCTION_H

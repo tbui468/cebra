@@ -14,11 +14,13 @@
 #define IS_INSTANCE(value) (value.type == VAL_INSTANCE)
 #define IS_NIL(value) (value.type == VAL_NIL)
 #define IS_SIG(value) (value.type == VAL_SIG)
+#define IS_NATIVE(value) (value.type == VAL_NATIVE)
 
 struct ObjInstance;
 struct ObjFunction;
 struct ObjClass;
 struct ObjString;
+struct ObjNative;
 
 typedef enum {
     VAL_INT,
@@ -29,7 +31,8 @@ typedef enum {
     VAL_CLASS,
     VAL_INSTANCE,
     VAL_NIL,
-    VAL_SIG
+    VAL_SIG,
+    VAL_NATIVE
 } ValueType;
 
 typedef struct {
@@ -43,6 +46,7 @@ typedef struct {
         struct ObjClass* class_type;
         struct ObjInstance* instance_type;
         struct Sig* sig_type;
+        struct ObjNative* native_type;
     } as;
 } Value;
 
@@ -55,6 +59,7 @@ Value to_function(struct ObjFunction* obj);
 Value to_class(struct ObjClass* obj);
 Value to_instance(struct ObjInstance* obj);
 Value to_sig(struct Sig* sig);
+Value to_native(struct ObjNative* obj);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);

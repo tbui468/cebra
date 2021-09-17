@@ -433,8 +433,8 @@
 
 {
     print ""
-    print "***********Classes************"
-    Dog: class = class {
+    print "***********Structs************"
+    Dog: struct = struct {
         name: string = "Mittens"
         age: int = 3
         length: float = 100.2
@@ -466,7 +466,7 @@
     }
 
     outer: () -> () -> = () -> () -> {
-        Cat: class = class {
+        Cat: struct = struct {
             name: string = "Whiskey"
             age: int = 2
         }

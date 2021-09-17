@@ -82,6 +82,7 @@ static struct Node* primary() {
         Token name = parser.previous;
         return make_get_var(name);
     } else if (match(TOKEN_LEFT_PAREN)) {
+        Token name = parser.previous;
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
             peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
             NodeList params;
@@ -107,7 +108,7 @@ static struct Node* primary() {
             struct Node* body = block();
             struct Sig* fun_sig = make_fun_sig(param_sig, ret_sig); 
 
-            return make_decl_fun(make_dummy_token(), params, fun_sig, body);
+            return make_decl_fun(name, params, fun_sig, body);
         }
 
         struct Node* expr = expression();
@@ -121,32 +122,15 @@ static struct Node* primary() {
         while (!match(TOKEN_RIGHT_BRACE)) {
             //add class signature entries to table here
             struct Node* decl = var_declaration(true);
-            struct Sig* prop_sig;
-            const char* prop_id_chars;
-            int prop_id_length;
-            switch (decl->type) {
-                case NODE_DECL_VAR:
-                    DeclVar* dv = (DeclVar*)decl;
-                    prop_sig = dv->sig;
-                    prop_id_chars = dv->name.start;
-                    prop_id_length = dv->name.length;
-                    break;
-                case NODE_DECL_FUN:
-                    DeclFun* df = (DeclFun*)decl;
-                    prop_sig = df->sig;
-                    prop_id_chars = df->name.start;
-                    prop_id_length = df->name.length;
-                    break;
-                case NODE_DECL_CLASS:
-                    DeclClass* dc = (DeclClass*)decl;
-                    prop_sig = dc->sig;
-                    prop_id_chars = dc->name.start;
-                    prop_id_length = dc->name.length;
-                    break;
-                default:
-                    add_error(parser.current_class, "Only primitive, function or class definitions allowed in class body.");
-                    return NULL;
+            if (decl->type != NODE_DECL_VAR) {
+                add_error(parser.current_class, "Only primitive, function or class definitions allowed in class body.");
+                return NULL;
             }
+            DeclVar* dv = (DeclVar*)decl;
+            struct Sig* prop_sig = dv->sig;
+            const char* prop_id_chars = dv->name.start;
+            int prop_id_length = dv->name.length;
+
             struct ObjString* name = make_string(prop_id_chars, prop_id_length);
             push_root(to_string(name));
             set_table(&((struct SigClass*)(parser.current_sig))->props, name, to_sig(prop_sig));

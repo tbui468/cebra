@@ -58,6 +58,7 @@ typedef struct {
 
 void print_token(Token token);
 Token make_dummy_token();
+Token make_artificial_token(const char* name);
 Token copy_token(Token token);
 
 #endif// CEBRA_TOKEN_H
