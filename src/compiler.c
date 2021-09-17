@@ -341,6 +341,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
+    int i = 0;
+    printf("-------------------\n");
+    while (i < func_comp.function->chunk.count) {
+       OpCode op = func_comp.function->chunk.codes[i++];
+       printf("[ %s ]\n", op_to_string(op));
+    }
 #endif
 
             copy_errors(compiler, &func_comp);

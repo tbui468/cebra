@@ -25,7 +25,6 @@ const char* op_to_string(OpCode op) {
         case OP_CONSTANT: return "OP_CONSTANT";
         case OP_FUN: return "OP_FUN";
         case OP_NIL: return "OP_NIL";
-        case OP_PRINT: return "OP_PRINT";
         case OP_TRUE: return "OP_TRUE";
         case OP_FALSE: return "OP_FALSE";
         case OP_LESS: return "OP_LESS";
@@ -85,7 +84,7 @@ void disassemble_chunk(struct ObjFunction* function) {
                 int fun_idx = read_short(chunk, i);
                 i += 2;
                 int upvalue_count = read_byte(chunk, i++);
-                for (int i = 0; i < upvalue_count; i++) {
+                for (int j = 0; j < upvalue_count; j++) {
                     int uv_local = read_byte(chunk, i++);
                     int uv_idx = read_byte(chunk, i++);
                 }

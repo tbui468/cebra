@@ -42,6 +42,12 @@ ResultCode run_source(VM* vm, const char* source) {
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(script_compiler.function);
+    int i = 0;
+    printf("-------------------\n");
+    while (i < script_compiler.function->chunk.count) {
+       OpCode op = script_compiler.function->chunk.codes[i++];
+       printf("[ %s ]\n", op_to_string(op));
+    }
 #endif
 
     if (compile_result == RESULT_FAILED) {
