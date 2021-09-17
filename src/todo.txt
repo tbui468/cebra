@@ -11,50 +11,24 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    //fun: () -> = () -> {
-    //    print("hi")
-    //}
-    outer: () -> () -> string = () -> () -> string {
-        x: string = "outside"
-        inner: () -> string = () -> string {
-            -> x
-        }
-        -> inner
-    }
-
-    closure: () -> string = outer()
-    if closure() == "outside" {
-        print("Closed Upvalues: Passed!")
-    } else {
-        print("Closed Upvalues: Failed!")
-    }
-
-    Also, function names are all screwed up - need a way to get
-        function names passed down recursive descent from 
-        var_declaration() to primary().  Functions can also
-        be enclosed, so simply setting a field on parser won't work -
-        need a linked list at very least or stack
-    
-    Closed Upvalue tests fail when running all tests, but they
-        pass when run in isolation. OP_GET_UPVALUE is getting a function
-        instead of the closed upvalue (string)
-
-    Change NODE_DECL_FUN, NODE_DECL_CLASS, NODE_INST_CLASS to just
-        NODE_FUN, NODE_CLASS, NODE_INST since NODE_DECL_VAR is the
-        variable declaration now
-
-    replace PRINT with native function print()
-
-    write tests for clock() and print()
-
-    find python native function list (for early python versions)
-        and add those functions
-
     maps and lists use [] notation for setting/getting
+
+    Allow shorthand for declaration types:
+        a := 1
+        b := "dogg"
+        c := () -> int {
+            -> 3
+        }
+        Dog := class {
+            name := "Mittens"
+        }
 
     When compile_node() is called, should check if return value is NULL
         make all errors return NULL, rather than a signature of type NIL
         NIL type signatures are valid, whereas NULL will signal an error
+
+    find python native function list (for early python versions)
+        and add those functions
 
     Allow struct instantiation to have arguments that set fields
         by order of declaration.  Use must include all arguments, but
@@ -80,16 +54,6 @@ IMPLEMENTATION:
         How about assigning functions to other functions?
             I don't think we support this right now:
             my_fun: () -> = other_fun
-
-    Allow shorthand for declaration types:
-        a := 1
-        b := "dogg"
-        c := () -> int {
-            -> 3
-        }
-        Dog := class {
-            name := "Mittens"
-        }
 
     Clear up the warnings (especially with switch statements)
 

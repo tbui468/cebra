@@ -329,7 +329,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             }
             return make_prim_sig(VAL_NIL);
         }
-        case NODE_DECL_FUN: {
+        case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
 
             struct Compiler func_comp;
@@ -384,7 +384,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             return df->sig;
         }
-        case NODE_DECL_CLASS: {
+        case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
 
             struct ObjString* name = make_string(dc->name.start, dc->name.length);
@@ -415,7 +415,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             return make_prim_sig(VAL_NIL);
         }
-        case NODE_INST_CLASS: {
+        case NODE_INST: {
             InstClass* ic = (InstClass*)node;
 
             struct Sig* klass_sig = compile_node(compiler, ic->klass, ret_sigs);
@@ -753,7 +753,7 @@ static struct Sig* define_native(struct Compiler* compiler, const char* name, Va
 }
 
 ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
-    define_native(compiler, "clock", clock_native, make_fun_sig(make_list_sig(), make_prim_sig(VAL_INT)));
+    define_native(compiler, "clock", clock_native, make_fun_sig(make_list_sig(), make_prim_sig(VAL_FLOAT)));
     struct Sig* sl = make_list_sig();
     struct Sig* str_sig = make_prim_sig(VAL_STRING);
     struct Sig* int_sig = make_prim_sig(VAL_INT);

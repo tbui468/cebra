@@ -22,7 +22,7 @@ struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, str
     df->parameters = parameters;
     df->sig = sig;
     df->body = body;
-    df->base.type = NODE_DECL_FUN;
+    df->base.type = NODE_FUN;
 
     return (struct Node*)df;
 }
@@ -32,7 +32,7 @@ struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig) {
     dc->name = name;
     dc->decls = decls;
     dc->sig = sig;
-    dc->base.type = NODE_DECL_CLASS;
+    dc->base.type = NODE_CLASS;
 
     return (struct Node*)dc;
 }
@@ -43,7 +43,7 @@ struct Node* make_inst_class(Token name, Token klass_type, struct Node* klass) {
     ic->klass_type = klass_type;
     ic->klass = klass;
     ic->sig = NULL; //filled in by compiler since class definition needed
-    ic->base.type = NODE_INST_CLASS;
+    ic->base.type = NODE_INST;
 
     return (struct Node*)ic;
 }
@@ -217,18 +217,18 @@ void print_node(struct Node* node) {
             printf(")");
             break;
         }
-        case NODE_DECL_FUN: {
+        case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
             printf("( DeclFun ");
             print_node(df->body);
             break;
         }
-        case NODE_DECL_CLASS: {
+        case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             printf("( DeclClass ");
             break;
         }
-        case NODE_INST_CLASS: {
+        case NODE_INST: {
             printf("( InstClass Stub  )");
             break;
         }
@@ -338,20 +338,20 @@ void free_node(struct Node* node) {
             FREE(decl_var, DeclVar);
             break;
         }
-        case NODE_DECL_FUN: {
+        case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
             free_node_list(&df->parameters);
             free_node(df->body);
             FREE(df, DeclFun);
             break;
         }
-        case NODE_DECL_CLASS: {
+        case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             free_node_list(&dc->decls);
             FREE(dc, DeclClass);
             break;
         }
-        case NODE_INST_CLASS: {
+        case NODE_INST: {
             InstClass* ic = (InstClass*)node;
             free_node(ic->klass);
             FREE(ic, InstClass);

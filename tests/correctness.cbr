@@ -522,3 +522,15 @@
     }
 
 }
+
+{
+    print("")
+    print("***********Native Functions************")
+    print("print(): Passed!")
+    a: float = clock()
+    if a > -1.0 {
+        print("clock(): Passed!")
+    } else {
+        print("clock(): Failed!")
+    }
+}
