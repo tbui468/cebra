@@ -11,7 +11,12 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Need to replace SigList or change List to Array
+    struct ObjArray {
+        Value* values;
+        Value default;
+        int count;
+        int capacity;
+    };
 
     That should be left to the DeclVar (left side)
         and GetVar (right side) and Call (right side)
@@ -20,18 +25,6 @@ IMPLEMENTATION:
         emit VAL_TYPE
         emit default value
         emit OP_LIST (which pops the above two to create ObjList)
-
-    struct ObjArray {
-        Value* values;
-        Value default;
-        int count;
-        int capacity;
-    };
-
-    struct SigArray {
-        struct Sig base;
-        struct Sig* template;
-    };
 
     use a[0] = 8 for getting/setting list values
     use a[-1] to access from end

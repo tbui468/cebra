@@ -26,7 +26,7 @@ struct Sig* make_array_sig() {
     sig_list->count = 0;
     sig_list->capacity = 0;
 
-    sig_list->base.type = SIG_LIST;
+    sig_list->base.type = SIG_ARRAY;
     sig_list->base.opt = NULL;
 
     insert_sig((struct Sig*)sig_list);
@@ -80,6 +80,16 @@ struct Sig* make_identifier_sig(Token identifier, struct Sig* type) {
     return (struct Sig*)si;
 }
 
+struct Sig* make_list_sig(struct Sig* type) {
+    struct SigList* sl = ALLOCATE(struct SigList);
+
+    sl->base.type = SIG_LIST;
+    sl->type = type;
+
+    insert_sig((struct Sig*)sl);
+    return (struct Sig*)sl;
+}
+
 bool is_duck(struct SigClass* sub, struct SigClass* super) {
     for (int i = 0; i < sub->props.capacity; i++) {
         struct Pair* sub_pair = &sub->props.pairs[i];
@@ -107,7 +117,7 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
     if (sig1->type != sig2->type) return false;
 
     switch(sig1->type) {
-        case SIG_LIST:
+        case SIG_ARRAY:
             struct SigArray* sl1 = (struct SigArray*)sig1;
             struct SigArray* sl2 = (struct SigArray*)sig2;
             if (sl1->count != sl2->count) return false;
@@ -141,6 +151,8 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
             if (si1->type != NULL && si2->type != NULL && !same_sig(si1->type, si2->type)) return false;
             if (si1->identifier.length != si2->identifier.length) return false;
             return memcmp(si1->identifier.start, si2->identifier.start, si1->identifier.length) == 0;
+        case SIG_LIST:
+            return same_sig(((struct SigList*)sig1)->type, ((struct SigList*)sig2)->type);
     }
 }
 
@@ -158,7 +170,7 @@ bool sig_is_type(struct Sig* sig, ValueType type) {
 
 void print_sig(struct Sig* sig) {
     switch(sig->type) {
-        case SIG_LIST:
+        case SIG_ARRAY:
             struct SigArray* sl = (struct SigArray*)sig;
             printf("(");
             for (int i = 0; i < sl->count; i++) {
@@ -186,6 +198,9 @@ void print_sig(struct Sig* sig) {
         case SIG_IDENTIFIER:
             printf("SigIdentifier Stub");
             break;
+        case SIG_LIST:
+            printf("SigList Stub");
+            break;
         default:
             printf("Invalid sig");
             break;
@@ -194,10 +209,10 @@ void print_sig(struct Sig* sig) {
 
 void free_sig(struct Sig* sig) {
     switch(sig->type) {
-        case SIG_LIST:
-            struct SigArray* sl = (struct SigArray*)sig;
-            FREE_ARRAY(sl->sigs, struct Sig*, sl->capacity);
-            FREE(sl, struct SigArray);
+        case SIG_ARRAY:
+            struct SigArray* sa = (struct SigArray*)sig;
+            FREE_ARRAY(sa->sigs, struct Sig*, sa->capacity);
+            FREE(sa, struct SigArray);
             break;
         case SIG_PRIM:
             struct SigPrim* sig_prim = (struct SigPrim*)sig;
@@ -215,6 +230,10 @@ void free_sig(struct Sig* sig) {
         case SIG_IDENTIFIER:
             struct SigIdentifier* si = (struct SigIdentifier*)sig;
             FREE(si, struct SigIdentifier);
+            break;
+        case SIG_LIST:
+            struct SigList* sl = (struct SigList*)sig;
+            FREE(sl, struct SigList);
             break;
     }
 }

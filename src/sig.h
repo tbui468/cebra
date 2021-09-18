@@ -5,11 +5,12 @@
 #include "table.h"
 
 typedef enum {
-    SIG_LIST,
+    SIG_ARRAY,
     SIG_PRIM,
     SIG_FUN,
     SIG_CLASS,
-    SIG_IDENTIFIER
+    SIG_IDENTIFIER,
+    SIG_LIST
 } SigType;
 
 struct Sig {
@@ -48,6 +49,12 @@ struct SigIdentifier {
     struct Sig* type;
 };
 
+struct SigList {
+    struct Sig base;
+    struct Sig* type;
+};
+
+
 void insert_sig(struct Sig* sig);
 
 struct Sig* make_array_sig();
@@ -56,6 +63,7 @@ struct Sig* make_prim_sig(ValueType type);
 struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret);
 struct Sig* make_class_sig(Token klass);
 struct Sig* make_identifier_sig(Token identifier, struct Sig* type);
+struct Sig* make_list_sig(struct Sig* type);
 
 bool is_duck(struct SigClass* sub, struct SigClass* super);
 bool same_sig(struct Sig* sig1, struct Sig* sig2);
