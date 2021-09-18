@@ -55,6 +55,8 @@ const char* op_to_string(OpCode op) {
         case OP_RETURN: return "OP_RETURN";
         case OP_NATIVE: return "OP_NATIVE";
         case OP_LIST: return "OP_LIST";
+        case OP_GET_SIZE: return "OP_GET_SIZE";
+        case OP_SET_SIZE: return "OP_SET_SIZE";
         default: return "Unrecognized op";
     }
 }

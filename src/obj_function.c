@@ -58,8 +58,6 @@ struct ObjList* make_list(Value default_value) {
 
     init_value_array(&obj->values);
     obj->default_value = default_value;
-    obj->count = 0;
-    obj->capacity = 0;
 
     pop_root();
     return obj;

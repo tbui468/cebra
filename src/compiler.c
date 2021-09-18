@@ -534,6 +534,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct Sig* sig_inst = compile_node(compiler, gp->inst, ret_sigs);
             if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
 
+            if (sig_inst->type == SIG_LIST) {
+                emit_byte(compiler, OP_GET_SIZE);
+                return make_prim_sig(VAL_INT);
+            }
+
             if (sig_inst->type == SIG_IDENTIFIER) {
                 sig_inst = resolve_sig(compiler, ((struct SigIdentifier*)sig_inst)->identifier);
             }
@@ -558,6 +563,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             SetProp* sp = (SetProp*)node;
             struct Sig* right_sig = compile_node(compiler, sp->right, ret_sigs);
             struct Sig* sig_inst = compile_node(compiler, sp->inst, ret_sigs);
+
+            if (sig_inst->type == SIG_LIST) {
+                emit_byte(compiler, OP_SET_SIZE);
+                return make_prim_sig(VAL_INT);
+            }
+
             if (sig_inst->type == SIG_IDENTIFIER) {
                 sig_inst = resolve_sig(compiler, ((struct SigIdentifier*)sig_inst)->identifier);
             }

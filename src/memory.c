@@ -177,6 +177,25 @@ static void trace_references() {
             case OBJ_STRING: {
                 break;
             }
+            case OBJ_LIST: {
+                struct ObjList* list = (struct ObjList*)obj;
+                //values
+                for (int i = 0; i < list->values.count; i++) {
+                    Value* value = &list->values.values[i];
+                    struct Obj* val_obj = get_object(value);
+                    if (val_obj != NULL && !val_obj->is_marked) {
+                        mark_object(val_obj);
+                        push_gray(val_obj);
+                    }
+                }
+                //mark default_value
+                struct Obj* val_obj = get_object(&list->default_value);
+                if (val_obj != NULL && !val_obj->is_marked) {
+                    mark_object(val_obj);
+                    push_gray(val_obj);
+                }
+                break;
+            }
             default: {
             }
         }

@@ -30,8 +30,6 @@ struct ObjList {
     struct Obj base;
     struct ValueArray values;
     Value default_value;
-    int count;
-    int capacity;
 };
 
 struct ObjFunction* make_function(struct ObjString* name, int arity);

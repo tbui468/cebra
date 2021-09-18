@@ -330,6 +330,33 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, to_list(list));
             break;
         }
+        case OP_GET_SIZE: {
+            struct ObjList* list = pop(vm).as.list_type;
+            push(vm, to_integer(list->values.count));
+            break;
+        }
+        case OP_SET_SIZE: {
+            //[new count][list]
+            struct ObjList* list = peek(vm, 0).as.list_type;
+            int new_count = peek(vm, 1).as.integer_type;
+            if (new_count > list->values.capacity) {
+                int new_cap = list->values.capacity == 0 ? 8 : list->values.capacity * 2;
+                while (new_cap < new_count) {
+                    new_cap *= 2;
+                }
+                list->values.values = GROW_ARRAY(list->values.values, Value, new_cap, list->values.capacity);
+                list->values.capacity = new_cap;
+
+                while (list->values.count < new_count) {
+                    list->values.values[list->values.count] = list->default_value;
+                    list->values.count++;
+                }
+            } else {
+                list->values.count = new_count;
+            }
+            pop(vm);
+            break;
+        }
     } 
 
 #ifdef DEBUG_TRACE
