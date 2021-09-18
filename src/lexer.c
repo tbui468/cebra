@@ -107,6 +107,9 @@ static Token read_keyword(char c) {
         case 'w':
             if (match_string("hile")) return new_token(TOKEN_WHILE);
             break;
+        case 'L':
+            if (match_string("ist")) return new_token(TOKEN_LIST);
+            break;
     }
     return new_token(TOKEN_IDENTIFIER);
 }

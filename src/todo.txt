@@ -11,14 +11,42 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    maps and lists use [] notation for setting/getting
+    Need to replace SigList or change List to Array
 
-        a: List<int> = List<int>()
-        SigList - conflicting name with list of signatures
-        SigMap
+    That should be left to the DeclVar (left side)
+        and GetVar (right side) and Call (right side)
+        we need to do this since template type needs to be specified
+        create an ObjList in Call of correct type + default
+        emit VAL_TYPE
+        emit default value
+        emit OP_LIST (which pops the above two to create ObjList)
 
-        list is a Cebra struct (for tracking size) and c-array that 
-            can dynamically grow
+    struct ObjArray {
+        Value* values;
+        Value default;
+        int count;
+        int capacity;
+    };
+
+    struct SigArray {
+        struct Sig base;
+        struct Sig* template;
+    };
+
+    use a[0] = 8 for getting/setting list values
+    use a[-1] to access from end
+    runtime error if trying to access out of bounds
+    a.length (or size) returns an int
+    a.length = 10 will increase array size (filling with default value)
+        or remove values from end of array
+
+    will need to have GC trace references in ObjList
+
+    Implement a stack in cebra using List + structs to test
+
+    for n: string in list {
+        
+    }
 
     Allow shorthand for declaration types:
         a := 1

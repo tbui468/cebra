@@ -752,8 +752,11 @@ static struct Sig* define_native(struct Compiler* compiler, const char* name, Va
     pop_root();
 }
 
-ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
+static void define_clock(struct Compiler* compiler) {
     define_native(compiler, "clock", clock_native, make_fun_sig(make_list_sig(), make_prim_sig(VAL_FLOAT)));
+}
+
+static void define_print(struct Compiler* compiler) {
     struct Sig* sl = make_list_sig();
     struct Sig* str_sig = make_prim_sig(VAL_STRING);
     struct Sig* int_sig = make_prim_sig(VAL_INT);
@@ -762,6 +765,11 @@ ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
     int_sig->opt = float_sig;
     add_sig((struct SigList*)sl, str_sig);
     define_native(compiler, "print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
+}
+
+ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
+    define_clock(compiler);
+    define_print(compiler);
 
     struct SigList* ret_sigs = compile_function(compiler, nl);
 

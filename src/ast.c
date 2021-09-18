@@ -164,9 +164,10 @@ struct Node* make_set_prop(struct Node* inst, Token prop, struct Node* right) {
     return (struct Node*)set_prop;
 }
 
-struct Node* make_get_var(Token name) {
+struct Node* make_get_var(Token name, struct Sig* template_type) {
     GetVar* get_var = ALLOCATE(GetVar);
     get_var->name = name;
+    get_var->template_type = template_type;
     get_var->base.type = NODE_GET_VAR;
 
     return (struct Node*)get_var;

@@ -43,6 +43,7 @@ typedef enum {
     TOKEN_CLASS,
     TOKEN_DOT,
     TOKEN_DUMMY,
+    TOKEN_LIST,
     TOKEN_EOF,
 } TokenType;
 

@@ -78,8 +78,14 @@ static struct Node* primary(Token var_name) {
         match(TOKEN_STRING) || match(TOKEN_TRUE) ||
         match(TOKEN_FALSE)) {
         return make_literal(parser.previous);
+    } else if (match(TOKEN_LIST)) {
+        Token identifier = parser.previous;
+        consume(TOKEN_LESS, "Expect '<' after 'List'.");
+        struct Sig* template_type = read_sig(var_name);
+        consume(TOKEN_GREATER, "Expect '>' after type.");
+        return make_get_var(identifier, template_type); 
     } else if (match(TOKEN_IDENTIFIER)) {
-        return make_get_var(parser.previous);
+        return make_get_var(parser.previous, NULL);
     } else if (match(TOKEN_LEFT_PAREN)) {
         Token name = parser.previous;
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
@@ -301,14 +307,16 @@ static struct Sig* read_sig(Token var_name) {
         return make_class_sig(var_name);
     }
 
-    if (match(TOKEN_IDENTIFIER)) {
+    if (match(TOKEN_LIST)) {
         Token identifier = parser.previous;
-        if (match(TOKEN_LESS)) {
-            struct Sig* type = read_sig(var_name);
-            consume(TOKEN_GREATER, "Expect '>' after type."); 
-            return make_identifier_sig(identifier, type);
-        }
-        return make_identifier_sig(identifier, NULL);
+        consume(TOKEN_LESS, "Expect '<' after 'List'.");
+        struct Sig* template_type = read_sig(var_name);
+        consume(TOKEN_GREATER, "Expect '>' after type."); 
+        return make_identifier_sig(identifier, template_type);
+    }
+
+    if (match(TOKEN_IDENTIFIER)) {
+        return make_identifier_sig(parser.previous, NULL);
     }
 
     return make_prim_sig(VAL_NIL);
