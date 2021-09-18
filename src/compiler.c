@@ -10,8 +10,8 @@
 
 struct Compiler* current_compiler = NULL;
 struct Compiler* class_compiler = NULL;
-struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs);
-static struct SigList* compile_function(struct Compiler* compiler, NodeList* nl);
+struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs);
+static struct SigArray* compile_function(struct Compiler* compiler, NodeList* nl);
 
 static void add_error(struct Compiler* compiler, Token token, const char* message) {
     CompileError error;
@@ -304,7 +304,7 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
-static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigList* ret_sigs) {
+static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs) {
     if (node == NULL) {
         return make_prim_sig(VAL_NIL);
     }
@@ -337,7 +337,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
-            struct SigList* inner_ret_sigs = compile_function(&func_comp, &df->parameters); 
+            struct SigArray* inner_ret_sigs = compile_function(&func_comp, &df->parameters); 
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
@@ -402,8 +402,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
                 push_root(to_string(prop_name));
 
-                struct Sig* class_ret_sigs = make_list_sig();
-                struct Sig* sig = compile_node(compiler, node, (struct SigList*)class_ret_sigs);
+                struct Sig* class_ret_sigs = make_array_sig();
+                struct Sig* sig = compile_node(compiler, node, (struct SigArray*)class_ret_sigs);
                 emit_byte(compiler, OP_ADD_PROP);
                 emit_short(compiler, add_constant(compiler, to_string(prop_name)));
                 compiler->locals_count--;
@@ -650,7 +650,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             }
 
             struct SigFun* sig_fun = (struct SigFun*)sig;
-            struct SigList* params = (struct SigList*)(sig_fun->params);
+            struct SigArray* params = (struct SigArray*)(sig_fun->params);
 
             if (call->arguments.count != params->count) {
                 add_error(compiler, call->name, "Argument count must match function parameter count.");
@@ -709,17 +709,17 @@ void free_compiler(struct Compiler* compiler) {
     pop_root();
 }
 
-static struct SigList* compile_function(struct Compiler* compiler, NodeList* nl) {
-    struct Sig* ret_sigs = make_list_sig();
+static struct SigArray* compile_function(struct Compiler* compiler, NodeList* nl) {
+    struct Sig* ret_sigs = make_array_sig();
     for (int i = 0; i < nl->count; i++) {
-        struct Sig* sig = compile_node(compiler, nl->nodes[i], (struct SigList*)ret_sigs);
+        struct Sig* sig = compile_node(compiler, nl->nodes[i], (struct SigArray*)ret_sigs);
     }
 
-    if (((struct SigList*)ret_sigs)->count == 0) {
+    if (((struct SigArray*)ret_sigs)->count == 0) {
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);
     }
-    return (struct SigList*)ret_sigs;
+    return (struct SigArray*)ret_sigs;
 }
 
 static Value clock_native(int arg_count, Value* args) {
@@ -753,17 +753,17 @@ static struct Sig* define_native(struct Compiler* compiler, const char* name, Va
 }
 
 static void define_clock(struct Compiler* compiler) {
-    define_native(compiler, "clock", clock_native, make_fun_sig(make_list_sig(), make_prim_sig(VAL_FLOAT)));
+    define_native(compiler, "clock", clock_native, make_fun_sig(make_array_sig(), make_prim_sig(VAL_FLOAT)));
 }
 
 static void define_print(struct Compiler* compiler) {
-    struct Sig* sl = make_list_sig();
+    struct Sig* sl = make_array_sig();
     struct Sig* str_sig = make_prim_sig(VAL_STRING);
     struct Sig* int_sig = make_prim_sig(VAL_INT);
     struct Sig* float_sig = make_prim_sig(VAL_FLOAT);
     str_sig->opt = int_sig;
     int_sig->opt = float_sig;
-    add_sig((struct SigList*)sl, str_sig);
+    add_sig((struct SigArray*)sl, str_sig);
     define_native(compiler, "print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
 }
 
@@ -771,7 +771,7 @@ ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
     define_clock(compiler);
     define_print(compiler);
 
-    struct SigList* ret_sigs = compile_function(compiler, nl);
+    struct SigArray* ret_sigs = compile_function(compiler, nl);
 
     if (compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {

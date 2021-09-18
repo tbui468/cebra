@@ -93,12 +93,12 @@ static struct Node* primary(Token var_name) {
             NodeList params;
             init_node_list(&params);
             
-            struct Sig* param_sig = make_list_sig();
+            struct Sig* param_sig = make_array_sig();
             if (!match(TOKEN_RIGHT_PAREN)) {
                 do {
                     struct Node* var_decl = var_declaration(false);
                     DeclVar* vd = (DeclVar*)var_decl;
-                    add_sig((struct SigList*)param_sig, vd->sig);
+                    add_sig((struct SigArray*)param_sig, vd->sig);
                     add_node(&params, var_decl);
                 } while (match(TOKEN_COMMA));
                 consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
@@ -279,10 +279,10 @@ static struct Node* block() {
 
 static struct Sig* read_sig(Token var_name) {
     if (match(TOKEN_LEFT_PAREN)) {
-        struct Sig* params = make_list_sig();
+        struct Sig* params = make_array_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                add_sig((struct SigList*)params, read_sig(var_name));
+                add_sig((struct SigArray*)params, read_sig(var_name));
             } while(match(TOKEN_COMMA));
             consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
         }

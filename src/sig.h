@@ -18,7 +18,7 @@ struct Sig {
     struct Sig* opt;
 };
 
-struct SigList {
+struct SigArray {
     struct Sig base;
     struct Sig** sigs;
     int count;
@@ -50,8 +50,8 @@ struct SigIdentifier {
 
 void insert_sig(struct Sig* sig);
 
-struct Sig* make_list_sig();
-void add_sig(struct SigList* sl, struct Sig* sig);
+struct Sig* make_array_sig();
+void add_sig(struct SigArray* sl, struct Sig* sig);
 struct Sig* make_prim_sig(ValueType type);
 struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret);
 struct Sig* make_class_sig(Token klass);

@@ -9,7 +9,7 @@ void insert_sig(struct Sig* sig) {
     current_compiler->signatures = sig;    
 }
 
-void add_sig(struct SigList* sl, struct Sig* sig) {
+void add_sig(struct SigArray* sl, struct Sig* sig) {
     if (sl->count + 1 > sl->capacity) {
         int new_capacity = sl->capacity == 0 ? 8 : sl->capacity * 2;
         sl->sigs = GROW_ARRAY(sl->sigs, struct Sig*, new_capacity, sl->capacity);
@@ -20,8 +20,8 @@ void add_sig(struct SigList* sl, struct Sig* sig) {
     sl->count++;
 }
 
-struct Sig* make_list_sig() {
-    struct SigList* sig_list = ALLOCATE(struct SigList);
+struct Sig* make_array_sig() {
+    struct SigArray* sig_list = ALLOCATE(struct SigArray);
     sig_list->sigs = ALLOCATE_ARRAY(struct Sig*);
     sig_list->count = 0;
     sig_list->capacity = 0;
@@ -108,8 +108,8 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
 
     switch(sig1->type) {
         case SIG_LIST:
-            struct SigList* sl1 = (struct SigList*)sig1;
-            struct SigList* sl2 = (struct SigList*)sig2;
+            struct SigArray* sl1 = (struct SigArray*)sig1;
+            struct SigArray* sl2 = (struct SigArray*)sig2;
             if (sl1->count != sl2->count) return false;
             for (int i = 0; i < sl1->count; i++) {
                 if (!same_sig(sl1->sigs[i], sl2->sigs[i])) return false;
@@ -159,7 +159,7 @@ bool sig_is_type(struct Sig* sig, ValueType type) {
 void print_sig(struct Sig* sig) {
     switch(sig->type) {
         case SIG_LIST:
-            struct SigList* sl = (struct SigList*)sig;
+            struct SigArray* sl = (struct SigArray*)sig;
             printf("(");
             for (int i = 0; i < sl->count; i++) {
                 print_sig(sl->sigs[i]);
@@ -172,7 +172,7 @@ void print_sig(struct Sig* sig) {
             break;
         case SIG_FUN:
             struct SigFun* sf = (struct SigFun*)sig;
-            struct SigList* params = (struct SigList*)(sf->params);
+            struct SigArray* params = (struct SigArray*)(sf->params);
             printf("(");
             for (int i = 0; i < params->count; i++) {
                 print_sig(params->sigs[i]);
@@ -195,9 +195,9 @@ void print_sig(struct Sig* sig) {
 void free_sig(struct Sig* sig) {
     switch(sig->type) {
         case SIG_LIST:
-            struct SigList* sl = (struct SigList*)sig;
+            struct SigArray* sl = (struct SigArray*)sig;
             FREE_ARRAY(sl->sigs, struct Sig*, sl->capacity);
-            FREE(sl, struct SigList);
+            FREE(sl, struct SigArray);
             break;
         case SIG_PRIM:
             struct SigPrim* sig_prim = (struct SigPrim*)sig;
