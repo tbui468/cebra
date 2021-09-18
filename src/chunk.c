@@ -54,6 +54,7 @@ const char* op_to_string(OpCode op) {
         case OP_INSTANCE: return "OP_INSTANCE";
         case OP_RETURN: return "OP_RETURN";
         case OP_NATIVE: return "OP_NATIVE";
+        case OP_LIST: return "OP_LIST";
         default: return "Unrecognized op";
     }
 }

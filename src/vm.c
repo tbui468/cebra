@@ -324,6 +324,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, read_constant(frame, READ_TYPE(frame, uint16_t)));
             break;
         }
+        case OP_LIST: {
+            struct ObjList* list = make_list(peek(vm, 0));
+            pop(vm);
+            push(vm, to_list(list));
+            break;
+        }
     } 
 
 #ifdef DEBUG_TRACE

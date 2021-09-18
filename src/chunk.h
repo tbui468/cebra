@@ -35,7 +35,8 @@ typedef enum {
     OP_ADD_PROP,
     OP_INSTANCE,
     OP_RETURN,
-    OP_NATIVE
+    OP_NATIVE,
+    OP_LIST
 } OpCode;
 
 typedef struct {

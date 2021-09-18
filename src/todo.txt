@@ -11,19 +11,11 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    struct ObjArray {
-        Value* values;
-        Value default;
-        int count;
-        int capacity;
-    };
-
     That should be left to the DeclVar (left side)
         and GetVar (right side) and Call (right side)
         we need to do this since template type needs to be specified
         create an ObjList in Call of correct type + default
-        emit VAL_TYPE
-        emit default value
+        emit default value - we can also get val type from this
         emit OP_LIST (which pops the above two to create ObjList)
 
     use a[0] = 8 for getting/setting list values

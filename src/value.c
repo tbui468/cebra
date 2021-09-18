@@ -58,6 +58,13 @@ Value to_instance(struct ObjInstance* obj) {
     return value;
 }
 
+Value to_list(struct ObjList* obj) {
+    Value value;
+    value.type = VAL_LIST;
+    value.as.list_type = obj;
+    return value;
+}
+
 Value to_nil() {
     Value value;
     value.type = VAL_NIL;
@@ -201,6 +208,9 @@ void print_value(Value a) {
         case VAL_NATIVE:
             printf("%s", "<native>");
             break;
+        case VAL_LIST:
+            printf("%s", "<list>");
+            break;
         default:
             printf("Invalid value");
             break;
@@ -219,6 +229,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_NIL: return "VAL_NIL";
         case VAL_SIG: return "VAL_SIG";
         case VAL_NATIVE: return "VAL_NATIVE";
+        case VAL_LIST: return "VAL_LIST";
         default: return "Unrecognized VAL_TYPE";
     }
 }
@@ -243,6 +254,10 @@ struct Obj* get_object(Value* value) {
         }
         case VAL_NATIVE: {
             struct ObjNative* obj = value->as.native_type;
+            return (struct Obj*)obj;
+        }
+        case VAL_LIST: {
+            struct ObjList* obj = value->as.list_type;
             return (struct Obj*)obj;
         }
         //Values with stack allocated data

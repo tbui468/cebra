@@ -50,6 +50,11 @@ int free_object(struct Obj* obj) {
             struct ObjNative* nat = (struct ObjNative*)obj;
             bytes_freed += FREE(nat, struct ObjNative);
             break;
+        case OBJ_LIST:
+            struct ObjList* list = (struct ObjList*)obj;
+            bytes_freed += free_value_array(&list->values);
+            bytes_freed += FREE(list, struct ObjList);
+            break;
     }
     return bytes_freed;
 }
@@ -82,6 +87,9 @@ void print_object(struct Obj* obj) {
             printf("OBJ_NATIVE [");
             print_value(to_native((struct ObjNative*)obj));
             printf("] : ");
+            break;
+        case OBJ_LIST:
+            printf("OBJ_LIST:");
             break;
         default:
             printf("Invalid Object: ");

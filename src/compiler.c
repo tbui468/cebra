@@ -327,6 +327,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             if (!sig_is_type(sig, VAL_NIL) && !same_sig(sig, decl_sig)) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
+
             return make_prim_sig(VAL_NIL);
         }
         case NODE_FUN: {
@@ -581,6 +582,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
 
+            //List creation
+            if (gv->template_type != NULL) {
+                return gv->template_type;
+            }
+
             int idx = resolve_local(compiler, gv->name);
             if (idx != -1) {
                 emit_byte(compiler, OP_GET_LOCAL);
@@ -637,6 +643,20 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             Call* call = (Call*)node;
 
             struct Sig* sig = compile_node(compiler, call->left, ret_sigs);
+
+            if (sig->type == SIG_LIST) {
+                struct SigList* sig_list = (struct SigList*)sig;
+                if (call->arguments.count != 1) {
+                    add_error(compiler, call->name, "List constructor must have 1 argument.");
+                }
+                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[0], ret_sigs);
+
+                if (!same_sig(arg_sig, sig_list->type)) {
+                    add_error(compiler, call->name, "List type and argument type must be the same.");
+                }
+                emit_byte(compiler, OP_LIST);
+                return sig;
+            }
 
             if (sig->type == SIG_CLASS) {
                 struct SigClass* sig_class = (struct SigClass*)sig;

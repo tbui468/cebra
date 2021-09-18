@@ -9,7 +9,8 @@ typedef enum {
     OBJ_CLASS,
     OBJ_INSTANCE,
     OBJ_UPVALUE,
-    OBJ_NATIVE
+    OBJ_NATIVE,
+    OBJ_LIST
 } ObjType;
 
 struct Obj {
@@ -17,7 +18,6 @@ struct Obj {
     struct Obj* next;
     bool is_marked;
 };
-
 
 void insert_object(struct Obj* ptr);
 int free_object(struct Obj* obj);
