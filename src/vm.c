@@ -10,6 +10,12 @@
 #define READ_TYPE(frame, type) \
     (frame->ip += (int)sizeof(type), (type)frame->function->chunk.codes[frame->ip - (int)sizeof(type)])
 
+static void add_error(VM* vm, const char* message) {
+    RuntimeError error;
+    error.message = message;
+    vm->errors[vm->error_count] = error;
+    vm->error_count++;
+}
 
 Value pop(VM* vm) {
     vm->stack_top--;
@@ -29,6 +35,7 @@ ResultCode init_vm(VM* vm) {
     vm->stack_top = &vm->stack[0];
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
+    vm->error_count = 0;
 
     return RESULT_SUCCESS;
 }
@@ -363,7 +370,8 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             int idx = pop(vm).as.integer_type;
             struct ObjList* list = peek(vm, 0).as.list_type;
             if (idx >= list->values.count) {
-                //TODO: add runtime error
+                add_error(vm, "Index out of bounds.");
+                return RESULT_FAILED;
             }
             pop(vm);
             push(vm, list->values.values[idx]);
@@ -380,8 +388,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 }
                 add_value(&list->values, value);
             } else {
-                list->values.count = idx;
-                add_value(&list->values, value);
+                list->values.values[idx] = value;
             }
             pop(vm);
             pop(vm);
@@ -403,7 +410,13 @@ ResultCode run(VM* vm, struct ObjFunction* script) {
 
     while (vm->frame_count > 0) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];
-        execute_frame(vm, frame);
+        ResultCode result = execute_frame(vm, frame);
+        if (vm->error_count > 0) {
+            for (int i = 0; i < vm->error_count; i++) {
+                printf("%s\n", vm->errors[i].message);
+            }
+            return RESULT_FAILED;
+        }
     }
 
     return RESULT_SUCCESS;

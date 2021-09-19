@@ -11,6 +11,30 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+a: List<int> = List<int>(2)
+b: List<float> = List<float>(4.8)
+
+for i: int = 0, i < 5, i = i + 1 {
+    a[i] = i
+    print(a[i])
+}
+print("***********")
+a[2] = -4
+for i: int = 0, i < 5, i = i + 1 {
+    print(a[i])
+}
+print("***********")
+a[5] = -100
+for i: int = 0, i < 6, i = i + 1 {
+    print(a[i])
+}
+print("***********")
+a.size = 4
+for i: int = 0, i < 4, i = i + 1 {
+    print(a[i])
+}
+
+
     Add runtime errors (mainly for OP_GET_IDX for now)
 
     Add tests for lists (getting idx/setting idx inside count/setting idx outside count/
@@ -23,6 +47,15 @@ IMPLEMENTATION:
         check in assignment() - similar to how we dealt with indices with []
 
     Implement a stack in cebra using List/structs/functions to test List
+        create a new file called stack.cbr to save this (can reuse later)
+
+    Implement 'in' keyword to check if value is in list
+        should return a boolean
+
+    Implement for each loop
+        for i: int in list {
+            print(i)
+        }
 
     Add support for maps 
     how to check if key is in map?  Use 'in' keyword:
