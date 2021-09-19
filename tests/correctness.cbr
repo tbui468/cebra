@@ -584,4 +584,22 @@
         print("Set Lower Index: Failed!")
     }
 
+
+    Dog: struct = struct {
+        name: string = "Mittens"
+        age: int = 5
+    }
+
+    a: List<Dog> = List<Dog>(Dog())
+    d: Dog = Dog()
+    d.name = "Bubbles"
+    a[0] = d
+    a.size = 2
+
+    if a[0].name == "Bubbles" and a[1].name == "Mittens" {
+        print("Structs in List: Passed!")
+    } else {
+        print("Structs in List: Failed!")
+    }
+
 }

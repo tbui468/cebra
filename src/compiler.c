@@ -706,7 +706,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
                 struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[0], ret_sigs);
 
-                if (!same_sig(arg_sig, sig_list->type)) {
+                struct Sig* list_template = sig_list->type;
+                if (list_template->type == SIG_IDENTIFIER) {
+                    list_template = resolve_sig(compiler, ((struct SigIdentifier*)list_template)->identifier);
+                }
+
+                if (!same_sig(arg_sig, list_template)) {
                     add_error(compiler, call->name, "List type and argument type must be the same.");
                 }
                 emit_byte(compiler, OP_LIST);

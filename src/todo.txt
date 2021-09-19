@@ -11,9 +11,7 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Implement structs in Lists
-
-    Write tests for structs in Lists
+    Need to add parse error if quote is not closed (rather than quietly failing)
 
     Split call_dot into call and dot, just make sure that both options are called
         when doing recursive descent
