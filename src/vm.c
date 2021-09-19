@@ -353,14 +353,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 }
                 list->values.values = GROW_ARRAY(list->values.values, Value, new_cap, list->values.capacity);
                 list->values.capacity = new_cap;
-
-                while (list->values.count < new_count) {
-                    list->values.values[list->values.count] = list->default_value;
-                    list->values.count++;
-                }
-            } else {
-                list->values.count = new_count;
             }
+            while (list->values.count < new_count) {
+                list->values.values[list->values.count] = list->default_value;
+                list->values.count++;
+            }
+            list->values.count = new_count;
             pop(vm);
             break;
         }

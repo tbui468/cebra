@@ -534,3 +534,54 @@
         print("clock(): Failed!")
     }
 }
+
+{
+    print("")
+    print("***********Lists************")
+    a: List<int> = List<int>(-1)
+
+    if a.size == 0 {
+        print("Initialize List: Passed!")
+    } else {
+        print("Initialize List: Failed!")
+    }
+
+    a[0] = 0
+    a[1] = 1
+    a[0] = 10
+
+    if a.size == 2 and a[0] == 10 and a[1] == 1 {
+        print("Setting Value: Passed!")
+    } else {
+        print("Setting Value: Failed!")
+    }
+
+    a.size = 0
+    if a.size == 0 {
+        print("Setting size to Zero: Passed!")
+    } else {
+        print("Setting size to Zero: Failed!")
+    }
+
+    a.size = 2
+    if a.size == 2 and a[0] == -1 and a[1] == -1 {
+        print("Set Higher Size / Fill with Default: Passed!")
+    } else {
+        print("Set Higher Size / Fill with Default: Failed!")
+    }
+
+    a[10] = 10
+    if a.size == 11 and a[10] == 10 and a[9] == -1 {
+        print("Set Higher Index / Fill with Default: Passed!")
+    } else {
+        print("Set Higher Index / Fill with Default: Failed!")
+    }
+
+    a[5] = 33
+    if a.size == 11 and a[10] == 10 and a[9] == -1 and a[5] == 33 {
+        print("Set Lower Index: Passed!")
+    } else {
+        print("Set Lower Index: Failed!")
+    }
+
+}
