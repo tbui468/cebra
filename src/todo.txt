@@ -11,23 +11,46 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    That should be left to the DeclVar (left side)
-        and GetVar (right side) and Call (right side)
-        we need to do this since template type needs to be specified
-        create an ObjList in Call of correct type + default
-        emit default value - we can also get val type from this
-        emit OP_LIST (which pops the above two to create ObjList)
+    Add runtime errors (mainly for OP_GET_IDX for now)
 
-    use a[0] = 8 for getting/setting list values
-    use a[-1] to access from end
-    runtime error if trying to access out of bounds
-    a.length (or size) returns an int
-    a.length = 10 will increase array size (filling with default value)
-        or remove values from end of array
+    Add tests for lists (getting idx/setting idx inside count/setting idx outside count/
+        setting size under count, settin size above count
 
-    will need to have GC trace references in ObjList
+    Split call_dot into call and dot, just make sure that both options are called
+        when doing recursive descent
 
-    Implement a stack in cebra using List + structs to test
+    should be able to skip checking for TOKEN_EQUAL in call_dot() and just
+        check in assignment() - similar to how we dealt with indices with []
+
+    Implement a stack in cebra using List/structs/functions to test List
+
+    Add support for maps 
+    how to check if key is in map?  Use 'in' keyword:
+    this should be used on a list.  Use keys/values/pairs to get a list
+    how about structs?  
+    if { "dog, 4 } in m.pairs {
+        print
+    }
+    if "dog" in m.keys {
+        print(m["dog"])
+    }
+        key: string
+        value: any type
+        m: Map<int> = Map<int>()
+        m["dog"] = 4
+        print(m["dog"]) //prints 4
+        print(m["cat"]) //prints ???? need a way to check if key exists
+        m.keys //returns a list of strings showing keys
+        m.values //returns a list of <type> showing values
+
+    struct inheritance - this will guarentee that Dog is 'ducked'
+    as an animal.
+        Animal: struct = struct {
+            species: string = "Mammal"
+        }
+        Dog: struct < Animal = struct < Animal {
+            name: string = "Bubbles"
+        }
 
     for n: string in list {
         

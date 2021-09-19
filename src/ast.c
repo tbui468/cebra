@@ -182,6 +182,25 @@ struct Node* make_set_var(struct Node* left, struct Node* right) {
     return (struct Node*)set_var;
 }
 
+struct Node* make_get_idx(Token name, struct Node* left, struct Node* idx) {
+    GetIdx* get_idx = ALLOCATE(GetIdx);
+    get_idx->name = name;
+    get_idx->left = left;
+    get_idx->idx = idx;
+    get_idx->base.type = NODE_GET_IDX;
+
+    return (struct Node*)get_idx;
+}
+
+struct Node* make_set_idx(struct Node* left, struct Node* right) {
+    SetIdx* set_idx = ALLOCATE(SetIdx);
+    set_idx->left = left;
+    set_idx->right = right;
+    set_idx->base.type = NODE_SET_IDX;
+
+    return (struct Node*)set_idx;
+}
+
 struct Node* make_call(Token name, struct Node* left, NodeList arguments) {
     Call* call = ALLOCATE(Call);
     call->name = name;
@@ -302,6 +321,14 @@ void print_node(struct Node* node) {
         }
         case NODE_SET_VAR: {
             printf("SetVar stub");
+            break;
+        }
+        case NODE_GET_IDX: {
+            printf("GetIdx stub");
+            break;
+        }
+        case NODE_SET_IDX: {
+            printf("SetIdx stub");
             break;
         }
         case NODE_CALL: {
@@ -431,6 +458,20 @@ void free_node(struct Node* node) {
             free_node(sv->left);
             free_node(sv->right);
             FREE(sv, SetVar);
+            break;
+        }
+        case NODE_GET_IDX: {
+            GetIdx* gv = (GetIdx*)node;
+            free_node(gv->left);
+            free_node(gv->idx);
+            FREE(gv, GetIdx);
+            break;
+        }
+        case NODE_SET_IDX: {
+            SetIdx* sv = (SetIdx*)node;
+            free_node(sv->left);
+            free_node(sv->right);
+            FREE(sv, SetIdx);
             break;
         }
         case NODE_CALL: {

@@ -650,6 +650,50 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             add_error(compiler, var, "Local variable not declared.");
             return make_prim_sig(VAL_NIL);
         }
+        case NODE_GET_IDX: {
+            GetIdx* get_idx = (GetIdx*)node;
+            struct Sig* left_sig = compile_node(compiler, get_idx->left, ret_sigs);
+            struct Sig* idx_sig = compile_node(compiler, get_idx->idx, ret_sigs);
+        
+            if (left_sig->type != SIG_LIST) {
+                add_error(compiler, get_idx->name, "[] access must be used on a list type.");
+                return NULL;
+            }    
+
+            if (!sig_is_type(idx_sig, VAL_INT)) {
+                add_error(compiler, get_idx->name, "Index must be integer type.");
+                return NULL;
+            }
+
+            emit_byte(compiler, OP_GET_IDX);
+            return ((struct SigList*)left_sig)->type;
+        }
+        case NODE_SET_IDX: {
+            SetIdx* set_idx = (SetIdx*)node;
+            GetIdx* get_idx = (GetIdx*)(set_idx->left);
+
+            struct Sig* right_sig = compile_node(compiler, set_idx->right, ret_sigs);
+            struct Sig* left_sig = compile_node(compiler, get_idx->left, ret_sigs);
+            struct Sig* idx_sig = compile_node(compiler, get_idx->idx, ret_sigs);
+
+            if (left_sig->type != SIG_LIST) {
+                add_error(compiler, get_idx->name, "[] access must be used on a list type.");
+                return NULL;
+            }    
+
+            if (!sig_is_type(idx_sig, VAL_INT)) {
+                add_error(compiler, get_idx->name, "Index must be integer type.");
+                return NULL;
+            }
+
+            if (!same_sig(((struct SigList*)left_sig)->type, right_sig)) {
+                add_error(compiler, get_idx->name, "List type and right side type must match.");
+                return NULL;
+            }
+
+            emit_byte(compiler, OP_SET_IDX);
+            return right_sig;
+        }
         case NODE_CALL: {
             Call* call = (Call*)node;
 

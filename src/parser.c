@@ -152,12 +152,15 @@ static struct Node* call_dot(Token var_name) {
     struct Node* left = primary(var_name);
 
     while (!peek_three(TOKEN_DOT, TOKEN_IDENTIFIER, TOKEN_EQUAL) && 
-            (match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN))) {
+            (match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
         if (parser.previous.type == TOKEN_DOT) {
             consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.");
             left = make_get_prop(left, parser.previous);
-        } else { //TOKEN_PAREN
+        } else if (parser.previous.type == TOKEN_LEFT_PAREN) {
             left = make_call(parser.previous, left, argument_list(var_name));
+        } else { //TOKEN_LEFT_BRACKET
+            left = make_get_idx(parser.previous, left, expression(var_name));
+            consume(TOKEN_RIGHT_BRACKET, "Expect ']' after index.");
         }
     }
 
@@ -250,7 +253,11 @@ static struct Node* assignment(Token var_name) {
 
     while (match(TOKEN_EQUAL) || peek_three(TOKEN_DOT, TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
         if (parser.previous.type == TOKEN_EQUAL) {
-            left = make_set_var(left, expression(var_name));
+            if (left->type == NODE_GET_IDX) {
+                left = make_set_idx(left, expression(var_name));
+            } else { //NODE_GET_VAR
+                left = make_set_var(left, expression(var_name));
+            }
         } else {
             match(TOKEN_DOT);
             match(TOKEN_IDENTIFIER);

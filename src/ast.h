@@ -19,6 +19,8 @@ typedef enum {
     NODE_SET_PROP,
     NODE_GET_VAR,
     NODE_SET_VAR,
+    NODE_GET_IDX,
+    NODE_SET_IDX,
     NODE_BLOCK,
     NODE_IF_ELSE,
     NODE_WHILE,
@@ -163,6 +165,19 @@ typedef struct {
     struct Node base;
     Token name;
     struct Node* left;
+    struct Node* idx;
+} GetIdx;
+
+typedef struct {
+    struct Node base;
+    struct Node* left;
+    struct Node* right;
+} SetIdx;
+
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* left;
     NodeList arguments;
 } Call;
 
@@ -174,6 +189,8 @@ struct Node* make_logical(Token name, struct Node* left, struct Node* right);
 struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right);
 struct Node* make_get_var(Token name, struct Sig* template_type);
 struct Node* make_set_var(struct Node* left, struct Node* right);
+struct Node* make_get_idx(Token name, struct Node* left, struct Node* idx);
+struct Node* make_set_idx(struct Node* left, struct Node* right);
 struct Node* make_block(Token name, NodeList dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);

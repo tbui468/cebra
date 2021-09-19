@@ -38,7 +38,9 @@ typedef enum {
     OP_NATIVE,
     OP_LIST,
     OP_GET_SIZE,
-    OP_SET_SIZE
+    OP_SET_SIZE,
+    OP_GET_IDX,
+    OP_SET_IDX
 } OpCode;
 
 typedef struct {

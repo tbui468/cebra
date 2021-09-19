@@ -180,6 +180,8 @@ Token next_token() {
         case ')':   return new_token(TOKEN_RIGHT_PAREN);
         case '{':   return new_token(TOKEN_LEFT_BRACE);
         case '}':   return new_token(TOKEN_RIGHT_BRACE);
+        case '[':   return new_token(TOKEN_LEFT_BRACKET);
+        case ']':   return new_token(TOKEN_RIGHT_BRACKET);
         case ',':   return new_token(TOKEN_COMMA);
         case '.':   return new_token(TOKEN_DOT);
         case ':':   

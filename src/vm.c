@@ -357,6 +357,36 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             pop(vm);
             break;
         }
+        case OP_GET_IDX: {
+            //[list][idx]
+            //need to check if idx > size of list
+            int idx = pop(vm).as.integer_type;
+            struct ObjList* list = peek(vm, 0).as.list_type;
+            if (idx >= list->values.count) {
+                //TODO: add runtime error
+            }
+            pop(vm);
+            push(vm, list->values.values[idx]);
+            break;
+        }
+        case OP_SET_IDX: {
+            //[value][list][idx]
+            struct ObjList* list = peek(vm, 1).as.list_type;
+            int idx = peek(vm, 0).as.integer_type;
+            Value value = peek(vm, 2);
+            if (idx >= list->values.count) {
+                while (list->values.count < idx) {
+                    add_value(&list->values, list->default_value);
+                }
+                add_value(&list->values, value);
+            } else {
+                list->values.count = idx;
+                add_value(&list->values, value);
+            }
+            pop(vm);
+            pop(vm);
+            break;
+        }
     } 
 
 #ifdef DEBUG_TRACE
