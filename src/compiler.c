@@ -670,19 +670,30 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             GetIdx* get_idx = (GetIdx*)node;
             struct Sig* left_sig = compile_node(compiler, get_idx->left, ret_sigs);
             struct Sig* idx_sig = compile_node(compiler, get_idx->idx, ret_sigs);
-        
-            if (left_sig->type != SIG_LIST) {
-                add_error(compiler, get_idx->name, "[] access must be used on a list type.");
-                return NULL;
-            }    
 
-            if (!sig_is_type(idx_sig, VAL_INT)) {
-                add_error(compiler, get_idx->name, "Index must be integer type.");
-                return NULL;
+            if (left_sig->type == SIG_LIST) {
+                if (!sig_is_type(idx_sig, VAL_INT)) {
+                    add_error(compiler, get_idx->name, "Index must be integer type.");
+                    return NULL;
+                }
+
+                emit_byte(compiler, OP_GET_IDX);
+                return ((struct SigList*)left_sig)->type;
             }
 
-            emit_byte(compiler, OP_GET_IDX);
-            return ((struct SigList*)left_sig)->type;
+            if (left_sig->type == SIG_MAP) {
+                if (!sig_is_type(idx_sig, VAL_STRING)) {
+                    add_error(compiler, get_idx->name, "Key must be string type.");
+                    return NULL;
+                }
+
+                emit_byte(compiler, OP_GET_IDX);
+                return ((struct SigList*)left_sig)->type;
+            }
+
+
+            add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
+            return NULL;
         }
         case NODE_SET_IDX: {
             SetIdx* set_idx = (SetIdx*)node;
@@ -692,23 +703,38 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct Sig* left_sig = compile_node(compiler, get_idx->left, ret_sigs);
             struct Sig* idx_sig = compile_node(compiler, get_idx->idx, ret_sigs);
 
-            if (left_sig->type != SIG_LIST) {
-                add_error(compiler, get_idx->name, "[] access must be used on a list type.");
-                return NULL;
-            }    
+            if (left_sig->type == SIG_LIST) {
+                if (!sig_is_type(idx_sig, VAL_INT)) {
+                    add_error(compiler, get_idx->name, "Index must be integer type.");
+                    return NULL;
+                }
 
-            if (!sig_is_type(idx_sig, VAL_INT)) {
-                add_error(compiler, get_idx->name, "Index must be integer type.");
-                return NULL;
+                if (!same_sig(((struct SigList*)left_sig)->type, right_sig)) {
+                    add_error(compiler, get_idx->name, "List type and right side type must match.");
+                    return NULL;
+                }
+
+                emit_byte(compiler, OP_SET_IDX);
+                return right_sig;
             }
 
-            if (!same_sig(((struct SigList*)left_sig)->type, right_sig)) {
-                add_error(compiler, get_idx->name, "List type and right side type must match.");
-                return NULL;
+            if (left_sig->type == SIG_MAP) {
+                if (!sig_is_type(idx_sig, VAL_STRING)) {
+                    add_error(compiler, get_idx->name, "Key must be string type.");
+                    return NULL;
+                }
+
+                if (!same_sig(((struct SigList*)left_sig)->type, right_sig)) {
+                    add_error(compiler, get_idx->name, "Map type and right side type must match.");
+                    return NULL;
+                }
+
+                emit_byte(compiler, OP_SET_IDX);
+                return right_sig;
             }
 
-            emit_byte(compiler, OP_SET_IDX);
-            return right_sig;
+            add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
+            return NULL;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;

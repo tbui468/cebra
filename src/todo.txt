@@ -12,17 +12,13 @@ ADDING FEATURES:
 IMPLEMENTATION:
     
     get compiler working with Map<type>
-        NODE_GET_PROP
-        NODE_SET_PROP (should we allow this?)
-        NODE_GET_KEY
-        NODE_SET_KEY
-        NODE_CALL
+        NODE_GET_PROP getting List of keys or values
+            for now, just create ObjList when map.keys or map.values is called
+            and push it onto the stack
 
-    get vm working with Map<type>
-        create ObjMap (in obj_function)
-            add supporting functions to obj.h/obj.c
-            add tracing to memory.c
-            add supporting functions to value.c/h
+    get vm working with:
+        OP_SET_KEY
+        OP_GET_KEY
 
     Add support for accessing values/setting values
         for invalid keys, return default value

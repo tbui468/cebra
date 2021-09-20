@@ -369,34 +369,60 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_GET_IDX: {
-            //[list][idx]
-            //need to check if idx > size of list
-            int idx = pop(vm).as.integer_type;
-            struct ObjList* list = peek(vm, 0).as.list_type;
-            if (idx >= list->values.count) {
-                add_error(vm, "Index out of bounds.");
-                return RESULT_FAILED;
+            //[list | map][idx]
+            Value left = peek(vm, 1);
+            if (left.type == VAL_LIST) {
+                int idx = pop(vm).as.integer_type;
+                struct ObjList* list = left.as.list_type;
+                if (idx >= list->values.count) {
+                    add_error(vm, "Index out of bounds.");
+                    return RESULT_FAILED;
+                }
+                pop(vm);
+                push(vm, list->values.values[idx]);
+                break;
             }
-            pop(vm);
-            push(vm, list->values.values[idx]);
-            break;
+            if (left.type == VAL_MAP) {
+                struct ObjString* key = pop(vm).as.string_type;
+                struct ObjMap* map = left.as.map_type;
+                Value value = to_nil();
+                get_from_table(&map->table, key, &value);
+                if (value.type == VAL_NIL) {
+                    value = map->default_value;
+                }
+                pop(vm);
+                push(vm, value);
+                break;
+            }
         }
         case OP_SET_IDX: {
-            //[value][list][idx]
-            struct ObjList* list = peek(vm, 1).as.list_type;
-            int idx = peek(vm, 0).as.integer_type;
-            Value value = peek(vm, 2);
-            if (idx >= list->values.count) {
-                while (list->values.count < idx) {
-                    add_value(&list->values, list->default_value);
+            //[value][list | map][idx]
+            Value left = peek(vm, 1);
+            if (left.type == VAL_LIST) {
+                struct ObjList* list = left.as.list_type;
+                int idx = peek(vm, 0).as.integer_type;
+                Value value = peek(vm, 2);
+                if (idx >= list->values.count) {
+                    while (list->values.count < idx) {
+                        add_value(&list->values, list->default_value);
+                    }
+                    add_value(&list->values, value);
+                } else {
+                    list->values.values[idx] = value;
                 }
-                add_value(&list->values, value);
-            } else {
-                list->values.values[idx] = value;
+                pop(vm);
+                pop(vm);
+                break;
             }
-            pop(vm);
-            pop(vm);
-            break;
+            if (left.type == VAL_MAP) {
+                struct ObjMap* map = left.as.map_type;
+                struct ObjString* key = peek(vm, 0).as.string_type;
+                Value value = peek(vm, 2);
+                set_table(&map->table, key, value);
+                pop(vm);
+                pop(vm);
+                break;
+            }
         }
         case OP_IN_LIST: {
             //[value][list]
