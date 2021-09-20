@@ -65,6 +65,13 @@ Value to_list(struct ObjList* obj) {
     return value;
 }
 
+Value to_map(struct ObjMap* obj) {
+    Value value;
+    value.type = VAL_MAP;
+    value.as.map_type = obj;
+    return value;
+}
+
 Value to_nil() {
     Value value;
     value.type = VAL_NIL;
@@ -211,6 +218,9 @@ void print_value(Value a) {
         case VAL_LIST:
             printf("%s", "<list>");
             break;
+        case VAL_MAP:
+            printf("%s", "<map>");
+            break;
         default:
             printf("Invalid value");
             break;
@@ -230,6 +240,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_SIG: return "VAL_SIG";
         case VAL_NATIVE: return "VAL_NATIVE";
         case VAL_LIST: return "VAL_LIST";
+        case VAL_MAP: return "VAL_MAP";
         default: return "Unrecognized VAL_TYPE";
     }
 }
@@ -258,6 +269,10 @@ struct Obj* get_object(Value* value) {
         }
         case VAL_LIST: {
             struct ObjList* obj = value->as.list_type;
+            return (struct Obj*)obj;
+        }
+        case VAL_MAP: {
+            struct ObjMap* obj = value->as.map_type;
             return (struct Obj*)obj;
         }
         //Values with stack allocated data

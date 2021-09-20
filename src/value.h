@@ -22,6 +22,7 @@ struct ObjClass;
 struct ObjString;
 struct ObjNative;
 struct ObjList;
+struct ObjMap;
 
 typedef enum {
     VAL_INT,
@@ -34,7 +35,8 @@ typedef enum {
     VAL_NIL,
     VAL_SIG,
     VAL_NATIVE,
-    VAL_LIST
+    VAL_LIST,
+    VAL_MAP
 } ValueType;
 
 typedef struct {
@@ -50,6 +52,7 @@ typedef struct {
         struct Sig* sig_type;
         struct ObjNative* native_type;
         struct ObjList* list_type;
+        struct ObjMap* map_type;
     } as;
 } Value;
 
@@ -64,6 +67,7 @@ Value to_instance(struct ObjInstance* obj);
 Value to_sig(struct Sig* sig);
 Value to_native(struct ObjNative* obj);
 Value to_list(struct ObjList* obj);
+Value to_map(struct ObjMap* obj);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);

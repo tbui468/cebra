@@ -55,6 +55,11 @@ int free_object(struct Obj* obj) {
             bytes_freed += free_value_array(&list->values);
             bytes_freed += FREE(list, struct ObjList);
             break;
+        case OBJ_MAP:
+            struct ObjMap* map = (struct ObjMap*)obj;
+            bytes_freed += free_table(&map->table);
+            bytes_freed += FREE(map, struct ObjMap);
+            break;
     }
     return bytes_freed;
 }
@@ -90,6 +95,9 @@ void print_object(struct Obj* obj) {
             break;
         case OBJ_LIST:
             printf("OBJ_LIST:");
+            break;
+        case OBJ_MAP:
+            printf("OBJ_MAP:");
             break;
         default:
             printf("Invalid Object: ");

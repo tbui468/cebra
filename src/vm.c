@@ -337,6 +337,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, to_list(list));
             break;
         }
+        case OP_MAP: {
+            struct ObjMap* map = make_map(peek(vm, 0));
+            pop(vm);
+            push(vm, to_map(map));
+            break;
+        }
         case OP_GET_SIZE: {
             struct ObjList* list = pop(vm).as.list_type;
             push(vm, to_integer(list->values.count));

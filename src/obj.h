@@ -10,7 +10,8 @@ typedef enum {
     OBJ_INSTANCE,
     OBJ_UPVALUE,
     OBJ_NATIVE,
-    OBJ_LIST
+    OBJ_LIST,
+    OBJ_MAP
 } ObjType;
 
 struct Obj {

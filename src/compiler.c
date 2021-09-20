@@ -718,7 +718,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             if (sig->type == SIG_LIST) {
                 struct SigList* sig_list = (struct SigList*)sig;
                 if (call->arguments.count != 1) {
-                    add_error(compiler, call->name, "List constructor must have 1 argument.");
+                    add_error(compiler, call->name, "List constructor must have 1 argument for default value.");
                 }
                 struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[0], ret_sigs);
 
@@ -731,6 +731,25 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     add_error(compiler, call->name, "List type and argument type must be the same.");
                 }
                 emit_byte(compiler, OP_LIST);
+                return sig;
+            }
+
+            if (sig->type == SIG_MAP) {
+                struct SigMap* sig_map = (struct SigMap*)sig;
+                if (call->arguments.count != 1) {
+                    add_error(compiler, call->name, "Map constructor must have 1 argument for default value.");
+                }
+                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[0], ret_sigs);
+
+                struct Sig* map_template = sig_map->type;
+                if (map_template->type == SIG_IDENTIFIER) {
+                    map_template = resolve_sig(compiler, ((struct SigIdentifier*)map_template)->identifier);
+                }
+
+                if (!same_sig(arg_sig, map_template)) {
+                    add_error(compiler, call->name, "Map type and argument type must be the same.");
+                }
+                emit_byte(compiler, OP_MAP);
                 return sig;
             }
 

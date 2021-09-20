@@ -10,14 +10,23 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    
+    get compiler working with Map<type>
+        NODE_GET_PROP
+        NODE_SET_PROP (should we allow this?)
+        NODE_GET_KEY
+        NODE_SET_KEY
+        NODE_CALL
 
-    Implement 'in' keyword to check if value is in list
-        if (2 in list) {
-            print("2 is inside list")
-        }
+    get vm working with Map<type>
+        create ObjMap (in obj_function)
+            add supporting functions to obj.h/obj.c
+            add tracing to memory.c
+            add supporting functions to value.c/h
 
-        need this for maps, so might as well do it now
-        while already working on Lists
+    Add support for accessing values/setting values
+        for invalid keys, return default value
+        user must manually check if key exits using 'in' keyword and map.keys
 
     Add support for Maps
         m: Map<int> = Map<int>(-1) //default value is returned if no key exists
@@ -36,8 +45,10 @@ IMPLEMENTATION:
     struct inheritance - this will guarentee that Dog is 'ducked'
     as an animal.
         Animal: struct = struct {
-            species: string = "Mammal"
+            class: string = "Mammal"
         }
+
+        //Dog will now have 'class' as a field
         Dog: struct < Animal = struct < Animal {
             name: string = "Bubbles"
         }
@@ -97,6 +108,8 @@ IMPLEMENTATION:
     property names are being added as constants for both OP_GET_PROP
     and OP_SET_PROP, but they aren't really constants.  What other
     way could this be done more clearly.  Interning!!!
+        this will also make value comparisons of strings faster
+        (right now need to compare lengths + memcmp)
 
     Does NODE_DECl_VAR only for primitive types, or is it for functions/classes too?
         add ability to assign variables to classes, function, instances

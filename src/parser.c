@@ -84,6 +84,12 @@ static struct Node* primary(Token var_name) {
         struct Sig* template_type = read_sig(var_name);
         consume(TOKEN_GREATER, "Expect '>' after type.");
         return make_get_var(identifier, make_list_sig(template_type)); 
+    } else if (match(TOKEN_MAP)) {
+        Token identifier = parser.previous;
+        consume(TOKEN_LESS, "Expect '<' after 'Map'.");
+        struct Sig* template_type = read_sig(var_name);
+        consume(TOKEN_GREATER, "Expect '>' after type.");
+        return make_get_var(identifier, make_map_sig(template_type)); 
     } else if (match(TOKEN_IDENTIFIER)) {
         return make_get_var(parser.previous, NULL);
     } else if (match(TOKEN_LEFT_PAREN)) {
@@ -312,6 +318,13 @@ static struct Sig* read_sig(Token var_name) {
         struct Sig* template_type = read_sig(var_name);
         consume(TOKEN_GREATER, "Expect '>' after type."); 
         return make_list_sig(template_type);
+    }
+
+    if (match(TOKEN_MAP)) {
+        consume(TOKEN_LESS, "Expect '<' after 'Map'.");
+        struct Sig* template_type = read_sig(var_name);
+        consume(TOKEN_GREATER, "Expect '>' after type."); 
+        return make_map_sig(template_type);
     }
 
     if (match(TOKEN_IDENTIFIER)) {

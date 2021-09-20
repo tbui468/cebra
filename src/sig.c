@@ -90,6 +90,16 @@ struct Sig* make_list_sig(struct Sig* type) {
     return (struct Sig*)sl;
 }
 
+struct Sig* make_map_sig(struct Sig* type) {
+    struct SigMap* sm = ALLOCATE(struct SigMap);
+
+    sm->base.type = SIG_MAP;
+    sm->type = type;
+
+    insert_sig((struct Sig*)sm);
+    return (struct Sig*)sm;
+}
+
 bool is_duck(struct SigClass* sub, struct SigClass* super) {
     for (int i = 0; i < sub->props.capacity; i++) {
         struct Pair* sub_pair = &sub->props.pairs[i];
@@ -153,6 +163,8 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
             return memcmp(si1->identifier.start, si2->identifier.start, si1->identifier.length) == 0;
         case SIG_LIST:
             return same_sig(((struct SigList*)sig1)->type, ((struct SigList*)sig2)->type);
+        case SIG_MAP:
+            return same_sig(((struct SigMap*)sig1)->type, ((struct SigMap*)sig2)->type);
     }
 }
 
@@ -201,6 +213,9 @@ void print_sig(struct Sig* sig) {
         case SIG_LIST:
             printf("SigList Stub");
             break;
+        case SIG_MAP:
+            printf("SigMap Stub");
+            break;
         default:
             printf("Invalid sig");
             break;
@@ -234,6 +249,10 @@ void free_sig(struct Sig* sig) {
         case SIG_LIST:
             struct SigList* sl = (struct SigList*)sig;
             FREE(sl, struct SigList);
+            break;
+        case SIG_MAP:
+            struct SigMap* sm = (struct SigMap*)sig;
+            FREE(sm, struct SigMap);
             break;
     }
 }

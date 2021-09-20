@@ -1,0 +1,19 @@
+stack: List<string> = List<string>("default")
+
+push: (List<string>, string) -> = (l: List<string>, n: string) -> {
+    l[l.size] = n
+}
+
+pop: (List<string>) -> string = (l: List<string>) -> string {
+    i: string = l[l.size - 1]
+    l.size = l.size - 1
+    -> i
+}
+
+push(stack, "one")
+push(stack, "two")
+push(stack, "three")
+
+while stack.size > 0 {
+    print(pop(stack))
+}

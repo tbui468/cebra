@@ -149,6 +149,7 @@ static void trace_references() {
                 break;
             }
             case OBJ_CLASS: {
+                //table of props
                 struct ObjClass* oc = (struct ObjClass*)obj;
                 for (int i = 0; i < oc->props.capacity; i++) {
                     struct Pair* pair = &oc->props.pairs[i];
@@ -160,6 +161,7 @@ static void trace_references() {
                         push_gray(obj);
                     }
                 }
+                //class name
                 mark_object((struct Obj*)(oc->name));
                 push_gray((struct Obj*)(oc->name));
                 break;
@@ -190,6 +192,27 @@ static void trace_references() {
                 }
                 //mark default_value
                 struct Obj* val_obj = get_object(&list->default_value);
+                if (val_obj != NULL && !val_obj->is_marked) {
+                    mark_object(val_obj);
+                    push_gray(val_obj);
+                }
+                break;
+            }
+            case OBJ_MAP: {
+                struct ObjMap* om = (struct ObjMap*)obj;
+                //table
+                for (int i = 0; i < om->table.capacity; i++) {
+                    struct Pair* pair = &om->table.pairs[i];
+                    if (pair->key != NULL) {
+                        mark_object((struct Obj*)(pair->key));
+                        push_gray((struct Obj*)(pair->key));
+                        struct Obj* obj = get_object(&pair->value);
+                        mark_object(obj);
+                        push_gray(obj);
+                    }
+                }
+                //default value
+                struct Obj* val_obj = get_object(&om->default_value);
                 if (val_obj != NULL && !val_obj->is_marked) {
                     mark_object(val_obj);
                     push_gray(val_obj);
