@@ -339,7 +339,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 decl_sig = resolve_sig(compiler, ((struct SigIdentifier*)decl_sig)->identifier);
             }
 
-            if (!sig_is_type(sig, VAL_NIL) && !same_sig(sig, decl_sig)) {
+            if (!same_sig(sig, decl_sig)) {
                 add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
             }
 
@@ -842,6 +842,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             return sig_fun->ret;
         }
+        case NODE_NIL: {
+            emit_byte(compiler, OP_NIL);
+            return  make_prim_sig(VAL_NIL);
+        }
     } 
 }
 
@@ -924,8 +928,10 @@ static void define_print(struct Compiler* compiler) {
     struct Sig* str_sig = make_prim_sig(VAL_STRING);
     struct Sig* int_sig = make_prim_sig(VAL_INT);
     struct Sig* float_sig = make_prim_sig(VAL_FLOAT);
+    struct Sig* nil_sig = make_prim_sig(VAL_NIL);
     str_sig->opt = int_sig;
     int_sig->opt = float_sig;
+    float_sig->opt = nil_sig;
     add_sig((struct SigArray*)sl, str_sig);
     define_native(compiler, "print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
 }

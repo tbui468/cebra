@@ -127,7 +127,8 @@ void disassemble_chunk(struct ObjFunction* function) {
                 break;
             }
             case OP_GET_PROP: {
-                int slot = read_byte(chunk, i++);
+                int slot = read_short(chunk, i);
+                i += 2;
                 printf("[%d]", slot);
                 break;
             }

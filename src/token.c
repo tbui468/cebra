@@ -51,6 +51,7 @@ void print_token(Token token) {
         case TOKEN_IN: printf("TOKEN_IN"); break;
         case TOKEN_MAP: printf("TOKEN_MAP"); break;
         case TOKEN_EOF: printf("TOKEN_EOF"); break;
+        case TOKEN_NIL: printf("TOKEN_NIL"); break;
         default: printf("Unrecognized token"); break;
     }
     printf("\n");

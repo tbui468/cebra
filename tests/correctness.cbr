@@ -665,3 +665,42 @@
         print("Value and Key List Sizes: Failed!")
     }
 }
+
+{
+    print("")
+    print("***********Nils For Instances************")
+
+    Dog: struct = struct {
+        name: string = "Bubbles"
+        age: int = 2
+        friend: Dog = nil
+    }
+
+    dog0: Dog = Dog()
+    dog1: Dog = Dog()
+    dog1.name = "Mittens"
+    dog2: Dog = Dog()
+    dog2.name = "Boxy"
+    dog0.friend = dog1
+    dog1.friend = dog2
+    dog_nil: Dog = nil
+
+    if dog0.friend.friend.friend == nil and dog_nil == nil{
+        print("Initialized to Nil: Passed!")
+    } else {
+        print("Initialized to Nil: Failed!")
+    }
+
+    if dog0.friend.friend.name == dog1.friend.name {
+        print("Instance Inside Instance: Passed!")
+    } else {
+        print("Instance Inside Instance: Failed!")
+    }
+
+    dog0 = nil
+    if dog0 == nil {
+        print("Set Instance to Nil: Passed!")
+    } else {
+        print("Set Instance to Nil: Failed!")
+    }
+}

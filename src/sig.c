@@ -124,6 +124,7 @@ bool is_duck(struct SigClass* sub, struct SigClass* super) {
 
 bool same_sig(struct Sig* sig1, struct Sig* sig2) {
     if (sig1 == NULL || sig2 == NULL) return false;
+    if (sig_is_type(sig1, VAL_NIL) || sig_is_type(sig2, VAL_NIL)) return true;
     if (sig1->type != sig2->type) return false;
 
     switch(sig1->type) {

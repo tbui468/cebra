@@ -28,7 +28,8 @@ typedef enum {
     NODE_FUN,
     NODE_RETURN,
     NODE_CALL,
-    NODE_EXPR_STMT
+    NODE_EXPR_STMT,
+    NODE_NIL
 } NodeType;
 
 struct Node {
@@ -180,6 +181,11 @@ typedef struct {
     NodeList arguments;
 } Call;
 
+typedef struct {
+    struct Node base;
+    Token name;
+} Nil;
+
 
 struct Node* make_literal(Token name);
 struct Node* make_unary(Token name, struct Node* right);
@@ -201,6 +207,7 @@ struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig);
 struct Node* make_expr_stmt(struct Node* expr);
 struct Node* make_get_prop(struct Node* inst, Token prop);
 struct Node* make_set_prop(struct Node* inst, struct Node* right);
+struct Node* make_nil(Token name);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

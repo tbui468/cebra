@@ -149,8 +149,11 @@ static struct Node* primary(Token var_name) {
             add_node(&nl, decl);
         }
         return make_decl_class(var_name, nl, parser.current_sig);
+    } else if (match(TOKEN_NIL)) {
+        return make_nil(parser.previous);
     }
 
+    add_error(parser.previous, "Invalid token.");
     return NULL;
 }
 

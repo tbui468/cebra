@@ -224,6 +224,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_GET_PROP: {
+            if (peek(vm, 0).type == VAL_NIL) {
+                READ_TYPE(frame, uint16_t);
+                break;
+            }
+
             struct ObjInstance* inst = peek(vm, 0).as.instance_type;
             struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
             Value prop_val = to_nil();

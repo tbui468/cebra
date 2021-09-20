@@ -210,6 +210,13 @@ struct Node* make_call(Token name, struct Node* left, NodeList arguments) {
     return (struct Node*)call;
 }
 
+struct Node* make_nil(Token name) {
+    Nil* nil = ALLOCATE(Nil);
+    nil->name = name;
+    nil->base.type = NODE_NIL;
+
+    return (struct Node*)nil;
+}
 
 /*
  * Utility
@@ -333,6 +340,10 @@ void print_node(struct Node* node) {
         case NODE_CALL: {
             printf("Call stub");
             break;
+        case NODE_NIL: {
+            printf("Nil stub");
+            break;
+        }
         }
     } 
 }
@@ -478,6 +489,11 @@ void free_node(struct Node* node) {
             free_node(call->left);
             free_node_list(&call->arguments);
             FREE(call, Call);
+            break;
+        }
+        case NODE_NIL: {
+            Nil* nil = (Nil*)node;
+            FREE(nil, Nil);
             break;
         }
     } 

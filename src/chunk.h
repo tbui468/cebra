@@ -44,7 +44,7 @@ typedef enum {
     OP_IN_LIST,
     OP_MAP,
     OP_GET_KEYS,
-    OP_GET_VALUES
+    OP_GET_VALUES,
 } OpCode;
 
 typedef struct {

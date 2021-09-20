@@ -12,31 +12,58 @@ ADDING FEATURES:
 IMPLEMENTATION:
 
     struct inheritance - this will guarentee that Dog is 'ducked' as an animal.
+    what is substruct overrides with different type?  We allow this.
+    There is no special inheritance signature - any subclass will simply
+    have the superclass properties added to props first, then the subclass
+    properties (property MUST be overwritten with same type)
+    are written.  The final result is used as the type signature
+
         Animal: struct = struct {
             class: string = "Mammal"
         }
 
-        //Dog will now have 'class' as a field
         Dog: struct < Animal = struct < Animal {
             name: string = "Bubbles"
         }
 
+        Cat: struct < Animal = struct < Animal {
+            name: string = "Mittens"
+            class: string = "Feline"
+        }
+
+        dog: Dog = Dog()
+        print(dog.name)
+        print(dog.class) //this should work
+
+
     Allow shorthand for declaration types:
         a := 1
         b := "dogg"
-        c := () -> int {
-            -> 3
+        c := (n: int, m: int) -> int {
+            -> m * n
         }
-        Dog := class {
+        Dog := struct {
             name := "Mittens"
         }
 
-    Allow structs to hold reference to same type as self:
-        Dog := struct {
-            name := "Mittens"
-            age := 1
-            friend := Dog()
-        }
+        dog := Dog()
+
+    Change display of test results for easier digestion:
+        sum all test and include failed/passed tests count
+        print names of failed tests only
+
+    Compile to webassembly and run in browser
+        test with simple 'hello world' program first
+        test with program that reads in text from text box (our script)
+            and returns info about that text
+        integrate final code
+
+    Update documentation to include syntax
+
+    find python native function list (for early python versions)
+        and add those functions
+        copy() for instances/lists/maps
+        casting to string/int/float
 
     Implement for each loop
         for i: int in list {
@@ -52,12 +79,14 @@ IMPLEMENTATION:
     Need to add parse error if quote is not closed (rather than quietly failing)
         and program crashing
 
+    Need to make parser and compiler errors NOT fail silently and instead
+        give user a useful message. Will require more careful handling of
+        parse/compiler/runtime errors - including syncing so that multiple
+        errors can be shown
+
     When compile_node() is called, should check if return value is NULL
         make all errors return NULL, rather than a signature of type NIL
         NIL type signatures are valid, whereas NULL will signal an error
-
-    find python native function list (for early python versions)
-        and add those functions
 
     Allow struct instantiation to have arguments that set fields
         by order of declaration.  Use must include all arguments, but

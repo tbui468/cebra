@@ -98,6 +98,9 @@ static Token read_keyword(char c) {
         case 'M':
             if (match_string("ap")) return new_token(TOKEN_MAP);
             break;
+        case 'n':
+            if (match_string("il")) return new_token(TOKEN_NIL);
+            break;
         case 'o':
             if (match_string("r")) return new_token(TOKEN_OR);
             break;
