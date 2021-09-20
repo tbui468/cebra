@@ -392,6 +392,22 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             pop(vm);
             break;
         }
+        case OP_IN_LIST: {
+            //[value][list]
+            struct ObjList* list = peek(vm, 0).as.list_type;
+            Value value = peek(vm, 1);
+            bool in_list = false;
+            for (int i = 0; i < list->values.count; i++) {
+                if (equal_values(value, list->values.values[i]).as.boolean_type) {
+                    in_list = true;
+                    break;
+                }                
+            }
+            pop(vm);
+            pop(vm);
+            push(vm, to_boolean(in_list));
+            break;
+        }
     } 
 
 #ifdef DEBUG_TRACE

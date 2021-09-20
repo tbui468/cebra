@@ -91,6 +91,7 @@ static Token read_keyword(char c) {
             if (match_string("alse")) return new_token(TOKEN_FALSE);
             break;
         case 'i':
+            if (match_string("n")) return new_token(TOKEN_IN);
             if (match_string("nt")) return new_token(TOKEN_INT_TYPE);
             if (match_string("f")) return new_token(TOKEN_IF);
             break;

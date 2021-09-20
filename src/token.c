@@ -48,6 +48,7 @@ void print_token(Token token) {
         case TOKEN_LIST: printf("TOKEN_LIST"); break;
         case TOKEN_LEFT_BRACKET: printf("TOKEN_LEFT_BRACKET"); break;
         case TOKEN_RIGHT_BRACKET: printf("TOKEN_RIGHT_BRACKET"); break;
+        case TOKEN_IN: printf("TOKEN_IN"); break;
         case TOKEN_EOF: printf("TOKEN_EOF"); break;
         default: printf("Unrecognized token"); break;
     }

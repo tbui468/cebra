@@ -151,8 +151,7 @@ static struct Node* primary(Token var_name) {
 static struct Node* call_dot(Token var_name) {
     struct Node* left = primary(var_name);
 
-    while (!peek_three(TOKEN_DOT, TOKEN_IDENTIFIER, TOKEN_EQUAL) && 
-            (match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
+    while ((match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
         if (parser.previous.type == TOKEN_DOT) {
             consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.");
             left = make_get_prop(left, parser.previous);
@@ -215,7 +214,7 @@ static struct Node* relation(Token var_name) {
 static struct Node* equality(Token var_name) {
     struct Node* left = relation(var_name);
 
-    while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL)) {
+    while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL) || match(TOKEN_IN)) {
         Token name = parser.previous;
         struct Node* right = relation(var_name);
         left = make_logical(name, left, right);
@@ -251,19 +250,13 @@ static struct Node* or(Token var_name) {
 static struct Node* assignment(Token var_name) {
     struct Node* left = or(var_name);
 
-    while (match(TOKEN_EQUAL) || peek_three(TOKEN_DOT, TOKEN_IDENTIFIER, TOKEN_EQUAL)) {
-        if (parser.previous.type == TOKEN_EQUAL) {
-            if (left->type == NODE_GET_IDX) {
-                left = make_set_idx(left, expression(var_name));
-            } else { //NODE_GET_VAR
-                left = make_set_var(left, expression(var_name));
-            }
-        } else {
-            match(TOKEN_DOT);
-            match(TOKEN_IDENTIFIER);
-            Token prop = parser.previous;
-            consume(TOKEN_EQUAL, "Expect '='");
-            left = make_set_prop(left, prop, expression(var_name));
+    while (match(TOKEN_EQUAL)) {
+        if (left->type == NODE_GET_IDX) {
+            left = make_set_idx(left, expression(var_name));
+        } else if (left->type == NODE_GET_VAR) {
+            left = make_set_var(left, expression(var_name));
+        } else { //NODE_GET_PROP
+            left = make_set_prop(left, expression(var_name));
         }
     }
 

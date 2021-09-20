@@ -603,3 +603,24 @@
     }
 
 }
+
+{
+    print("")
+    print("***********In Keyword************")
+    list: List<int> = List<int>(-1)
+
+    if !(10 in list) {
+        print("Empty Int List: Passed!")
+    } else {
+        print("Empty Int List: Failed!")
+    } 
+
+    list[list.size] = 1
+    list[list.size] = 2
+
+    if 2 in list {
+        print("Int List: Passed!")
+    } else {
+        print("Int List: Failed!")
+    }
+}

@@ -40,7 +40,8 @@ typedef enum {
     OP_GET_SIZE,
     OP_SET_SIZE,
     OP_GET_IDX,
-    OP_SET_IDX
+    OP_SET_IDX,
+    OP_IN_LIST
 } OpCode;
 
 typedef struct {

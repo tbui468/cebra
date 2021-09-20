@@ -147,6 +147,21 @@ static struct Sig* compile_logical(struct Compiler* compiler, struct Node* node)
         return make_prim_sig(VAL_BOOL);
     }
 
+    if (logical->name.type == TOKEN_IN) {
+        struct Sig* element_sig = compile_node(compiler, logical->left, NULL);
+        struct Sig* list_sig = compile_node(compiler, logical->right, NULL);
+
+        if (list_sig->type != SIG_LIST) {
+            add_error(compiler, logical->name, "Identifier after 'in' must reference a List.");
+        }
+
+        if (!same_sig(element_sig, ((struct SigList*)list_sig)->type)) {
+            add_error(compiler, logical->name, "Type left of 'in' must match List element type.");
+        }
+
+        emit_byte(compiler, OP_IN_LIST);
+        return make_prim_sig(VAL_BOOL);
+    }
 
     struct Sig* left_type = compile_node(compiler, logical->left, NULL);
     struct Sig* right_type = compile_node(compiler, logical->right, NULL);
@@ -562,7 +577,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;
             struct Sig* right_sig = compile_node(compiler, sp->right, ret_sigs);
-            struct Sig* sig_inst = compile_node(compiler, sp->inst, ret_sigs);
+            struct Sig* sig_inst = compile_node(compiler, ((GetProp*)(sp->inst))->inst, ret_sigs);
+            Token prop = ((GetProp*)sp->inst)->prop;
 
             if (sig_inst->type == SIG_LIST) {
                 emit_byte(compiler, OP_SET_SIZE);
@@ -573,7 +589,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 sig_inst = resolve_sig(compiler, ((struct SigIdentifier*)sig_inst)->identifier);
             }
 
-            struct ObjString* name = make_string(sp->prop.start, sp->prop.length);
+            struct ObjString* name = make_string(prop.start, prop.length);
             push_root(to_string(name));
             emit_byte(compiler, OP_SET_PROP);
             emit_short(compiler, add_constant(compiler, to_string(name))); 
@@ -583,7 +599,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
 
             if (!same_sig(sig_val.as.sig_type, right_sig)) {
-                add_error(compiler, sp->prop, "Property and assignment types must match.");
+                add_error(compiler, prop, "Property and assignment types must match.");
                 return make_prim_sig(VAL_NIL);
             }
 

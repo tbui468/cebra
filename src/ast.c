@@ -154,10 +154,9 @@ struct Node* make_get_prop(struct Node* inst, Token prop) {
     return (struct Node*)get_prop;
 }
 
-struct Node* make_set_prop(struct Node* inst, Token prop, struct Node* right) {
+struct Node* make_set_prop(struct Node* inst, struct Node* right) {
     SetProp* set_prop = ALLOCATE(SetProp);
     set_prop->inst = inst;
-    set_prop->prop = prop;
     set_prop->right = right;
     set_prop->base.type = NODE_SET_PROP;
 

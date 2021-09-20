@@ -145,7 +145,6 @@ typedef struct {
 typedef struct {
     struct Node base;
     struct Node* inst;
-    Token prop;
     struct Node* right;
 } SetProp;
 
@@ -201,7 +200,7 @@ struct Node* make_call(Token name, struct Node* left, NodeList arguments);
 struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig);
 struct Node* make_expr_stmt(struct Node* expr);
 struct Node* make_get_prop(struct Node* inst, Token prop);
-struct Node* make_set_prop(struct Node* inst, Token prop, struct Node* right);
+struct Node* make_set_prop(struct Node* inst, struct Node* right);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

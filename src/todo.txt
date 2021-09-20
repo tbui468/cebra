@@ -11,43 +11,27 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Need to add parse error if quote is not closed (rather than quietly failing)
-
-    Split call_dot into call and dot, just make sure that both options are called
-        when doing recursive descent
-
-    should be able to skip checking for TOKEN_EQUAL in call_dot() and just
-        check in assignment() - similar to how we dealt with indices with []
-
-    Implement a stack in cebra using List/structs/functions to test List
-        create a new file called stack.cbr to save this (can reuse later)
-
     Implement 'in' keyword to check if value is in list
-        should return a boolean
-
-    Implement for each loop
-        for i: int in list {
-            print(i)
+        if (2 in list) {
+            print("2 is inside list")
         }
 
-    Add support for maps 
-    how to check if key is in map?  Use 'in' keyword:
-    this should be used on a list.  Use keys/values/pairs to get a list
-    how about structs?  
-    if { "dog, 4 } in m.pairs {
-        print
-    }
-    if "dog" in m.keys {
-        print(m["dog"])
-    }
-        key: string
-        value: any type
-        m: Map<int> = Map<int>()
-        m["dog"] = 4
-        print(m["dog"]) //prints 4
-        print(m["cat"]) //prints ???? need a way to check if key exists
-        m.keys //returns a list of strings showing keys
-        m.values //returns a list of <type> showing values
+        need this for maps, so might as well do it now
+        while already working on Lists
+
+    Add support for Maps
+        m: Map<int> = Map<int>(-1) //default value is returned if no key exists
+        m.values //returns a list of values (no specific order)
+        m.keys //returns a list of keys (no specific order)
+        m["dog"] = 232
+        print(m["cat"]) //prints -1 (default value) since key doesn't exist
+
+        don't need delete now, since we will just allow user to copy
+        Map (and not include any key/value pairs they want to delete)
+
+        if "dog" in m.keys {
+            print(m["dog"])
+        }
 
     struct inheritance - this will guarentee that Dog is 'ducked'
     as an animal.
@@ -58,10 +42,6 @@ IMPLEMENTATION:
             name: string = "Bubbles"
         }
 
-    for n: string in list {
-        
-    }
-
     Allow shorthand for declaration types:
         a := 1
         b := "dogg"
@@ -71,6 +51,27 @@ IMPLEMENTATION:
         Dog := class {
             name := "Mittens"
         }
+
+    Allow structs to hold reference to same type as self:
+        Dog := struct {
+            name := "Mittens"
+            age := 1
+            friend := Dog()
+        }
+
+    Implement for each loop
+        for i: int in list {
+            print(i)
+        }
+
+        for i: int in 1..19 {
+
+        }
+
+    copy() to make copies of instances, maps and lists
+
+    Need to add parse error if quote is not closed (rather than quietly failing)
+        and program crashing
 
     When compile_node() is called, should check if return value is NULL
         make all errors return NULL, rather than a signature of type NIL
