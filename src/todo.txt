@@ -10,36 +10,8 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-    
-    get compiler working with Map<type>
-        NODE_GET_PROP getting List of keys or values
-            for now, just create ObjList when map.keys or map.values is called
-            and push it onto the stack
 
-    get vm working with:
-        OP_SET_KEY
-        OP_GET_KEY
-
-    Add support for accessing values/setting values
-        for invalid keys, return default value
-        user must manually check if key exits using 'in' keyword and map.keys
-
-    Add support for Maps
-        m: Map<int> = Map<int>(-1) //default value is returned if no key exists
-        m.values //returns a list of values (no specific order)
-        m.keys //returns a list of keys (no specific order)
-        m["dog"] = 232
-        print(m["cat"]) //prints -1 (default value) since key doesn't exist
-
-        don't need delete now, since we will just allow user to copy
-        Map (and not include any key/value pairs they want to delete)
-
-        if "dog" in m.keys {
-            print(m["dog"])
-        }
-
-    struct inheritance - this will guarentee that Dog is 'ducked'
-    as an animal.
+    struct inheritance - this will guarentee that Dog is 'ducked' as an animal.
         Animal: struct = struct {
             class: string = "Mammal"
         }

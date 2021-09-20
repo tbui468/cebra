@@ -624,3 +624,44 @@
         print("Int List: Failed!")
     }
 }
+
+{
+    print("")
+    print("***********Maps************")
+    map: Map<int> = Map<int>(-1)
+
+    if map["two"] == -1 {
+        print("Invalid Key: Passed!")
+    } else {
+        print("Invalid Key: Failed!")
+    }
+
+    if !("two" in map.keys) {
+        print("Map Keys List: Passed!")
+    } else {
+        print("Map Keys List: Failed!")
+    }
+
+    map["one"] = 1
+    map["dog"] = 123
+
+    if map["one"] == 1 and map["dog"] == 123 {
+        print("Access: Passed!")
+    } else {
+        print("Access: Failed!")
+    }
+
+    map["one"] = 3
+
+    if map["one"] == 3 {
+        print("Set Value: Passed!")
+    } else {
+        print("Set Value: Failed!")
+    }
+
+    if map.values.size == 2 and map.keys.size == 2 {
+        print("Value and Key List Sizes: Passed!")
+    } else {
+        print("Value and Key List Sizes: Failed!")
+    }
+}

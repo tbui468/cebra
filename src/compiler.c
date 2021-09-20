@@ -550,8 +550,26 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
 
             if (sig_inst->type == SIG_LIST) {
-                emit_byte(compiler, OP_GET_SIZE);
-                return make_prim_sig(VAL_INT);
+                if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
+                    emit_byte(compiler, OP_GET_SIZE);
+                    return make_prim_sig(VAL_INT);
+                }
+                add_error(compiler, gp->prop, "Property doesn't exist on List.");
+                return NULL;
+            }
+
+            
+            if (sig_inst->type == SIG_MAP) {
+                if (gp->prop.length == 4 && memcmp(gp->prop.start, "keys", gp->prop.length) == 0) {
+                    emit_byte(compiler, OP_GET_KEYS);
+                    return make_list_sig(make_prim_sig(VAL_STRING));
+                }
+                if (gp->prop.length == 6 && memcmp(gp->prop.start, "values", gp->prop.length) == 0) {
+                    emit_byte(compiler, OP_GET_VALUES);
+                    return make_list_sig(((struct SigMap*)sig_inst)->type);
+                }
+                add_error(compiler, gp->prop, "Property doesn't exist on Map.");
+                return NULL;
             }
 
             if (sig_inst->type == SIG_IDENTIFIER) {
@@ -569,7 +587,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             if (IS_NIL(sig_val)) {
                 add_error(compiler, gp->prop, "Property doesn't exist on instance");
-                return make_prim_sig(VAL_NIL);
+                return make_prim_sig(VAL_NIL); //change to NULL (since VAL_NIL sig is a valid sig)
             }
 
             return sig_val.as.sig_type;
@@ -581,8 +599,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             Token prop = ((GetProp*)sp->inst)->prop;
 
             if (sig_inst->type == SIG_LIST) {
-                emit_byte(compiler, OP_SET_SIZE);
-                return make_prim_sig(VAL_INT);
+                if (prop.length == 4 && memcmp(prop.start, "size", prop.length) == 0) {
+                    emit_byte(compiler, OP_SET_SIZE);
+                    return make_prim_sig(VAL_INT);
+                }
+                add_error(compiler, prop, "Property doesn't exist on List.");
+                return NULL;
             }
 
             if (sig_inst->type == SIG_IDENTIFIER) {
@@ -609,7 +631,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
 
-            //List creation
+            //List/Map creation
             if (gv->template_type != NULL) {
                 return gv->template_type;
             }

@@ -440,6 +440,32 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, to_boolean(in_list));
             break;
         }
+        case OP_GET_KEYS: {
+            struct ObjMap* map = pop(vm).as.map_type;
+            struct ObjString* default_string = make_string("Invalid key", 11);
+            struct ObjList* list = make_list(to_string(default_string));
+            push(vm, to_list(list));
+            for (int i = 0; i < map->table.capacity; i++) {
+                struct Pair* pair = &map->table.pairs[i];
+                if (pair->key != NULL) {
+                    add_value(&list->values, to_string(pair->key));
+                }
+            }
+            break;
+        }
+        case OP_GET_VALUES: {
+            struct ObjMap* map = pop(vm).as.map_type;
+            struct ObjString* default_string = make_string("Invalid key", 11);
+            struct ObjList* list = make_list(to_string(default_string));
+            push(vm, to_list(list));
+            for (int i = 0; i < map->table.capacity; i++) {
+                struct Pair* pair = &map->table.pairs[i];
+                if (pair->key != NULL) {
+                    add_value(&list->values, pair->value);
+                }
+            }
+            break;
+        }
     } 
 
 #ifdef DEBUG_TRACE
