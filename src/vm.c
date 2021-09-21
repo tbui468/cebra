@@ -147,7 +147,20 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_CLASS: {
-            push(vm, read_constant(frame, READ_TYPE(frame, uint16_t)));
+            //[super | nil ]
+            Value super_val = pop(vm);
+            Value klass_val = read_constant(frame, READ_TYPE(frame, uint16_t));
+            struct ObjClass* klass = klass_val.as.class_type;
+            push(vm, klass_val);
+            if (super_val.type != VAL_NIL) {
+                struct ObjClass* super = super_val.as.class_type;
+                for (int i = 0; i < super->props.capacity; i++) {
+                    struct Pair* pair = &super->props.pairs[i];
+                    if (pair->key != NULL) {
+                        set_table(&klass->props, pair->key, pair->value);
+                    }
+                } 
+            }
             break;
         }
         case OP_ADD_PROP: {

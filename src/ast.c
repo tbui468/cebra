@@ -27,9 +27,10 @@ struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, str
     return (struct Node*)df;
 }
 
-struct Node* make_decl_class(Token name, NodeList decls, struct Sig* sig) {
+struct Node* make_decl_class(Token name, struct Node* super, NodeList decls, struct Sig* sig) {
     DeclClass* dc = ALLOCATE(DeclClass);
     dc->name = name;
+    dc->super = super;
     dc->decls = decls;
     dc->sig = sig;
     dc->base.type = NODE_CLASS;
@@ -350,6 +351,7 @@ void print_node(struct Node* node) {
 
 
 void free_node(struct Node* node) {
+    if (node == NULL) return;
     switch(node->type) {
         //Declarations
         case NODE_DECL_VAR: {
@@ -370,6 +372,7 @@ void free_node(struct Node* node) {
         }
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
+            free_node(dc->super);
             free_node_list(&dc->decls);
             FREE(dc, DeclClass);
             break;

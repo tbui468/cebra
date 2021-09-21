@@ -63,17 +63,40 @@ void init_memory_manager(VM* vm) {
     mm.grays = (struct Obj**)realloc(NULL, 0);
     mm.gray_capacity = 0;
     mm.gray_count = 0;
+    init_table(&mm.structs);
 }
 
 
 void free_memory_manager() {
     free((void*)mm.grays);
 
+    //manually free strings from structs table (used in parser)
+    for (int i = 0; i < mm.structs.capacity; i++) {
+        struct Pair* pair = &mm.structs.pairs[i];
+        if (pair->key != NULL) {
+            free_object((struct Obj*)(pair->key));       
+        } 
+    }
+    free_table(&mm.structs);
 }
 
 void print_memory() {
     printf("bytes allocated: %d\n", mm.allocated);
 }
+
+static void mark_table(struct Table* table) {
+    for (int i = 0; i < table->capacity; i++) {
+        struct Pair* pair = &table->pairs[i];
+        if (pair->key != NULL) {
+            mark_object((struct Obj*)(pair->key));
+            push_gray((struct Obj*)(pair->key));
+            struct Obj* obj = get_object(&pair->value);
+            mark_object(obj);
+            push_gray(obj);
+        }
+    }
+}
+
 
 static void mark_vm_roots() {
     for (Value* slot = mm.vm->stack; slot < mm.vm->stack_top; slot++) {
@@ -288,6 +311,7 @@ void collect_garbage() {
     printf("Bytes allocated: %d\n", mm.allocated);
     print_stack();
 #endif 
+    mark_table(&mm.structs);
     mark_vm_roots();
     mark_compiler_roots();
     trace_references();
@@ -298,5 +322,5 @@ void collect_garbage() {
 #ifdef DEBUG_LOG_GC
     printf("Bytes freed: %d\n", bytes_freed);
     printf("- End GC\n\n");
-#endif 
+#endif
 }

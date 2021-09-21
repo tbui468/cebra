@@ -11,30 +11,11 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    struct inheritance - this will guarentee that Dog is 'ducked' as an animal.
-    what is substruct overrides with different type?  We allow this.
-    There is no special inheritance signature - any subclass will simply
-    have the superclass properties added to props first, then the subclass
-    properties (property MUST be overwritten with same type)
-    are written.  The final result is used as the type signature
+    Add tests for inheritance
 
-        Animal: struct = struct {
-            class: string = "Mammal"
-        }
+    Check that duck typing works for function parameters / return
 
-        Dog: struct < Animal = struct < Animal {
-            name: string = "Bubbles"
-        }
-
-        Cat: struct < Animal = struct < Animal {
-            name: string = "Mittens"
-            class: string = "Feline"
-        }
-
-        dog: Dog = Dog()
-        print(dog.name)
-        print(dog.class) //this should work
-
+    Add tests for duck typing
 
     Allow shorthand for declaration types:
         a := 1
@@ -58,7 +39,8 @@ IMPLEMENTATION:
             and returns info about that text
         integrate final code
 
-    Update documentation to include syntax
+    Update documentation to include new syntax + List/Map
+        and include small box to write /run test scripts
 
     find python native function list (for early python versions)
         and add those functions

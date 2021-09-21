@@ -203,13 +203,13 @@ void print_value(Value a) {
             printf(">");
             break;
         case VAL_CLASS:
-            printf("%s", "<class>");
+            printf("%s", "<struct>");
             break;
         case VAL_INSTANCE:
             printf("%s", "<instance>");
             break;
         case VAL_NIL:
-            printf("%s", "<Nil>");
+            printf("%s", "<nil>");
             break;
         case VAL_SIG:
             printf("%s", "<sig>");

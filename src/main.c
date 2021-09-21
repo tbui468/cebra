@@ -35,6 +35,7 @@ ResultCode run_source(VM* vm, const char* source) {
     printf("After compiler\n");
 
     if (compile_result == RESULT_FAILED) {
+        printf("Compilation Failed\n");
         free_node_list(&nl);
         free_compiler(&script_compiler);
         return RESULT_FAILED; 
@@ -50,16 +51,12 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 #endif
 
-    if (compile_result == RESULT_FAILED) {
-        free_node_list(&nl);
-        free_compiler(&script_compiler);
-        return RESULT_FAILED; 
-    }
-
     free_node_list(&nl);
     free_compiler(&script_compiler);
 
+    printf("Before run\n");
     ResultCode run_result = run(vm, script_compiler.function);
+    printf("After run\n");
 
     if (run_result == RESULT_FAILED) {
         free_node_list(&nl);
@@ -129,13 +126,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-//    free_objects();
-
     printf("*****************\n");
 #ifdef DEBUG_STRESS_GC
     collect_garbage();
 #endif
-    print_memory();
 
     free_vm(&vm);
     free_memory_manager();

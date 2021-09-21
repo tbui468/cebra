@@ -5,6 +5,8 @@
 #include "token.h"
 #include "result_code.h"
 #include "node_list.h"
+#include "table.h"
+
 
 typedef struct {
     Token token;

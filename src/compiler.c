@@ -408,9 +408,16 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct ObjClass* klass = make_class(name);
             push_root(to_class(klass));
 
-            emit_byte(compiler, OP_CLASS);
-            emit_short(compiler, add_constant(compiler, to_class(klass)));
+            if (dc->super != NULL) {
+                struct Sig* super_sig = compile_node(compiler, dc->super, ret_sigs);
+            } else {
+                emit_byte(compiler, OP_NIL);
+            }
 
+            emit_byte(compiler, OP_CLASS);
+            emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
+
+            //add struct properties
             for (int i = 0; i < dc->decls.count; i++) {
                 struct Node* node = dc->decls.nodes[i];
                 DeclVar* dv = (DeclVar*)node;
@@ -430,19 +437,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             pop_root();
 
             return make_prim_sig(VAL_NIL);
-        }/*
-        case NODE_INST: {
-            InstClass* ic = (InstClass*)node;
-
-            struct Sig* klass_sig = compile_node(compiler, ic->klass, ret_sigs);
-            struct Sig* decl_sig = resolve_sig(compiler, ic->klass_type);
-            if (!is_duck((struct SigClass*)decl_sig, (struct SigClass*)klass_sig)) {
-                add_error(compiler, ic->name, "Declaration type and class constructor type must match.");
-            }
-            emit_byte(compiler, OP_INSTANCE);
-            add_local(compiler, ic->name, klass_sig);
-            return make_prim_sig(VAL_NIL);
-        }*/
+        }
         //statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;

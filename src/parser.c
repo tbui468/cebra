@@ -125,13 +125,34 @@ static struct Node* primary(Token var_name) {
         struct Node* expr = expression(var_name);
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
         return expr;
-    } else if (match(TOKEN_CLASS)) {
+    } else if (peek_one(TOKEN_CLASS)) {
         struct Sig* right_sig = read_sig(var_name);
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+
+        //add superstruct signatures to struct
+        struct SigClass* sc = (struct SigClass*)right_sig;
+        if (sc->super.length > 0) {
+            Value super_val = to_nil();
+            struct ObjString* super_name = make_string(sc->super.start, sc->super.length);
+            push_root(to_string(super_name));
+            get_from_table(&mm.structs, super_name, &super_val);
+            if (super_val.type == VAL_NIL) {
+                add_error(var_name, "Superstruct not declared.");
+                return NULL;
+            }
+            struct SigClass* super_sig = (struct SigClass*)super_val.as.sig_type;
+            for (int i = 0; i < super_sig->props.capacity; i++) {
+                struct Pair* pair = &super_sig->props.pairs[i];
+                if (pair->key != NULL) {
+                    set_table(&((struct SigClass*)(parser.current_sig))->props, pair->key, pair->value);
+                }
+            }
+            pop_root();
+        }
+
         NodeList nl;
         init_node_list(&nl);
         while (!match(TOKEN_RIGHT_BRACE)) {
-            //add class signature entries to table here
             struct Node* decl = var_declaration(true);
             if (decl->type != NODE_DECL_VAR) {
                 add_error(var_name, "Only primitive, function or class definitions allowed in class body.");
@@ -148,7 +169,16 @@ static struct Node* primary(Token var_name) {
             pop_root();
             add_node(&nl, decl);
         }
-        return make_decl_class(var_name, nl, parser.current_sig);
+        
+        //add struct to parser.structs
+        struct ObjString* struct_name = make_string(sc->klass.start, sc->klass.length);
+        push_root(to_string(struct_name));
+        set_table(&mm.structs, struct_name, to_sig(parser.current_sig));
+        pop_root();
+
+        Token super_token = ((struct SigClass*)right_sig)->super;
+        struct Node* super = super_token.length == 0 ? NULL : make_get_var(super_token, NULL);
+        return make_decl_class(var_name, super, nl, parser.current_sig);
     } else if (match(TOKEN_NIL)) {
         return make_nil(parser.previous);
     }
@@ -313,7 +343,12 @@ static struct Sig* read_sig(Token var_name) {
         return make_prim_sig(VAL_STRING);
 
     if (match(TOKEN_CLASS)) {
-        return make_class_sig(var_name);
+        if (match(TOKEN_LESS)) {
+            consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
+            return make_class_sig(var_name, parser.previous);
+        }
+
+        return make_class_sig(var_name, make_dummy_token());
     }
 
     if (match(TOKEN_LIST)) {

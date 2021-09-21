@@ -56,12 +56,13 @@ struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret) {
     return (struct Sig*)sig_fun;
 }
 
-struct Sig* make_class_sig(Token klass) {
+struct Sig* make_class_sig(Token klass, Token super) {
     struct SigClass* sc = ALLOCATE(struct SigClass);
 
     sc->base.type = SIG_CLASS;
     sc->base.opt = NULL;
     sc->klass = klass;
+    sc->super = super;
     init_table(&sc->props);
 
     insert_sig((struct Sig*)sc);
