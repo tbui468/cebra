@@ -417,6 +417,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
 
+
             //add struct properties
             for (int i = 0; i < dc->decls.count; i++) {
                 struct Node* node = dc->decls.nodes[i];
@@ -426,12 +427,16 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 push_root(to_string(prop_name));
 
                 struct Sig* class_ret_sigs = make_array_sig();
+
+                start_scope(compiler);
                 struct Sig* sig = compile_node(compiler, node, (struct SigArray*)class_ret_sigs);
                 emit_byte(compiler, OP_ADD_PROP);
                 emit_short(compiler, add_constant(compiler, to_string(prop_name)));
-                compiler->locals_count--;
+                end_scope(compiler);
+
                 pop_root();
             }
+
 
             pop_root();
             pop_root();
@@ -442,6 +447,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
             struct Sig* sig = compile_node(compiler, es->expr, ret_sigs);
+            //while/if-else etc return VAL_NIL (and leave nothing on stack)
             if (!sig_is_type(sig, VAL_NIL)) {
                 emit_byte(compiler, OP_POP);
             }
@@ -658,6 +664,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             Token var = ((GetVar*)(sv->left))->name;
             struct Sig* var_sig = resolve_sig(compiler, var);
+            if (var_sig->type == SIG_IDENTIFIER) {
+                var_sig = resolve_sig(compiler, ((struct SigIdentifier*)var_sig)->identifier);
+            }
             int idx = resolve_local(compiler, var);
             if (idx != -1) {
                 if (!same_sig(var_sig, right_sig)) {
@@ -666,7 +675,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
                 emit_byte(compiler, OP_SET_LOCAL);
                 emit_byte(compiler, idx);
-                return right_sig;
+                return var_sig;
             }
 
             int upvalue_idx = resolve_upvalue(compiler, var);
@@ -677,7 +686,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
                 emit_byte(compiler, OP_SET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
-                return right_sig;
+                return var_sig;
             }
 
             add_error(compiler, var, "Local variable not declared.");
@@ -838,6 +847,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             return sig_fun->ret;
         }
         case NODE_NIL: {
+            Nil* nil = (Nil*)node;
             emit_byte(compiler, OP_NIL);
             return  make_prim_sig(VAL_NIL);
         }

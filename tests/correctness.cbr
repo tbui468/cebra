@@ -704,3 +704,47 @@
         print("Set Instance to Nil: Failed!")
     }
 }
+
+{
+    print("")
+    print("***********Struct Inheritance************")
+
+    Animal: struct = struct {
+        class: string = "Mammal"
+    }
+
+    Bird: struct < Animal = struct < Animal {
+        class: string = "Avian"
+    }
+
+    Fly: struct < Animal = struct < Animal {
+        class: int = 43
+    }
+
+    Zebra: struct < Animal = struct < Animal {
+        name: string = "adfs"
+    }
+
+    bird: Bird = Bird()
+    fly: Fly = Fly()
+    zebra: Zebra = Zebra()
+
+    if bird.class == "Avian" {
+        print("Overwrite property: Passed!")
+    } else {
+        print("Overwrite property: Failed!")
+    }
+
+    if zebra.class == "Mammal" {
+        print("Inherit property: Passed!")
+    } else {
+        print("Inherit property: Failed!")
+    }
+
+    if fly.class == 43 {
+        print("Overwrite Property with Diffferent Type: Passed!")
+    } else {
+        print("Overwrite Property with Diffferent Type: Failed!")
+    }
+
+}

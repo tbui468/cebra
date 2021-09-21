@@ -164,13 +164,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_ADD_PROP: {
-            //This op only gets added after a class property/method is compiled into a local variable
             //current stack: [script]...[class][value]
             push_root(read_constant(frame, READ_TYPE(frame, uint16_t)));
             struct ObjClass* klass = peek(vm, 2).as.class_type;
             set_table(&klass->props, peek(vm, 0).as.string_type, peek(vm, 1));
             pop_root();
-            pop(vm);
             break;
         }
         case OP_INSTANCE: {

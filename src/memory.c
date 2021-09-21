@@ -71,6 +71,7 @@ void free_memory_manager() {
     free((void*)mm.grays);
 
     //manually free strings from structs table (used in parser)
+    print_table(&mm.structs);
     for (int i = 0; i < mm.structs.capacity; i++) {
         struct Pair* pair = &mm.structs.pairs[i];
         if (pair->key != NULL) {
@@ -172,18 +173,9 @@ static void trace_references() {
                 break;
             }
             case OBJ_CLASS: {
-                //table of props
                 struct ObjClass* oc = (struct ObjClass*)obj;
-                for (int i = 0; i < oc->props.capacity; i++) {
-                    struct Pair* pair = &oc->props.pairs[i];
-                    if (pair->key != NULL) {
-                        mark_object((struct Obj*)(pair->key));
-                        push_gray((struct Obj*)(pair->key));
-                        struct Obj* obj = get_object(&pair->value);
-                        mark_object(obj);
-                        push_gray(obj);
-                    }
-                }
+                //table of props
+                mark_table(&oc->props);
                 //class name
                 mark_object((struct Obj*)(oc->name));
                 push_gray((struct Obj*)(oc->name));
@@ -224,16 +216,7 @@ static void trace_references() {
             case OBJ_MAP: {
                 struct ObjMap* om = (struct ObjMap*)obj;
                 //table
-                for (int i = 0; i < om->table.capacity; i++) {
-                    struct Pair* pair = &om->table.pairs[i];
-                    if (pair->key != NULL) {
-                        mark_object((struct Obj*)(pair->key));
-                        push_gray((struct Obj*)(pair->key));
-                        struct Obj* obj = get_object(&pair->value);
-                        mark_object(obj);
-                        push_gray(obj);
-                    }
-                }
+                mark_table(&om->table);
                 //default value
                 struct Obj* val_obj = get_object(&om->default_value);
                 if (val_obj != NULL && !val_obj->is_marked) {

@@ -11,8 +11,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Add tests for inheritance
-
     Check that duck typing works for function parameters / return
 
     Add tests for duck typing
