@@ -101,22 +101,22 @@ struct Sig* make_map_sig(struct Sig* type) {
     return (struct Sig*)sm;
 }
 
-bool is_duck(struct SigClass* sub, struct SigClass* super) {
-    for (int i = 0; i < sub->props.capacity; i++) {
-        struct Pair* sub_pair = &sub->props.pairs[i];
-        if (sub_pair->key != NULL) {
-            Value super_value;
-            get_from_table(&super->props, sub_pair->key, &super_value);
-            if (IS_NIL(super_value)) return false;
+bool is_duck(struct SigClass* param, struct SigClass* arg) {
+    for (int i = 0; i < param->props.capacity; i++) {
+        struct Pair* param_pair = &param->props.pairs[i];
+        if (param_pair->key != NULL) {
+            Value arg_value;
+            if (!get_from_table(&arg->props, param_pair->key, &arg_value))
+                return false;
 
-            struct Sig* sub_sig = sub_pair->value.as.sig_type;
-            struct Sig* super_sig = super_value.as.sig_type;
-            if (IS_CLASS(sub_pair->value) && IS_CLASS(super_value)) {
-                if (!is_duck((struct SigClass*)sub_sig, (struct SigClass*)super_sig)) {
+            struct Sig* param_sig = param_pair->value.as.sig_type;
+            struct Sig* arg_sig = arg_value.as.sig_type;
+            if (IS_CLASS(param_pair->value) && IS_CLASS(arg_value)) {
+                if (!is_duck((struct SigClass*)param_sig, (struct SigClass*)arg_sig)) {
                     return false;
                 }
             } else {
-                if (!same_sig(sub_sig, super_sig)) return false;
+                if (!same_sig(param_sig, arg_sig)) return false;
             }
         }
     }
@@ -156,7 +156,7 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
         case SIG_CLASS:
             struct SigClass* sc1 = (struct SigClass*)sig1;
             struct SigClass* sc2 = (struct SigClass*)sig2;
-            return is_duck(sc1, sc2) && is_duck(sc2, sc1);
+            return is_duck(sc1, sc2);
         case SIG_IDENTIFIER:
             struct SigIdentifier* si1 = (struct SigIdentifier*)sig1; 
             struct SigIdentifier* si2 = (struct SigIdentifier*)sig2; 

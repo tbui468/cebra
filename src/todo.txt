@@ -10,10 +10,18 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-
-    Check that duck typing works for function parameters / return
+    
+    Problem in NODE_GET_PROP
 
     Add tests for duck typing
+        copy from test.cbr and add checks
+
+    How about letting declarations leave NIL on the stack, and then 
+    popping them off by wrapping them in expr_stmt?  This would
+    get rid of the weird NIL checking in OP_POP.
+
+    have Maps and Lists return nil for invalid values
+        get rid of default values
 
     Allow shorthand for declaration types:
         a := 1

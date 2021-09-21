@@ -71,7 +71,6 @@ void free_memory_manager() {
     free((void*)mm.grays);
 
     //manually free strings from structs table (used in parser)
-    print_table(&mm.structs);
     for (int i = 0; i < mm.structs.capacity; i++) {
         struct Pair* pair = &mm.structs.pairs[i];
         if (pair->key != NULL) {

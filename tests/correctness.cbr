@@ -717,16 +717,11 @@
         class: string = "Avian"
     }
 
-    Fly: struct < Animal = struct < Animal {
-        class: int = 43
-    }
-
     Zebra: struct < Animal = struct < Animal {
         name: string = "adfs"
     }
 
     bird: Bird = Bird()
-    fly: Fly = Fly()
     zebra: Zebra = Zebra()
 
     if bird.class == "Avian" {
@@ -741,10 +736,44 @@
         print("Inherit property: Failed!")
     }
 
-    if fly.class == 43 {
-        print("Overwrite Property with Diffferent Type: Passed!")
+}
+
+{
+
+    print("")
+    print("***********Duck Typing************")
+    Animal: struct = struct {
+        class: string = "Mammal"
+    }
+
+    Bird: struct < Animal = struct < Animal {
+        class: string = "Avian"
+        name: string = "Flappy"
+    }
+
+    fun: (Animal) -> = (a: Animal) -> {
+        a.class = "Reptile"
+    }
+
+    make_bird: () -> Animal = () -> Animal {
+        b: Bird = Bird()
+        -> b
+    }
+
+
+    a: Bird = Bird()
+    fun(a)
+
+    if a.name == "Flappy" and a.class == "Reptile" {
+        print("Function Modify Struct Instance: Passed!")
     } else {
-        print("Overwrite Property with Diffferent Type: Failed!")
+        print("Function Modify Struct Instance: Failed!")
+    }
+
+    if make_bird().class == "Avian" {
+        print("Return Substruct: Passed!")
+    } else {
+        print("Return Substruct: Failed!")
     }
 
 }

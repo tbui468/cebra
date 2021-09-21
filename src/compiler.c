@@ -409,14 +409,25 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             push_root(to_class(klass));
 
             if (dc->super != NULL) {
-                struct Sig* super_sig = compile_node(compiler, dc->super, ret_sigs);
+                struct Sig* sig = compile_node(compiler, dc->super, ret_sigs);
+                struct SigClass* super_sig = (struct SigClass*)sig;
+                struct SigClass* sub_sig = (struct SigClass*)(dc->sig);
+                for (int i = 0; i < sub_sig->props.capacity; i++) {
+                    struct Pair* pair = &sub_sig->props.pairs[i];
+                    if (pair->key != NULL) {
+                        Value value;
+                        bool overwritting = get_from_table(&super_sig->props, pair->key, &value);
+                        if (overwritting && !same_sig(value.as.sig_type, pair->value.as.sig_type)) {
+                            add_error(compiler, dc->name, "Overwritten property must of same type.");
+                        }
+                    }
+                }
             } else {
                 emit_byte(compiler, OP_NIL);
             }
 
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
-
 
             //add struct properties
             for (int i = 0; i < dc->decls.count; i++) {
@@ -583,11 +594,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             emit_short(compiler, add_constant(compiler, to_string(name))); 
             pop_root();
 
-            Value sig_val = to_nil();
-            get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
-
-            if (IS_NIL(sig_val)) {
-                add_error(compiler, gp->prop, "Property doesn't exist on instance");
+            Value sig_val;
+            if (!get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val)) {
+                add_error(compiler, gp->prop, "Property doesn't exist on struct.");
                 return make_prim_sig(VAL_NIL); //change to NULL (since VAL_NIL sig is a valid sig)
             }
 
@@ -836,7 +845,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     param_sig = resolve_sig(compiler, ((struct SigIdentifier*)param_sig)->identifier);
                 }
 
-                if (!same_sig(arg_sig, param_sig)) {
+                if (!same_sig(param_sig, arg_sig)) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
                 }
             }
