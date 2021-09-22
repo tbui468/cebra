@@ -75,31 +75,37 @@
     print("")
     print("***********Variables************")
     a: int = 1
-    if a == 1 {
+    ai := 1
+    if a == 1 and ai == 1 {
         print("Declaring Integers: Passed!") 
     } else {
         print("Declaring Integers: Failed!") 
     } 
     b: string = "dog"
-    if b == "dog" {
+    bi := "dog"
+    if b == "dog" and bi == "dog" {
         print("Declaring Strings: Passed!")
     } else {
         print("Declaring Strings: Failed!")
     }
 
     c: int = 1
+    ci := 1
+    di := 1
     d: int = 2
-    c = d
-    if c == 2 {
+    ci = di = c = d 
+    if c == 2 and ci == 2 and di == 2 {
         print("Assigning integers: Passed!")
     } else {
         print("Assigning integers: Failed!")
     }
 
     e: int = 1
+    ei := 1
     f: int = 2
-    e = f = 10
-    if e == 10 and f == 10 {
+    fi := 1
+    e = ei = f = fi = 10
+    if e == 10 and f == 10 and ei == 10 and fi == 10 {
         print("Cascade Assigning Integers: Passed!")
     } else {
         print("Cascade Assigning Integers: Failed!")
@@ -110,26 +116,28 @@
     print("")
     print("***********Scopes************")
     a: int = 1
+    ai := 1
     {
-        if a == 1 {
+        if a == 1 and ai == 1 {
             print("Using Variables in Outer Scopes: Passed!") 
         } else {
             print("Using Variables in Outer Scopes: Failed!") 
         } 
         a: int = 2
-        if a == 2 {
+        ai := 2
+        if a == 2 and ai == 2 {
             print("Shadowing Variables in Outer Scopes: Passed!") 
         } else {
             print("Shadowing Variables in Outer Scopes: Failed!") 
         } 
     }
-    if a == 1 {
+    if a == 1 and ai == 1{
         print("Popping Variables at Scope End: Passed!") 
     } else {
         print("Popping Variables at Scope End: Failed!") 
     }
     {{{
-        if a == 1 {
+        if a == 1 and ai == 1 {
             print("Using Variables in Outer Scopes (3 levels): Passed!") 
         } else {
             print("Using Variables in Outer Scopes (3 levels): Failed!") 
@@ -141,41 +149,58 @@
     print("")
     print("***********For Loops************")
     j: int = 0
+    ji := 0
     for i: int = 0, i < 5, i = i + 1 {
         j = j + 1
     }
-    if j == 5 {
+    for i := 0, i < 5, i = i + 1 {
+        ji = ji + 1
+    }
+    if j == 5 and ji == 5 {
         print("Initializer, Condition, Upate: Passed!")
     } else {
         print("Initializer, Condition, Upate: Failed!")
     }
 
     a: int = 0
+    ai := 0
     b: int = 0
+    bi := 0
     for , b < 5, b = b + 1 {
         a = a + 1
     }
-    if a == 5 {
+    for , bi < 5, bi = bi + 1 {
+        ai = ai + 1
+    }
+    if a == 5 and ai == 5 {
         print("No Initializer: Passed!")
     } else {
         print("No Initializer: Failed!")
     }
 
     c: int = 0
+    ci := 0
     for , c < 5, {
         c = c + 1
     }
-    if c == 5 {
+    for , ci < 5, {
+        ci = ci + 1
+    }
+    if c == 5 and ci == 5 {
         print("No Initializer, No Update: Passed!")
     } else {
         print("No Initializer, No Update: Failed!")
     }
 
     d: int = 0
+    di := 0
     while d < 5 {
         d = d + 1
     }
-    if d == 5 {
+    while di < 5 {
+        di = di + 1
+    }
+    if d == 5 and di == 5 {
         print("While: Passed!")
     } else {
         print("While: Failed!")
@@ -188,15 +213,24 @@
     a: () -> = () -> {
         print("Zero Parameters / No Return: Passed!")
     }
+    ai := () -> {
+        print("Zero Parameters / No Return (Inferred): Passed!")
+    }
     a()
+    ai()
+
     b: () -> int = () -> int {
         -> -1
     }
-    if b() == -1 {
+    bi := () -> int {
+        -> -1
+    }
+    if b() == -1 and bi() == -1 {
         print("Zero Parameters / Integer Return: Passed!")
     } else {
         print("Zero Parameters / Integer Return: Failed!")
     }
+
     c: (int) -> = (i: int) -> {
         if i == 2 {
             print("Integer Parameter: Passed!")
@@ -204,14 +238,29 @@
             print("Integer Parameter: Failed!")
         }
     }
+    ci := (i: int) -> {
+        if i == 2 {
+            print("Integer Parameter (Inferred): Passed!")
+        } else {
+            print("Integer Parameter (Inferred): Failed!")
+        }
+    }
     c(2)
+    ci(2)
+
     fib: (int) -> int = (i: int) -> int {
         if i < 2 {
             -> i
         }
         -> fib(i - 1) + fib(i - 2)
     }
-    if fib(10) == 55 {
+    fibi := (i: int) -> int {
+        if i < 2 {
+            -> i
+        }
+        -> fibi(i - 1) + fibi(i - 2)
+    }
+    if fib(10) == 55 and fibi(10) == 55 {
         print("Recursion: Passed!")
     } else {
         print("Recursion: Failed!")
@@ -227,8 +276,15 @@
         }
         -> b
     }
+    ai := () -> () -> {
+        bi := () -> {
+            print("No Parameters / Nil Return (Inferred): Passed!")
+        }
+        -> bi
+    }
 
     a()()
+    ai()()
 
     c: () -> (int) -> int = () -> (int) -> int {
         d: (int) -> int = (n: int) -> int {
@@ -236,8 +292,14 @@
         }
         -> d
     }
+    ci := () -> (int) -> int {
+        di := (n: int) -> int {
+            -> n * 2
+        }
+        -> di
+    }
 
-    if c()(4) == 8 {
+    if c()(4) == 8 and ci()(4) == 8 {
         print("One Parameter / Int Return: Passed!")
     } else {
         print("One Parameter / Int Return: Failed!")
@@ -251,16 +313,27 @@
     add: (int, int) -> int = (a: int, b: int) -> int {
         -> a + b
     }
+    addi := (a: int, b: int) -> int {
+        -> a + b
+    }
 
     mul: (int, int) -> int = (a: int, b: int) -> int {
+        -> a * b
+    }
+    muli := (a: int, b: int) -> int {
         -> a * b
     }
 
     fun: (int, int, (int, int)->int) -> int = (a: int, b: int, c: (int, int)->int) -> int {
         -> c(a, b)
     }
+    funi := (a: int, b: int, c: (int, int)->int) -> int {
+        -> c(a, b)
+    }
 
-    if fun(2, 3, add) == 5 and fun(5, 4, mul) == 20 {
+    if fun(2, 3, add) == 5 and fun(5, 4, mul) == 20 
+        and funi(2, 3, addi) == 5 and funi(5, 4, muli) == 20
+    {
         print("Passing function as Argument: Passed!")    
     } else {
         print("Passing function as Argument: Failed!")    
@@ -280,8 +353,17 @@
         }
         -> b
     }
+    ai := () -> () -> () -> int {
+        bi := () -> () -> int {
+            ci := () -> int {
+                -> 1
+            }
+            -> ci
+        }
+        -> bi
+    }
 
-    if a()()() == 1 {
+    if a()()() == 1 and ai()()() == 1 {
         print("Triple calls: Passed!")
     } else {
         print("Triple calls: Failed!")
@@ -293,8 +375,14 @@
         }
         -> e
     }
+    di := () -> (int) -> int {
+        ei := (n: int) -> int {
+            -> 2 * n
+        }
+        -> ei
+    }
 
-    if d()(2) == 4 {
+    if d()(2) == 4 and di()(2) == 4 {
         print("Double calls: Passed!")
     } else {
         print("Double calls: Failed!")
@@ -308,8 +396,13 @@
     op: (int, int, (int, int) -> int) -> int = (a: int, b: int, c: (int, int) -> int) -> int {
         -> c(a, b)
     }
+    opi := (a: int, b: int, c: (int, int) -> int) -> int {
+        -> c(a, b)
+    }
 
-    if op(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 {
+    if op(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 
+       and opi(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 
+    {
         print("Anonymous Function: Passed!")
     } else {
         print("Anonymous Function: Failed!")

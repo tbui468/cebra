@@ -10,56 +10,19 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-    Clean up code
+    
+    Write tests for inferred types from:
+        Depth 1 Closures til the end
 
-    Run each test to check output
+    Clean up code 
+        get rid of creating struct signature type in parser
+        create inferred signature so that it's clearer
+            don't want a bunch of confusing NULL checks everywhere
+        SigClass doesn't need super struct token, does it?
 
-    Problem in parser, make_decl_class.  Inferred type for properties
-        doesn't work here - trying to set the property signature to
-        a NULL (that's changed to Value).  Using dv->sig, but it's
-        NULL bc we are inferring property types.
-
-        Won't be able to get the type until the rhs is compiled
-        This is causing GET_PROP and SET_PROP to break.
-
-        Could try to update signature after compiling the class, but
-        would need to take care with inheritance - right now
-        we are checking if overwritten type is the same.  Will need
-        to do it in this order:
-            compile class (adding all properties)
-            update class signature with inferred types
-                struct and function signatures should be fine
-            Check super struct properties using new signature:
-                if overwritten, check that type matches
-                if not overwritten, add prop to struct
-            return the new update signature, and let NODE_DECL_VAR
-                update the class signature in locals
-            
-
-    in read_sig() in parser, returning NULL if next token is TOKEN_EQUAL
-    in compiler NODE_DECL_VAR, need to deal with a NULL signature.
-    if the right side is a function or struct, need to get that sig
-    before compiling right side.  If it's anything else, can compile
-    and then get that signature.
-
-    Shorthand problem: can't do recursion or have structs within same
-        struct since we normally add_local BEFORE the right hand side
-        is compiled so that it's defined.
-
-        could we just look on the right side? Before add_local?
-            This will work.  Just set sig to NULL
-
-        if ':' is followed by '=', then what to do about signatures?
-        a := 1
-        b := "dogg"
-        c := (n: int, m: int) -> int {
-            -> m * n
-        }
-        Dog := struct {
-            name := "Mittens"
-        }
-
-        dog := Dog()
+    this code should give error since declaring same variable twice
+        d: int = 0
+        d := 0
 
     Change display of test results for easier digestion:
         sum all test and include failed/passed tests count
@@ -74,10 +37,20 @@ IMPLEMENTATION:
     Update documentation to include new syntax + List/Map
         and include small box to write /run test scripts
 
+    Write broken code and make sure ALL parsing, compilation, and runtime
+        errors are caught.  Make 3 new files: parsing.cbr, compiling.cbr, 
+        runtime.cbr with bad code.  Make sure that all mistakes sychronize
+        and run to the very end, emitting errors WITHOUT crashing.
+
     have Maps and Lists return nil for invalid values
         get rid of default values
         in vm, fill invalid values with nil
         change tests to match 
+
+    Add string manipulation
+        access char by index using [idx]
+        property size
+        slicing by index [0, 2]
 
     find python native function list (for early python versions)
         and add those functions
@@ -93,8 +66,12 @@ IMPLEMENTATION:
         changed code so that variable signature was returned
 
     Implement for each loop
-        for i: int in list {
+        foreach i: int in list {
             print(i)
+        }
+
+        foreach i: string in map.keys {
+            print(map[i])
         }
 
         for i: int in 1..19 {
