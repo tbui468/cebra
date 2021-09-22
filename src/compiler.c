@@ -320,6 +320,23 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
+static void resolve_table_identifiers(struct Compiler* compiler, struct Table* table) {
+    for (int i = 0; i < table->capacity; i++) {
+        struct Pair* pair = &table->pairs[i];
+        printf("i: %d\n", i);
+        if (pair->key != NULL) {
+            struct Sig* sig = pair->value.as.sig_type;
+            print_value(pair->value); //TODO: invalid signature
+            if (sig->type == SIG_IDENTIFIER) {
+                struct Sig* result = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
+                if (result != NULL) {
+                    set_table(table, pair->key, to_sig(result));
+                }
+            }
+        }
+    }
+}
+
 static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs) {
     if (node == NULL) {
         return make_prim_sig(VAL_NIL);
@@ -328,25 +345,57 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
-            struct Sig* sig;
-            //inferred type
-            if (dv->sig == NULL) {
-                int idx = add_local(compiler, dv->name, dv->sig); //TODO: sig may be incomplete, but type must be correct
-                sig = compile_node(compiler, dv->right, NULL);
-                set_local(compiler, dv->name, sig, idx);
-            } else { //not inferred
-                add_local(compiler, dv->name, dv->sig);
-                sig = compile_node(compiler, dv->right, NULL);
-                if (sig->type == SIG_IDENTIFIER) {
-                    sig = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
-                }
-                struct Sig* decl_sig = dv->sig;
-                if (decl_sig->type == SIG_IDENTIFIER) {
-                    decl_sig = resolve_sig(compiler, ((struct SigIdentifier*)decl_sig)->identifier);
-                }
 
-                if (!same_sig(sig, decl_sig)) {
-                    add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
+            struct Sig* sig = NULL;
+
+            //invalid syntax
+            if (dv->right == NULL && dv->sig == NULL) {
+                add_error(compiler, dv->name, "Variable with inferred type must be defined.");
+            }
+
+            //explicit type, not defined (only for parameters)
+            if (dv->right == NULL && dv->sig != NULL) {
+                if (dv->sig->type == SIG_IDENTIFIER) {
+                    sig = resolve_sig(compiler, ((struct SigIdentifier*)dv->sig)->identifier);
+                    if (sig == NULL) {
+                        add_error(compiler, dv->name, "Identifier not defined.");
+                    }
+                    add_local(compiler, dv->name, sig);
+                }
+            }
+
+            //inferred type, defined
+            if (dv->right != NULL && dv->sig == NULL) {
+                int idx = add_local(compiler, dv->name, dv->sig);
+                sig = compile_node(compiler, dv->right, NULL);
+                if (sig_is_type(sig, VAL_NIL)) {
+                    add_error(compiler, dv->name, "Inferred type cannot be assigned to 'nil'.");
+                }
+                set_local(compiler, dv->name, sig, idx);
+                if (sig->type == SIG_CLASS) {
+                    resolve_table_identifiers(compiler, &((struct SigClass*)sig)->props); //This is not doing anything to sigs in SET PROP
+                }
+            }
+            
+            //explicit type, defined
+            if (dv->right != NULL && dv->sig != NULL) {
+                int idx = add_local(compiler, dv->name, dv->sig);
+                sig = compile_node(compiler, dv->right, NULL);
+                if (!sig_is_type(sig, VAL_NIL)) {
+                    set_local(compiler, dv->name, sig, idx);
+
+                    if (dv->sig->type == SIG_IDENTIFIER || dv->sig->type == SIG_CLASS) {
+                        dv->sig = sig;
+                    }
+
+                    if (sig->type == SIG_CLASS) {
+                        resolve_table_identifiers(compiler, &((struct SigClass*)sig)->props); //This is not doing anything to sigs in SET_PROP
+                    }
+
+                    if (!same_sig(dv->sig, sig)) {
+                        add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
+                    }
+
                 }
             }
 
@@ -442,7 +491,16 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 start_scope(compiler);
                 struct Sig* sig = compile_node(compiler, node, (struct SigArray*)class_ret_sigs);
 
-                set_table(&sc->props, prop_name, to_sig(sig));
+                if (sig_is_type(sig, VAL_NIL)) {
+                    struct Sig* dv_sig = dv->sig;
+                    if (dv_sig->type == SIG_IDENTIFIER) {
+                        dv_sig = resolve_sig(compiler, ((struct SigIdentifier*)dv_sig)->identifier);
+                    }
+                    set_table(&sc->props, prop_name, to_sig(dv_sig));
+                } else {
+                    set_table(&sc->props, prop_name, to_sig(sig));
+                }
+
 
                 emit_byte(compiler, OP_ADD_PROP);
                 emit_short(compiler, add_constant(compiler, to_string(prop_name)));
@@ -653,17 +711,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             Value sig_val = to_nil();
             get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
 
-            /*
-            if (sig_val.as.sig_type == NULL) {
-                printf("NULL\n");
-            } else {
-                print_sig(sig_val.as.sig_type); //THIS IS NULL - NOT OKAY
-            }
-            if (right_sig == NULL) {
-                printf("NULL\n");
-            } else {
-                print_sig(right_sig); //THIS IS STRING OKAY!
-            }*/
+            //TODO: the SigIdentifier is still showing up in the sig_val
+            print_sig(sig_val.as.sig_type);
+            print_table(&((struct SigClass*)sig_val.as.sig_type)->props); //this is and identifier
+            print_sig(right_sig);
+            print_table(&((struct SigClass*)right_sig)->props);
+            printf("\n");
             if (!same_sig(sig_val.as.sig_type, right_sig)) {
                 add_error(compiler, prop, "Property and assignment types must match.");
                 return make_prim_sig(VAL_NIL);
@@ -778,7 +831,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     return NULL;
                 }
 
-                if (!same_sig(((struct SigList*)left_sig)->type, right_sig)) {
+                struct Sig* template = ((struct SigList*)left_sig)->type;
+                if (template->type == SIG_IDENTIFIER) {
+                    template = resolve_sig(compiler, ((struct SigIdentifier*)template)->identifier);
+                }
+                if (!same_sig(template, right_sig)) {
                     add_error(compiler, get_idx->name, "List type and right side type must match.");
                     return NULL;
                 }
@@ -793,7 +850,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     return NULL;
                 }
 
-                if (!same_sig(((struct SigList*)left_sig)->type, right_sig)) {
+                struct Sig* template = ((struct SigList*)left_sig)->type;
+                if (template->type == SIG_IDENTIFIER) {
+                    template = resolve_sig(compiler, ((struct SigIdentifier*)template)->identifier);
+                }
+                if (!same_sig(template, right_sig)) {
                     add_error(compiler, get_idx->name, "Map type and right side type must match.");
                     return NULL;
                 }
@@ -929,7 +990,6 @@ static struct SigArray* compile_function(struct Compiler* compiler, NodeList* nl
     for (int i = 0; i < nl->count; i++) {
         struct Sig* sig = compile_node(compiler, nl->nodes[i], (struct SigArray*)ret_sigs);
     }
-
     if (((struct SigArray*)ret_sigs)->count == 0) {
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);

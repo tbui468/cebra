@@ -212,7 +212,8 @@ void print_value(Value a) {
             printf("%s", "<nil>");
             break;
         case VAL_SIG:
-            printf("%s", "<sig>");
+            printf("%s", "<sig> ");
+            print_sig(a.as.sig_type);
             break;
         case VAL_NATIVE:
             printf("%s", "<native>");

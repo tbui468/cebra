@@ -414,38 +414,48 @@
     print("***********1 Depth Closures************")
 
     a: int = 0
+    ai := 0
     b: () -> = () -> {
         a = a + 1
     }
+    bi := () -> {
+        ai = ai + 1
+    }
 
     b()
+    bi()
 
-    if a == 1 {
+    if a == 1 and ai == 1 {
         print("Open Upvalue 0: Passed!")
     } else {
         print("Open Upvalue 0: Failed!")
     }
 
     b()
+    bi()
 
-    if a == 2 {
+    if a == 2 and ai == 2 {
         print("Open Upvalue 1: Passed!")
     } else {
         print("Open Upvalue 1: Failed!")
     }
 
     var: string = "hello world"
+    vari := "hello world"
     c: () -> string = () -> string {
         -> var + "!"
     }
+    ci := () -> string {
+        -> vari + "!"
+    }
 
-    if c() == "hello world!" {
+    if c() == "hello world!" and ci() == "hello world!" {
         print("Open upvalue 2: Passed!")
     } else {
         print("Open upvalue 2: Failed!")
     }
 
-    if var == "hello world" {
+    if var == "hello world" and vari == "hello world" {
         print("Open upvalue 3: Passed!")
     } else {
         print("Open upvalue 3: Failed!")
@@ -465,10 +475,20 @@
         }
         -> b
     }
-
     c: () -> string = a()
 
-    if c() == "hello world" and a()() == "hello world" {
+    str1i := "hello "
+    str2i := "world"
+    ai := () -> () -> string {
+        bi := () -> string {
+            -> str1i + str2i
+        }
+        -> bi
+    }
+    ci := ai()
+
+    if c() == "hello world" and a()() == "hello world" 
+        and ci() == "hello world" and ai()() == "hello world" {
         print("Open upvalues, Depth 2: Passed!")
     } else {
         print("Open upvalues, Depth 2: Failed!")
@@ -483,16 +503,28 @@
         }
         -> y
     }
-
     xx: () -> () -> string = x()
     yy: () -> string = xx()
-    if yy() == "hello world" {
+
+    xi := () -> () -> () -> string {
+        yi := () -> () -> string {
+            zi := () -> string {
+                -> str1i + str2i
+            }
+            -> zi
+        }
+        -> yi
+    }
+    xxi := x()
+    yyi := xx()
+
+    if yy() == "hello world" and yyi() == "hello world" {
         print("Open upvalues, Depth 3: Passed!")
     } else {
         print("Open upvalues, Depth 3: Failed!")
     }
 
-    if x()()() == "hello world" {
+    if x()()() == "hello world" and xi()()() == "hello world" {
         print("Open upvalues, Depth 3, Cascade: Passed!")
     } else {
         print("Open upvalues, Depth 3, Cascade: Failed!")
@@ -509,15 +541,24 @@
         }
         -> inner
     }
-
     closure: () -> string = outer()
-    if closure() == "outside" {
+
+    outeri := () -> () -> string {
+        x := "outside"
+        inneri := () -> string{
+            -> x
+        }
+        -> inneri
+    }
+    closurei := outeri()
+
+    if closure() == "outside" and closurei() == "outside" {
         print("Closed Upvalues: Passed!")
     } else {
         print("Closed Upvalues: Failed!")
     }
 
-    if outer()() == "outside" {
+    if outer()() == "outside" and outeri()() == "outside" {
         print("Closed Upvalues, Cascade: Passed!")
     } else {
         print("Closed Upvalues, Cascade: Failed!")
@@ -532,15 +573,22 @@
         age: int = 3
         length: float = 100.2
     }
+    Dogi := struct {
+        namei := "Mittens"
+        agei := 1 + 2
+        lengthi := 100.2
+    }
 
     dog: Dog = Dog()
-    if dog.name == "Mittens" {
+    dogi := Dogi()
+    if dog.name == "Mittens" and dogi.namei == "Mittens" {
         print("Get Property: Passed!")
     } else {
         print("Get Property: Failed!")
     }
     dog.name = "Bubbles"
-    if dog.name == "Bubbles" {
+    dogi.namei = "Bubbles"
+    if dog.name == "Bubbles" and dogi.namei == "Bubbles" {
         print("Set Property: Passed!")
     } else {
         print("Set Property: Failed!")
@@ -549,10 +597,14 @@
     increment: () -> = () -> {
         dog.age = dog.age + 1
     }
+    incrementi := () -> {
+        dogi.agei = dogi.agei + 1
+    }
 
     increment()
+    incrementi()
 
-    if dog.age == 4 {
+    if dog.age == 4 and dogi.agei == 4 {
         print("Instance Upvalue: Passed!")
     } else {
         print("Instance Upvalue: Failed!")
@@ -573,19 +625,42 @@
         } 
         -> inner
     }
-
     outer()()
-
     dog1: Dog = Dog()
     dog1.age = 5
-    if dog1.age == 5 {
+
+    outeri := () -> () -> {
+        Cati := struct {
+            namei := "Whiskey"
+            agei := 2
+        }
+        inneri := () -> {
+            ci := Cati()
+            if ci.namei == "Whiskey" and ci.agei == 2 {
+                print("Class upvalue (Inferred): Passed!")
+            } else {
+                print("Class upvalue (Inferred): Failed!")
+            } 
+        } 
+        -> inneri
+    }
+    outeri()()
+    dog1i := Dogi()
+    dog1i.agei = 5
+
+    if dog1.age == 5 and dog1i.agei == 5 {
         print("Property Assignment: Passed!")
     } else {
         print("Property Assignment: Failed!")
     }
+
     dog2: Dog = Dog()
     dog1.age = dog2.age = 10
-    if dog1.age == 10 and dog2.age == 10 {
+    dog2i := Dogi()
+    dog1i.agei = dog2i.agei = 10
+    if dog1.age == 10 and dog2.age == 10 and
+        dog1i.agei == 10 and dog2i.agei == 10 
+    {
         print("Cascade Property Assignment: Passed!")
     } else {
         print("Cascade Property Assignment: Failed!")
@@ -596,7 +671,12 @@
         d.age = 10
     }
     dog_age(dog3)
-    if dog3.age == 10 {
+    dog3i := Dogi()
+    dog_agei := (d: Dogi) -> {
+        d.agei = 10
+    }
+    dog_agei(dog3i)
+    if dog3.age == 10 and dog3i.agei == 10 {
         print("Instance as Parameter: Passed!")
     } else {
         print("Instance as Parameter: Failed!")
@@ -607,8 +687,12 @@
         d.age = 100
         -> d
     }
-
-    if dog_factory().age == 100 {
+    dog_factoryi := () -> Dogi {
+        d := Dogi()
+        d.agei = 100
+        -> d
+    }
+    if dog_factory().age == 100 and dog_factoryi().agei == 100 {
         print("Instance as Return: Passed!")
     } else {
         print("Instance as Return: Failed!")

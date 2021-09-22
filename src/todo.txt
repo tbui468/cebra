@@ -10,19 +10,50 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-    
-    Write tests for inferred types from:
-        Depth 1 Closures til the end
 
+    problem with this in test.cbr
+        dog0.friend = dog1
+        dog1.friend = dog2
+        printing tables and SigClass sigs are different in SET_PROP
+            trying to resolve_table_identifieres in DECL_VAR but
+            it's not working in SET_PROP
+
+    "Nil for Instances" test is broken
+        accessing multiple properties is the problem now
+        see test.cbr
+
+        print(dog0.name) //works fine
+        print(dog0.friend.name) //doesn't work dispite - check parser and compiler
+            to see how this statement is parsed and compiled
+            dog0 should be SigClass
+            friend should also be a SigClass
+            
     Clean up code 
         get rid of creating struct signature type in parser
         create inferred signature so that it's clearer
             don't want a bunch of confusing NULL checks everywhere
+        create node for empty right side (for parameters) and
+            call it Empty (or similar) so that we don't have
+            random NULL checks everywhere
         SigClass doesn't need super struct token, does it?
 
+    Need to work on error handling in parser, compiler, runtime
+        we don't want any crashes - bad syntax / logic should
+        report an error, synchronize if necessary, and move on 
+        if possible
+
     this code should give error since declaring same variable twice
+    but it currently crashes program
+        //declaring variable with same identifier
         d: int = 0
         d := 0
+        
+        //expecting 'and' between
+        if yy() == "hello world" yyi() == "hello world" {
+
+        //Look at List tests, setting same variable to different list templates
+        a: List<int> = List<int>(-1)
+        a: List<Dog> = List<Dog>(Dog()) //this should report and error
 
     Change display of test results for easier digestion:
         sum all test and include failed/passed tests count

@@ -111,6 +111,7 @@ bool is_duck(struct SigClass* param, struct SigClass* arg) {
 
             struct Sig* param_sig = param_pair->value.as.sig_type;
             struct Sig* arg_sig = arg_value.as.sig_type;
+
             if (IS_CLASS(param_pair->value) && IS_CLASS(arg_value)) {
                 if (!is_duck((struct SigClass*)param_sig, (struct SigClass*)arg_sig)) {
                     return false;
@@ -156,7 +157,19 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
         case SIG_CLASS:
             struct SigClass* sc1 = (struct SigClass*)sig1;
             struct SigClass* sc2 = (struct SigClass*)sig2;
-            return is_duck(sc1, sc2);
+            //only checking signature types (and not recursively comparing properties that are struct types)
+            //since structs can hold references to themselves.  Doing so could loop indefinitely.
+            for (int i = 0; i < sc1->props.capacity; i++) {
+                struct Pair* pair = &sc1->props.pairs[i];
+                if (pair->key != NULL) {
+                    Value value;
+                    if (!get_from_table(&sc2->props, pair->key, &value))
+                        return false;
+                    if (pair->value.as.sig_type->type != value.as.sig_type->type)
+                        return false;
+                }
+            }
+            return true;
         case SIG_IDENTIFIER:
             struct SigIdentifier* si1 = (struct SigIdentifier*)sig1; 
             struct SigIdentifier* si2 = (struct SigIdentifier*)sig2; 
