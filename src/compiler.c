@@ -222,9 +222,10 @@ static void set_local(struct Compiler* compiler, Token name, struct Sig* sig, in
     compiler->locals[index] = local;
 }
 
-static void add_local(struct Compiler* compiler, Token name, struct Sig* sig) {
+static int add_local(struct Compiler* compiler, Token name, struct Sig* sig) {
     set_local(compiler, name, sig, compiler->locals_count);
     compiler->locals_count++;
+    return compiler->locals_count - 1;
 }
 
 
@@ -327,23 +328,30 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         //declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
-            add_local(compiler, dv->name, dv->sig);
+            struct Sig* sig;
+            //inferred type
+            if (dv->sig == NULL) {
+                int idx = add_local(compiler, dv->name, dv->sig); //TODO: sig may be incomplete, but type must be correct
+                sig = compile_node(compiler, dv->right, NULL);
+                set_local(compiler, dv->name, sig, idx);
+            } else { //not inferred
+                add_local(compiler, dv->name, dv->sig);
+                sig = compile_node(compiler, dv->right, NULL);
+                if (sig->type == SIG_IDENTIFIER) {
+                    sig = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
+                }
+                struct Sig* decl_sig = dv->sig;
+                if (decl_sig->type == SIG_IDENTIFIER) {
+                    decl_sig = resolve_sig(compiler, ((struct SigIdentifier*)decl_sig)->identifier);
+                }
 
-            struct Sig* sig = compile_node(compiler, dv->right, NULL);
-            if (sig->type == SIG_IDENTIFIER) {
-                sig = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
+                if (!same_sig(sig, decl_sig)) {
+                    add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
+                }
             }
 
-            struct Sig* decl_sig = dv->sig;
-            if (decl_sig->type == SIG_IDENTIFIER) {
-                decl_sig = resolve_sig(compiler, ((struct SigIdentifier*)decl_sig)->identifier);
-            }
 
-            if (!same_sig(sig, decl_sig)) {
-                add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
-            }
-
-            return make_prim_sig(VAL_NIL);
+            return sig;
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
@@ -408,26 +416,18 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct ObjClass* klass = make_class(name);
             push_root(to_class(klass));
 
+            struct SigClass* super_sig;
             if (dc->super != NULL) {
-                struct Sig* sig = compile_node(compiler, dc->super, ret_sigs);
-                struct SigClass* super_sig = (struct SigClass*)sig;
-                struct SigClass* sub_sig = (struct SigClass*)(dc->sig);
-                for (int i = 0; i < sub_sig->props.capacity; i++) {
-                    struct Pair* pair = &sub_sig->props.pairs[i];
-                    if (pair->key != NULL) {
-                        Value value;
-                        bool overwritting = get_from_table(&super_sig->props, pair->key, &value);
-                        if (overwritting && !same_sig(value.as.sig_type, pair->value.as.sig_type)) {
-                            add_error(compiler, dc->name, "Overwritten property must of same type.");
-                        }
-                    }
-                }
+                super_sig = (struct SigClass*)compile_node(compiler, dc->super, ret_sigs);
             } else {
                 emit_byte(compiler, OP_NIL);
             }
 
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
+
+            GetVar* super_gv = (GetVar*)(dc->super);
+            struct SigClass* sc = (struct SigClass*)make_class_sig(dc->name, make_dummy_token()); //TODO: do we really need super token?
 
             //add struct properties
             for (int i = 0; i < dc->decls.count; i++) {
@@ -441,6 +441,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
                 start_scope(compiler);
                 struct Sig* sig = compile_node(compiler, node, (struct SigArray*)class_ret_sigs);
+
+                set_table(&sc->props, prop_name, to_sig(sig));
+
                 emit_byte(compiler, OP_ADD_PROP);
                 emit_short(compiler, add_constant(compiler, to_string(prop_name)));
                 end_scope(compiler);
@@ -449,10 +452,31 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             }
 
 
+            if (dc->super != NULL) {
+                //type checking overwritten properties
+                for (int i = 0; i < sc->props.capacity; i++) {
+                    struct Pair* pair = &sc->props.pairs[i];
+                    if (pair->key != NULL) {
+                        Value value;
+                        bool overwritting = get_from_table(&super_sig->props, pair->key, &value);
+                        if (overwritting && !same_sig(value.as.sig_type, pair->value.as.sig_type)) {
+                            add_error(compiler, dc->name, "Overwritten property must of same type.");
+                        }
+                    }
+                }
+                //inheriting properties in signature
+                for (int i = 0; i < super_sig->props.capacity; i++) {
+                    struct Pair* pair = &super_sig->props.pairs[i];
+                    if (pair->key != NULL) {
+                        set_table(&sc->props, pair->key, pair->value);
+                    }
+                }
+            }
+
             pop_root();
             pop_root();
 
-            return make_prim_sig(VAL_NIL);
+            return (struct Sig*)sc;
         }
         //statements
         case NODE_EXPR_STMT: {
@@ -570,7 +594,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 return NULL;
             }
 
-            
             if (sig_inst->type == SIG_MAP) {
                 if (gp->prop.length == 4 && memcmp(gp->prop.start, "keys", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_KEYS);
@@ -630,6 +653,17 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             Value sig_val = to_nil();
             get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
 
+            /*
+            if (sig_val.as.sig_type == NULL) {
+                printf("NULL\n");
+            } else {
+                print_sig(sig_val.as.sig_type); //THIS IS NULL - NOT OKAY
+            }
+            if (right_sig == NULL) {
+                printf("NULL\n");
+            } else {
+                print_sig(right_sig); //THIS IS STRING OKAY!
+            }*/
             if (!same_sig(sig_val.as.sig_type, right_sig)) {
                 add_error(compiler, prop, "Property and assignment types must match.");
                 return make_prim_sig(VAL_NIL);

@@ -10,20 +10,46 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-    
-    Problem in NODE_GET_PROP
+    Clean up code
 
-    Add tests for duck typing
-        copy from test.cbr and add checks
+    Run each test to check output
 
-    How about letting declarations leave NIL on the stack, and then 
-    popping them off by wrapping them in expr_stmt?  This would
-    get rid of the weird NIL checking in OP_POP.
+    Problem in parser, make_decl_class.  Inferred type for properties
+        doesn't work here - trying to set the property signature to
+        a NULL (that's changed to Value).  Using dv->sig, but it's
+        NULL bc we are inferring property types.
 
-    have Maps and Lists return nil for invalid values
-        get rid of default values
+        Won't be able to get the type until the rhs is compiled
+        This is causing GET_PROP and SET_PROP to break.
 
-    Allow shorthand for declaration types:
+        Could try to update signature after compiling the class, but
+        would need to take care with inheritance - right now
+        we are checking if overwritten type is the same.  Will need
+        to do it in this order:
+            compile class (adding all properties)
+            update class signature with inferred types
+                struct and function signatures should be fine
+            Check super struct properties using new signature:
+                if overwritten, check that type matches
+                if not overwritten, add prop to struct
+            return the new update signature, and let NODE_DECL_VAR
+                update the class signature in locals
+            
+
+    in read_sig() in parser, returning NULL if next token is TOKEN_EQUAL
+    in compiler NODE_DECL_VAR, need to deal with a NULL signature.
+    if the right side is a function or struct, need to get that sig
+    before compiling right side.  If it's anything else, can compile
+    and then get that signature.
+
+    Shorthand problem: can't do recursion or have structs within same
+        struct since we normally add_local BEFORE the right hand side
+        is compiled so that it's defined.
+
+        could we just look on the right side? Before add_local?
+            This will work.  Just set sig to NULL
+
+        if ':' is followed by '=', then what to do about signatures?
         a := 1
         b := "dogg"
         c := (n: int, m: int) -> int {
@@ -48,10 +74,23 @@ IMPLEMENTATION:
     Update documentation to include new syntax + List/Map
         and include small box to write /run test scripts
 
+    have Maps and Lists return nil for invalid values
+        get rid of default values
+        in vm, fill invalid values with nil
+        change tests to match 
+
     find python native function list (for early python versions)
         and add those functions
         copy() for instances/lists/maps
         casting to string/int/float
+
+    How about letting declarations leave NIL on the stack, and then 
+    popping them off by wrapping them in expr_stmt?  This would
+    get rid of the weird NIL checking in OP_POP.
+
+        had bug before where setting a variable to nil and 
+        return nil as the type (which didn't get popped)
+        changed code so that variable signature was returned
 
     Implement for each loop
         for i: int in list {
