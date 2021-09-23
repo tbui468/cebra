@@ -259,6 +259,19 @@ static struct Sig* resolve_sig(struct Compiler* compiler, Token name) {
     return NULL;
 }
 
+static bool declared_in_scope(struct Compiler* compiler, Token name) {
+    for (int i = compiler->locals_count - 1; i >= 0; i--) {
+        Local* local = &compiler->locals[i];
+        if (local->name.length == name.length && 
+            memcmp(local->name.start, name.start, name.length) == 0) {
+            if (compiler->scope_depth == local->depth) return true; 
+            else return false;
+        }
+    }
+
+    return false;
+}
+
 static int resolve_local(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
@@ -344,6 +357,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             DeclVar* dv = (DeclVar*)node;
 
             struct Sig* sig = NULL;
+
+            if (declared_in_scope(compiler, dv->name)) {
+                add_error(compiler, dv->name, "Identifier already defined.");
+            }
 
             //inferred type, defined
             if (dv->sig->type == SIG_DECL) {
@@ -584,6 +601,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         }
         case NODE_FOR: {
             For* fo = (For*)node;
+            start_scope(compiler);
             struct Sig* init = compile_node(compiler, fo->initializer, ret_sigs); //should leave no value on stack
 
             int condition_start = compiler->function->chunk.count;
@@ -609,6 +627,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             patch_jump(compiler, exit_jump);
             emit_byte(compiler, OP_POP); //pop condition if false
+            end_scope(compiler);
             return make_prim_sig(VAL_NIL);
         }
         case NODE_RETURN: {

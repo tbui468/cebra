@@ -17,10 +17,6 @@ IMPLEMENTATION:
             and returns info about that text
         integrate final code
 
-    Change display of test results for easier digestion:
-        sum all test and include failed/passed tests count
-        print names of failed tests only
-
     Whenever a SigIdentifier is used, it should be resolved at
         that time - is there a way to automate this rather
         than checking if type == SIG_IDENTIFIER and resolving

@@ -163,9 +163,9 @@ add_passed := (msg: string) -> {
         ji = ji + 1
     }
     if j == 5 and ji == 5 {
-        add_passed("Initializer, Condition, Upate: Passed!")
+        add_passed("Initializer, Condition, Update: Passed!")
     } else {
-        add_failed("Initializer, Condition, Upate: Failed!")
+        add_failed("Initializer, Condition, Update: Failed!")
     }
 
     a: int = 0
@@ -772,13 +772,13 @@ add_passed := (msg: string) -> {
         age: int = 5
     }
 
-    a: List<Dog> = List<Dog>(Dog())
+    b: List<Dog> = List<Dog>(Dog())
     d: Dog = Dog()
     d.name = "Bubbles"
-    a[0] = d
-    a.size = 2
+    b[0] = d
+    b.size = 2
 
-    if a[0].name == "Bubbles" and a[1].name == "Mittens" {
+    if b[0].name == "Bubbles" and b[1].name == "Mittens" {
         add_passed("Structs in List: Passed!")
     } else {
         add_failed("Structs in List: Failed!")
