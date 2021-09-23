@@ -229,7 +229,7 @@ void print_node(struct Node* node) {
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
             printf("( DeclVar %.*s ", dv->name.length, dv->name.start);
-            print_node(dv->right);
+            if (dv->right != NULL) print_node(dv->right);
             printf(")");
             break;
         }

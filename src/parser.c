@@ -324,7 +324,7 @@ static struct Node* block() {
 
 static struct Sig* read_sig(Token var_name) {
     if (parser.previous.type == TOKEN_COLON && peek_one(TOKEN_EQUAL)) {
-        return NULL; //type is inferred from right hand side
+        return make_decl_sig();
     }
 
     if (match(TOKEN_LEFT_PAREN)) {

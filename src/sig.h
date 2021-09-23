@@ -11,13 +11,18 @@ typedef enum {
     SIG_CLASS,
     SIG_IDENTIFIER,
     SIG_LIST,
-    SIG_MAP
+    SIG_MAP,
+    SIG_DECL
 } SigType;
 
 struct Sig {
     SigType type;
     struct Sig* next;
     struct Sig* opt;
+};
+
+struct SigDecl {
+    struct Sig base;
 };
 
 struct SigArray {
@@ -72,6 +77,7 @@ struct Sig* make_class_sig(Token klass, Token super);
 struct Sig* make_identifier_sig(Token identifier, struct Sig* type);
 struct Sig* make_list_sig(struct Sig* type);
 struct Sig* make_map_sig(struct Sig* type);
+struct Sig* make_decl_sig();
 
 bool is_duck(struct SigClass* sub, struct SigClass* super);
 bool same_sig(struct Sig* sig1, struct Sig* sig2);

@@ -20,6 +20,17 @@ void add_sig(struct SigArray* sl, struct Sig* sig) {
     sl->count++;
 }
 
+
+struct Sig* make_decl_sig() {
+    struct SigDecl* sd = ALLOCATE(struct SigDecl);
+
+    sd->base.type = SIG_DECL;
+    sd->base.opt = NULL;
+
+    insert_sig((struct Sig*)sd);
+    return (struct Sig*)sd;
+}
+
 struct Sig* make_array_sig() {
     struct SigArray* sig_list = ALLOCATE(struct SigArray);
     sig_list->sigs = ALLOCATE_ARRAY(struct Sig*);
@@ -197,6 +208,9 @@ bool sig_is_type(struct Sig* sig, ValueType type) {
 
 void print_sig(struct Sig* sig) {
     switch(sig->type) {
+        case SIG_DECL:
+            printf("SigDecl");
+            break;
         case SIG_ARRAY:
             struct SigArray* sl = (struct SigArray*)sig;
             printf("(");
@@ -239,6 +253,10 @@ void print_sig(struct Sig* sig) {
 
 void free_sig(struct Sig* sig) {
     switch(sig->type) {
+        case SIG_DECL:
+            struct SigDecl* sd = (struct SigDecl*)sig;
+            FREE(sd, struct SigDecl);
+            break;
         case SIG_ARRAY:
             struct SigArray* sa = (struct SigArray*)sig;
             FREE_ARRAY(sa->sigs, struct Sig*, sa->capacity);

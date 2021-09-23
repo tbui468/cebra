@@ -165,6 +165,7 @@ static struct Sig* compile_logical(struct Compiler* compiler, struct Node* node)
 
     struct Sig* left_type = compile_node(compiler, logical->left, NULL);
     struct Sig* right_type = compile_node(compiler, logical->right, NULL);
+
     if (!same_sig(left_type, right_type)) {
         add_error(compiler, logical->name, "Left and right types must match.");
     }
@@ -323,10 +324,8 @@ static void end_scope(struct Compiler* compiler) {
 static void resolve_table_identifiers(struct Compiler* compiler, struct Table* table) {
     for (int i = 0; i < table->capacity; i++) {
         struct Pair* pair = &table->pairs[i];
-        printf("i: %d\n", i);
         if (pair->key != NULL) {
             struct Sig* sig = pair->value.as.sig_type;
-            print_value(pair->value); //TODO: invalid signature
             if (sig->type == SIG_IDENTIFIER) {
                 struct Sig* result = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
                 if (result != NULL) {
@@ -349,23 +348,23 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct Sig* sig = NULL;
 
             //invalid syntax
-            if (dv->right == NULL && dv->sig == NULL) {
+            if (dv->right == NULL && dv->sig->type == SIG_DECL) {
                 add_error(compiler, dv->name, "Variable with inferred type must be defined.");
             }
 
             //explicit type, not defined (only for parameters)
-            if (dv->right == NULL && dv->sig != NULL) {
+            if (dv->right == NULL && dv->sig->type != SIG_DECL) {
                 if (dv->sig->type == SIG_IDENTIFIER) {
                     sig = resolve_sig(compiler, ((struct SigIdentifier*)dv->sig)->identifier);
                     if (sig == NULL) {
                         add_error(compiler, dv->name, "Identifier not defined.");
                     }
-                    add_local(compiler, dv->name, sig);
                 }
+                add_local(compiler, dv->name, dv->sig);
             }
 
             //inferred type, defined
-            if (dv->right != NULL && dv->sig == NULL) {
+            if (dv->right != NULL && dv->sig->type == SIG_DECL) {
                 int idx = add_local(compiler, dv->name, dv->sig);
                 sig = compile_node(compiler, dv->right, NULL);
                 if (sig_is_type(sig, VAL_NIL)) {
@@ -378,7 +377,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             }
             
             //explicit type, defined
-            if (dv->right != NULL && dv->sig != NULL) {
+            if (dv->right != NULL && dv->sig->type != SIG_DECL) {
                 int idx = add_local(compiler, dv->name, dv->sig);
                 sig = compile_node(compiler, dv->right, NULL);
                 if (!sig_is_type(sig, VAL_NIL)) {
@@ -407,7 +406,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             struct Compiler func_comp;
             init_compiler(&func_comp, df->name.start, df->name.length, df->parameters.count);
-
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(&df->parameters, df->body);
             struct SigArray* inner_ret_sigs = compile_function(&func_comp, &df->parameters); 
@@ -558,6 +556,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
             struct Sig* cond = compile_node(compiler, ie->condition, ret_sigs);
+
             if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, ie->name, "Condition must evaluate to boolean.");
             }
@@ -626,6 +625,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_RETURN: {
             Return* ret = (Return*)node;
             struct Sig* sig = compile_node(compiler, ret->right, ret_sigs);
+
             if (sig_is_type(sig, VAL_NIL)) {
                 emit_byte(compiler, OP_NIL);
             }
@@ -702,6 +702,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 sig_inst = resolve_sig(compiler, ((struct SigIdentifier*)sig_inst)->identifier);
             }
 
+            if (sig_inst->type == SIG_CLASS) {
+                sig_inst = resolve_sig(compiler, ((struct SigClass*)sig_inst)->klass);
+            }
+
             struct ObjString* name = make_string(prop.start, prop.length);
             push_root(to_string(name));
             emit_byte(compiler, OP_SET_PROP);
@@ -710,13 +714,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             Value sig_val = to_nil();
             get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
+            resolve_table_identifiers(compiler, &((struct SigClass*)sig_val.as.sig_type)->props);
 
-            //TODO: the SigIdentifier is still showing up in the sig_val
-            print_sig(sig_val.as.sig_type);
-            print_table(&((struct SigClass*)sig_val.as.sig_type)->props); //this is and identifier
-            print_sig(right_sig);
-            print_table(&((struct SigClass*)right_sig)->props);
-            printf("\n");
             if (!same_sig(sig_val.as.sig_type, right_sig)) {
                 add_error(compiler, prop, "Property and assignment types must match.");
                 return make_prim_sig(VAL_NIL);
@@ -748,7 +747,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             }
 
             add_error(compiler, gv->name, "Local variable not declared.");
-
             return NULL;
         }
         case NODE_SET_VAR: {
@@ -919,6 +917,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 add_error(compiler, call->name, "Calls must be used on a function type.");
                 return make_prim_sig(VAL_NIL);
             }
+
 
             struct SigFun* sig_fun = (struct SigFun*)sig;
             struct SigArray* params = (struct SigArray*)(sig_fun->params);
