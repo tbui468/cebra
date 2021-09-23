@@ -11,25 +11,11 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Order of open_upvalues is all messed up - check linked list
-        insertion in capture_upvalue again.
-
-    'Functions Returning Functions' followed by 'Closed Upvalues' 
-        and following code above it all breaks 'Closed Upvalues'
-
-        //top of file
-        passed := 0
-        add_passed := () -> {
-            passed = passed + 1
-        }
-
-        break the 4 tests into 
-
-
-    Adding Lists (or something else?) to correctness.cbr
-        breaks Closed Upvalue tests
-        Seems like using an upvalue outside of the tests breaks them.
-        issue with upvalue implementation
+    Compile to webassembly and run in browser
+        test with simple 'hello world' program first
+        test with program that reads in text from text box (our script)
+            and returns info about that text
+        integrate final code
 
     Change display of test results for easier digestion:
         sum all test and include failed/passed tests count
@@ -58,12 +44,6 @@ IMPLEMENTATION:
         a: List<int> = List<int>(-1)
         a: List<Dog> = List<Dog>(Dog()) //this should report and error
 
-    Compile to webassembly and run in browser
-        test with simple 'hello world' program first
-        test with program that reads in text from text box (our script)
-            and returns info about that text
-        integrate final code
-
     Update documentation to include new syntax + List/Map
         and include small box to write /run test scripts
 
@@ -73,6 +53,7 @@ IMPLEMENTATION:
         and run to the very end, emitting errors WITHOUT crashing.
 
     have Maps and Lists return nil for invalid values
+        make this an option (if argument is nothing)
         get rid of default values
         in vm, fill invalid values with nil
         change tests to match 

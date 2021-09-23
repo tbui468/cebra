@@ -1,104 +1,98 @@
 //Correctness test
 
-passed := 0
-//failed := List<string>("default")
+passed := List<string>("default")
+failed := List<string>("default")
 
-//add_failed := (msg: string) -> {
-//    failed[failed.size] = msg
-//}
-add_passed := () -> {
-    passed = passed + 1
+add_failed := (msg: string) -> {
+    failed[failed.size] = msg
+}
+add_passed := (msg: string) -> {
+    passed[passed.size] = msg
 }
 
 {
-    print("")
     print("***********Basic************")
-    print("Print - Passed!")
     if true {
-//        add_passed()
-        print("If / Else - Passed!")
+        add_passed("If / Else - Passed!")
     } else {
-//        add_failed("If / Else - Failed!")
-        print("If / Else - Failed!")
+        add_failed("If / Else - Failed!")
     }
 }
 
 {
-    print("")
     print("***********Equality************")
     if 1 == 1 {
-        print("Integer Equal - Passed!")
+        add_passed("Integer Equal - Passed!")
     } else {
-        print("Integer Equal - Failed!")
+        add_failed("Integer Equal - Failed!")
     }
     if 1 != 2 {
-        print("Integer Not Equal - Passed!")
+        add_passed("Integer Not Equal - Passed!")
     } else {
-        print("Integer Not Equal - Failed!")
+        add_failed("Integer Not Equal - Failed!")
     }
 }
 
 {
-    print("")
     print("***********Inequality************")
     if 1 < 2 {
-        print("Integer Less Than - Passed!")
+        add_passed("Integer Less Than - Passed!")
     } else {
-        print("Integer Less Than - Failed!")
+        add_failed("Integer Less Than - Failed!")
     }
 }
 
 {
-    print("")
     print("***********Operations************")
     if 1 + 3 == 4 {
-        print("Integer Addition: Passed!")
+        add_passed("Integer Addition: Passed!")
     } else {
-        print("Integer Addition: Failed!")
+        add_failed("Integer Addition: Failed!")
     }
+
     if 1 - 3 == -2 {
-        print("Integer Subtraction: Passed!")
+        add_passed("Integer Subtraction: Passed!")
     } else {
-        print("Integer Subtraction: Failed!")
+        add_failed("Integer Subtraction: Failed!")
     }
     if -1 * 3 == -3 {
-        print("Integer Multiplication: Passed!")
+        add_passed("Integer Multiplication: Passed!")
     } else {
-        print("Integer Multiplication: Failed!")
+        add_failed("Integer Multiplication: Failed!")
     }
     if 12 / 5 == 2 {
-        print("Integer Division: Passed!")
+        add_passed("Integer Division: Passed!")
     } else {
-        print("Integer Division: Failed!")
+        add_failed("Integer Division: Failed!")
     }
     if 7 % 3 == 1 {
-        print("Integer Modulus: Passed!")
+        add_passed("Integer Modulus: Passed!")
     } else {
-        print("Integer Modulus: Failed!")
+        add_failed("Integer Modulus: Failed!")
     }
     if "dog" + "cat" == "dogcat" {
-        print("String Concatenation: Passed!")
+        add_passed("String Concatenation: Passed!")
     } else {
-        print("String Concatenation: Failed!")
+        add_failed("String Concatenation: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Variables************")
     a: int = 1
     ai := 1
     if a == 1 and ai == 1 {
-        print("Declaring Integers: Passed!") 
+        add_passed("Declaring Integers: Passed!") 
     } else {
-        print("Declaring Integers: Failed!") 
+        add_failed("Declaring Integers: Failed!") 
     } 
     b: string = "dog"
     bi := "dog"
     if b == "dog" and bi == "dog" {
-        print("Declaring Strings: Passed!")
+        add_passed("Declaring Strings: Passed!")
     } else {
-        print("Declaring Strings: Failed!")
+        add_failed("Declaring Strings: Failed!")
     }
 
     c: int = 1
@@ -107,9 +101,9 @@ add_passed := () -> {
     d: int = 2
     ci = di = c = d 
     if c == 2 and ci == 2 and di == 2 {
-        print("Assigning integers: Passed!")
+        add_passed("Assigning integers: Passed!")
     } else {
-        print("Assigning integers: Failed!")
+        add_failed("Assigning integers: Failed!")
     }
 
     e: int = 1
@@ -118,47 +112,47 @@ add_passed := () -> {
     fi := 1
     e = ei = f = fi = 10
     if e == 10 and f == 10 and ei == 10 and fi == 10 {
-        print("Cascade Assigning Integers: Passed!")
+        add_passed("Cascade Assigning Integers: Passed!")
     } else {
-        print("Cascade Assigning Integers: Failed!")
+        add_failed("Cascade Assigning Integers: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Scopes************")
     a: int = 1
     ai := 1
     {
         if a == 1 and ai == 1 {
-            print("Using Variables in Outer Scopes: Passed!") 
+            add_passed("Using Variables in Outer Scopes: Passed!") 
         } else {
-            print("Using Variables in Outer Scopes: Failed!") 
+            add_failed("Using Variables in Outer Scopes: Failed!") 
         } 
         a: int = 2
         ai := 2
         if a == 2 and ai == 2 {
-            print("Shadowing Variables in Outer Scopes: Passed!") 
+            add_passed("Shadowing Variables in Outer Scopes: Passed!") 
         } else {
-            print("Shadowing Variables in Outer Scopes: Failed!") 
+            add_failed("Shadowing Variables in Outer Scopes: Failed!") 
         } 
     }
     if a == 1 and ai == 1{
-        print("Popping Variables at Scope End: Passed!") 
+        add_passed("Popping Variables at Scope End: Passed!") 
     } else {
-        print("Popping Variables at Scope End: Failed!") 
+        add_failed("Popping Variables at Scope End: Failed!") 
     }
     {{{
         if a == 1 and ai == 1 {
-            print("Using Variables in Outer Scopes (3 levels): Passed!") 
+            add_passed("Using Variables in Outer Scopes (3 levels): Passed!") 
         } else {
-            print("Using Variables in Outer Scopes (3 levels): Failed!") 
+            add_failed("Using Variables in Outer Scopes (3 levels): Failed!") 
         } 
     }}}
 }
 
 {
-    print("")
+    
     print("***********For Loops************")
     j: int = 0
     ji := 0
@@ -169,9 +163,9 @@ add_passed := () -> {
         ji = ji + 1
     }
     if j == 5 and ji == 5 {
-        print("Initializer, Condition, Upate: Passed!")
+        add_passed("Initializer, Condition, Upate: Passed!")
     } else {
-        print("Initializer, Condition, Upate: Failed!")
+        add_failed("Initializer, Condition, Upate: Failed!")
     }
 
     a: int = 0
@@ -185,9 +179,9 @@ add_passed := () -> {
         ai = ai + 1
     }
     if a == 5 and ai == 5 {
-        print("No Initializer: Passed!")
+        add_passed("No Initializer: Passed!")
     } else {
-        print("No Initializer: Failed!")
+        add_failed("No Initializer: Failed!")
     }
 
     c: int = 0
@@ -199,9 +193,9 @@ add_passed := () -> {
         ci = ci + 1
     }
     if c == 5 and ci == 5 {
-        print("No Initializer, No Update: Passed!")
+        add_passed("No Initializer, No Update: Passed!")
     } else {
-        print("No Initializer, No Update: Failed!")
+        add_failed("No Initializer, No Update: Failed!")
     }
 
     d: int = 0
@@ -213,20 +207,20 @@ add_passed := () -> {
         di = di + 1
     }
     if d == 5 and di == 5 {
-        print("While: Passed!")
+        add_passed("While: Passed!")
     } else {
-        print("While: Failed!")
+        add_failed("While: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Functions Return Primitives or Nil************")
     a: () -> = () -> {
-        print("Zero Parameters / No Return: Passed!")
+        add_passed("Zero Parameters / No Return: Passed!")
     }
     ai := () -> {
-        print("Zero Parameters / No Return (Inferred): Passed!")
+        add_passed("Zero Parameters / No Return (Inferred): Passed!")
     }
     a()
     ai()
@@ -238,23 +232,23 @@ add_passed := () -> {
         -> -1
     }
     if b() == -1 and bi() == -1 {
-        print("Zero Parameters / Integer Return: Passed!")
+        add_passed("Zero Parameters / Integer Return: Passed!")
     } else {
-        print("Zero Parameters / Integer Return: Failed!")
+        add_failed("Zero Parameters / Integer Return: Failed!")
     }
 
     c: (int) -> = (i: int) -> {
         if i == 2 {
-            print("Integer Parameter: Passed!")
+            add_passed("Integer Parameter: Passed!")
         } else {
-            print("Integer Parameter: Failed!")
+            add_failed("Integer Parameter: Failed!")
         }
     }
     ci := (i: int) -> {
         if i == 2 {
-            print("Integer Parameter (Inferred): Passed!")
+            add_passed("Integer Parameter (Inferred): Passed!")
         } else {
-            print("Integer Parameter (Inferred): Failed!")
+            add_failed("Integer Parameter (Inferred): Failed!")
         }
     }
     c(2)
@@ -273,24 +267,24 @@ add_passed := () -> {
         -> fibi(i - 1) + fibi(i - 2)
     }
     if fib(10) == 55 and fibi(10) == 55 {
-        print("Recursion: Passed!")
+        add_passed("Recursion: Passed!")
     } else {
-        print("Recursion: Failed!")
+        add_failed("Recursion: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Functions Returning Functions************")
     a: () -> () -> = () -> () -> {
         b: () -> = () -> {
-            print("No Parameters / Nil Return: Passed!")
+            add_passed("No Parameters / Nil Return: Passed!")
         }
         -> b
     }
     ai := () -> () -> {
         bi := () -> {
-            print("No Parameters / Nil Return (Inferred): Passed!")
+            add_passed("No Parameters / Nil Return (Inferred): Passed!")
         }
         -> bi
     }
@@ -312,14 +306,14 @@ add_passed := () -> {
     }
 
     if c()(4) == 8 and ci()(4) == 8 {
-        print("One Parameter / Int Return: Passed!")
+        add_passed("One Parameter / Int Return: Passed!")
     } else {
-        print("One Parameter / Int Return: Failed!")
+        add_failed("One Parameter / Int Return: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Functions as Function Parameters************")
 
     add: (int, int) -> int = (a: int, b: int) -> int {
@@ -346,14 +340,14 @@ add_passed := () -> {
     if fun(2, 3, add) == 5 and fun(5, 4, mul) == 20 
         and funi(2, 3, addi) == 5 and funi(5, 4, muli) == 20
     {
-        print("Passing function as Argument: Passed!")    
+        add_passed("Passing function as Argument: Passed!")    
     } else {
-        print("Passing function as Argument: Failed!")    
+        add_failed("Passing function as Argument: Failed!")    
     }
 }
 
 {
-    print("")
+    
     print("***********Cascading Calls************")
 
     a: () -> () -> () -> int = () -> () -> () -> int {
@@ -376,9 +370,9 @@ add_passed := () -> {
     }
 
     if a()()() == 1 and ai()()() == 1 {
-        print("Triple calls: Passed!")
+        add_passed("Triple calls: Passed!")
     } else {
-        print("Triple calls: Failed!")
+        add_failed("Triple calls: Failed!")
     }
 
     d: () -> (int) -> int = () -> (int) -> int {
@@ -395,14 +389,14 @@ add_passed := () -> {
     }
 
     if d()(2) == 4 and di()(2) == 4 {
-        print("Double calls: Passed!")
+        add_passed("Double calls: Passed!")
     } else {
-        print("Double calls: Failed!")
+        add_failed("Double calls: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Anonymous Functions************")
 
     op: (int, int, (int, int) -> int) -> int = (a: int, b: int, c: (int, int) -> int) -> int {
@@ -415,14 +409,14 @@ add_passed := () -> {
     if op(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 
        and opi(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 
     {
-        print("Anonymous Function: Passed!")
+        add_passed("Anonymous Function: Passed!")
     } else {
-        print("Anonymous Function: Failed!")
+        add_failed("Anonymous Function: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********1 Depth Closures************")
 
     a: int = 0
@@ -438,18 +432,18 @@ add_passed := () -> {
     bi()
 
     if a == 1 and ai == 1 {
-        print("Open Upvalue 0: Passed!")
+        add_passed("Open Upvalue 0: Passed!")
     } else {
-        print("Open Upvalue 0: Failed!")
+        add_failed("Open Upvalue 0: Failed!")
     }
 
     b()
     bi()
 
     if a == 2 and ai == 2 {
-        print("Open Upvalue 1: Passed!")
+        add_passed("Open Upvalue 1: Passed!")
     } else {
-        print("Open Upvalue 1: Failed!")
+        add_failed("Open Upvalue 1: Failed!")
     }
 
     var: string = "hello world"
@@ -462,21 +456,21 @@ add_passed := () -> {
     }
 
     if c() == "hello world!" and ci() == "hello world!" {
-        print("Open upvalue 2: Passed!")
+        add_passed("Open upvalue 2: Passed!")
     } else {
-        print("Open upvalue 2: Failed!")
+        add_failed("Open upvalue 2: Failed!")
     }
 
     if var == "hello world" and vari == "hello world" {
-        print("Open upvalue 3: Passed!")
+        add_passed("Open upvalue 3: Passed!")
     } else {
-        print("Open upvalue 3: Failed!")
+        add_failed("Open upvalue 3: Failed!")
     }
 
 }
 
 {
-    print("")
+    
     print("***********2+ Depth Closures************")
 
     str1: string = "hello "
@@ -501,9 +495,9 @@ add_passed := () -> {
 
     if c() == "hello world" and a()() == "hello world" 
         and ci() == "hello world" and ai()() == "hello world" {
-        print("Open upvalues, Depth 2: Passed!")
+        add_passed("Open upvalues, Depth 2: Passed!")
     } else {
-        print("Open upvalues, Depth 2: Failed!")
+        add_failed("Open upvalues, Depth 2: Failed!")
     }
 
     x: () -> () -> () -> string = () -> () -> () -> string {
@@ -531,20 +525,20 @@ add_passed := () -> {
     yyi := xx()
 
     if yy() == "hello world" and yyi() == "hello world" {
-        print("Open upvalues, Depth 3: Passed!")
+        add_passed("Open upvalues, Depth 3: Passed!")
     } else {
-        print("Open upvalues, Depth 3: Failed!")
+        add_failed("Open upvalues, Depth 3: Failed!")
     }
 
     if x()()() == "hello world" and xi()()() == "hello world" {
-        print("Open upvalues, Depth 3, Cascade: Passed!")
+        add_passed("Open upvalues, Depth 3, Cascade: Passed!")
     } else {
-        print("Open upvalues, Depth 3, Cascade: Failed!")
+        add_failed("Open upvalues, Depth 3, Cascade: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Closures: Closed Upvalues************")
     outer: () -> () -> string = () -> () -> string {
         x: string = "outside"
@@ -565,20 +559,20 @@ add_passed := () -> {
     closurei := outeri()
 
     if closure() == "outside" and closurei() == "outside" {
-        print("Closed Upvalues: Passed!")
+        add_passed("Closed Upvalues: Passed!")
     } else {
-        print("Closed Upvalues: Failed!")
+        add_failed("Closed Upvalues: Failed!")
     }
 
     if outer()() == "outside" and outeri()() == "outside" {
-        print("Closed Upvalues, Cascade: Passed!")
+        add_passed("Closed Upvalues, Cascade: Passed!")
     } else {
-        print("Closed Upvalues, Cascade: Failed!")
+        add_failed("Closed Upvalues, Cascade: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Structs************")
     Dog: struct = struct {
         name: string = "Mittens"
@@ -594,16 +588,16 @@ add_passed := () -> {
     dog: Dog = Dog()
     dogi := Dogi()
     if dog.name == "Mittens" and dogi.namei == "Mittens" {
-        print("Get Property: Passed!")
+        add_passed("Get Property: Passed!")
     } else {
-        print("Get Property: Failed!")
+        add_failed("Get Property: Failed!")
     }
     dog.name = "Bubbles"
     dogi.namei = "Bubbles"
     if dog.name == "Bubbles" and dogi.namei == "Bubbles" {
-        print("Set Property: Passed!")
+        add_passed("Set Property: Passed!")
     } else {
-        print("Set Property: Failed!")
+        add_failed("Set Property: Failed!")
     }
 
     increment: () -> = () -> {
@@ -617,9 +611,9 @@ add_passed := () -> {
     incrementi()
 
     if dog.age == 4 and dogi.agei == 4 {
-        print("Instance Upvalue: Passed!")
+        add_passed("Instance Upvalue: Passed!")
     } else {
-        print("Instance Upvalue: Failed!")
+        add_failed("Instance Upvalue: Failed!")
     }
 
     outer: () -> () -> = () -> () -> {
@@ -630,9 +624,9 @@ add_passed := () -> {
         inner: () -> = () -> {
             c: Cat = Cat()
             if c.name == "Whiskey" and c.age == 2 {
-                print("Class upvalue: Passed!")
+                add_passed("Class upvalue: Passed!")
             } else {
-                print("Class upvalue: Failed!")
+                add_failed("Class upvalue: Failed!")
             } 
         } 
         -> inner
@@ -649,9 +643,9 @@ add_passed := () -> {
         inneri := () -> {
             ci := Cati()
             if ci.namei == "Whiskey" and ci.agei == 2 {
-                print("Class upvalue (Inferred): Passed!")
+                add_passed("Class upvalue (Inferred): Passed!")
             } else {
-                print("Class upvalue (Inferred): Failed!")
+                add_failed("Class upvalue (Inferred): Failed!")
             } 
         } 
         -> inneri
@@ -661,9 +655,9 @@ add_passed := () -> {
     dog1i.agei = 5
 
     if dog1.age == 5 and dog1i.agei == 5 {
-        print("Property Assignment: Passed!")
+        add_passed("Property Assignment: Passed!")
     } else {
-        print("Property Assignment: Failed!")
+        add_failed("Property Assignment: Failed!")
     }
 
     dog2: Dog = Dog()
@@ -673,9 +667,9 @@ add_passed := () -> {
     if dog1.age == 10 and dog2.age == 10 and
         dog1i.agei == 10 and dog2i.agei == 10 
     {
-        print("Cascade Property Assignment: Passed!")
+        add_passed("Cascade Property Assignment: Passed!")
     } else {
-        print("Cascade Property Assignment: Failed!")
+        add_failed("Cascade Property Assignment: Failed!")
     }
 
     dog3: Dog = Dog()
@@ -689,9 +683,9 @@ add_passed := () -> {
     }
     dog_agei(dog3i)
     if dog3.age == 10 and dog3i.agei == 10 {
-        print("Instance as Parameter: Passed!")
+        add_passed("Instance as Parameter: Passed!")
     } else {
-        print("Instance as Parameter: Failed!")
+        add_failed("Instance as Parameter: Failed!")
     }
 
     dog_factory: () -> Dog = () -> Dog {
@@ -705,34 +699,33 @@ add_passed := () -> {
         -> d
     }
     if dog_factory().age == 100 and dog_factoryi().agei == 100 {
-        print("Instance as Return: Passed!")
+        add_passed("Instance as Return: Passed!")
     } else {
-        print("Instance as Return: Failed!")
+        add_failed("Instance as Return: Failed!")
     }
 
 }
 
 {
-    print("")
+    
     print("***********Native Functions************")
-    print("print(): Passed!")
     a: float = clock()
     if a > -1.0 {
-        print("clock(): Passed!")
+        add_passed("clock(): Passed!")
     } else {
-        print("clock(): Failed!")
+        add_failed("clock(): Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Lists************")
     a: List<int> = List<int>(-1)
 
     if a.size == 0 {
-        print("Initialize List: Passed!")
+        add_passed("Initialize List: Passed!")
     } else {
-        print("Initialize List: Failed!")
+        add_failed("Initialize List: Failed!")
     }
 
     a[0] = 0
@@ -740,37 +733,37 @@ add_passed := () -> {
     a[0] = 10
 
     if a.size == 2 and a[0] == 10 and a[1] == 1 {
-        print("Setting Value: Passed!")
+        add_passed("Setting Value: Passed!")
     } else {
-        print("Setting Value: Failed!")
+        add_failed("Setting Value: Failed!")
     }
 
     a.size = 0
     if a.size == 0 {
-        print("Setting size to Zero: Passed!")
+        add_passed("Setting size to Zero: Passed!")
     } else {
-        print("Setting size to Zero: Failed!")
+        add_failed("Setting size to Zero: Failed!")
     }
 
     a.size = 2
     if a.size == 2 and a[0] == -1 and a[1] == -1 {
-        print("Set Higher Size / Fill with Default: Passed!")
+        add_passed("Set Higher Size / Fill with Default: Passed!")
     } else {
-        print("Set Higher Size / Fill with Default: Failed!")
+        add_failed("Set Higher Size / Fill with Default: Failed!")
     }
 
     a[10] = 10
     if a.size == 11 and a[10] == 10 and a[9] == -1 {
-        print("Set Higher Index / Fill with Default: Passed!")
+        add_passed("Set Higher Index / Fill with Default: Passed!")
     } else {
-        print("Set Higher Index / Fill with Default: Failed!")
+        add_failed("Set Higher Index / Fill with Default: Failed!")
     }
 
     a[5] = 33
     if a.size == 11 and a[10] == 10 and a[9] == -1 and a[5] == 33 {
-        print("Set Lower Index: Passed!")
+        add_passed("Set Lower Index: Passed!")
     } else {
-        print("Set Lower Index: Failed!")
+        add_failed("Set Lower Index: Failed!")
     }
 
 
@@ -786,77 +779,77 @@ add_passed := () -> {
     a.size = 2
 
     if a[0].name == "Bubbles" and a[1].name == "Mittens" {
-        print("Structs in List: Passed!")
+        add_passed("Structs in List: Passed!")
     } else {
-        print("Structs in List: Failed!")
+        add_failed("Structs in List: Failed!")
     }
 
 }
 
 {
-    print("")
+    
     print("***********In Keyword************")
     list: List<int> = List<int>(-1)
 
     if !(10 in list) {
-        print("Empty Int List: Passed!")
+        add_passed("Empty Int List: Passed!")
     } else {
-        print("Empty Int List: Failed!")
+        add_failed("Empty Int List: Failed!")
     } 
 
     list[list.size] = 1
     list[list.size] = 2
 
     if 2 in list {
-        print("Int List: Passed!")
+        add_passed("Int List: Passed!")
     } else {
-        print("Int List: Failed!")
+        add_failed("Int List: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Maps************")
     map: Map<int> = Map<int>(-1)
 
     if map["two"] == -1 {
-        print("Invalid Key: Passed!")
+        add_passed("Invalid Key: Passed!")
     } else {
-        print("Invalid Key: Failed!")
+        add_failed("Invalid Key: Failed!")
     }
 
     if !("two" in map.keys) {
-        print("Map Keys List: Passed!")
+        add_passed("Map Keys List: Passed!")
     } else {
-        print("Map Keys List: Failed!")
+        add_failed("Map Keys List: Failed!")
     }
 
     map["one"] = 1
     map["dog"] = 123
 
     if map["one"] == 1 and map["dog"] == 123 {
-        print("Access: Passed!")
+        add_passed("Access: Passed!")
     } else {
-        print("Access: Failed!")
+        add_failed("Access: Failed!")
     }
 
     map["one"] = 3
 
     if map["one"] == 3 {
-        print("Set Value: Passed!")
+        add_passed("Set Value: Passed!")
     } else {
-        print("Set Value: Failed!")
+        add_failed("Set Value: Failed!")
     }
 
     if map.values.size == 2 and map.keys.size == 2 {
-        print("Value and Key List Sizes: Passed!")
+        add_passed("Value and Key List Sizes: Passed!")
     } else {
-        print("Value and Key List Sizes: Failed!")
+        add_failed("Value and Key List Sizes: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Nils For Instances************")
 
     Dog: struct = struct {
@@ -875,27 +868,27 @@ add_passed := () -> {
     dog_nil: Dog = nil
 
     if dog0.friend.friend.friend == nil and dog_nil == nil{
-        print("Initialized to Nil: Passed!")
+        add_passed("Initialized to Nil: Passed!")
     } else {
-        print("Initialized to Nil: Failed!")
+        add_failed("Initialized to Nil: Failed!")
     }
 
     if dog0.friend.friend.name == dog1.friend.name {
-        print("Instance Inside Instance: Passed!")
+        add_passed("Instance Inside Instance: Passed!")
     } else {
-        print("Instance Inside Instance: Failed!")
+        add_failed("Instance Inside Instance: Failed!")
     }
 
     dog0 = nil
     if dog0 == nil {
-        print("Set Instance to Nil: Passed!")
+        add_passed("Set Instance to Nil: Passed!")
     } else {
-        print("Set Instance to Nil: Failed!")
+        add_failed("Set Instance to Nil: Failed!")
     }
 }
 
 {
-    print("")
+    
     print("***********Struct Inheritance************")
 
     Animal: struct = struct {
@@ -914,22 +907,22 @@ add_passed := () -> {
     zebra: Zebra = Zebra()
 
     if bird.class == "Avian" {
-        print("Overwrite property: Passed!")
+        add_passed("Overwrite property: Passed!")
     } else {
-        print("Overwrite property: Failed!")
+        add_failed("Overwrite property: Failed!")
     }
 
     if zebra.class == "Mammal" {
-        print("Inherit property: Passed!")
+        add_passed("Inherit property: Passed!")
     } else {
-        print("Inherit property: Failed!")
+        add_failed("Inherit property: Failed!")
     }
 
 }
 
 {
 
-    print("")
+    
     print("***********Duck Typing************")
     Animal: struct = struct {
         class: string = "Mammal"
@@ -954,27 +947,30 @@ add_passed := () -> {
     fun(a)
 
     if a.name == "Flappy" and a.class == "Reptile" {
-        print("Function Modify Struct Instance: Passed!")
+        add_passed("Function Modify Struct Instance: Passed!")
     } else {
-        print("Function Modify Struct Instance: Failed!")
+        add_failed("Function Modify Struct Instance: Failed!")
     }
 
     if make_bird().class == "Avian" {
-        print("Return Substruct: Passed!")
+        add_passed("Return Substruct: Passed!")
     } else {
-        print("Return Substruct: Failed!")
+        add_failed("Return Substruct: Failed!")
     }
 
 }
 
-print("")
+
 print("----------------------------------")
 print("Total Tests:")
-//print(passed + failed.size)
+print(passed.size + failed.size)
 print("Passed:")
-print(passed)
-print("Failed:")
-//print(failed.size)
-//for i := 0, i < failed.size, i = i + 1 {
-//    print(failed[i])
+print(passed.size)
+//for i := 0, i < passed.size, i = i + 1 {
+//    print(passed[i])
 //}
+print("Failed:")
+print(failed.size)
+for i := 0, i < failed.size, i = i + 1 {
+    print(failed[i])
+}
