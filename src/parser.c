@@ -129,62 +129,25 @@ static struct Node* primary(Token var_name) {
         struct Sig* right_sig = read_sig(var_name);
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 
-        struct Sig* class_sig = parser.current_sig != NULL ? 
-                                parser.current_sig :
-                                right_sig;
-        struct Table* class_props = &((struct SigClass*)class_sig)->props;
-
-        //add superstruct signatures to struct
-        struct SigClass* sc = (struct SigClass*)right_sig;
-        if (sc->super.length > 0) {
-            Value super_val = to_nil();
-            struct ObjString* super_name = make_string(sc->super.start, sc->super.length);
-            push_root(to_string(super_name));
-            get_from_table(&mm.structs, super_name, &super_val);
-            if (super_val.type == VAL_NIL) {
-                add_error(var_name, "Superstruct not declared.");
-                return NULL;
-            }
-            struct SigClass* super_sig = (struct SigClass*)super_val.as.sig_type;
-            for (int i = 0; i < super_sig->props.capacity; i++) {
-                struct Pair* pair = &super_sig->props.pairs[i];
-                if (pair->key != NULL) {
-                    set_table(class_props, pair->key, pair->value);
-                }
-            }
-            pop_root();
-        }
-
         NodeList nl;
         init_node_list(&nl);
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* decl = var_declaration(true);
             if (decl->type != NODE_DECL_VAR) {
-                add_error(var_name, "Only primitive, function or class definitions allowed in class body.");
+                add_error(var_name, "Only primitive, function or class definitions allowed in struct body.");
                 return NULL;
             }
-            DeclVar* dv = (DeclVar*)decl;
-            struct Sig* prop_sig = dv->sig; //TODO: this is breaking shit since will be NULL for inferred types
-            const char* prop_id_chars = dv->name.start;
-            int prop_id_length = dv->name.length;
 
-            struct ObjString* name = make_string(prop_id_chars, prop_id_length);
-            push_root(to_string(name));
-            set_table(class_props, name, to_sig(prop_sig));
-            pop_root();
             add_node(&nl, decl);
         }
-        
-        //add struct to parser.structs
-        struct ObjString* struct_name = make_string(sc->klass.start, sc->klass.length);
-        push_root(to_string(struct_name));
-        set_table(&mm.structs, struct_name, to_sig(class_sig));
-        pop_root();
 
-        Token super_token = ((struct SigClass*)right_sig)->super;
+        struct Sig* valid_sig = parser.current_sig != NULL ? 
+                                parser.current_sig :
+                                right_sig;
+        Token super_token = ((struct SigClass*)valid_sig)->super;
         struct Node* super = super_token.length == 0 ? NULL : make_get_var(super_token, NULL);
-        //return make_decl_class(var_name, super, nl, class_sig);
-        return make_decl_class(var_name, super, nl, make_class_sig(var_name, super_token)); //TODO: not using class sig in parser
+
+        return make_decl_class(var_name, super, nl);
     } else if (match(TOKEN_NIL)) {
         return make_nil(parser.previous);
     }

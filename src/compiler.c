@@ -371,24 +371,19 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     add_error(compiler, dv->name, "Inferred type cannot be assigned to 'nil'.");
                 }
                 set_local(compiler, dv->name, sig, idx);
-                if (sig->type == SIG_CLASS) {
-                    resolve_table_identifiers(compiler, &((struct SigClass*)sig)->props); //This is not doing anything to sigs in SET PROP
-                }
+
             }
             
             //explicit type, defined
             if (dv->right != NULL && dv->sig->type != SIG_DECL) {
                 int idx = add_local(compiler, dv->name, dv->sig);
                 sig = compile_node(compiler, dv->right, NULL);
+
                 if (!sig_is_type(sig, VAL_NIL)) {
                     set_local(compiler, dv->name, sig, idx);
 
                     if (dv->sig->type == SIG_IDENTIFIER || dv->sig->type == SIG_CLASS) {
                         dv->sig = sig;
-                    }
-
-                    if (sig->type == SIG_CLASS) {
-                        resolve_table_identifiers(compiler, &((struct SigClass*)sig)->props); //This is not doing anything to sigs in SET_PROP
                     }
 
                     if (!same_sig(dv->sig, sig)) {
@@ -532,6 +527,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             pop_root();
             pop_root();
 
+            resolve_table_identifiers(compiler, &sc->props);
+
             return (struct Sig*)sc;
         }
         //statements
@@ -641,6 +638,13 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_GET_PROP: {
             GetProp* gp = (GetProp*)node;
             struct Sig* sig_inst = compile_node(compiler, gp->inst, ret_sigs);
+
+            //structs referencing themselves will have incomplete signature
+            //so this is needed to update embedded structs if accessed
+            if (sig_inst->type == SIG_CLASS) {
+                sig_inst = resolve_sig(compiler, ((struct SigClass*)sig_inst)->klass);
+            }
+
             if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
 
             if (sig_inst->type == SIG_LIST) {

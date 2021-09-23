@@ -191,6 +191,8 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
             return same_sig(((struct SigList*)sig1)->type, ((struct SigList*)sig2)->type);
         case SIG_MAP:
             return same_sig(((struct SigMap*)sig1)->type, ((struct SigMap*)sig2)->type);
+        case SIG_DECL:
+            return true;
     }
 }
 
@@ -234,7 +236,10 @@ void print_sig(struct Sig* sig) {
             print_sig(sf->ret);
             break;
         case SIG_CLASS:
-            printf("SigClass Stub");
+            struct SigClass* sc = (struct SigClass*)sig;
+            printf("( SigClass Stub");
+            print_token(sc->klass);
+            print_token(sc->super);
             break;
         case SIG_IDENTIFIER:
             printf("SigIdentifier Stub");

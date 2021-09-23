@@ -54,7 +54,6 @@ void print_token(Token token) {
         case TOKEN_NIL: printf("TOKEN_NIL"); break;
         default: printf("Unrecognized token"); break;
     }
-    printf("\n");
 }
 
 Token make_dummy_token() {

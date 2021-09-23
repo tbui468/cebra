@@ -11,25 +11,35 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    problem with this in test.cbr
-        dog0.friend = dog1
-        dog1.friend = dog2
-        printing tables and SigClass sigs are different in SET_PROP
-            trying to resolve_table_identifieres in DECL_VAR but
-            it's not working in SET_PROP
-
-    "Nil for Instances" test is broken
-        accessing multiple properties is the problem now
-        see test.cbr
-
-        print(dog0.name) //works fine
-        print(dog0.friend.name) //doesn't work dispite - check parser and compiler
-            to see how this statement is parsed and compiled
-            dog0 should be SigClass
-            friend should also be a SigClass
-            
     Clean up code 
+        Found the problem!  We're creating a DeclVar with
+        an empty SigClass.  When the props are added in parser.c,
+        it works fine and the props show up in the table.  When
+        not, the table is empty and compiler error is added
+
+            tried setting locals sig in DECL_VAR (when SigClass or SigIdentifier)
+            but it's not working.  Need to get that props table in GET_PROP
+            filled with properties - trace where this table is coming from.
+
         get rid of creating struct signature type in parser
+            one block in the while loop is causing crash
+            making 'Nil for Instances' crash (not even fail)
+
+            it's GET_PROP that's the problem.
+            There's a SigClass with an empty props table
+                this is the SigClass we create in parser, but then
+                pass to compiler with empty props (I think)
+
+            How about make all right sides nil if not defined?
+            this would get rid of the NULL problem everywhere
+
+        could it be a problem with SigClass in parser?  We could
+        change it to a SigIdentifier IF SigClass since we know
+        DeclVar won't have the correct sig
+
+        make_identifier_sig() has unused second parameter
+            could we remove it?
+
         create inferred signature so that it's clearer
             don't want a bunch of confusing NULL checks everywhere
         create node for empty right side (for parameters) and

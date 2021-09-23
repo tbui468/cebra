@@ -60,7 +60,7 @@ typedef struct {
     Token name;
     struct Node* super;
     NodeList decls;
-    struct Sig* sig;
+//    struct Sig* sig;
 } DeclClass;
 
 /*
@@ -204,7 +204,7 @@ struct Node* make_for(Token name, struct Node* initializer, struct Node* conditi
 struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, struct Node* left, NodeList arguments);
-struct Node* make_decl_class(Token name, struct Node* super, NodeList decls, struct Sig* sig);
+struct Node* make_decl_class(Token name, struct Node* super, NodeList decls);
 struct Node* make_expr_stmt(struct Node* expr);
 struct Node* make_get_prop(struct Node* inst, Token prop);
 struct Node* make_set_prop(struct Node* inst, struct Node* right);

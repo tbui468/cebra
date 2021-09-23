@@ -63,7 +63,7 @@ void init_memory_manager(VM* vm) {
     mm.grays = (struct Obj**)realloc(NULL, 0);
     mm.gray_capacity = 0;
     mm.gray_count = 0;
-    init_table(&mm.structs);
+   // init_table(&mm.structs);
 }
 
 
@@ -71,13 +71,14 @@ void free_memory_manager() {
     free((void*)mm.grays);
 
     //manually free strings from structs table (used in parser)
+    /*
     for (int i = 0; i < mm.structs.capacity; i++) {
         struct Pair* pair = &mm.structs.pairs[i];
         if (pair->key != NULL) {
             free_object((struct Obj*)(pair->key));       
         } 
     }
-    free_table(&mm.structs);
+    free_table(&mm.structs);*/
 }
 
 void print_memory() {
@@ -293,7 +294,7 @@ void collect_garbage() {
     printf("Bytes allocated: %d\n", mm.allocated);
     print_stack();
 #endif 
-    mark_table(&mm.structs);
+//    mark_table(&mm.structs);
     mark_vm_roots();
     mark_compiler_roots();
     trace_references();

@@ -27,12 +27,11 @@ struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, str
     return (struct Node*)df;
 }
 
-struct Node* make_decl_class(Token name, struct Node* super, NodeList decls, struct Sig* sig) {
+struct Node* make_decl_class(Token name, struct Node* super, NodeList decls) {
     DeclClass* dc = ALLOCATE(DeclClass);
     dc->name = name;
     dc->super = super;
     dc->decls = decls;
-    dc->sig = sig;
     dc->base.type = NODE_CLASS;
 
     return (struct Node*)dc;

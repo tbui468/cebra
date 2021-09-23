@@ -37,7 +37,7 @@ typedef struct {
     struct Obj** grays;
     int gray_capacity;
     int gray_count;
-    struct Table structs;
+//    struct Table structs;
 } MemoryManager;
 
 extern MemoryManager mm;
