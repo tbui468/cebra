@@ -141,13 +141,10 @@ static struct Node* primary(Token var_name) {
             add_node(&nl, decl);
         }
 
-        struct Sig* valid_sig = parser.current_sig != NULL ? 
-                                parser.current_sig :
-                                right_sig;
-        Token super_token = ((struct SigClass*)valid_sig)->super;
-        struct Node* super = super_token.length == 0 ? NULL : make_get_var(super_token, NULL);
+        Token super_token = ((struct SigClass*)right_sig)->super;
+        struct Node* super_node = super_token.length == 0 ? NULL : make_get_var(super_token, NULL);
 
-        return make_decl_class(var_name, super, nl);
+        return make_decl_class(var_name, super_node, nl);
     } else if (match(TOKEN_NIL)) {
         return make_nil(parser.previous);
     }
@@ -352,9 +349,10 @@ static struct Node* var_declaration(bool require_assign) {
     bool is_class = peek_one(TOKEN_CLASS);
     struct Sig* sig = read_sig(var_name);
 
+    /*
     if (is_class) {
         parser.current_sig = sig;
-    }
+    }*/
 
     if (require_assign) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
@@ -433,7 +431,6 @@ static void init_parser(const char* source) {
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
-    parser.current_sig = NULL;
 }
 
 

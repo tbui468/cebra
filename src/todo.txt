@@ -11,25 +11,11 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-        currently resolving_sig inside GET_PROP for embedded structs,
-        but why don't we do that in DECL_VAR?  If a struct was declared,
-        check for any self-references inside definition - if so, 
-        make that sig reference itself.
+    How about make all right sides nil if not defined?
+    this would get rid of the NULL problem everywhere
 
-            after compiling and setting class sig, loop through
-            all properties and look for SigClass->klass with 
-            the same name as dv->name, and then replace that Sig*
-            in the table with a reference to itself.  
-
-        How about make all right sides nil if not defined?
-        this would get rid of the NULL problem everywhere
-
-        could it be a problem with SigClass in parser?  We could
-        change it to a SigIdentifier IF SigClass since we know
-        DeclVar won't have the correct sig
-
-        make_identifier_sig() has unused second parameter
-            could we remove it?
+    make_identifier_sig() has unused second parameter
+        could we remove it?
 
         create inferred signature so that it's clearer
             don't want a bunch of confusing NULL checks everywhere

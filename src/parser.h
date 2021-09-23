@@ -20,7 +20,6 @@ typedef struct {
     Token next_next;
     ParseError errors[256];
     int error_count;
-    struct Sig* current_sig;
 } Parser;
 
 ResultCode parse(const char* source, NodeList* nl);
