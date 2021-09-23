@@ -321,16 +321,14 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
-static void resolve_table_identifiers(struct Compiler* compiler, struct Table* table) {
-    for (int i = 0; i < table->capacity; i++) {
-        struct Pair* pair = &table->pairs[i];
-        if (pair->key != NULL) {
-            struct Sig* sig = pair->value.as.sig_type;
-            if (sig->type == SIG_IDENTIFIER) {
-                struct Sig* result = resolve_sig(compiler, ((struct SigIdentifier*)sig)->identifier);
-                if (result != NULL) {
-                    set_table(table, pair->key, to_sig(result));
-                }
+static void resolve_self_ref_sig(struct SigClass* sc) {
+    for (int i = 0; i < sc->props.capacity; i++) {
+        struct Pair* pair = &sc->props.pairs[i];
+        if (pair->key != NULL && pair->value.as.sig_type->type == SIG_CLASS) {
+            struct SigClass* sc2 = (struct SigClass*)(pair->value.as.sig_type);
+            if (sc->klass.length == sc2->klass.length && 
+                memcmp(sc->klass.start, sc2->klass.start, sc->klass.length) == 0) {
+                set_table(&sc->props, pair->key, to_sig((struct Sig*)sc)); 
             }
         }
     }
@@ -372,6 +370,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
                 set_local(compiler, dv->name, sig, idx);
 
+                if (sig->type == SIG_CLASS) {
+                    resolve_self_ref_sig((struct SigClass*)sig);
+                }
             }
             
             //explicit type, defined
@@ -382,7 +383,12 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 if (!sig_is_type(sig, VAL_NIL)) {
                     set_local(compiler, dv->name, sig, idx);
 
-                    if (dv->sig->type == SIG_IDENTIFIER || dv->sig->type == SIG_CLASS) {
+                    if (dv->sig->type == SIG_CLASS) {
+                        resolve_self_ref_sig((struct SigClass*)sig);
+                        dv->sig = sig;
+                    }
+
+                    if (dv->sig->type == SIG_IDENTIFIER) {
                         dv->sig = sig;
                     }
 
@@ -527,14 +533,13 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             pop_root();
             pop_root();
 
-            resolve_table_identifiers(compiler, &sc->props);
-
             return (struct Sig*)sc;
         }
         //statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
             struct Sig* sig = compile_node(compiler, es->expr, ret_sigs);
+
             //while/if-else etc return VAL_NIL (and leave nothing on stack)
             if (!sig_is_type(sig, VAL_NIL)) {
                 emit_byte(compiler, OP_POP);
@@ -641,9 +646,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             //structs referencing themselves will have incomplete signature
             //so this is needed to update embedded structs if accessed
+             //TODO: testing type checking
+             /*
             if (sig_inst->type == SIG_CLASS) {
                 sig_inst = resolve_sig(compiler, ((struct SigClass*)sig_inst)->klass);
-            }
+            }*/
 
             if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
 
@@ -718,7 +725,6 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             Value sig_val = to_nil();
             get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val);
-            resolve_table_identifiers(compiler, &((struct SigClass*)sig_val.as.sig_type)->props);
 
             if (!same_sig(sig_val.as.sig_type, right_sig)) {
                 add_error(compiler, prop, "Property and assignment types must match.");

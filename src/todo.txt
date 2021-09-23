@@ -11,27 +11,18 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Clean up code 
-        Found the problem!  We're creating a DeclVar with
-        an empty SigClass.  When the props are added in parser.c,
-        it works fine and the props show up in the table.  When
-        not, the table is empty and compiler error is added
+        currently resolving_sig inside GET_PROP for embedded structs,
+        but why don't we do that in DECL_VAR?  If a struct was declared,
+        check for any self-references inside definition - if so, 
+        make that sig reference itself.
 
-            tried setting locals sig in DECL_VAR (when SigClass or SigIdentifier)
-            but it's not working.  Need to get that props table in GET_PROP
-            filled with properties - trace where this table is coming from.
+            after compiling and setting class sig, loop through
+            all properties and look for SigClass->klass with 
+            the same name as dv->name, and then replace that Sig*
+            in the table with a reference to itself.  
 
-        get rid of creating struct signature type in parser
-            one block in the while loop is causing crash
-            making 'Nil for Instances' crash (not even fail)
-
-            it's GET_PROP that's the problem.
-            There's a SigClass with an empty props table
-                this is the SigClass we create in parser, but then
-                pass to compiler with empty props (I think)
-
-            How about make all right sides nil if not defined?
-            this would get rid of the NULL problem everywhere
+        How about make all right sides nil if not defined?
+        this would get rid of the NULL problem everywhere
 
         could it be a problem with SigClass in parser?  We could
         change it to a SigIdentifier IF SigClass since we know
