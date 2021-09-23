@@ -11,17 +11,10 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    How about make all right sides nil if not defined?
-    this would get rid of the NULL problem everywhere
-    and would get rid of one case in DECL_VAR
-
-        create inferred signature so that it's clearer
-            don't want a bunch of confusing NULL checks everywhere
-        create node for empty right side (for parameters) and
-            call it Empty (or similar) so that we don't have
-            random NULL checks everywhere
-
-    SigClass doesn't need super struct token, does it?
+    Whenever a SigIdentifier is used, it should be resolved at
+        that time - is there a way to automate this rather
+        than checking if type == SIG_IDENTIFIER and resolving
+        the signature each time?  It's prone to mistakes.
 
     Change display of test results for easier digestion:
         sum all test and include failed/passed tests count

@@ -127,6 +127,11 @@ static struct Node* primary(Token var_name) {
         return expr;
     } else if (peek_one(TOKEN_CLASS)) {
         struct Sig* right_sig = read_sig(var_name);
+
+        struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
+                             make_get_var(parser.previous, NULL) : 
+                             NULL;
+
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 
         NodeList nl;
@@ -141,10 +146,7 @@ static struct Node* primary(Token var_name) {
             add_node(&nl, decl);
         }
 
-        Token super_token = ((struct SigClass*)right_sig)->super;
-        struct Node* super_node = super_token.length == 0 ? NULL : make_get_var(super_token, NULL);
-
-        return make_decl_class(var_name, super_node, nl);
+        return make_decl_class(var_name, super, nl);
     } else if (match(TOKEN_NIL)) {
         return make_nil(parser.previous);
     }
@@ -315,10 +317,10 @@ static struct Sig* read_sig(Token var_name) {
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
-            return make_class_sig(var_name, parser.previous);
+            return make_class_sig(var_name);
         }
 
-        return make_class_sig(var_name, make_dummy_token());
+        return make_class_sig(var_name);
     }
 
     if (match(TOKEN_LIST)) {

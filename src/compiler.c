@@ -462,7 +462,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
 
             GetVar* super_gv = (GetVar*)(dc->super);
-            struct SigClass* sc = (struct SigClass*)make_class_sig(dc->name, make_dummy_token()); //TODO: do we really need super token?
+            struct SigClass* sc = (struct SigClass*)make_class_sig(dc->name); //TODO: do we really need super token?
 
             //add struct properties
             for (int i = 0; i < dc->decls.count; i++) {

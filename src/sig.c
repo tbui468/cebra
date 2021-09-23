@@ -67,13 +67,12 @@ struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret) {
     return (struct Sig*)sig_fun;
 }
 
-struct Sig* make_class_sig(Token klass, Token super) {
+struct Sig* make_class_sig(Token klass) {
     struct SigClass* sc = ALLOCATE(struct SigClass);
 
     sc->base.type = SIG_CLASS;
     sc->base.opt = NULL;
     sc->klass = klass;
-    sc->super = super;
     init_table(&sc->props);
 
     insert_sig((struct Sig*)sc);
@@ -237,7 +236,6 @@ void print_sig(struct Sig* sig) {
             struct SigClass* sc = (struct SigClass*)sig;
             printf("( SigClass Stub");
             print_token(sc->klass);
-            print_token(sc->super);
             break;
         case SIG_IDENTIFIER:
             printf("SigIdentifier Stub");

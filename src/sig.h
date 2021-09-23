@@ -46,7 +46,6 @@ struct SigFun {
 struct SigClass {
     struct Sig base;
     Token klass;
-    Token super;
     struct Table props;
 };
 
@@ -72,7 +71,7 @@ struct Sig* make_array_sig();
 void add_sig(struct SigArray* sl, struct Sig* sig);
 struct Sig* make_prim_sig(ValueType type);
 struct Sig* make_fun_sig(struct Sig* params, struct Sig* ret);
-struct Sig* make_class_sig(Token klass, Token super);
+struct Sig* make_class_sig(Token klass);
 struct Sig* make_identifier_sig(Token identifier);
 struct Sig* make_list_sig(struct Sig* type);
 struct Sig* make_map_sig(struct Sig* type);
