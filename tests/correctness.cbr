@@ -1,12 +1,24 @@
 //Correctness test
 
+passed := 0
+//failed := List<string>("default")
+
+//add_failed := (msg: string) -> {
+//    failed[failed.size] = msg
+//}
+add_passed := () -> {
+    passed = passed + 1
+}
+
 {
     print("")
     print("***********Basic************")
     print("Print - Passed!")
     if true {
+//        add_passed()
         print("If / Else - Passed!")
     } else {
+//        add_failed("If / Else - Failed!")
         print("If / Else - Failed!")
     }
 }
@@ -954,3 +966,15 @@
     }
 
 }
+
+print("")
+print("----------------------------------")
+print("Total Tests:")
+//print(passed + failed.size)
+print("Passed:")
+print(passed)
+print("Failed:")
+//print(failed.size)
+//for i := 0, i < failed.size, i = i + 1 {
+//    print(failed[i])
+//}

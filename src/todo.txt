@@ -11,14 +11,34 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Whenever a SigIdentifier is used, it should be resolved at
-        that time - is there a way to automate this rather
-        than checking if type == SIG_IDENTIFIER and resolving
-        the signature each time?  It's prone to mistakes.
+    Order of open_upvalues is all messed up - check linked list
+        insertion in capture_upvalue again.
+
+    'Functions Returning Functions' followed by 'Closed Upvalues' 
+        and following code above it all breaks 'Closed Upvalues'
+
+        //top of file
+        passed := 0
+        add_passed := () -> {
+            passed = passed + 1
+        }
+
+        break the 4 tests into 
+
+
+    Adding Lists (or something else?) to correctness.cbr
+        breaks Closed Upvalue tests
+        Seems like using an upvalue outside of the tests breaks them.
+        issue with upvalue implementation
 
     Change display of test results for easier digestion:
         sum all test and include failed/passed tests count
         print names of failed tests only
+
+    Whenever a SigIdentifier is used, it should be resolved at
+        that time - is there a way to automate this rather
+        than checking if type == SIG_IDENTIFIER and resolving
+        the signature each time?  It's prone to mistakes.
 
     Need to work on error handling in parser, compiler, runtime
         we don't want any crashes - bad syntax / logic should

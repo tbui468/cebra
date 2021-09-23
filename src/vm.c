@@ -77,38 +77,35 @@ static void print_trace(VM* vm, OpCode op) {
 
 static struct ObjUpvalue* capture_upvalue(VM* vm, Value* location) {
 
-    if (vm->open_upvalues == NULL) {
-        struct ObjUpvalue* new_upvalue = make_upvalue(location);
-        vm->open_upvalues = new_upvalue;
-        return new_upvalue;
+    struct ObjUpvalue* prev = NULL;
+    struct ObjUpvalue* curr = vm->open_upvalues;
+
+    if (curr == NULL) {
+        vm->open_upvalues = make_upvalue(location);
+        return vm->open_upvalues;
     }
 
-    struct ObjUpvalue* previous = NULL;
-    struct ObjUpvalue* current = vm->open_upvalues;
-    struct ObjUpvalue* next = current->next;
-    while (next != NULL && location > current->location) {
-        previous = current;
-        current = next;
-        next = next->next;
+    while (curr != NULL && curr->location > location) {
+        prev = curr;
+        curr = curr->next;
     }
 
-    if (location == current->location) {
-        return current;
-    }
-
-    struct ObjUpvalue* new_upvalue = make_upvalue(location);
-    if (location > current->location) {
-        new_upvalue->next = current;
-        if (previous == NULL) {
-            vm->open_upvalues = new_upvalue;
-        } else {
-            previous->next = new_upvalue;
-        }
+    if (curr == NULL) {
+        prev->next = make_upvalue(location);
+        return prev->next;
+    } else if (curr->location == location) {
+        return curr;
+    } else if (prev == NULL) {
+        struct ObjUpvalue* ret = make_upvalue(location);
+        ret->next = vm->open_upvalues;
+        vm->open_upvalues = ret;
+        return ret;
     } else {
-        current->next = new_upvalue;
-        new_upvalue->next = next;
+        prev->next = make_upvalue(location);
+        prev->next->next = curr;
+        return prev->next;
     }
-    return new_upvalue;
+
 }
 
 static void close_upvalues(VM* vm, Value* location) {

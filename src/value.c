@@ -183,6 +183,7 @@ Value equal_values(Value a, Value b) {
     }
 }
 
+
 void print_value(Value a) {
     switch(a.type) {
         case VAL_INT:
