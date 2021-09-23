@@ -345,24 +345,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             struct Sig* sig = NULL;
 
-            //invalid syntax
-            if (dv->right == NULL && dv->sig->type == SIG_DECL) {
-                add_error(compiler, dv->name, "Variable with inferred type must be defined.");
-            }
-
-            //explicit type, not defined (only for parameters)
-            if (dv->right == NULL && dv->sig->type != SIG_DECL) {
-                if (dv->sig->type == SIG_IDENTIFIER) {
-                    sig = resolve_sig(compiler, ((struct SigIdentifier*)dv->sig)->identifier);
-                    if (sig == NULL) {
-                        add_error(compiler, dv->name, "Identifier not defined.");
-                    }
-                }
-                add_local(compiler, dv->name, dv->sig);
-            }
-
             //inferred type, defined
-            if (dv->right != NULL && dv->sig->type == SIG_DECL) {
+            if (dv->sig->type == SIG_DECL) {
                 int idx = add_local(compiler, dv->name, dv->sig);
                 sig = compile_node(compiler, dv->right, NULL);
                 if (sig_is_type(sig, VAL_NIL)) {
@@ -375,8 +359,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
             }
             
-            //explicit type, defined
-            if (dv->right != NULL && dv->sig->type != SIG_DECL) {
+            //explicit type, defined and parameters
+            if (dv->sig->type != SIG_DECL) {
                 int idx = add_local(compiler, dv->name, dv->sig);
                 sig = compile_node(compiler, dv->right, NULL);
 
@@ -389,13 +373,16 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     }
 
                     if (dv->sig->type == SIG_IDENTIFIER) {
-                        dv->sig = sig;
+                        dv->sig = resolve_sig(compiler, dv->name);
                     }
 
                     if (!same_sig(dv->sig, sig)) {
                         add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
                     }
+                }
 
+                if (dv->sig->type == SIG_IDENTIFIER) {
+                    dv->sig = resolve_sig(compiler, dv->name);
                 }
             }
 

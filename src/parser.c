@@ -10,7 +10,7 @@ static struct Node* declaration();
 static void add_error(Token token, const char* message);
 static struct Node* block();
 static struct Sig* read_sig(Token var_name);
-static struct Node* var_declaration(bool require_assign);
+static struct Node* var_declaration(bool fun_param);
 
 static void print_all_tokens() {
     printf("******start**********\n");
@@ -102,7 +102,7 @@ static struct Node* primary(Token var_name) {
             struct Sig* param_sig = make_array_sig();
             if (!match(TOKEN_RIGHT_PAREN)) {
                 do {
-                    struct Node* var_decl = var_declaration(false);
+                    struct Node* var_decl = var_declaration(true);
                     DeclVar* vd = (DeclVar*)var_decl;
                     add_sig((struct SigArray*)param_sig, vd->sig);
                     add_node(&params, var_decl);
@@ -132,7 +132,7 @@ static struct Node* primary(Token var_name) {
         NodeList nl;
         init_node_list(&nl);
         while (!match(TOKEN_RIGHT_BRACE)) {
-            struct Node* decl = var_declaration(true);
+            struct Node* decl = var_declaration(false);
             if (decl->type != NODE_DECL_VAR) {
                 add_error(var_name, "Only primitive, function or class definitions allowed in struct body.");
                 return NULL;
@@ -336,39 +336,35 @@ static struct Sig* read_sig(Token var_name) {
     }
 
     if (match(TOKEN_IDENTIFIER)) {
-        return make_identifier_sig(parser.previous, NULL);
+        return make_identifier_sig(parser.previous);
     }
 
     return make_prim_sig(VAL_NIL);
 }
 
-static struct Node* var_declaration(bool require_assign) {
+static struct Node* var_declaration(bool fun_param) {
     match(TOKEN_IDENTIFIER);
     Token var_name = parser.previous;
     consume(TOKEN_COLON, "Expect ':' after identifier.");
     bool is_class = peek_one(TOKEN_CLASS);
     struct Sig* sig = read_sig(var_name);
 
-    /*
-    if (is_class) {
-        parser.current_sig = sig;
-    }*/
-
-    if (require_assign) {
+    if (!fun_param) {
         consume(TOKEN_EQUAL, "Expect '=' after variable declaration.");
         return make_decl_var(var_name, sig, expression(var_name));
     }
 
+
     if (match(TOKEN_EQUAL)) {
-        return make_decl_var(var_name, sig, expression(var_name));
-    } else {
-        return make_decl_var(var_name, sig, NULL); 
+        add_error(parser.previous, "Function parameters cannot be defined.");
     }
+
+    return make_decl_var(var_name, sig, make_nil(parser.previous));
 }
 
 static struct Node* declaration() {
     if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
-        return var_declaration(true);
+        return var_declaration(false);
     } else if (match(TOKEN_LEFT_BRACE)) {
         return block();
     } else if (match(TOKEN_IF)) {

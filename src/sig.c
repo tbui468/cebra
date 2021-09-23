@@ -80,13 +80,12 @@ struct Sig* make_class_sig(Token klass, Token super) {
     return (struct Sig*)sc;
 }
 
-struct Sig* make_identifier_sig(Token identifier, struct Sig* type) {
+struct Sig* make_identifier_sig(Token identifier) {
     struct SigIdentifier* si = ALLOCATE(struct SigIdentifier);
 
     si->base.type = SIG_IDENTIFIER;
     si->base.opt = NULL;
     si->identifier = identifier;
-    si->type = type;
 
     insert_sig((struct Sig*)si);
     return (struct Sig*)si;
@@ -184,7 +183,6 @@ bool same_sig(struct Sig* sig1, struct Sig* sig2) {
         case SIG_IDENTIFIER:
             struct SigIdentifier* si1 = (struct SigIdentifier*)sig1; 
             struct SigIdentifier* si2 = (struct SigIdentifier*)sig2; 
-            if (si1->type != NULL && si2->type != NULL && !same_sig(si1->type, si2->type)) return false;
             if (si1->identifier.length != si2->identifier.length) return false;
             return memcmp(si1->identifier.start, si2->identifier.start, si1->identifier.length) == 0;
         case SIG_LIST:
