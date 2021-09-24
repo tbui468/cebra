@@ -12,8 +12,11 @@ ADDING FEATURES:
 IMPLEMENTATION:
 
     add parsing errors for other declarations
-        var_decl
+        var_decl - structs
+        argument_list / calls
         expression stmt
+
+    need to NULL check expressions(), declarations(), etc
 
     add test for return from a function while inside a for/while loop
 
