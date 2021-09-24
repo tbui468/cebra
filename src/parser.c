@@ -56,6 +56,7 @@ static void synchronize() {
         if (peek_one(TOKEN_WHILE)) return;
         if (peek_one(TOKEN_IF)) return;
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) return;
+        if (peek_two(TOKEN_IDENTIFIER, TOKEN_LEFT_PAREN)) return;
         advance();
     }
 }
@@ -166,13 +167,17 @@ static struct Node* primary(Token var_name) {
                              make_get_var(parser.previous, NULL) : 
                              NULL;
 
-        consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.")) return NULL;
 
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* decl = var_declaration();
+            if (decl == NULL) {
+                //error added in var_declaration
+                return NULL;
+            }
             if (decl->type != NODE_DECL_VAR) {
-                add_error(var_name, "Only primitive, function or class definitions allowed in struct body.");
+                add_error(var_name, "Only primitive, function or struct definitions allowed in struct body.");
                 return NULL;
             }
 
@@ -680,7 +685,7 @@ static struct Node* declaration() {
 
     struct Node* expr = expression(make_dummy_token());
     if (expr == NULL) {
-        add_error(parser.previous, "Invalid statement.");
+        //errors add inside expression
         return NULL;
     }
     return make_expr_stmt(expr);

@@ -1,0 +1,33 @@
+
+//not defined at declaration
+i: int 
+
+//definition is invalid 
+c: int = +
+
+//invalid parameter type
+fun := (a: 7) -> {
+    print(a)
+}
+
+//assigning parameter to value
+fnnnn := (a: int = 7) -> {
+
+}
+
+//no closing paren for parameters
+f3 := (a: int -> {
+
+}
+
+//no return type
+f4 := (a: int) {
+}
+
+//no start brace
+f5 := () -> }
+
+//no ending brace
+f6 := () -> {
+
+

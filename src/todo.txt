@@ -11,10 +11,10 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+
     add parsing errors for other declarations
-        var_decl - structs
-        argument_list / calls
-        expression stmt
+        go through parser and find ALL functions that can return NULL
+
 
     need to NULL check expressions(), declarations(), etc
 

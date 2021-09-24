@@ -1,0 +1,18 @@
+
+
+//empty group as argument
+print(())
+
+f1 := (a: int) -> int {
+    -> a * 2
+}
+
+//invalid argument
+f1(*)
+
+//no ending paren
+f1(3
+
+//no opening paren
+f1)
+
