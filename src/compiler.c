@@ -11,7 +11,7 @@
 struct Compiler* current_compiler = NULL;
 struct Compiler* class_compiler = NULL;
 struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs);
-static struct SigArray* compile_function(struct Compiler* compiler, NodeList* nl);
+static struct SigArray* compile_function(struct Compiler* compiler, struct NodeList* nl);
 
 static void add_error(struct Compiler* compiler, Token token, const char* message) {
     CompileError error;
@@ -410,10 +410,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             DeclFun* df = (DeclFun*)node;
 
             struct Compiler func_comp;
-            init_compiler(&func_comp, df->name.start, df->name.length, df->parameters.count);
+            init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count);
             set_local(&func_comp, df->name, df->sig, 0);
-            add_node(&df->parameters, df->body);
-            struct SigArray* inner_ret_sigs = compile_function(&func_comp, &df->parameters); 
+            add_node(df->parameters, df->body);
+            struct SigArray* inner_ret_sigs = compile_function(&func_comp, df->parameters); 
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
@@ -482,8 +482,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct SigClass* sc = (struct SigClass*)make_class_sig(dc->name); //TODO: do we really need super token?
 
             //add struct properties
-            for (int i = 0; i < dc->decls.count; i++) {
-                struct Node* node = dc->decls.nodes[i];
+            for (int i = 0; i < dc->decls->count; i++) {
+                struct Node* node = dc->decls->nodes[i];
                 DeclVar* dv = (DeclVar*)node;
                 struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
 
@@ -553,8 +553,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             start_scope(compiler);
-            for (int i = 0; i < block->decl_list.count; i++) {
-                struct Sig* sig = compile_node(compiler, block->decl_list.nodes[i], ret_sigs);
+            for (int i = 0; i < block->decl_list->count; i++) {
+                struct Sig* sig = compile_node(compiler, block->decl_list->nodes[i], ret_sigs);
             }
             end_scope(compiler);
             return make_prim_sig(VAL_NIL);
@@ -887,10 +887,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             if (sig->type == SIG_LIST) {
                 struct SigList* sig_list = (struct SigList*)sig;
-                if (call->arguments.count != 1) {
+                if (call->arguments->count != 1) {
                     add_error(compiler, call->name, "List constructor must have 1 argument for default value.");
                 }
-                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[0], ret_sigs);
+                struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
                 struct Sig* list_template = sig_list->type;
                 if (list_template->type == SIG_IDENTIFIER) {
@@ -906,10 +906,10 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             if (sig->type == SIG_MAP) {
                 struct SigMap* sig_map = (struct SigMap*)sig;
-                if (call->arguments.count != 1) {
+                if (call->arguments->count != 1) {
                     add_error(compiler, call->name, "Map constructor must have 1 argument for default value.");
                 }
-                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[0], ret_sigs);
+                struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
                 struct Sig* map_template = sig_map->type;
                 if (map_template->type == SIG_IDENTIFIER) {
@@ -938,14 +938,14 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct SigFun* sig_fun = (struct SigFun*)sig;
             struct SigArray* params = (struct SigArray*)(sig_fun->params);
 
-            if (call->arguments.count != params->count) {
+            if (call->arguments->count != params->count) {
                 add_error(compiler, call->name, "Argument count must match function parameter count.");
                 return make_prim_sig(VAL_NIL);
             }
 
-            int min = call->arguments.count < params->count ? call->arguments.count : params->count; //Why is this needed?
+            int min = call->arguments->count < params->count ? call->arguments->count : params->count; //Why is this needed?
             for (int i = 0; i < min; i++) {
-                struct Sig* arg_sig = compile_node(compiler, call->arguments.nodes[i], ret_sigs);
+                struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[i], ret_sigs);
                 if (arg_sig->type == SIG_IDENTIFIER) {
                     arg_sig = resolve_sig(compiler, ((struct SigIdentifier*)arg_sig)->identifier);
                 }
@@ -961,7 +961,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             }
 
             emit_byte(compiler, OP_CALL);
-            emit_byte(compiler, (uint8_t)(call->arguments.count));
+            emit_byte(compiler, (uint8_t)(call->arguments->count));
 
             return sig_fun->ret;
         }
@@ -1000,7 +1000,7 @@ void free_compiler(struct Compiler* compiler) {
     pop_root();
 }
 
-static struct SigArray* compile_function(struct Compiler* compiler, NodeList* nl) {
+static struct SigArray* compile_function(struct Compiler* compiler, struct NodeList* nl) {
     struct Sig* ret_sigs = make_array_sig();
     for (int i = 0; i < nl->count; i++) {
         struct Sig* sig = compile_node(compiler, nl->nodes[i], (struct SigArray*)ret_sigs);
@@ -1059,7 +1059,7 @@ static void define_print(struct Compiler* compiler) {
     define_native(compiler, "print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
 }
 
-ResultCode compile_script(struct Compiler* compiler, NodeList* nl) {
+ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     define_clock(compiler);
     define_print(compiler);
 

@@ -11,6 +11,14 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Can we make NodeList an ast node?  Put it inside the same header/.c
+
+        add free_node() for NodeList
+        add print_node() for NodeList
+
+    free_node() should NOT free any subnodes now - leave it to the linked
+    list to free all nodes together.
+
     Nodes should be added to a linked list (similar to Sigs)
     and deleted as a batch.  This will simplify the memory management
     for error handling in parser.

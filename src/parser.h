@@ -4,7 +4,7 @@
 #include "common.h"
 #include "token.h"
 #include "result_code.h"
-#include "node_list.h"
+#include "ast.h"
 #include "table.h"
 
 
@@ -22,7 +22,7 @@ typedef struct {
     int error_count;
 } Parser;
 
-ResultCode parse(const char* source, NodeList* nl);
+ResultCode parse(const char* source, struct NodeList* nl);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H

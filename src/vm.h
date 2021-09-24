@@ -4,7 +4,6 @@
 #include "result_code.h"
 #include "value.h"
 #include "compiler.h"
-#include "node_list.h"
 
 typedef struct {
     const char* message;

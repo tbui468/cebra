@@ -10,7 +10,6 @@ set(Sources
     token.c
     sig.c
     value.c
-    node_list.c
     lexer.c
     parser.c
     ast.c
@@ -33,7 +32,6 @@ set(Headers
     token.h
     sig.h
     value.h
-    node_list.h
     lexer.h
     parser.h
     ast.h

@@ -69,12 +69,11 @@ static bool consume(TokenType type, const char* message) {
     return false;
 }
 
-static NodeList argument_list(Token var_name) {
-    NodeList args;
-    init_node_list(&args);
+static struct NodeList* argument_list(Token var_name) {
+    struct NodeList* args = (struct NodeList*)make_node_list();
     if (!match(TOKEN_RIGHT_PAREN)) {
         do {
-            add_node(&args, expression(var_name)); 
+            add_node(args, expression(var_name)); 
         } while (match(TOKEN_COMMA));
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
     }
@@ -106,8 +105,7 @@ static struct Node* primary(Token var_name) {
         Token name = parser.previous;
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
             peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
-            NodeList params;
-            init_node_list(&params);
+            struct NodeList* params = (struct NodeList*)make_node_list();
             
             struct Sig* param_sig = make_array_sig();
             if (!match(TOKEN_RIGHT_PAREN)) {
@@ -115,7 +113,7 @@ static struct Node* primary(Token var_name) {
                     struct Node* var_decl = var_declaration(true);
                     DeclVar* vd = (DeclVar*)var_decl;
                     add_sig((struct SigArray*)param_sig, vd->sig);
-                    add_node(&params, var_decl);
+                    add_node(params, var_decl);
                 } while (match(TOKEN_COMMA));
                 consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
             }
@@ -144,8 +142,7 @@ static struct Node* primary(Token var_name) {
 
         consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 
-        NodeList nl;
-        init_node_list(&nl);
+        struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* decl = var_declaration(false);
             if (decl->type != NODE_DECL_VAR) {
@@ -153,7 +150,7 @@ static struct Node* primary(Token var_name) {
                 return NULL;
             }
 
-            add_node(&nl, decl);
+            add_node(nl, decl);
         }
 
         return make_decl_class(var_name, super, nl);
@@ -286,18 +283,17 @@ static struct Node* expression(Token var_name) {
 
 static struct Node* block() {
     Token name = parser.previous;
-    NodeList body;
-    init_node_list(&body);
+    struct NodeList* body = (struct NodeList*)make_node_list();
     while (!match(TOKEN_RIGHT_BRACE)) {
         if (peek_one(TOKEN_EOF)) {
-            free_node_list(&body);
+            free_node((struct Node*)body);
             return NULL;
         }
         struct Node* decl = declaration();
         if (decl == NULL) {
             synchronize();
         } else {
-            add_node(&body, decl);
+            add_node(body, decl);
         }
     }
     return make_block(name, body);
@@ -512,7 +508,7 @@ static void quick_sort(ParseError* errors, int lo, int hi) {
     quick_sort(errors, p + 1, hi);
 }
 
-ResultCode parse(const char* source, NodeList* nl) {
+ResultCode parse(const char* source, struct NodeList* nl) {
     init_parser(source);
 
     while(parser.current.type != TOKEN_EOF) {

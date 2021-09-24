@@ -1,6 +1,26 @@
 #include "ast.h"
 #include "memory.h"
 
+struct Node* make_node_list() {
+    struct NodeList* nl = ALLOCATE(struct NodeList);
+    nl->nodes = ALLOCATE_ARRAY(struct Node*);
+    nl->count = 0;
+    nl->capacity = 0;
+    nl->base.type = NODE_LIST;
+
+    return (struct Node*)nl;
+}
+
+void add_node(struct NodeList* nl, struct Node* node) {
+    if (nl->count + 1 > nl->capacity) {
+        int new_capacity = nl->capacity == 0 ? 8 : nl->capacity * 2;
+        nl->nodes = GROW_ARRAY(nl->nodes, struct Node*, new_capacity, nl->capacity);
+        nl->capacity = new_capacity;
+    }
+
+    nl->nodes[nl->count] = node;
+    nl->count++;
+}
 
 /*
  * Declarations
@@ -16,7 +36,7 @@ struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right) {
     return (struct Node*)decl_var;
 }
 
-struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, struct Node* body) {
+struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Sig* sig, struct Node* body) {
     DeclFun* df = ALLOCATE(DeclFun);
     df->name = name;
     df->parameters = parameters;
@@ -27,7 +47,7 @@ struct Node* make_decl_fun(Token name, NodeList parameters, struct Sig* sig, str
     return (struct Node*)df;
 }
 
-struct Node* make_decl_class(Token name, struct Node* super, NodeList decls) {
+struct Node* make_decl_class(Token name, struct Node* super, struct NodeList* decls) {
     DeclClass* dc = ALLOCATE(DeclClass);
     dc->name = name;
     dc->super = super;
@@ -49,7 +69,7 @@ struct Node* make_expr_stmt(struct Node* expr) {
     return (struct Node*)es;
 }
 
-struct Node* make_block(Token name, NodeList dl) {
+struct Node* make_block(Token name, struct NodeList* dl) {
     Block* block = ALLOCATE(Block);
     block->name = name;
     block->decl_list = dl;
@@ -200,7 +220,7 @@ struct Node* make_set_idx(struct Node* left, struct Node* right) {
     return (struct Node*)set_idx;
 }
 
-struct Node* make_call(Token name, struct Node* left, NodeList arguments) {
+struct Node* make_call(Token name, struct Node* left, struct NodeList* arguments) {
     Call* call = ALLOCATE(Call);
     call->name = name;
     call->left = left;
@@ -224,6 +244,16 @@ struct Node* make_nil(Token name) {
 
 void print_node(struct Node* node) {
     switch(node->type) {
+        case NODE_LIST: {
+            struct NodeList* nl = (struct NodeList*)node;
+            printf("( NodeList \n");
+            for (int i = 0; i < nl->count; i++) {
+                print_node(nl->nodes[i]);
+                printf("\n");
+            }
+            printf(")");
+            break;
+        }
         //Declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
@@ -252,7 +282,7 @@ void print_node(struct Node* node) {
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             printf("( Block");
-            print_node_list(&block->decl_list);
+            print_node((struct Node*)(block->decl_list));
             printf(" )");
             break;
         }
@@ -352,6 +382,16 @@ void print_node(struct Node* node) {
 void free_node(struct Node* node) {
     if (node == NULL) return;
     switch(node->type) {
+        case NODE_LIST: {
+            struct NodeList* nl = (struct NodeList*)node;
+            //TODO: will get rid of this later
+            for (int i = 0; i < nl->count; i++) {
+                free_node(nl->nodes[i]);
+            }
+            FREE_ARRAY(nl->nodes, struct Node*, nl->capacity);
+            FREE(nl, struct NodeList);
+            break;
+        }
         //Declarations
         case NODE_DECL_VAR: {
             DeclVar* decl_var = (DeclVar*)node;
@@ -364,7 +404,7 @@ void free_node(struct Node* node) {
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
-            free_node_list(&df->parameters);
+            free_node((struct Node*)(df->parameters));
             free_node(df->body);
             FREE(df, DeclFun);
             break;
@@ -372,7 +412,7 @@ void free_node(struct Node* node) {
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             free_node(dc->super);
-            free_node_list(&dc->decls);
+            free_node((struct Node*)(dc->decls));
             FREE(dc, DeclClass);
             break;
         }
@@ -385,7 +425,7 @@ void free_node(struct Node* node) {
         }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
-            free_node_list(&block->decl_list);
+            free_node((struct Node*)(block->decl_list));
             FREE(block, Block);
             break;
         }
@@ -489,7 +529,7 @@ void free_node(struct Node* node) {
         case NODE_CALL: {
             Call* call = (Call*)node;
             free_node(call->left);
-            free_node_list(&call->arguments);
+            free_node((struct Node*)(call->arguments));
             FREE(call, Call);
             break;
         }

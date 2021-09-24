@@ -3,7 +3,6 @@
 
 #include "result_code.h"
 #include "ast.h"
-#include "node_list.h"
 #include "chunk.h"
 #include "value.h"
 
@@ -42,7 +41,7 @@ extern struct Compiler* class_compiler;
 
 void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count);
 void free_compiler(struct Compiler* compiler);
-ResultCode compile_script(struct Compiler* compiler, NodeList* nl);
+ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(struct Compiler* compiler);
 

@@ -3,7 +3,6 @@
 #include "ast.h"
 #include "value.h"
 #include "vm.h"
-#include "node_list.h"
 #include "memory.h"
 #include "table.h"
 #include "obj_function.h"
@@ -16,28 +15,27 @@ ResultCode run_source(VM* vm, const char* source) {
     init_compiler(&script_compiler, "script", 6, 0);
 
     printf("Before parser\n");
-    NodeList nl;
-    init_node_list(&nl);
-    ResultCode parse_result = parse(source, &nl);
+    struct Node* nl = make_node_list();
+    ResultCode parse_result = parse(source, (struct NodeList*)nl);
     printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
-        free_node_list(&nl);
+        free_node(nl);
         free_compiler(&script_compiler);
         return RESULT_FAILED;
     }
 
 #ifdef DEBUG_AST
-    print_node_list(&nl);
+    print_node(nl);
 #endif
 
     printf("Before compiler\n");
-    ResultCode compile_result = compile_script(&script_compiler, &nl);
+    ResultCode compile_result = compile_script(&script_compiler, (struct NodeList*)nl);
     printf("After compiler\n");
 
     if (compile_result == RESULT_FAILED) {
         printf("Compilation Failed\n");
-        free_node_list(&nl);
+        free_node(nl);
         free_compiler(&script_compiler);
         return RESULT_FAILED; 
     }
@@ -57,13 +55,13 @@ ResultCode run_source(VM* vm, const char* source) {
     printf("After run\n");
 
     if (run_result == RESULT_FAILED) {
-        free_node_list(&nl);
+        free_node(nl);
         free_compiler(&script_compiler);
         return RESULT_FAILED; 
     }
 
 
-    free_node_list(&nl);
+    free_node(nl);
     free_compiler(&script_compiler);
 
     return RESULT_SUCCESS;
