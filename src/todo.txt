@@ -11,21 +11,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Can we make NodeList an ast node?  Put it inside the same header/.c
-
-        add free_node() for NodeList
-        add print_node() for NodeList
-
-    free_node() should NOT free any subnodes now - leave it to the linked
-    list to free all nodes together.
-
-    Nodes should be added to a linked list (similar to Sigs)
-    and deleted as a batch.  This will simplify the memory management
-    for error handling in parser.
-
-        add nodes linked list to compiler and free them when compiler
-        is freed.
-
     add parsing errors for other declarations
 
     check other errors in parser not included inside declaration()

@@ -34,6 +34,7 @@ struct Compiler {
     int error_count;
     struct Compiler* enclosing;
     struct Sig* signatures;
+    struct Node* nodes;
 };
 
 extern struct Compiler* current_compiler;

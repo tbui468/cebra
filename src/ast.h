@@ -34,6 +34,7 @@ typedef enum {
 
 struct Node {
     NodeType type;
+    struct Node* next;
 };
 
 struct NodeList {

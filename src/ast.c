@@ -1,6 +1,14 @@
 #include "ast.h"
 #include "memory.h"
 
+
+struct Node* insert_node(struct Node* node) {
+    node->next = current_compiler->nodes;
+    current_compiler->nodes = node;    
+
+    return node;
+}
+
 struct Node* make_node_list() {
     struct NodeList* nl = ALLOCATE(struct NodeList);
     nl->nodes = ALLOCATE_ARRAY(struct Node*);
@@ -8,7 +16,7 @@ struct Node* make_node_list() {
     nl->capacity = 0;
     nl->base.type = NODE_LIST;
 
-    return (struct Node*)nl;
+    return insert_node((struct Node*)nl);
 }
 
 void add_node(struct NodeList* nl, struct Node* node) {
@@ -33,7 +41,7 @@ struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right) {
     decl_var->right = right;
     decl_var->base.type = NODE_DECL_VAR;
 
-    return (struct Node*)decl_var;
+    return insert_node((struct Node*)decl_var);
 }
 
 struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Sig* sig, struct Node* body) {
@@ -44,7 +52,7 @@ struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Sig* 
     df->body = body;
     df->base.type = NODE_FUN;
 
-    return (struct Node*)df;
+    return insert_node((struct Node*)df);
 }
 
 struct Node* make_decl_class(Token name, struct Node* super, struct NodeList* decls) {
@@ -54,7 +62,7 @@ struct Node* make_decl_class(Token name, struct Node* super, struct NodeList* de
     dc->decls = decls;
     dc->base.type = NODE_CLASS;
 
-    return (struct Node*)dc;
+    return insert_node((struct Node*)dc);
 }
 
 /*
@@ -66,7 +74,7 @@ struct Node* make_expr_stmt(struct Node* expr) {
     es->expr = expr;
     es->base.type = NODE_EXPR_STMT;
 
-    return (struct Node*)es;
+    return insert_node((struct Node*)es);
 }
 
 struct Node* make_block(Token name, struct NodeList* dl) {
@@ -75,7 +83,7 @@ struct Node* make_block(Token name, struct NodeList* dl) {
     block->decl_list = dl;
     block->base.type = NODE_BLOCK;
 
-    return (struct Node*)block;
+    return insert_node((struct Node*)block);
 }
 
 struct Node* make_if_else(Token name, struct Node* condition, 
@@ -87,7 +95,7 @@ struct Node* make_if_else(Token name, struct Node* condition,
     ie->else_block = else_block; 
     ie->base.type = NODE_IF_ELSE;
 
-    return (struct Node*)ie;
+    return insert_node((struct Node*)ie);
 }
 
 struct Node* make_while(Token name, struct Node* condition, 
@@ -98,7 +106,7 @@ struct Node* make_while(Token name, struct Node* condition,
     wh->then_block = then_block;
     wh->base.type = NODE_WHILE;
 
-    return (struct Node*)wh;
+    return insert_node((struct Node*)wh);
 }
 
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, 
@@ -111,7 +119,7 @@ struct Node* make_for(Token name, struct Node* initializer, struct Node* conditi
     fo->then_block = then_block;
     fo->base.type = NODE_FOR;
 
-    return (struct Node*)fo;
+    return insert_node((struct Node*)fo);
 }
 
 
@@ -121,7 +129,7 @@ struct Node* make_return(Token name, struct Node* right) {
     ret->right = right;
     ret->base.type = NODE_RETURN;
 
-    return (struct Node*)ret;
+    return insert_node((struct Node*)ret);
 }
 
 /*
@@ -133,7 +141,7 @@ struct Node* make_literal(Token name) {
     literal->name = name;
     literal->base.type = NODE_LITERAL;
 
-    return (struct Node*)literal;
+    return insert_node((struct Node*)literal);
 }
 
 struct Node* make_unary(Token name, struct Node* right) {
@@ -142,7 +150,7 @@ struct Node* make_unary(Token name, struct Node* right) {
     unary->right = right;
     unary->base.type = NODE_UNARY;
 
-    return (struct Node*)unary;
+    return insert_node((struct Node*)unary);
 }
 
 struct Node* make_binary(Token name, struct Node* left, struct Node* right) {
@@ -152,7 +160,7 @@ struct Node* make_binary(Token name, struct Node* left, struct Node* right) {
     binary->right = right;
     binary->base.type = NODE_BINARY;
 
-    return (struct Node*)binary;
+    return insert_node((struct Node*)binary);
 }
 
 struct Node* make_logical(Token name, struct Node* left, struct Node* right) {
@@ -162,7 +170,7 @@ struct Node* make_logical(Token name, struct Node* left, struct Node* right) {
     logical->right = right;
     logical->base.type = NODE_LOGICAL;
 
-    return (struct Node*)logical;
+    return insert_node((struct Node*)logical);
 }
 
 struct Node* make_get_prop(struct Node* inst, Token prop) {
@@ -171,7 +179,7 @@ struct Node* make_get_prop(struct Node* inst, Token prop) {
     get_prop->prop = prop;
     get_prop->base.type = NODE_GET_PROP;
 
-    return (struct Node*)get_prop;
+    return insert_node((struct Node*)get_prop);
 }
 
 struct Node* make_set_prop(struct Node* inst, struct Node* right) {
@@ -180,7 +188,7 @@ struct Node* make_set_prop(struct Node* inst, struct Node* right) {
     set_prop->right = right;
     set_prop->base.type = NODE_SET_PROP;
 
-    return (struct Node*)set_prop;
+    return insert_node((struct Node*)set_prop);
 }
 
 struct Node* make_get_var(Token name, struct Sig* template_type) {
@@ -189,7 +197,7 @@ struct Node* make_get_var(Token name, struct Sig* template_type) {
     get_var->template_type = template_type;
     get_var->base.type = NODE_GET_VAR;
 
-    return (struct Node*)get_var;
+    return insert_node((struct Node*)get_var);
 }
 
 struct Node* make_set_var(struct Node* left, struct Node* right) {
@@ -198,7 +206,7 @@ struct Node* make_set_var(struct Node* left, struct Node* right) {
     set_var->right = right;
     set_var->base.type = NODE_SET_VAR;
 
-    return (struct Node*)set_var;
+    return insert_node((struct Node*)set_var);
 }
 
 struct Node* make_get_idx(Token name, struct Node* left, struct Node* idx) {
@@ -208,7 +216,7 @@ struct Node* make_get_idx(Token name, struct Node* left, struct Node* idx) {
     get_idx->idx = idx;
     get_idx->base.type = NODE_GET_IDX;
 
-    return (struct Node*)get_idx;
+    return insert_node((struct Node*)get_idx);
 }
 
 struct Node* make_set_idx(struct Node* left, struct Node* right) {
@@ -217,7 +225,7 @@ struct Node* make_set_idx(struct Node* left, struct Node* right) {
     set_idx->right = right;
     set_idx->base.type = NODE_SET_IDX;
 
-    return (struct Node*)set_idx;
+    return insert_node((struct Node*)set_idx);
 }
 
 struct Node* make_call(Token name, struct Node* left, struct NodeList* arguments) {
@@ -227,7 +235,7 @@ struct Node* make_call(Token name, struct Node* left, struct NodeList* arguments
     call->arguments = arguments;
     call->base.type = NODE_CALL;
 
-    return (struct Node*)call;
+    return insert_node((struct Node*)call);
 }
 
 struct Node* make_nil(Token name) {
@@ -235,7 +243,7 @@ struct Node* make_nil(Token name) {
     nil->name = name;
     nil->base.type = NODE_NIL;
 
-    return (struct Node*)nil;
+    return insert_node((struct Node*)nil);
 }
 
 /*
@@ -384,10 +392,6 @@ void free_node(struct Node* node) {
     switch(node->type) {
         case NODE_LIST: {
             struct NodeList* nl = (struct NodeList*)node;
-            //TODO: will get rid of this later
-            for (int i = 0; i < nl->count; i++) {
-                free_node(nl->nodes[i]);
-            }
             FREE_ARRAY(nl->nodes, struct Node*, nl->capacity);
             FREE(nl, struct NodeList);
             break;
@@ -395,69 +399,47 @@ void free_node(struct Node* node) {
         //Declarations
         case NODE_DECL_VAR: {
             DeclVar* decl_var = (DeclVar*)node;
-            //parameters have NULL for right expression
-            if (decl_var->right != NULL) {
-                free_node(decl_var->right);
-            }
             FREE(decl_var, DeclVar);
             break;
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
-            free_node((struct Node*)(df->parameters));
-            free_node(df->body);
             FREE(df, DeclFun);
             break;
         }
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
-            free_node(dc->super);
-            free_node((struct Node*)(dc->decls));
             FREE(dc, DeclClass);
             break;
         }
         //Statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
-            free_node(es->expr);
             FREE(es, ExprStmt);
             break;
         }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
-            free_node((struct Node*)(block->decl_list));
             FREE(block, Block);
             break;
         }
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
-            free_node(ie->condition);
-            free_node(ie->then_block);
-            if (ie->else_block != NULL) {
-                free_node(ie->else_block);
-            }
             FREE(ie, IfElse);
             break;
         }
         case NODE_WHILE: {
             While* wh = (While*)node;
-            free_node(wh->condition);
-            free_node(wh->then_block);
             FREE(wh, While);
             break;
         }
         case NODE_FOR: {
             For* fo = (For*)node;
-            if (fo->initializer != NULL) free_node(fo->initializer);
-            free_node(fo->condition);
-            if (fo->update != NULL) free_node(fo->update);
-            free_node(fo->then_block);
             FREE(fo, For);
             break;
         }
         case NODE_RETURN: {
             Return* ret = (Return*)node;
-            if (ret->right != NULL) free_node(ret->right);
             FREE(ret, Return);
             break;
         }
@@ -469,34 +451,26 @@ void free_node(struct Node* node) {
         }
         case NODE_BINARY: {
             Binary* binary = (Binary*)node;
-            free_node(binary->left);
-            free_node(binary->right);
             FREE(binary, Binary);
             break;
         }
         case NODE_LOGICAL: {
             Logical* binary = (Logical*)node;
-            free_node(binary->left);
-            free_node(binary->right);
             FREE(binary, Logical);
             break;
         }
         case NODE_UNARY: {
             Unary* unary = (Unary*)node;
-            free_node(unary->right);
             FREE(unary, Unary);
             break;
         }
         case NODE_GET_PROP: {
             GetProp* get_prop = (GetProp*)node;
-            free_node(get_prop->inst);
             FREE(get_prop, GetProp);
             break;
         }
         case NODE_SET_PROP: {
             SetProp* set_prop = (SetProp*)node;
-            free_node(set_prop->inst);
-            free_node(set_prop->right);
             FREE(set_prop, SetProp);
             break;
         }
@@ -507,29 +481,21 @@ void free_node(struct Node* node) {
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
-            free_node(sv->left);
-            free_node(sv->right);
             FREE(sv, SetVar);
             break;
         }
         case NODE_GET_IDX: {
             GetIdx* gv = (GetIdx*)node;
-            free_node(gv->left);
-            free_node(gv->idx);
             FREE(gv, GetIdx);
             break;
         }
         case NODE_SET_IDX: {
             SetIdx* sv = (SetIdx*)node;
-            free_node(sv->left);
-            free_node(sv->right);
             FREE(sv, SetIdx);
             break;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
-            free_node(call->left);
-            free_node((struct Node*)(call->arguments));
             FREE(call, Call);
             break;
         }

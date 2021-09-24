@@ -984,6 +984,7 @@ void init_compiler(struct Compiler* compiler, const char* start, int length, int
     compiler->enclosing = NULL;
     compiler->upvalue_count = 0;
     compiler->signatures = NULL;
+    compiler->nodes = NULL;
 
     compiler->enclosing = current_compiler;
     current_compiler = compiler;
@@ -994,6 +995,11 @@ void free_compiler(struct Compiler* compiler) {
         struct Sig* previous = compiler->signatures;
         compiler->signatures = compiler->signatures->next;
         free_sig(previous);
+    }
+    while (compiler->nodes != NULL) {
+        struct Node* previous = compiler->nodes;
+        compiler->nodes = compiler->nodes->next;
+        free_node(previous);
     }
     current_compiler = compiler->enclosing;
     pop_root();

@@ -286,7 +286,6 @@ static struct Node* block() {
     struct NodeList* body = (struct NodeList*)make_node_list();
     while (!match(TOKEN_RIGHT_BRACE)) {
         if (peek_one(TOKEN_EOF)) {
-            free_node((struct Node*)body);
             return NULL;
         }
         struct Node* decl = declaration();
@@ -400,14 +399,12 @@ static struct Node* declaration() {
         }
 
         if (!match(TOKEN_LEFT_BRACE)) {
-            free_node(condition);
             add_error(name, "Expect boolean expression and '{' after 'if'.");
             return NULL;
         }
 
         struct Node* then_block = block();
         if (then_block == NULL) {
-            free_node(condition);
             add_error(name, "Expect '}' after 'if' statement body.");
             return NULL;
         }
@@ -415,15 +412,11 @@ static struct Node* declaration() {
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
             if (!match(TOKEN_LEFT_BRACE)) {
-                free_node(then_block);
-                free_node(condition);
                 add_error(name, "Expect '{' after 'else'.");
                 return NULL;
             }
             else_block = block();
             if (else_block == NULL) {
-                free_node(then_block);
-                free_node(condition);
                 add_error(name, "Expect '}' after 'else' statement body.");
                 return NULL;
             }

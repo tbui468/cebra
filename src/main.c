@@ -20,7 +20,6 @@ ResultCode run_source(VM* vm, const char* source) {
     printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
-        free_node(nl);
         free_compiler(&script_compiler);
         return RESULT_FAILED;
     }
@@ -35,7 +34,6 @@ ResultCode run_source(VM* vm, const char* source) {
 
     if (compile_result == RESULT_FAILED) {
         printf("Compilation Failed\n");
-        free_node(nl);
         free_compiler(&script_compiler);
         return RESULT_FAILED; 
     }
@@ -55,13 +53,11 @@ ResultCode run_source(VM* vm, const char* source) {
     printf("After run\n");
 
     if (run_result == RESULT_FAILED) {
-        free_node(nl);
         free_compiler(&script_compiler);
         return RESULT_FAILED; 
     }
 
 
-    free_node(nl);
     free_compiler(&script_compiler);
 
     return RESULT_SUCCESS;
