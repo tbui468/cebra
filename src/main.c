@@ -126,7 +126,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    printf("\n*****************\n");
 #ifdef DEBUG_STRESS_GC
     collect_garbage();
 #endif

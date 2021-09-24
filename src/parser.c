@@ -21,34 +21,25 @@ static void print_all_tokens() {
     printf("******end**********\n");
 }
 
+static void advance() {
+    parser.previous = parser.current;
+    parser.current = parser.next;
+    parser.next = parser.next_next;
+    parser.next_next = next_token();
+}
+
 static bool match(TokenType type) {
     if (parser.current.type == type) {
-        parser.previous = parser.current;
-        parser.current = parser.next;
-        parser.next = parser.next_next;
-        parser.next_next = next_token();
+        advance();
         return true;
     }
 
     return false;
 }
 
-static void consume(TokenType type, const char* message) {
-    if (type == parser.current.type) {
-        parser.previous = parser.current;
-        parser.current = parser.next;
-        parser.next = parser.next_next;
-        parser.next_next = next_token();
-        return;
-    }
-    
-    add_error(parser.previous, message);
-}
-
 static bool peek_one(TokenType type) {
     return parser.current.type == type;
 }
-
 static bool peek_two(TokenType type1, TokenType type2) {
     return parser.current.type == type1 && parser.next.type == type2;
 }
@@ -58,6 +49,25 @@ static bool peek_three(TokenType type1, TokenType type2, TokenType type3) {
            parser.next_next.type == type3;
 }
 
+static void synchronize() {
+    while (!peek_one(TOKEN_EOF)) {
+        if (peek_one(TOKEN_FOR)) return;
+        if (peek_one(TOKEN_WHILE)) return;
+        if (peek_one(TOKEN_IF)) return;
+        if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) return;
+        advance();
+    }
+}
+
+static bool consume(TokenType type, const char* message) {
+    if (type == parser.current.type) {
+        advance();
+        return true;
+    }
+    
+    add_error(parser.previous, message);
+    return false;
+}
 
 static NodeList argument_list(Token var_name) {
     NodeList args;
@@ -151,7 +161,7 @@ static struct Node* primary(Token var_name) {
         return make_nil(parser.previous);
     }
 
-    add_error(parser.previous, "Invalid token.");
+    //add_error(parser.previous, "Invalid token.");
     return NULL;
 }
 
@@ -279,7 +289,13 @@ static struct Node* block() {
     NodeList body;
     init_node_list(&body);
     while (!match(TOKEN_RIGHT_BRACE)) {
-        add_node(&body, declaration());
+        if (peek_one(TOKEN_EOF)) return NULL;
+        struct Node* decl = declaration();
+        if (decl == NULL) {
+            synchronize();
+        } else {
+            add_node(&body, decl);
+        }
     }
     return make_block(name, body);
 }
@@ -368,17 +384,41 @@ static struct Node* declaration() {
     if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
         return var_declaration(false);
     } else if (match(TOKEN_LEFT_BRACE)) {
-        return block();
+        Token name = parser.previous;
+        struct Node* b = block();
+        if (b == NULL) {
+            add_error(name, "Expect '}' after block body.");
+            return NULL;
+        }
+        return b;
     } else if (match(TOKEN_IF)) {
         Token name = parser.previous;
+
         struct Node* condition = expression(make_dummy_token());
-        consume(TOKEN_LEFT_BRACE, "Expect '{' after condition.");
+        if (condition == NULL || !match(TOKEN_LEFT_BRACE)) {
+            add_error(name, "Expect boolean expression and '{' after 'if'.");
+            return NULL;
+        }
+
         struct Node* then_block = block();
+        if (then_block == NULL) {
+            add_error(name, "Expect '}' after 'if' statement body.");
+            return NULL;
+        }
+
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
-            consume(TOKEN_LEFT_BRACE, "Expect '{' after else.");
+            if (!match(TOKEN_LEFT_BRACE)) {
+                add_error(name, "Expect '{' after 'else'.");
+                return NULL;
+            }
             else_block = block();
+            if (else_block == NULL) {
+                add_error(name, "Expect '}' after 'else' statement body.");
+                return NULL;
+            }
         }
+
         return make_if_else(name, condition, then_block, else_block);
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
@@ -416,6 +456,7 @@ static struct Node* declaration() {
 }
 
 static void add_error(Token token, const char* message) {
+    if (parser.error_count == 256) return;
     ParseError error;
     error.token = token;
     error.message = message;
@@ -431,17 +472,51 @@ static void init_parser(const char* source) {
     parser.next_next = next_token();
 }
 
+static int partition(ParseError* errors, int lo, int hi) {
+    ParseError pivot = errors[hi];
+    int i = lo - 1;
+
+    for (int j = lo; j <= hi; j++) {
+        if (errors[j].token.line <= pivot.token.line) {
+            i++;
+            ParseError orig_i = errors[i];
+            errors[i] = errors[j];
+            errors[j] = orig_i;
+        }
+    }
+    return i;
+}
+
+static void quick_sort(ParseError* errors, int lo, int hi) {
+    int count = hi - lo + 1;
+    if (count <= 0) return;
+
+    //making pivot last element is potentially slow, but it's easier to implement
+    int p = partition(errors, lo, hi);
+
+    quick_sort(errors, lo, p - 1);
+    quick_sort(errors, p + 1, hi);
+}
 
 ResultCode parse(const char* source, NodeList* nl) {
     init_parser(source);
 
     while(parser.current.type != TOKEN_EOF) {
-        add_node(nl, declaration());
+        struct Node* decl = declaration();
+        if (decl == NULL) {
+            synchronize();
+        } else {
+            add_node(nl, decl);
+        }
     }
 
     if (parser.error_count > 0) {
+        quick_sort(parser.errors, 0, parser.error_count - 1);
         for (int i = 0; i < parser.error_count; i++) {
             printf("[line %d] %s\n", parser.errors[i].token.line, parser.errors[i].message);
+        }
+        if (parser.error_count == 256) {
+            printf("Parsing error count exceeded maximum of 256.\n");
         }
         return RESULT_FAILED;
     }

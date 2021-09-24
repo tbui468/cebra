@@ -11,6 +11,18 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    currently doing error checks for if/else and block - need to
+        take care of memory.  Should free all memory even if failed.
+
+    add parsing errors for other declarations
+
+    check other errors in parser not included inside declaration()
+        make sure memory is freed
+        make format consistent with other changes
+
+    compiling error - if the condition evaulates to non-boolean take care of
+        any memory
+
     Compile to webassembly and run in browser
         test with simple 'hello world' program first
         test with program that reads in text from text box (our script)
@@ -29,10 +41,6 @@ IMPLEMENTATION:
 
     this code should give error since declaring same variable twice
     but it currently crashes program
-        //declaring variable with same identifier
-        d: int = 0
-        d := 0
-        
         //expecting 'and' between
         if yy() == "hello world" yyi() == "hello world" {
 
