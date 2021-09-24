@@ -11,7 +11,26 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    //this parses fine for some reason
+    for i := 0, *, i = i + 1  {
+
+    }
+
+    Do we have an invalid token?  *, $, #, shouldn't work anywhere
+        this should add error, but it doesn't.  Make 
+
+        for i := 0, $  {
+
+        }
+
     add parsing errors for other declarations
+        while
+        for 
+        var_decl
+        return
+        expression stmt
+
+    add test for return from a function while inside a for/while loop
 
     check other errors in parser not included inside declaration()
         make sure memory is freed
