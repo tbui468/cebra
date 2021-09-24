@@ -223,6 +223,8 @@ Token next_token() {
             return new_token(TOKEN_GREATER);
         case '\0':
             return new_token(TOKEN_EOF);
+        default:
+            return new_token(TOKEN_DUMMY);
     }
 }
 

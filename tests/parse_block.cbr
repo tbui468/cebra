@@ -1,8 +1,6 @@
+//no closing brace
 {
 
     print("hello")
 
 
-if true {
-    print("hi")
-}

@@ -1,26 +1,27 @@
+//no condition
 if {
 }
 
-
+//invalid condition
 if 1 + 3 == 4 1 + 4 == 5 {
 }
 
+//no opening if brace
+if true }
+
+//no closing if brace
+if "dog" == "cat" {
+
+//no opening else brace
+if true {
+} else }
+
+//no closing else brace
 if 2 == 2 {
     print("correct")
 } else {
 
-    if {
-        print("correct")
-    }
-
-    if print("correct") {
-
-    {
-        print("Hello")
-
-
-    if {
-
-    }
-
-
+//invalid else condition
+if true {
+} else 4 == 4 {
+}

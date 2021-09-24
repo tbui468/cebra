@@ -1,0 +1,35 @@
+
+//no condition
+while {
+    print("hi")
+    i = i - 1
+}
+
+//no closing brace
+while i > 0 {
+    i = i - 1
+
+//no start brace
+while }
+
+//no update
+for i := 0,   {
+
+}
+
+//no condition or update
+for i := 0 {
+
+}
+
+//no intializer, condition or update
+for {
+
+}
+
+//no starter brace
+for ,, }
+
+//no ending brace
+for ,, {
+    +
