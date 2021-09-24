@@ -289,7 +289,10 @@ static struct Node* block() {
     NodeList body;
     init_node_list(&body);
     while (!match(TOKEN_RIGHT_BRACE)) {
-        if (peek_one(TOKEN_EOF)) return NULL;
+        if (peek_one(TOKEN_EOF)) {
+            free_node_list(&body);
+            return NULL;
+        }
         struct Node* decl = declaration();
         if (decl == NULL) {
             synchronize();
@@ -395,13 +398,20 @@ static struct Node* declaration() {
         Token name = parser.previous;
 
         struct Node* condition = expression(make_dummy_token());
-        if (condition == NULL || !match(TOKEN_LEFT_BRACE)) {
+        if (condition == NULL) {
+            add_error(name, "Expect boolean expression and '{' after 'if'.");
+            return NULL;
+        }
+
+        if (!match(TOKEN_LEFT_BRACE)) {
+            free_node(condition);
             add_error(name, "Expect boolean expression and '{' after 'if'.");
             return NULL;
         }
 
         struct Node* then_block = block();
         if (then_block == NULL) {
+            free_node(condition);
             add_error(name, "Expect '}' after 'if' statement body.");
             return NULL;
         }
@@ -409,11 +419,15 @@ static struct Node* declaration() {
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
             if (!match(TOKEN_LEFT_BRACE)) {
+                free_node(then_block);
+                free_node(condition);
                 add_error(name, "Expect '{' after 'else'.");
                 return NULL;
             }
             else_block = block();
             if (else_block == NULL) {
+                free_node(then_block);
+                free_node(condition);
                 add_error(name, "Expect '}' after 'else' statement body.");
                 return NULL;
             }

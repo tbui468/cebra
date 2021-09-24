@@ -294,7 +294,6 @@ void collect_garbage() {
     printf("Bytes allocated: %d\n", mm.allocated);
     print_stack();
 #endif 
-//    mark_table(&mm.structs);
     mark_vm_roots();
     mark_compiler_roots();
     trace_references();

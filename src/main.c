@@ -23,6 +23,7 @@ ResultCode run_source(VM* vm, const char* source) {
 
     if (parse_result == RESULT_FAILED) {
         free_node_list(&nl);
+        free_compiler(&script_compiler);
         return RESULT_FAILED;
     }
 
@@ -51,9 +52,6 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 #endif
 
-    free_node_list(&nl);
-    free_compiler(&script_compiler);
-
     printf("Before run\n");
     ResultCode run_result = run(vm, script_compiler.function);
     printf("After run\n");
@@ -63,6 +61,10 @@ ResultCode run_source(VM* vm, const char* source) {
         free_compiler(&script_compiler);
         return RESULT_FAILED; 
     }
+
+
+    free_node_list(&nl);
+    free_compiler(&script_compiler);
 
     return RESULT_SUCCESS;
 }
@@ -101,11 +103,11 @@ const char* read_file(const char* path) {
 ResultCode run_script(VM* vm, const char* path) {
 
     const char* source = read_file(path);
-    run_source(vm, source);
+    ResultCode result = run_source(vm, source);
 
     free((void*)source);
 
-    return RESULT_SUCCESS;
+    return result;
 }
 
 int main(int argc, char** argv) {
@@ -122,10 +124,6 @@ int main(int argc, char** argv) {
         result = run_script(&vm, argv[1]);
     }
 
-    if (result == RESULT_FAILED) {
-        return 1;
-    }
-
 #ifdef DEBUG_STRESS_GC
     collect_garbage();
 #endif
@@ -134,6 +132,10 @@ int main(int argc, char** argv) {
     free_memory_manager();
 
     print_memory();
+
+    if (result == RESULT_FAILED) {
+        return 1;
+    }
 
     return 0;
 }
