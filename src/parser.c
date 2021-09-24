@@ -5,7 +5,7 @@
 
 Parser parser;
 
-static struct Node* expression();
+static struct Node* expression(Token var_name);
 static struct Node* declaration();
 static void add_error(Token token, const char* message);
 static struct Node* block();
@@ -82,7 +82,7 @@ static struct NodeList* argument_list(Token var_name) {
             }
             add_node(args, arg); 
         } while (match(TOKEN_COMMA));
-        consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+        if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.")) return NULL;
     }
 
     return args;
@@ -96,15 +96,15 @@ static struct Node* primary(Token var_name) {
         return make_literal(parser.previous);
     } else if (match(TOKEN_LIST)) {
         Token identifier = parser.previous;
-        consume(TOKEN_LESS, "Expect '<' after 'List'.");
+        if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return NULL;
         struct Sig* template_type = read_sig(var_name);
-        consume(TOKEN_GREATER, "Expect '>' after type.");
+        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
         return make_get_var(identifier, make_list_sig(template_type)); 
     } else if (match(TOKEN_MAP)) {
         Token identifier = parser.previous;
-        consume(TOKEN_LESS, "Expect '<' after 'Map'.");
+        if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return NULL;
         struct Sig* template_type = read_sig(var_name);
-        consume(TOKEN_GREATER, "Expect '>' after type.");
+        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
         return make_get_var(identifier, make_map_sig(template_type)); 
     } else if (match(TOKEN_IDENTIFIER)) {
         return make_get_var(parser.previous, NULL);
@@ -221,8 +221,13 @@ static struct Node* call_dot(Token var_name) {
             }
             left = make_call(parser.previous, left, args);
         } else { //TOKEN_LEFT_BRACKET
-            left = make_get_idx(parser.previous, left, expression(var_name));
-            consume(TOKEN_RIGHT_BRACKET, "Expect ']' after index.");
+            struct Node* idx = expression(var_name);
+            if (idx == NULL) {
+                add_error(parser.previous, "Index must be a string for Maps, or integer for Lists.");
+                return NULL;
+            }
+            left = make_get_idx(parser.previous, left, idx);
+            if (!consume(TOKEN_RIGHT_BRACKET, "Expect ']' after index.")) return NULL;
         }
     }
 
@@ -231,7 +236,17 @@ static struct Node* call_dot(Token var_name) {
 
 static struct Node* unary(Token var_name) {
     if (match(TOKEN_MINUS) || match(TOKEN_BANG)) {
-        return make_unary(parser.previous, unary(var_name));
+        Token op = parser.previous;
+        struct Node* right = unary(var_name);
+        if (right == NULL) {
+            if (op.type == TOKEN_MINUS) {
+            add_error(op, "Right side of '-' must be valid expression.");
+            } else {
+            add_error(op, "Right side of '!' must be valid expression.");
+            }
+            return NULL;
+        }
+        return make_unary(parser.previous, right);
     }
 
     return call_dot(var_name);

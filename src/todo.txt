@@ -11,9 +11,19 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-
     add parsing errors for other declarations
-        go through parser and find ALL functions that can return NULL
+        Restructure read_sig() so that it returns a NULL for errors
+        List/Map
+            list2 := List<$>(-2) //this currently doesn't cause error (and it should)
+            map3 := Map<$>(-23)
+            need to make invalid sigs NULL so we can check
+        should return NULL if signature is invalid since VAL_NIL is a valid sig for inferred types
+            one sig was recognized as error when VAL_NIL - need to find that one and change it
+
+        for 'return' nodes, right side expression is NULL if no return type - shouldn't this be nil?
+            let's leave NULL for errors
+
+            how about for other NULL?  I think some nodes take in NULL values.  Shouldn't they be nil too?
 
 
     need to NULL check expressions(), declarations(), etc
