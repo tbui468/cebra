@@ -157,6 +157,7 @@ Token next_token() {
     //string literal
     if (c == '"') {
         while (peek_char() != '"') {
+            if (peek_char() == '\0') return new_token(TOKEN_EOF);
             next_char();
         }
         lexer.start++; //skip first double quote

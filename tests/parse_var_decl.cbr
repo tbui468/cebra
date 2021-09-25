@@ -31,3 +31,43 @@ f5 := () -> }
 f6 := () -> {
 
 
+//invalid type
+map3 := Map<->(-23)
+
+//invalid type
+list := List<>(3)
+
+//no < before type
+map := Map(a)
+
+//no > after type
+map2 := Map<$
+
+//no < before type
+list := List(a)
+
+//no > after type
+list2 := List<$
+
+//invalid type
+list3 := List<$>(-23)
+
+//invalid right side
+a: bool = !$
+
+//invalid right side
+c: int = -(-(^))
+
+//invalid type
+a: $ = 4
+
+//invalid return type
+fn := () -> 4 {
+}
+
+//invalid parameter
+fn2: (, float) -> = (a: int, b: float) -> {
+
+}
+
+

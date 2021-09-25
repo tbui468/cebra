@@ -11,6 +11,7 @@
 
 ResultCode run_source(VM* vm, const char* source) {
 
+    printf("Before init script compiler\n");
     struct Compiler script_compiler;
     init_compiler(&script_compiler, "script", 6, 0);
 
@@ -48,6 +49,9 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 #endif
 
+    //need to free script compiler, since need to pop two temporaries from root_stack
+    free_compiler(&script_compiler);
+
     printf("Before run\n");
     ResultCode run_result = run(vm, script_compiler.function);
     printf("After run\n");
@@ -58,7 +62,6 @@ ResultCode run_source(VM* vm, const char* source) {
     }
 
 
-    free_compiler(&script_compiler);
 
     return RESULT_SUCCESS;
 }

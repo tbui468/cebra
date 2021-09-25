@@ -265,18 +265,6 @@ static void print_marks() {
     printf("\n");
 }
 
-static void print_stack() {
-    printf("Stack: ");
-    Value* start = mm.vm->stack;
-    while (start < mm.vm->stack_top) {
-        printf("[ ");
-        print_value(*start);
-        printf(" ]");
-        start++;
-    }
-    printf("\n");
-}
-
 static void print_objects() {
     int count = 0;
     struct Obj* current = mm.objects;

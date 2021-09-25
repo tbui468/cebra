@@ -98,12 +98,20 @@ static struct Node* primary(Token var_name) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return NULL;
         struct Sig* template_type = read_sig(var_name);
+        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+            add_error(parser.previous, "List type inside <> must be valid.");
+            return NULL;
+        }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
         return make_get_var(identifier, make_list_sig(template_type)); 
     } else if (match(TOKEN_MAP)) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return NULL;
         struct Sig* template_type = read_sig(var_name);
+        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+            add_error(parser.previous, "Map type inside <> must be valid.");
+            return NULL;
+        }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
         return make_get_var(identifier, make_map_sig(template_type)); 
     } else if (match(TOKEN_IDENTIFIER)) {
@@ -138,6 +146,10 @@ static struct Node* primary(Token var_name) {
             if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameter list.")) return NULL;
 
             struct Sig* ret_sig = read_sig(var_name);
+            if (ret_sig == NULL) {
+                add_error(parser.previous, "Expect valid return type after function parameters.");
+                return NULL;
+            }
 
             if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.")) return NULL;
 
@@ -161,6 +173,8 @@ static struct Node* primary(Token var_name) {
         if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.")) return NULL;
         return expr;
     } else if (peek_one(TOKEN_CLASS)) {
+        //this branch is only entered if next is TOKEN_CLASS
+        //so read_sig(var_name) will always be valid, so no NULL check
         struct Sig* right_sig = read_sig(var_name);
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
@@ -202,7 +216,7 @@ static struct Node* call_dot(Token var_name) {
                     add_error(parser.previous, "Left of '.' must be a struct instance.");
                     break;
                 case TOKEN_LEFT_PAREN:
-                    add_error(parser.previous, "Left of '(' must be a function identifier.");
+                    add_error(parser.previous, "Left of '(' must be an identifier.");
                     break;
                 case TOKEN_LEFT_BRACKET:
                     add_error(parser.previous, "Left of '[' must be a List or Map identifier.");
@@ -212,7 +226,7 @@ static struct Node* call_dot(Token var_name) {
         }
 
         if (parser.previous.type == TOKEN_DOT) {
-            consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.");
+            if (!consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.")) return NULL;
             left = make_get_prop(left, parser.previous);
         } else if (parser.previous.type == TOKEN_LEFT_PAREN) {
             struct NodeList* args = argument_list(var_name);
@@ -512,12 +526,21 @@ static struct Sig* read_sig(Token var_name) {
         struct Sig* params = make_array_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                add_sig((struct SigArray*)params, read_sig(var_name));
+                struct Sig* param_sig = read_sig(var_name);
+                if (param_sig == NULL) {
+                    add_error(var_name, "Invalid parameter type.");
+                    return NULL;
+                }
+                add_sig((struct SigArray*)params, param_sig);
             } while(match(TOKEN_COMMA));
-            consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.");
+            if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.")) return NULL;
         }
-        consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.");
+        if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.")) return NULL;
         struct Sig* ret = read_sig(var_name);
+        if (ret == NULL) {
+            add_error(var_name, "Invalid return type.");
+            return NULL;
+        }
         return make_fun_sig(params, ret);
     }
 
@@ -535,7 +558,7 @@ static struct Sig* read_sig(Token var_name) {
 
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
-            consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.");
+            if (!consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.")) return NULL;
             return make_class_sig(var_name);
         }
 
@@ -543,16 +566,24 @@ static struct Sig* read_sig(Token var_name) {
     }
 
     if (match(TOKEN_LIST)) {
-        consume(TOKEN_LESS, "Expect '<' after 'List'.");
+        if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return NULL;
         struct Sig* template_type = read_sig(var_name);
-        consume(TOKEN_GREATER, "Expect '>' after type."); 
+        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+            add_error(parser.previous, "List type inside <> must be valid.");
+            return NULL;
+        }
+        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
         return make_list_sig(template_type);
     }
 
     if (match(TOKEN_MAP)) {
-        consume(TOKEN_LESS, "Expect '<' after 'Map'.");
+        if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return NULL;
         struct Sig* template_type = read_sig(var_name);
-        consume(TOKEN_GREATER, "Expect '>' after type."); 
+        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+            add_error(parser.previous, "Map type inside <> must be valid.");
+            return NULL;
+        }
+        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
         return make_map_sig(template_type);
     }
 
@@ -560,7 +591,16 @@ static struct Sig* read_sig(Token var_name) {
         return make_identifier_sig(parser.previous);
     }
 
-    return make_prim_sig(VAL_NIL);
+    //TODO: testing - normally it's just NIL
+    if (match(TOKEN_NIL) || 
+        //function definition
+        (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
+        //function declaration
+        (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))) {
+        return make_prim_sig(VAL_NIL);
+    }
+
+    return NULL;
 }
 
 static struct Node* param_declaration() {
@@ -575,12 +615,12 @@ static struct Node* param_declaration() {
     }
 
     struct Sig* sig = read_sig(var_name);
-    if (sig_is_type(sig, VAL_NIL)) {
-        add_error(var_name, "Parameter must be a valid type.");
+    if (sig == NULL || sig_is_type(sig, VAL_NIL)) {
+        add_error(var_name, "Parameter type must be valid.");
         return NULL;
     }
 
-    return make_decl_var(var_name, sig, make_nil(parser.previous));
+    return make_decl_var(var_name, sig, NULL);
 }
 
 static struct Node* var_declaration() {
@@ -589,6 +629,10 @@ static struct Node* var_declaration() {
     match(TOKEN_COLON);  //var_declaration only called if this is true, so no need to check
 
     struct Sig* sig = read_sig(var_name);
+    if (sig == NULL) {
+        add_error(var_name, "Expecting variable type.");
+        return NULL;
+    }
 
     if (!consume(TOKEN_EQUAL, "Variables must be defined at declaration.")) return NULL;
 

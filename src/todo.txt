@@ -1,7 +1,7 @@
 DOCUMENTATION:
-    Look at how Nystrom design docs for Wren
-    The embedded compiler/vm in browser is neat
-        look at using emscripten to compiler to webassembly
+    Deconstruct Wren to see how Nystom got the interpereter running in browser
+        recreate website locally to see if the interpreter can run locally
+        Analyze the 'try' page and get my own wasm/js compiled from C working
 
 ADDING FEATURES:
     Add correctness tests for new features
@@ -11,31 +11,18 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    add parsing errors for other declarations
-        Restructure read_sig() so that it returns a NULL for errors
-        List/Map
-            list2 := List<$>(-2) //this currently doesn't cause error (and it should)
-            map3 := Map<$>(-23)
-            need to make invalid sigs NULL so we can check
-        should return NULL if signature is invalid since VAL_NIL is a valid sig for inferred types
-            one sig was recognized as error when VAL_NIL - need to find that one and change it
+    Lexing error when " is not closed
 
-        for 'return' nodes, right side expression is NULL if no return type - shouldn't this be nil?
-            let's leave NULL for errors
+    write code to catch compiler errors: pretty much type checking
+        compiling error - if the condition evaulates to non-boolean take care of
+            any memory
 
-            how about for other NULL?  I think some nodes take in NULL values.  Shouldn't they be nil too?
+    'Variable must be assigned to a valid expression' in parser should tell user the variable identifier
+        need a way for errors to print token too
 
+    Write code to catch runtime errors: what runtime checks do we do?
 
-    need to NULL check expressions(), declarations(), etc
-
-    add test for return from a function while inside a for/while loop
-
-    check other errors in parser not included inside declaration()
-        make sure memory is freed
-        make format consistent with other changes
-
-    compiling error - if the condition evaulates to non-boolean take care of
-        any memory
+    Write code to break maximum parameter/argument, upvalues, and constants limits
 
     Compile to webassembly and run in browser
         test with simple 'hello world' program first
@@ -48,10 +35,8 @@ IMPLEMENTATION:
         than checking if type == SIG_IDENTIFIER and resolving
         the signature each time?  It's prone to mistakes.
 
-    Need to work on error handling in parser, compiler, runtime
-        we don't want any crashes - bad syntax / logic should
-        report an error, synchronize if necessary, and move on 
-        if possible
+        whenever an ast node sig is used, pass it through an identifier filter function
+            to automatically resolve thes signature if it's SIG_IDENTIFIER
 
     this code should give error since declaring same variable twice
     but it currently crashes program

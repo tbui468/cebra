@@ -31,5 +31,6 @@ ResultCode free_vm(VM* vm);
 ResultCode run(VM* vm, struct ObjFunction* script);
 Value pop(VM* vm);
 void push(VM* vm, Value value);
+void print_stack(VM* vm);
 
 #endif// CEBRA_VM_H

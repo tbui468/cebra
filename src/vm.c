@@ -59,12 +59,7 @@ static Value read_constant(CallFrame* frame, int idx) {
     return frame->function->chunk.constants.values[idx];
 }
 
-static void print_trace(VM* vm, OpCode op) {
-    //print opcodes - how can the compiler and this use the same code?
-    printf("Op: %s\n", op_to_string(op));
-
-    //print vm stack
-    printf("Stack: ");
+void print_stack(VM* vm) {
     Value* start = vm->stack;
     while (start < vm->stack_top) {
         printf("[ ");
@@ -72,6 +67,12 @@ static void print_trace(VM* vm, OpCode op) {
         printf(" ]");
         start++;
     }
+}
+
+static void print_trace(VM* vm, OpCode op) {
+    //print opcodes - how can the compiler and this use the same code?
+    printf("Op: %s\n", op_to_string(op));
+    print_stack(vm);
     printf("\n*************************\n");
 }
 
