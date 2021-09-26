@@ -116,6 +116,10 @@ static struct Node* primary(Token var_name) {
         return make_get_var(identifier, make_map_sig(template_type)); 
     } else if (match(TOKEN_IDENTIFIER)) {
         return make_get_var(parser.previous, NULL);
+    } else if (match(TOKEN_STRING_TYPE)) {
+        Token token = parser.previous;
+        token.type = TOKEN_IDENTIFIER;
+        return make_get_var(token, NULL);
     } else if (match(TOKEN_LEFT_PAREN)) {
         Token name = parser.previous;
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
@@ -315,7 +319,7 @@ static struct Node* term(Token var_name) {
         if (left == NULL) {
             switch(parser.previous.type) {
                 case TOKEN_PLUS:
-                    add_error(parser.previous, "Left hand side of '+' must evaluate to int or float.");
+                    add_error(parser.previous, "Left hand side of '+' must evaluate to int, float or string.");
                     break;
                 case TOKEN_MINUS:
                     add_error(parser.previous, "Left hand side of '-' must evaluate to int or float.");
@@ -328,7 +332,7 @@ static struct Node* term(Token var_name) {
         if (right == NULL) {
             switch(parser.previous.type) {
                 case TOKEN_PLUS:
-                    add_error(parser.previous, "Right hand side of '+' must evaluate to int or float.");
+                    add_error(parser.previous, "Right hand side of '+' must evaluate to int, float or string.");
                     break;
                 case TOKEN_MINUS:
                     add_error(parser.previous, "Right hand side of '-' must evaluate to int or float.");

@@ -3,6 +3,12 @@ DOCUMENTATION:
         recreate website locally to see if the interpreter can run locally
         Analyze the 'try' page and get my own wasm/js compiled from C working
 
+    Look at WebAssembly/test_html.html to see current code
+        can load simple.wasm (last commented out block), but it's
+        not a function that returns anything 
+
+    Trying other things...
+
 ADDING FEATURES:
     Add correctness tests for new features
     Check that ALL memory is freed if GC is called at end of main()
@@ -11,7 +17,33 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Lexing error when " is not closed
+    Make string casting for floating point (double, in particular)
+    Look here for tips: easy version and more complete version
+        //stackoverflow.com/questions/2302969/convert-a-float-to-a-string
+        
+    add tests for float to string casting
+        need to include NaN and -Nan
+
+    int casting (string, float)
+        if string cannot be converted, ??
+
+    float casting (string, int)
+        if string cannot be converted, ??
+
+    type() function that returns 'int', 'string', 'bool', 'float', 'Dog', '(int) -> string' in string format
+
+    to_string, to_function, to_integer, etc really all should be to_value() and
+        then a switch inside can switch based on type 
+
+        but this will be tricky since they all take in different arguments
+
+    change name of TOKEN_STRING_TYPE to TOKEN_STRING_IDENTIFIER so that it can
+        be used for both type AND casting to strings
+
+    print("Hello world" + string(3) + string(-32.2) + string(true))
+
+    Write a tree-walk interpreter in cebra to flaws in code
+        print(nil) should this work?
 
     write code to catch compiler errors: pretty much type checking
         compiling error - if the condition evaulates to non-boolean take care of

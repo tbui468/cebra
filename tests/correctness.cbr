@@ -961,6 +961,33 @@ add_passed := (msg: string) -> {
 }
 
 
+{
+    print("***********Cast to String************")
+    if string(true) == "true" and string(false) == "false" {
+        add_passed("Cast Boolean to String: Passed!")
+    } else {
+        add_failed("Cast Boolean to String: Failed!")
+    }
+
+    if string(nil) == "nil" {
+        add_passed("Cast Nil to String: Passed!")
+    } else {
+        add_passed("Cast Nil to String: Failed!")
+    }
+
+    a: bool = string(0) == "0"
+    b: bool = string(-1) == "-1"
+    c: bool = string(1) == "1"
+    d: bool = string(9000111000111000111) == "9000111000111000111"
+    e: bool = string(-9000111000111000111) == "-9000111000111000111"
+
+    if a and b and c and d and e {
+        add_passed("Cast Int to String: Passed!")
+    } else {
+        add_passed("Cast Int to String: Failed!")
+    }
+}
+
 print("----------------------------------")
 print("Total Tests:")
 print(passed.size + failed.size)

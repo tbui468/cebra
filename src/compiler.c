@@ -1018,6 +1018,77 @@ static struct SigArray* compile_function(struct Compiler* compiler, struct NodeL
     return (struct SigArray*)ret_sigs;
 }
 
+static char int_to_char(int i) {
+    switch(i) {
+        case 0: return '0';
+        case 1: return '1';
+        case 2: return '2';
+        case 3: return '3';
+        case 4: return '4';
+        case 5: return '5';
+        case 6: return '6';
+        case 7: return '7';
+        case 8: return '8';
+        case 9: return '9';
+    }
+}
+
+static Value string_native(int arg_count, Value* args) {
+    switch(args[0].type) {
+        case VAL_INT:
+            int num = args[0].as.integer_type;
+            bool is_positive = num >= 0 ? true : false;
+            if (!is_positive) num = num * -1;
+
+            char* str = ALLOCATE_ARRAY(char);
+            //64 bit int has up to ~ nine quintrillion (19 digits)
+            //plus one for sign
+            //plus one for terminal char
+            str = GROW_ARRAY(str, char, 21, 0);
+
+            int idx = 0;
+            str[idx] = '\0';
+            idx++;
+
+            do {
+                char c = int_to_char(num % 10);
+                str[idx] = c;
+                idx++;
+                num /= 10;
+            } while (num != 0);
+
+            //add sign if negative
+            if (!is_positive) {
+                str[idx] = '-';
+                idx++;    
+            }
+
+            //resize array to length based on idx
+            int len = idx;
+            str = GROW_ARRAY(str, char, len, 21);
+
+            //reverse array
+            int n = 0;
+            while (n < len / 2) {
+                char temp = str[n];
+                str[n] = str[len - 1 - n];
+                str[len - 1 - n] = temp;
+                n++;
+            }
+
+            return to_string(take_string(str, len - 1));
+        case VAL_FLOAT:
+            return to_string(make_string("[not implemented]", 17));
+        case VAL_BOOL:
+            if (args[0].as.boolean_type) {
+                return to_string(make_string("true", 4));
+            }
+            return to_string(make_string("false", 5));
+        case VAL_NIL:
+            return to_string(make_string("nil", 3));
+    }
+}
+
 static Value clock_native(int arg_count, Value* args) {
     return to_float((double)clock() / CLOCKS_PER_SEC);
 }
@@ -1053,7 +1124,6 @@ static void define_clock(struct Compiler* compiler) {
 }
 
 static void define_print(struct Compiler* compiler) {
-    struct Sig* sl = make_array_sig();
     struct Sig* str_sig = make_prim_sig(VAL_STRING);
     struct Sig* int_sig = make_prim_sig(VAL_INT);
     struct Sig* float_sig = make_prim_sig(VAL_FLOAT);
@@ -1061,13 +1131,28 @@ static void define_print(struct Compiler* compiler) {
     str_sig->opt = int_sig;
     int_sig->opt = float_sig;
     float_sig->opt = nil_sig;
+    struct Sig* sl = make_array_sig();
     add_sig((struct SigArray*)sl, str_sig);
     define_native(compiler, "print", print_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_NIL)));
+}
+
+static void define_string(struct Compiler* compiler) {
+    struct Sig* int_sig = make_prim_sig(VAL_INT);
+    struct Sig* float_sig = make_prim_sig(VAL_FLOAT);
+    struct Sig* bool_sig = make_prim_sig(VAL_BOOL);
+    struct Sig* nil_sig = make_prim_sig(VAL_NIL);
+    int_sig->opt = float_sig;
+    float_sig->opt = bool_sig;
+    bool_sig->opt = nil_sig;
+    struct Sig* sl = make_array_sig();
+    add_sig((struct SigArray*)sl, int_sig);
+    define_native(compiler, "string", string_native, make_fun_sig((struct Sig*)sl, make_prim_sig(VAL_STRING)));
 }
 
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     define_clock(compiler);
     define_print(compiler);
+    define_string(compiler);
 
     struct SigArray* ret_sigs = compile_function(compiler, nl);
 
