@@ -17,9 +17,7 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Go through compiler and delete old commented code
-
-    remove lines setting return signatures when also returning RESULT_FAILED
+    Use ResultCode in parser, and make struct Node* returns a parameter
     
     put in 'if' into correctness.cbr to turn on/off tests - this will make it easier to
         pinpoint failing tests/crashing tests
@@ -85,8 +83,6 @@ IMPLEMENTATION:
 
     change name of TOKEN_STRING_TYPE to TOKEN_STRING_IDENTIFIER so that it can
         be used for both type AND casting to strings
-
-    print("Hello world" + string(3) + string(-32.2) + string(true))
 
     Write a tree-walk interpreter in cebra to flaws in code
         print(nil) should this work?

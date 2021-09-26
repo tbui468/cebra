@@ -6,7 +6,7 @@
 Parser parser;
 
 static struct Node* expression(Token var_name);
-static struct Node* declaration();
+static ResultCode declaration(struct Node** node);
 static void add_error(Token token, const char* message);
 static struct Node* block(struct Node* prepend);
 static struct Sig* read_sig(Token var_name);
@@ -517,11 +517,11 @@ static struct Node* block(struct Node* prepend) {
         if (peek_one(TOKEN_EOF)) {
             return NULL;
         }
-        struct Node* decl = declaration();
-        if (decl == NULL) {
-            synchronize();
-        } else {
+        struct Node* decl;
+        if (declaration(&decl) == RESULT_SUCCESS) {
             add_node(body, decl);
+        } else {
+            synchronize();
         }
     }
     return make_block(name, body);
@@ -654,69 +654,72 @@ static struct Node* var_declaration() {
     return make_decl_var(var_name, sig, right);
 }
 
-static struct Node* declaration() {
+static ResultCode declaration(struct Node** node) {
     if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
-        return var_declaration();
+        *node = var_declaration();
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;
         struct Node* b = block(NULL);
         if (b == NULL) {
             add_error(name, "Expect '}' after block body.");
-            return NULL;
+            return RESULT_FAILED;
         }
-        return b;
+        *node = b;
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_IF)) {
         Token name = parser.previous;
 
         struct Node* condition = expression(make_dummy_token());
         if (condition == NULL) {
             add_error(name, "Expect boolean expression after 'if'.");
-            return NULL;
+            return RESULT_FAILED;
         }
 
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after 'if' condition.")) return NULL;
+        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after 'if' condition.")) return RESULT_FAILED;
 
         struct Node* then_block = block(NULL);
         if (then_block == NULL) {
             add_error(name, "Expect '}' after 'if' statement body.");
-            return NULL;
+            return RESULT_FAILED;
         }
 
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
-            if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after 'else'.")) return NULL;
+            if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after 'else'.")) return RESULT_FAILED;
 
             else_block = block(NULL);
             if (else_block == NULL) {
                 add_error(name, "Expect '}' after 'else' statement body.");
-                return NULL;
+                return RESULT_FAILED;
             }
         }
 
-        return make_if_else(name, condition, then_block, else_block);
+        *node = make_if_else(name, condition, then_block, else_block);
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
         struct Node* condition = expression(make_dummy_token());
         if (condition == NULL || !match(TOKEN_LEFT_BRACE)) {
             add_error(name, "Expect boolean expression and '{' after 'while'.");
-            return NULL;
+            return RESULT_FAILED;
         }
         struct Node* then_block = block(NULL);
         if (then_block == NULL) {
             add_error(name, "Expect '}' after 'while' body.");
-            return NULL;
+            return RESULT_FAILED;
         }
-        return make_while(name, condition, then_block);
+        *node = make_while(name, condition, then_block);
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_FOR)) {
         Token name = parser.previous;
-        struct Node* initializer = NULL;
+        struct Node* initializer;
         if (!match(TOKEN_COMMA)) {
-            initializer = declaration();
-            if (initializer == NULL) {
+            if (declaration(&initializer) == RESULT_FAILED) {
                 add_error(name, "Expect initializer or empty space for first item in 'for' loop.");
-                return NULL;
+                return RESULT_FAILED;
             }
-            if (!consume(TOKEN_COMMA, "Expect ',' after for-loop initializer.")) return NULL;
+            if (!consume(TOKEN_COMMA, "Expect ',' after for-loop initializer.")) return RESULT_FAILED;
         }
 
         struct Node* condition = NULL;
@@ -724,9 +727,9 @@ static struct Node* declaration() {
             condition = expression(make_dummy_token());
             if (condition == NULL) {
                 add_error(name, "Expect condition or empty space for second item in 'for' loop.");
-                return NULL;
+                return RESULT_FAILED;
             }
-            if (!consume(TOKEN_COMMA, "Expect ',' after for-loop condition.")) return NULL;
+            if (!consume(TOKEN_COMMA, "Expect ',' after for-loop condition.")) return RESULT_FAILED;
         }
 
         struct Node* update = NULL;
@@ -734,18 +737,19 @@ static struct Node* declaration() {
             update = make_expr_stmt(expression(make_dummy_token()));
             if (update == NULL) {
                 add_error(name, "Expect update or empty space for third item in 'for' loop.");
-                return NULL;
+                return RESULT_FAILED;
             }
-            if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after for-loop update.")) return NULL;
+            if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after for-loop update.")) return RESULT_FAILED;
         }
 
         struct Node* then_block = block(NULL);
         if (then_block == NULL) {
             add_error(name, "Expect '}' after for-loop body.");
-            return NULL;
+            return RESULT_FAILED;
         }
 
-        return make_for(name, initializer, condition, update, then_block);
+        *node = make_for(name, initializer, condition, update, then_block);
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_FOR_EACH)) {
         Token name = parser.previous;
         struct Node* element = param_declaration();
@@ -753,15 +757,15 @@ static struct Node* declaration() {
             //error messages are added in param_declaration
             //Maybe pull error messages up here so that they can be specific to foreach loop
             //consider doing same for function parameters
-            return NULL;
+            return RESULT_FAILED;
         }
 
-        if (!consume(TOKEN_IN, "Expect 'in' after element declaration.")) return NULL;
+        if (!consume(TOKEN_IN, "Expect 'in' after element declaration.")) return RESULT_FAILED;
 
         struct Node* list = expression(make_dummy_token());
         if (list == NULL) {
             add_error(name, "Expect List after 'in'.");
-            return NULL;
+            return RESULT_FAILED;
         }
 
         //initializer
@@ -783,29 +787,33 @@ static struct Node* declaration() {
         struct Node* update = make_expr_stmt(make_set_var(get_idx, sum)); 
 
         //body
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before foreach loop body.")) return NULL;
+        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before foreach loop body.")) return RESULT_FAILED;
 
         struct Node* get_element = make_get_idx(make_dummy_token(), list, get_idx);
         ((DeclVar*)element)->right = get_element;
         struct Node* then_block = block(element);
         if (then_block == NULL) {
             add_error(name, "Expect '}' after for-loop body.");
-            return NULL;
+            return RESULT_FAILED;
         }
 
-        return make_for(name, initializer, condition, update, then_block);
+        *node = make_for(name, initializer, condition, update, then_block);
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right = expression(make_dummy_token()); //NULL if '}'
-        return make_return(name, right);
+        *node = make_return(name, right);
+        return RESULT_SUCCESS;
     }
 
     struct Node* expr = expression(make_dummy_token());
     if (expr == NULL) {
         //errors add inside expression
-        return NULL;
+        return RESULT_FAILED;
     }
-    return make_expr_stmt(expr);
+    
+    *node = make_expr_stmt(expr);
+    return RESULT_SUCCESS;
 }
 
 static void add_error(Token token, const char* message) {
@@ -855,11 +863,11 @@ ResultCode parse(const char* source, struct NodeList* nl) {
     init_parser(source);
 
     while(parser.current.type != TOKEN_EOF) {
-        struct Node* decl = declaration();
-        if (decl == NULL) {
-            synchronize();
-        } else {
+        struct Node* decl;
+        if (declaration(&decl) == RESULT_SUCCESS) {
             add_node(nl, decl);
+        } else {
+            synchronize();
         }
     }
 
