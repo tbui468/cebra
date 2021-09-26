@@ -12,7 +12,7 @@
 struct Compiler* current_compiler = NULL;
 struct Compiler* class_compiler = NULL;
 struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs);
-static struct SigArray* compile_function(struct Compiler* compiler, struct NodeList* nl);
+static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct SigArray** sig_array);
 
 static void add_error(struct Compiler* compiler, Token token, const char* message) {
     CompileError error;
@@ -414,7 +414,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count);
             set_local(&func_comp, df->name, df->sig, 0);
             add_node(df->parameters, df->body);
-            struct SigArray* inner_ret_sigs = compile_function(&func_comp, df->parameters); 
+            struct SigArray* inner_ret_sigs;
+            ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_sigs); 
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
@@ -1014,7 +1015,7 @@ void free_compiler(struct Compiler* compiler) {
     pop_root();
 }
 
-static struct SigArray* compile_function(struct Compiler* compiler, struct NodeList* nl) {
+static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct SigArray** sig_array) {
     struct Sig* ret_sigs = make_array_sig();
     for (int i = 0; i < nl->count; i++) {
         struct Sig* sig = compile_node(compiler, nl->nodes[i], (struct SigArray*)ret_sigs);
@@ -1023,7 +1024,10 @@ static struct SigArray* compile_function(struct Compiler* compiler, struct NodeL
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);
     }
-    return (struct SigArray*)ret_sigs;
+
+    *sig_array = (struct SigArray*)ret_sigs;
+
+    return RESULT_SUCCESS;
 }
 
 static Value string_native(int arg_count, Value* args) {
@@ -1126,7 +1130,8 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     define_print(compiler);
     define_string(compiler);
 
-    struct SigArray* ret_sigs = compile_function(compiler, nl);
+    struct SigArray* ret_sigs;
+    ResultCode result = compile_function(compiler, nl, &ret_sigs);
 
     if (compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {
