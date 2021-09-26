@@ -17,18 +17,12 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Make compile_node return a ResultCode.  Pass in a struct Sig** to get a resulting sig.
-        //This crashes in compiler when c is NOT a declared variable - need to handle this gracefully 
-        foreach i: string in c {
-            print(c[i])
-        }
+    Go through compiler and delete old commented code
 
-        //this one also may be the same problem as above
-        add_Failed("For Each with Map Keys/Values: Failed!") //crashes because name is wrong - need to handle
-
-        need to return if any NULL are returned in compiler, otherwise it gets stuck in some loop/tries to use a NULL
-
-            compile_script is the root
+    remove lines setting return signatures when also returning RESULT_FAILED
+    
+    put in 'if' into correctness.cbr to turn on/off tests - this will make it easier to
+        pinpoint failing tests/crashing tests
 
     Add enum support
 

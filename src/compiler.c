@@ -11,7 +11,7 @@
 
 struct Compiler* current_compiler = NULL;
 struct Compiler* class_compiler = NULL;
-struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs);
+static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs, struct Sig** node_sig);
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct SigArray** sig_array);
 
 static void add_error(struct Compiler* compiler, Token token, const char* message) {
@@ -80,20 +80,22 @@ static void emit_jump_by(struct Compiler* compiler, OpCode op, int index) {
 }
 
 
-static struct Sig* compile_literal(struct Compiler* compiler, struct Node* node) {
+static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, struct Sig** node_sig) {
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
             emit_byte(compiler, OP_CONSTANT); 
             emit_short(compiler, add_constant(compiler, to_integer(integer)));
-            return make_prim_sig(VAL_INT);
+            *node_sig = make_prim_sig(VAL_INT);
+            return RESULT_SUCCESS;
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
             emit_byte(compiler, OP_CONSTANT);
             emit_short(compiler, add_constant(compiler, to_float(f)));
-            return make_prim_sig(VAL_FLOAT);
+            *node_sig = make_prim_sig(VAL_FLOAT);
+            return RESULT_SUCCESS;
         }
         case TOKEN_STRING: {
             struct ObjString* str = make_string(literal->name.start, literal->name.length);
@@ -101,74 +103,96 @@ static struct Sig* compile_literal(struct Compiler* compiler, struct Node* node)
             emit_byte(compiler, OP_CONSTANT);
             emit_short(compiler, add_constant(compiler, to_string(str)));
             pop_root();
-            return make_prim_sig(VAL_STRING);
+            *node_sig = make_prim_sig(VAL_STRING);
+            return RESULT_SUCCESS;
         }
         case TOKEN_TRUE: {
             emit_byte(compiler, OP_TRUE);
-            return make_prim_sig(VAL_BOOL);
+            *node_sig = make_prim_sig(VAL_BOOL);
+            return RESULT_SUCCESS;
         }
         case TOKEN_FALSE: {
             emit_byte(compiler, OP_FALSE);
-            return make_prim_sig(VAL_BOOL);
+            *node_sig = make_prim_sig(VAL_BOOL);
+            return RESULT_SUCCESS;
         }
     }
+    return RESULT_FAILED;
 }
 
-static struct Sig* compile_unary(struct Compiler* compiler, struct Node* node) {
+static ResultCode compile_unary(struct Compiler* compiler, struct Node* node, struct Sig** node_sig) {
     Unary* unary = (Unary*)node;
-    struct Sig* sig = compile_node(compiler, unary->right, NULL);
+    struct Sig* sig;
+    if (compile_node(compiler, unary->right, NULL, &sig) == RESULT_FAILED) return RESULT_FAILED;
     emit_byte(compiler, OP_NEGATE);
-    return sig;
+    *node_sig = sig;
+    return RESULT_SUCCESS;
 }
 
-static struct Sig* compile_logical(struct Compiler* compiler, struct Node* node) {
+static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, struct Sig** node_sig) {
     Logical* logical = (Logical*)node;
 
     if (logical->name.type == TOKEN_AND) {
-        struct Sig* left_type = compile_node(compiler, logical->left, NULL);
+        struct Sig* left_type;
+        if (compile_node(compiler, logical->left, NULL, &left_type) == RESULT_FAILED) return RESULT_FAILED;
         int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
         emit_byte(compiler, OP_POP);
-        struct Sig* right_type = compile_node(compiler, logical->right, NULL);
+        struct Sig* right_type;
+        if (compile_node(compiler, logical->right, NULL, &right_type) == RESULT_FAILED) return RESULT_FAILED;
         patch_jump(compiler, false_jump);
         if (!same_sig(left_type, right_type)) {
             add_error(compiler, logical->name, "Left and right types must match.");
+            return RESULT_FAILED;
         }
-        return make_prim_sig(VAL_BOOL);
+        *node_sig = make_prim_sig(VAL_BOOL);
+        return RESULT_SUCCESS;
     }
 
     if (logical->name.type == TOKEN_OR) {
-        struct Sig* left_type = compile_node(compiler, logical->left, NULL);
+        struct Sig* left_type;
+        if (compile_node(compiler, logical->left, NULL, &left_type) == RESULT_FAILED) return RESULT_FAILED;
         int true_jump = emit_jump(compiler, OP_JUMP_IF_TRUE);
         emit_byte(compiler, OP_POP);
-        struct Sig* right_type = compile_node(compiler, logical->right, NULL);
+        struct Sig* right_type;
+        if (compile_node(compiler, logical->right, NULL, &right_type) == RESULT_FAILED) return RESULT_FAILED;
         patch_jump(compiler, true_jump);
         if (!same_sig(left_type, right_type)) {
             add_error(compiler, logical->name, "Left and right types must match.");
+            return RESULT_FAILED;
         }
-        return make_prim_sig(VAL_BOOL);
+        *node_sig = make_prim_sig(VAL_BOOL);
+        return RESULT_SUCCESS;
     }
 
     if (logical->name.type == TOKEN_IN) {
-        struct Sig* element_sig = compile_node(compiler, logical->left, NULL);
-        struct Sig* list_sig = compile_node(compiler, logical->right, NULL);
+        struct Sig* element_sig;
+        if (compile_node(compiler, logical->left, NULL, &element_sig) == RESULT_FAILED) return RESULT_FAILED;
+        struct Sig* list_sig;
+        if (compile_node(compiler, logical->right, NULL, &list_sig) == RESULT_FAILED) return RESULT_FAILED;
 
         if (list_sig->type != SIG_LIST) {
             add_error(compiler, logical->name, "Identifier after 'in' must reference a List.");
+            return RESULT_FAILED;
         }
 
         if (!same_sig(element_sig, ((struct SigList*)list_sig)->type)) {
             add_error(compiler, logical->name, "Type left of 'in' must match List element type.");
+            return RESULT_FAILED;
         }
 
         emit_byte(compiler, OP_IN_LIST);
-        return make_prim_sig(VAL_BOOL);
+        *node_sig = make_prim_sig(VAL_BOOL);
+        return RESULT_SUCCESS;
     }
 
-    struct Sig* left_type = compile_node(compiler, logical->left, NULL);
-    struct Sig* right_type = compile_node(compiler, logical->right, NULL);
+    struct Sig* left_type;
+    if (compile_node(compiler, logical->left, NULL, &left_type)) return RESULT_FAILED;
+    struct Sig* right_type;
+    if (compile_node(compiler, logical->right, NULL, &right_type)) return RESULT_FAILED;
 
     if (!same_sig(left_type, right_type)) {
         add_error(compiler, logical->name, "Left and right types must match.");
+        return RESULT_FAILED;
     }
     switch(logical->name.type) {
         case TOKEN_LESS:
@@ -193,16 +217,20 @@ static struct Sig* compile_logical(struct Compiler* compiler, struct Node* node)
             emit_byte(compiler, OP_NEGATE);
             break;
     }
-    return make_prim_sig(VAL_BOOL);
+    *node_sig = make_prim_sig(VAL_BOOL);
+    return RESULT_SUCCESS;
 }
 
-static struct Sig* compile_binary(struct Compiler* compiler, struct Node* node) {
+static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, struct Sig** node_sig) {
     Binary* binary = (Binary*)node;
 
-    struct Sig* type1 = compile_node(compiler, binary->left, NULL);
-    struct Sig* type2 = compile_node(compiler, binary->right, NULL);
+    struct Sig* type1;
+    if (compile_node(compiler, binary->left, NULL, &type1) == RESULT_FAILED) return RESULT_FAILED;
+    struct Sig* type2;
+    if (compile_node(compiler, binary->right, NULL, &type2) == RESULT_FAILED) return RESULT_FAILED;
     if (!same_sig(type1, type2)) {
         add_error(compiler, binary->name, "Left and right types must match.");
+        return RESULT_FAILED;
     }
     switch(binary->name.type) {
         case TOKEN_PLUS: emit_byte(compiler, OP_ADD); break;
@@ -212,7 +240,8 @@ static struct Sig* compile_binary(struct Compiler* compiler, struct Node* node) 
         case TOKEN_MOD: emit_byte(compiler, OP_MOD); break;
     }
 
-    return type1;
+    *node_sig = type1;
+    return RESULT_SUCCESS;
 }
 
 static void set_local(struct Compiler* compiler, Token name, struct Sig* sig, int index) {
@@ -348,9 +377,10 @@ static void resolve_self_ref_sig(struct SigClass* sc) {
     }
 }
 
-static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs) {
+static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs, struct Sig** node_sig) {
     if (node == NULL) {
-        return make_prim_sig(VAL_NIL);
+        *node_sig = make_prim_sig(VAL_NIL);
+        return RESULT_SUCCESS;
     }
     switch(node->type) {
         //declarations
@@ -361,14 +391,16 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             if (declared_in_scope(compiler, dv->name)) {
                 add_error(compiler, dv->name, "Identifier already defined.");
+                return RESULT_FAILED;
             }
 
             //inferred type, defined
             if (dv->sig->type == SIG_DECL) {
                 int idx = add_local(compiler, dv->name, dv->sig);
-                sig = compile_node(compiler, dv->right, NULL);
+                if (compile_node(compiler, dv->right, NULL, &sig) == RESULT_FAILED) return RESULT_FAILED;
                 if (sig_is_type(sig, VAL_NIL)) {
                     add_error(compiler, dv->name, "Inferred type cannot be assigned to 'nil'.");
+                    return RESULT_FAILED;
                 }
                 set_local(compiler, dv->name, sig, idx);
 
@@ -380,7 +412,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             //explicit type, defined and parameters
             if (dv->sig->type != SIG_DECL) {
                 int idx = add_local(compiler, dv->name, dv->sig);
-                sig = compile_node(compiler, dv->right, NULL);
+                if (compile_node(compiler, dv->right, NULL, &sig) == RESULT_FAILED) return RESULT_FAILED;
 
                 if (!sig_is_type(sig, VAL_NIL)) {
                     set_local(compiler, dv->name, sig, idx);
@@ -396,6 +428,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
                     if (!same_sig(dv->sig, sig)) {
                         add_error(compiler, dv->name, "Declaration type and right hand side type must match.");
+                        return RESULT_FAILED;
                     }
                 }
 
@@ -404,8 +437,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
             }
 
-
-            return sig;
+            *node_sig = sig;
+            return RESULT_SUCCESS;
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
@@ -432,6 +465,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             struct SigFun* sigfun = (struct SigFun*)df->sig;
             if (inner_ret_sigs->count == 0 && !sig_is_type(sigfun->ret, VAL_NIL)) {
                 add_error(compiler, df->name, "Return type must match signature in function declaration.");
+                return RESULT_FAILED;
             }
 
             struct Sig* ret_sig = sigfun->ret;
@@ -446,6 +480,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
                 if (!same_sig(ret_sig, inner_sig)) {
                     add_error(compiler, df->name, "Return type must match signature in function declaration.");
+                    return RESULT_FAILED;
                 }
             }
 
@@ -460,7 +495,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             free_compiler(&func_comp);
 
-            return df->sig;
+            *node_sig = df->sig;
+            return RESULT_SUCCESS;
         }
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
@@ -472,7 +508,9 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             struct SigClass* super_sig;
             if (dc->super != NULL) {
-                super_sig = (struct SigClass*)compile_node(compiler, dc->super, ret_sigs);
+                struct Sig* s;
+                if (compile_node(compiler, dc->super, ret_sigs, &s) == RESULT_FAILED) return RESULT_FAILED;
+                super_sig = (struct SigClass*)s;
             } else {
                 emit_byte(compiler, OP_NIL);
             }
@@ -494,7 +532,8 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 struct Sig* class_ret_sigs = make_array_sig();
 
                 start_scope(compiler);
-                struct Sig* sig = compile_node(compiler, node, (struct SigArray*)class_ret_sigs);
+                struct Sig* sig;
+                if (compile_node(compiler, node, (struct SigArray*)class_ret_sigs, &sig) == RESULT_FAILED) return RESULT_FAILED;
 
                 if (sig_is_type(sig, VAL_NIL)) {
                     struct Sig* dv_sig = dv->sig;
@@ -524,6 +563,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                         bool overwritting = get_from_table(&super_sig->props, pair->key, &value);
                         if (overwritting && !same_sig(value.as.sig_type, pair->value.as.sig_type)) {
                             add_error(compiler, dc->name, "Overwritten property must of same type.");
+                            return RESULT_FAILED;
                         }
                     }
                 }
@@ -539,80 +579,97 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             pop_root();
             pop_root();
 
-            return (struct Sig*)sc;
+            *node_sig = (struct Sig*)sc;
+            return RESULT_SUCCESS;
         }
         //statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
-            struct Sig* sig = compile_node(compiler, es->expr, ret_sigs);
+            struct Sig* sig;
+            if (compile_node(compiler, es->expr, ret_sigs, &sig) == RESULT_FAILED) return RESULT_FAILED;
 
             //while/if-else etc return VAL_NIL (and leave nothing on stack)
             if (!sig_is_type(sig, VAL_NIL)) {
                 emit_byte(compiler, OP_POP);
             }
-            return make_prim_sig(VAL_NIL);
+            *node_sig = make_prim_sig(VAL_NIL);
+            return RESULT_SUCCESS;
         }
         case NODE_BLOCK: {
             Block* block = (Block*)node;
             start_scope(compiler);
             for (int i = 0; i < block->decl_list->count; i++) {
-                struct Sig* sig = compile_node(compiler, block->decl_list->nodes[i], ret_sigs);
+                struct Sig* sig;
+                if (compile_node(compiler, block->decl_list->nodes[i], ret_sigs, &sig) == RESULT_FAILED) return RESULT_FAILED;
             }
             end_scope(compiler);
-            return make_prim_sig(VAL_NIL);
+            *node_sig = make_prim_sig(VAL_NIL);
+            return RESULT_SUCCESS;
         }
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
-            struct Sig* cond = compile_node(compiler, ie->condition, ret_sigs);
+            struct Sig* cond;
+            if (compile_node(compiler, ie->condition, ret_sigs, &cond) == RESULT_FAILED) return RESULT_FAILED;
 
             if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, ie->name, "Condition must evaluate to boolean.");
+                return RESULT_FAILED;
             }
 
             int jump_then = emit_jump(compiler, OP_JUMP_IF_FALSE); 
 
             emit_byte(compiler, OP_POP);
-            struct Sig* then_sig = compile_node(compiler, ie->then_block, ret_sigs);
+            struct Sig* then_sig;
+            if (compile_node(compiler, ie->then_block, ret_sigs, &then_sig) == RESULT_FAILED) return RESULT_FAILED;
             int jump_else = emit_jump(compiler, OP_JUMP);
 
             patch_jump(compiler, jump_then);
             emit_byte(compiler, OP_POP);
-            struct Sig* else_sig = compile_node(compiler, ie->else_block, ret_sigs);
+            struct Sig* else_sig;
+            if (compile_node(compiler, ie->else_block, ret_sigs, &else_sig) == RESULT_FAILED) return RESULT_FAILED;
             patch_jump(compiler, jump_else);
-            return make_prim_sig(VAL_NIL);
+            *node_sig = make_prim_sig(VAL_NIL);
+            return RESULT_SUCCESS;
         }
         case NODE_WHILE: {
             While* wh = (While*)node;
             int start = compiler->function->chunk.count;
-            struct Sig* cond = compile_node(compiler, wh->condition, ret_sigs);
+            struct Sig* cond;
+            if (compile_node(compiler, wh->condition, ret_sigs, &cond) == RESULT_FAILED) return RESULT_FAILED;
             if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, wh->name, "Condition must evaluate to boolean.");
+                return RESULT_FAILED;
             }
 
             int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
 
             emit_byte(compiler, OP_POP);
-            struct Sig* then_block = compile_node(compiler, wh->then_block, ret_sigs);
+            struct Sig* then_block;
+            if (compile_node(compiler, wh->then_block, ret_sigs, &then_block) == RESULT_FAILED) return RESULT_FAILED;
 
             //+3 to include OP_JUMP_BACK and uint16_t for jump distance
             int from = compiler->function->chunk.count + 3;
             emit_jump_by(compiler, OP_JUMP_BACK, from - start);
             patch_jump(compiler, false_jump);   
             emit_byte(compiler, OP_POP);
-            return make_prim_sig(VAL_NIL);
+            *node_sig = make_prim_sig(VAL_NIL);
+            return RESULT_SUCCESS;
         }
         case NODE_FOR: {
             For* fo = (For*)node;
             start_scope(compiler);
            
             //initializer
-            struct Sig* init = compile_node(compiler, fo->initializer, ret_sigs); //should leave no value on stack
+            struct Sig* init;
+            if (compile_node(compiler, fo->initializer, ret_sigs, &init) == RESULT_FAILED) return RESULT_FAILED;
 
             //condition
             int condition_start = compiler->function->chunk.count;
-            struct Sig* cond = compile_node(compiler, fo->condition, ret_sigs);
+            struct Sig* cond;
+            if (compile_node(compiler, fo->condition, ret_sigs, &cond) == RESULT_FAILED) return RESULT_FAILED;
             if (!sig_is_type(cond, VAL_BOOL)) {
                 add_error(compiler, fo->name, "Condition must evaluate to boolean.");
+                return RESULT_FAILED;
             }
 
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
@@ -621,72 +678,73 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             //update
             int update_start = compiler->function->chunk.count;
             if (fo->update) {
-                struct Sig* up = compile_node(compiler, fo->update, ret_sigs);
+                struct Sig* up;
+                if (compile_node(compiler, fo->update, ret_sigs, &up) == RESULT_FAILED) return RESULT_FAILED;
             }
             emit_jump_by(compiler, OP_JUMP_BACK, compiler->function->chunk.count + 3 - condition_start);
 
             //body
             patch_jump(compiler, body_jump);
             emit_byte(compiler, OP_POP); //pop condition if true
-            struct Sig* then_sig = compile_node(compiler, fo->then_block, ret_sigs);
+            struct Sig* then_sig;
+            if (compile_node(compiler, fo->then_block, ret_sigs, &then_sig) == RESULT_FAILED) return RESULT_FAILED;
             emit_jump_by(compiler, OP_JUMP_BACK, compiler->function->chunk.count + 3 - update_start);
 
             patch_jump(compiler, exit_jump);
             emit_byte(compiler, OP_POP); //pop condition if false
 
             end_scope(compiler);
-            return make_prim_sig(VAL_NIL);
+            *node_sig = make_prim_sig(VAL_NIL);
+            return RESULT_SUCCESS;
         }
         case NODE_RETURN: {
             Return* ret = (Return*)node;
-            struct Sig* sig = compile_node(compiler, ret->right, ret_sigs);
+            struct Sig* sig;
+            if (compile_node(compiler, ret->right, ret_sigs, &sig) == RESULT_FAILED) return RESULT_FAILED;
 
             if (sig_is_type(sig, VAL_NIL)) {
                 emit_byte(compiler, OP_NIL);
             }
             emit_byte(compiler, OP_RETURN);
             add_sig(ret_sigs, sig);
-            return sig;
+            *node_sig = sig;
+            return RESULT_SUCCESS;
         }
         //expressions
-        case NODE_LITERAL:      return compile_literal(compiler, node);
-        case NODE_BINARY:       return compile_binary(compiler, node);
-        case NODE_LOGICAL:      return compile_logical(compiler, node);
-        case NODE_UNARY:        return compile_unary(compiler, node);
+        case NODE_LITERAL:      return compile_literal(compiler, node, node_sig);
+        case NODE_BINARY:       return compile_binary(compiler, node, node_sig);
+        case NODE_LOGICAL:      return compile_logical(compiler, node, node_sig);
+        case NODE_UNARY:        return compile_unary(compiler, node, node_sig);
         case NODE_GET_PROP: {
             GetProp* gp = (GetProp*)node;
-            struct Sig* sig_inst = compile_node(compiler, gp->inst, ret_sigs);
+            struct Sig* sig_inst;
+            if (compile_node(compiler, gp->inst, ret_sigs, &sig_inst) == RESULT_FAILED) return RESULT_FAILED;
 
-            //structs referencing themselves will have incomplete signature
-            //so this is needed to update embedded structs if accessed
-             //TODO: testing type checking
-             /*
-            if (sig_inst->type == SIG_CLASS) {
-                sig_inst = resolve_sig(compiler, ((struct SigClass*)sig_inst)->klass);
-            }*/
-
-            if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
+            //if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
 
             if (sig_inst->type == SIG_LIST) {
                 if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_SIZE);
-                    return make_prim_sig(VAL_INT);
+                    *node_sig = make_prim_sig(VAL_INT);
+                    return RESULT_SUCCESS;
                 }
                 add_error(compiler, gp->prop, "Property doesn't exist on List.");
-                return NULL;
+                return RESULT_FAILED;
             }
 
             if (sig_inst->type == SIG_MAP) {
                 if (gp->prop.length == 4 && memcmp(gp->prop.start, "keys", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_KEYS);
-                    return make_list_sig(make_prim_sig(VAL_STRING));
+                    *node_sig = make_list_sig(make_prim_sig(VAL_STRING));
+                    return RESULT_SUCCESS;
                 }
                 if (gp->prop.length == 6 && memcmp(gp->prop.start, "values", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_VALUES);
-                    return make_list_sig(((struct SigMap*)sig_inst)->type);
+                    *node_sig = make_list_sig(((struct SigMap*)sig_inst)->type);
+                    return RESULT_SUCCESS;
                 }
                 add_error(compiler, gp->prop, "Property doesn't exist on Map.");
-                return NULL;
+                return RESULT_FAILED;
             }
 
             if (sig_inst->type == SIG_IDENTIFIER) {
@@ -702,24 +760,28 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             Value sig_val;
             if (!get_from_table(&((struct SigClass*)sig_inst)->props, name, &sig_val)) {
                 add_error(compiler, gp->prop, "Property doesn't exist on struct.");
-                return make_prim_sig(VAL_NIL); //change to NULL (since VAL_NIL sig is a valid sig)
+                return RESULT_FAILED;
             }
 
-            return sig_val.as.sig_type;
+            *node_sig = sig_val.as.sig_type;
+            return RESULT_SUCCESS;
         }
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;
-            struct Sig* right_sig = compile_node(compiler, sp->right, ret_sigs);
-            struct Sig* sig_inst = compile_node(compiler, ((GetProp*)(sp->inst))->inst, ret_sigs);
+            struct Sig* right_sig;
+            if (compile_node(compiler, sp->right, ret_sigs, &right_sig) == RESULT_FAILED) return RESULT_FAILED;
+            struct Sig* sig_inst;
+            if (compile_node(compiler, ((GetProp*)(sp->inst))->inst, ret_sigs, &sig_inst) == RESULT_FAILED) return RESULT_FAILED;
             Token prop = ((GetProp*)sp->inst)->prop;
 
             if (sig_inst->type == SIG_LIST) {
                 if (prop.length == 4 && memcmp(prop.start, "size", prop.length) == 0) {
                     emit_byte(compiler, OP_SET_SIZE);
-                    return make_prim_sig(VAL_INT);
+                    *node_sig = make_prim_sig(VAL_INT);
+                    return RESULT_SUCCESS;
                 }
                 add_error(compiler, prop, "Property doesn't exist on List.");
-                return NULL;
+                return RESULT_FAILED;
             }
 
             if (sig_inst->type == SIG_IDENTIFIER) {
@@ -741,40 +803,44 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             if (!same_sig(sig_val.as.sig_type, right_sig)) {
                 add_error(compiler, prop, "Property and assignment types must match.");
-                return make_prim_sig(VAL_NIL);
+                return RESULT_FAILED;
             }
 
-            return right_sig;
-
+            *node_sig = right_sig;
+            return RESULT_SUCCESS;
         }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
 
             //List/Map creation
             if (gv->template_type != NULL) {
-                return gv->template_type;
+                *node_sig = gv->template_type;
+                return RESULT_SUCCESS;
             }
 
             int idx = resolve_local(compiler, gv->name);
             if (idx != -1) {
                 emit_byte(compiler, OP_GET_LOCAL);
                 emit_byte(compiler, idx);
-                return resolve_sig(compiler, gv->name);
+                *node_sig = resolve_sig(compiler, gv->name);
+                return RESULT_SUCCESS;
             }
 
             int upvalue_idx = resolve_upvalue(compiler, gv->name);
             if (upvalue_idx != -1) {
                 emit_byte(compiler, OP_GET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
-                return resolve_sig(compiler, gv->name);
+                *node_sig = resolve_sig(compiler, gv->name);
+                return RESULT_SUCCESS;
             }
 
             add_error(compiler, gv->name, "Local variable not declared.");
-            return NULL;
+            return RESULT_FAILED;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
-            struct Sig* right_sig = compile_node(compiler, sv->right, ret_sigs);
+            struct Sig* right_sig;
+            if (compile_node(compiler, sv->right, ret_sigs, &right_sig) == RESULT_FAILED) return RESULT_FAILED;
             if (right_sig->type == SIG_IDENTIFIER) {
                 right_sig = resolve_sig(compiler, ((struct SigIdentifier*)right_sig)->identifier);
             }
@@ -788,68 +854,80 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             if (idx != -1) {
                 if (!same_sig(var_sig, right_sig)) {
                     add_error(compiler, var, "Right side type must match variable type.");
+                    return RESULT_FAILED;
                 }
 
                 emit_byte(compiler, OP_SET_LOCAL);
                 emit_byte(compiler, idx);
-                return var_sig;
+                *node_sig = var_sig;
+                return RESULT_SUCCESS;
             }
 
             int upvalue_idx = resolve_upvalue(compiler, var);
             if (upvalue_idx != -1) {
                 if (!same_sig(var_sig, right_sig)) {
                     add_error(compiler, var, "Right side type must match variable type.");
+                    return RESULT_FAILED;
                 }
 
                 emit_byte(compiler, OP_SET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
-                return var_sig;
+                *node_sig = var_sig;
+                return RESULT_SUCCESS;
             }
 
             add_error(compiler, var, "Local variable not declared.");
-            return make_prim_sig(VAL_NIL);
+            *node_sig = make_prim_sig(VAL_NIL);
+            return RESULT_FAILED;
         }
         case NODE_GET_IDX: {
             GetIdx* get_idx = (GetIdx*)node;
-            struct Sig* left_sig = compile_node(compiler, get_idx->left, ret_sigs);
-            struct Sig* idx_sig = compile_node(compiler, get_idx->idx, ret_sigs);
+            struct Sig* left_sig;
+            if (compile_node(compiler, get_idx->left, ret_sigs, &left_sig) == RESULT_FAILED) return RESULT_FAILED;
+            struct Sig* idx_sig;
+            if (compile_node(compiler, get_idx->idx, ret_sigs, &idx_sig) == RESULT_FAILED) return RESULT_FAILED;
 
             if (left_sig->type == SIG_LIST) {
                 if (!sig_is_type(idx_sig, VAL_INT)) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
-                    return NULL;
+                    return RESULT_FAILED;
                 }
 
                 emit_byte(compiler, OP_GET_IDX);
-                return ((struct SigList*)left_sig)->type;
+                *node_sig = ((struct SigList*)left_sig)->type;
+                return RESULT_SUCCESS;
             }
 
             if (left_sig->type == SIG_MAP) {
                 if (!sig_is_type(idx_sig, VAL_STRING)) {
                     add_error(compiler, get_idx->name, "Key must be string type.");
-                    return NULL;
+                    return RESULT_FAILED;
                 }
 
                 emit_byte(compiler, OP_GET_IDX);
-                return ((struct SigList*)left_sig)->type;
+                *node_sig = ((struct SigList*)left_sig)->type;
+                return RESULT_SUCCESS;
             }
 
 
             add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
-            return NULL;
+            return RESULT_FAILED;
         }
         case NODE_SET_IDX: {
             SetIdx* set_idx = (SetIdx*)node;
             GetIdx* get_idx = (GetIdx*)(set_idx->left);
 
-            struct Sig* right_sig = compile_node(compiler, set_idx->right, ret_sigs);
-            struct Sig* left_sig = compile_node(compiler, get_idx->left, ret_sigs);
-            struct Sig* idx_sig = compile_node(compiler, get_idx->idx, ret_sigs);
+            struct Sig* right_sig;
+            if (compile_node(compiler, set_idx->right, ret_sigs, &right_sig) == RESULT_FAILED) return RESULT_FAILED;
+            struct Sig* left_sig;
+            if (compile_node(compiler, get_idx->left, ret_sigs, &left_sig) == RESULT_FAILED) return RESULT_FAILED;
+            struct Sig* idx_sig;
+            if (compile_node(compiler, get_idx->idx, ret_sigs, &idx_sig) == RESULT_FAILED) return RESULT_FAILED;
 
             if (left_sig->type == SIG_LIST) {
                 if (!sig_is_type(idx_sig, VAL_INT)) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
-                    return NULL;
+                    return RESULT_FAILED;
                 }
 
                 struct Sig* template = ((struct SigList*)left_sig)->type;
@@ -858,17 +936,18 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
                 if (!same_sig(template, right_sig)) {
                     add_error(compiler, get_idx->name, "List type and right side type must match.");
-                    return NULL;
+                    return RESULT_FAILED;
                 }
 
                 emit_byte(compiler, OP_SET_IDX);
-                return right_sig;
+                *node_sig = right_sig;
+                return RESULT_SUCCESS;
             }
 
             if (left_sig->type == SIG_MAP) {
                 if (!sig_is_type(idx_sig, VAL_STRING)) {
                     add_error(compiler, get_idx->name, "Key must be string type.");
-                    return NULL;
+                    return RESULT_FAILED;
                 }
 
                 struct Sig* template = ((struct SigList*)left_sig)->type;
@@ -877,25 +956,28 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                 }
                 if (!same_sig(template, right_sig)) {
                     add_error(compiler, get_idx->name, "Map type and right side type must match.");
-                    return NULL;
+                    return RESULT_FAILED;
                 }
 
                 emit_byte(compiler, OP_SET_IDX);
-                return right_sig;
+                *node_sig = right_sig;
+                return RESULT_SUCCESS;
             }
 
             add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
-            return NULL;
+            return RESULT_FAILED;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
 
-            struct Sig* sig = compile_node(compiler, call->left, ret_sigs);
+            struct Sig* sig;
+            if (compile_node(compiler, call->left, ret_sigs, &sig) == RESULT_FAILED) return RESULT_FAILED;
 
             if (sig->type == SIG_LIST) {
                 struct SigList* sig_list = (struct SigList*)sig;
                 if (call->arguments->count != 0) {
                     add_error(compiler, call->name, "List constructor must have 1 argument for default value.");
+                    return RESULT_FAILED;
                 }
                 //struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
@@ -909,13 +991,15 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     add_error(compiler, call->name, "List type and argument type must be the same.");
                 }*/
                 emit_byte(compiler, OP_LIST);
-                return sig;
+                *node_sig = sig;
+                return RESULT_SUCCESS;
             }
 
             if (sig->type == SIG_MAP) {
                 struct SigMap* sig_map = (struct SigMap*)sig;
                 if (call->arguments->count != 0) {
                     add_error(compiler, call->name, "Map constructor must have 1 argument for default value.");
+                    return RESULT_FAILED;
                 }
                 //struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
@@ -929,18 +1013,21 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
                     add_error(compiler, call->name, "Map type and argument type must be the same.");
                 }*/
                 emit_byte(compiler, OP_MAP);
-                return sig;
+                *node_sig = sig;
+                return RESULT_SUCCESS;
             }
 
             if (sig->type == SIG_CLASS) {
                 struct SigClass* sig_class = (struct SigClass*)sig;
                 emit_byte(compiler, OP_INSTANCE);
-                return sig;
+                *node_sig = sig;
+                return RESULT_SUCCESS;
             }
 
             if (sig->type != SIG_FUN) {
                 add_error(compiler, call->name, "Calls must be used on a function type.");
-                return make_prim_sig(VAL_NIL);
+                *node_sig = make_prim_sig(VAL_NIL);
+                return RESULT_FAILED;
             }
 
 
@@ -949,12 +1036,14 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             if (call->arguments->count != params->count) {
                 add_error(compiler, call->name, "Argument count must match function parameter count.");
-                return make_prim_sig(VAL_NIL);
+                *node_sig = make_prim_sig(VAL_NIL);
+                return RESULT_FAILED;
             }
 
             int min = call->arguments->count < params->count ? call->arguments->count : params->count; //Why is this needed?
             for (int i = 0; i < min; i++) {
-                struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[i], ret_sigs);
+                struct Sig* arg_sig;
+                if (compile_node(compiler, call->arguments->nodes[i], ret_sigs, &arg_sig) == RESULT_FAILED) return RESULT_FAILED;
                 if (arg_sig->type == SIG_IDENTIFIER) {
                     arg_sig = resolve_sig(compiler, ((struct SigIdentifier*)arg_sig)->identifier);
                 }
@@ -966,18 +1055,21 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
                 if (!same_sig(param_sig, arg_sig)) {
                     add_error(compiler, call->name, "Argument type must match parameter type.");
+                    return RESULT_FAILED;
                 }
             }
 
             emit_byte(compiler, OP_CALL);
             emit_byte(compiler, (uint8_t)(call->arguments->count));
 
-            return sig_fun->ret;
+            *node_sig = sig_fun->ret;
+            return RESULT_SUCCESS;
         }
         case NODE_NIL: {
             Nil* nil = (Nil*)node;
             emit_byte(compiler, OP_NIL);
-            return  make_prim_sig(VAL_NIL);
+            *node_sig =  make_prim_sig(VAL_NIL);
+            return RESULT_SUCCESS;
         }
     } 
 }
@@ -1017,9 +1109,13 @@ void free_compiler(struct Compiler* compiler) {
 
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct SigArray** sig_array) {
     struct Sig* ret_sigs = make_array_sig();
+    ResultCode ret_result = RESULT_SUCCESS;
     for (int i = 0; i < nl->count; i++) {
-        struct Sig* sig = compile_node(compiler, nl->nodes[i], (struct SigArray*)ret_sigs);
+        struct Sig* sig;
+        ResultCode result = compile_node(compiler, nl->nodes[i], (struct SigArray*)ret_sigs, &sig);
+        if (result == RESULT_FAILED) ret_result = result;
     }
+
     if (((struct SigArray*)ret_sigs)->count == 0) {
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);
@@ -1027,7 +1123,7 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
 
     *sig_array = (struct SigArray*)ret_sigs;
 
-    return RESULT_SUCCESS;
+    return ret_result;
 }
 
 static Value string_native(int arg_count, Value* args) {
