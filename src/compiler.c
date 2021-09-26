@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #include "compiler.h"
 #include "memory.h"
@@ -887,38 +888,40 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             if (sig->type == SIG_LIST) {
                 struct SigList* sig_list = (struct SigList*)sig;
-                if (call->arguments->count != 1) {
+                if (call->arguments->count != 0) {
                     add_error(compiler, call->name, "List constructor must have 1 argument for default value.");
                 }
-                struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
+                //struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
                 struct Sig* list_template = sig_list->type;
                 if (list_template->type == SIG_IDENTIFIER) {
                     list_template = resolve_sig(compiler, ((struct SigIdentifier*)list_template)->identifier);
                 }
 
+                /*
                 if (!same_sig(arg_sig, list_template)) {
                     add_error(compiler, call->name, "List type and argument type must be the same.");
-                }
+                }*/
                 emit_byte(compiler, OP_LIST);
                 return sig;
             }
 
             if (sig->type == SIG_MAP) {
                 struct SigMap* sig_map = (struct SigMap*)sig;
-                if (call->arguments->count != 1) {
+                if (call->arguments->count != 0) {
                     add_error(compiler, call->name, "Map constructor must have 1 argument for default value.");
                 }
-                struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
+                //struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
                 struct Sig* map_template = sig_map->type;
                 if (map_template->type == SIG_IDENTIFIER) {
                     map_template = resolve_sig(compiler, ((struct SigIdentifier*)map_template)->identifier);
                 }
 
+                /*
                 if (!same_sig(arg_sig, map_template)) {
                     add_error(compiler, call->name, "Map type and argument type must be the same.");
-                }
+                }*/
                 emit_byte(compiler, OP_MAP);
                 return sig;
             }
@@ -1018,67 +1021,28 @@ static struct SigArray* compile_function(struct Compiler* compiler, struct NodeL
     return (struct SigArray*)ret_sigs;
 }
 
-static char int_to_char(int i) {
-    switch(i) {
-        case 0: return '0';
-        case 1: return '1';
-        case 2: return '2';
-        case 3: return '3';
-        case 4: return '4';
-        case 5: return '5';
-        case 6: return '6';
-        case 7: return '7';
-        case 8: return '8';
-        case 9: return '9';
-    }
-}
-
 static Value string_native(int arg_count, Value* args) {
     switch(args[0].type) {
-        case VAL_INT:
+        case VAL_INT: {
             int num = args[0].as.integer_type;
-            bool is_positive = num >= 0 ? true : false;
-            if (!is_positive) num = num * -1;
 
             char* str = ALLOCATE_ARRAY(char);
-            //64 bit int has up to ~ nine quintrillion (19 digits)
-            //plus one for sign
-            //plus one for terminal char
-            str = GROW_ARRAY(str, char, 21, 0);
+            str = GROW_ARRAY(str, char, 80, 0);
+            int len = sprintf(str, "%d", num);
+            str = GROW_ARRAY(str, char, len + 1, 80);
 
-            int idx = 0;
-            str[idx] = '\0';
-            idx++;
+            return to_string(take_string(str, len));
+        }
+        case VAL_FLOAT: {
+            double num = args[0].as.float_type;
 
-            do {
-                char c = int_to_char(num % 10);
-                str[idx] = c;
-                idx++;
-                num /= 10;
-            } while (num != 0);
+            char* str = ALLOCATE_ARRAY(char);
+            str = GROW_ARRAY(str, char, 80, 0);
+            int len = sprintf(str, "%f", num);
+            str = GROW_ARRAY(str, char, len + 1, 80);
 
-            //add sign if negative
-            if (!is_positive) {
-                str[idx] = '-';
-                idx++;    
-            }
-
-            //resize array to length based on idx
-            int len = idx;
-            str = GROW_ARRAY(str, char, len, 21);
-
-            //reverse array
-            int n = 0;
-            while (n < len / 2) {
-                char temp = str[n];
-                str[n] = str[len - 1 - n];
-                str[len - 1 - n] = temp;
-                n++;
-            }
-
-            return to_string(take_string(str, len - 1));
-        case VAL_FLOAT:
-            return to_string(make_string("[not implemented]", 17));
+            return to_string(take_string(str, len));
+        }
         case VAL_BOOL:
             if (args[0].as.boolean_type) {
                 return to_string(make_string("true", 4));
@@ -1106,6 +1070,9 @@ static Value print_native(int arg_count, Value* args) {
         case VAL_FLOAT:
             printf("%f\n", value.as.float_type);
             break; 
+        case VAL_NIL:
+            printf("nil\n");
+            break;
     }
     return to_nil();
 }

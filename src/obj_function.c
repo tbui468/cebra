@@ -48,13 +48,13 @@ struct ObjNative* make_native(Value (*function)(int, Value*)) {
     return obj;
 }
 
-struct ObjList* make_list(Value default_value) {
+struct ObjList* make_list() {
     struct ObjList* obj = ALLOCATE(struct ObjList);
     push_root(to_list(obj));
     obj->base.type = OBJ_LIST;
     obj->base.next = NULL;
     obj->base.is_marked = false;
-    obj->default_value = default_value;
+    obj->default_value = to_nil();
     insert_object((struct Obj*)obj);
 
     init_value_array(&obj->values);
@@ -63,13 +63,13 @@ struct ObjList* make_list(Value default_value) {
     return obj;
 }
 
-struct ObjMap* make_map(Value default_value) {
+struct ObjMap* make_map() {
     struct ObjMap* obj = ALLOCATE(struct ObjMap);
     push_root(to_map(obj)); 
     obj->base.type = OBJ_MAP;
     obj->base.next = NULL;
     obj->base.is_marked = false;
-    obj->default_value = default_value;
+    obj->default_value = to_nil();
     insert_object((struct Obj*)obj);
 
     init_table(&obj->table);

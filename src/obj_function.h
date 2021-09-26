@@ -41,7 +41,7 @@ struct ObjMap {
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 struct ObjNative* make_native(Value (*function)(int, Value*));
-struct ObjList* make_list(Value default_value);
-struct ObjMap* make_map(Value default_value);
+struct ObjList* make_list();
+struct ObjMap* make_map();
 
 #endif// CEBRA_OBJ_FUNCTION_H

@@ -346,14 +346,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_LIST: {
-            struct ObjList* list = make_list(peek(vm, 0));
-            pop(vm);
+            struct ObjList* list = make_list();
             push(vm, to_list(list));
             break;
         }
         case OP_MAP: {
-            struct ObjMap* map = make_map(peek(vm, 0));
-            pop(vm);
+            struct ObjMap* map = make_map();
             push(vm, to_map(map));
             break;
         }

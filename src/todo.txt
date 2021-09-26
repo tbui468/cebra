@@ -17,12 +17,24 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Make string casting for floating point (double, in particular)
-    Look here for tips: easy version and more complete version
-        //stackoverflow.com/questions/2302969/convert-a-float-to-a-string
-        
-    add tests for float to string casting
-        need to include NaN and -Nan
+    Add enum support
+
+        //creates ObjEnum object (which is not like an instance since
+        //an instance doesn't need to be created, and dot notation
+        //is called directly on the enum type to get the field.
+        Token := enum {
+            plus
+            minus
+            star
+            divide
+        }
+
+        a: Token = Token.plus
+        b: Token = Token.star
+
+    Need to be able to read in a string and the process it
+        get string length
+        access char in string using [] index
 
     int casting (string, float)
         if string cannot be converted, ??

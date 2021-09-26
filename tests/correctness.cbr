@@ -1,7 +1,7 @@
 //Correctness test
 
-passed := List<string>("default")
-failed := List<string>("default")
+passed := List<string>()
+failed := List<string>()
 
 add_failed := (msg: string) -> {
     failed[failed.size] = msg
@@ -720,7 +720,7 @@ add_passed := (msg: string) -> {
 {
     
     print("***********Lists************")
-    a: List<int> = List<int>(-1)
+    a: List<int> = List<int>()
 
     if a.size == 0 {
         add_passed("Initialize List: Passed!")
@@ -746,21 +746,21 @@ add_passed := (msg: string) -> {
     }
 
     a.size = 2
-    if a.size == 2 and a[0] == -1 and a[1] == -1 {
+    if a.size == 2 and a[0] == nil and a[1] == nil {
         add_passed("Set Higher Size / Fill with Default: Passed!")
     } else {
         add_failed("Set Higher Size / Fill with Default: Failed!")
     }
 
     a[10] = 10
-    if a.size == 11 and a[10] == 10 and a[9] == -1 {
+    if a.size == 11 and a[10] == 10 and a[9] == nil {
         add_passed("Set Higher Index / Fill with Default: Passed!")
     } else {
         add_failed("Set Higher Index / Fill with Default: Failed!")
     }
 
     a[5] = 33
-    if a.size == 11 and a[10] == 10 and a[9] == -1 and a[5] == 33 {
+    if a.size == 11 and a[10] == 10 and a[9] == nil and a[5] == 33 {
         add_passed("Set Lower Index: Passed!")
     } else {
         add_failed("Set Lower Index: Failed!")
@@ -772,13 +772,13 @@ add_passed := (msg: string) -> {
         age: int = 5
     }
 
-    b: List<Dog> = List<Dog>(Dog())
+    b: List<Dog> = List<Dog>()
     d: Dog = Dog()
     d.name = "Bubbles"
     b[0] = d
     b.size = 2
 
-    if b[0].name == "Bubbles" and b[1].name == "Mittens" {
+    if b[0].name == "Bubbles" and b[1] == nil {
         add_passed("Structs in List: Passed!")
     } else {
         add_failed("Structs in List: Failed!")
@@ -789,7 +789,7 @@ add_passed := (msg: string) -> {
 {
     
     print("***********In Keyword************")
-    list: List<int> = List<int>(-1)
+    list: List<int> = List<int>()
 
     if !(10 in list) {
         add_passed("Empty Int List: Passed!")
@@ -810,9 +810,9 @@ add_passed := (msg: string) -> {
 {
     
     print("***********Maps************")
-    map: Map<int> = Map<int>(-1)
+    map: Map<int> = Map<int>()
 
-    if map["two"] == -1 {
+    if map["two"] == nil {
         add_passed("Invalid Key: Passed!")
     } else {
         add_failed("Invalid Key: Failed!")
