@@ -17,12 +17,13 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Add foreach tests
+    //This crashes in compiler when c is NOT a declared variable - need to handle this gracefully 
+    foreach i: string in c {
+        print(c[i])
+    }
 
-    OP_GET_IDX/OP_SET_IDX should really be called OP_GET_ELEMENT/OP_SET_ELEMENT
-
-    combine Obj files together as best as possible - all the obj files is so confusing
-        and messy.  Not using typedef on objs and
+    //this one also may be the same problem as above
+    add_Failed("For Each with Map Keys/Values: Failed!") //crashes because name is wrong - need to handle
 
     Add enum support
 
@@ -63,6 +64,12 @@ IMPLEMENTATION:
         b := a[0] //"h"
         c := a[a.size - 1] //"d"
         d := sub_string(a, 0, 5) //"hello"
+
+
+    OP_GET_IDX/OP_SET_IDX should really be called OP_GET_ELEMENT/OP_SET_ELEMENT
+
+    combine Obj files together as best as possible - all the obj files is so confusing
+        and messy.  Not using typedef on objs and
 
     int casting (string, float)
         if string cannot be converted, ??

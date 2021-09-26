@@ -988,6 +988,44 @@ add_passed := (msg: string) -> {
     }
 }
 
+{
+    print("***********For Each Loop************")
+
+    a := List<int>()
+    for i := 0, i < 10, i = i + 1 {
+        a[i] = 1
+    }
+
+    sum := 0
+    foreach i: int in a {
+        sum = sum + i
+    }
+
+    if sum == 10 {
+        add_passed("For Each with Int List: Passed!")
+    } else {
+        add_failed("For Each with Int List: Failed!")
+    }
+
+    map := Map<int>()
+    map["one"] = 1
+    map["two"] = 2
+
+    out := "" 
+    foreach i: string in map.keys {
+        out = out + i
+    }
+    map_sum := 0
+    foreach i: int in map.values {
+        map_sum = map_sum + i
+    }
+    if (out == "onetwo" or out == "twoone") and map_sum == 3 {
+        add_passed("For Each with Map Keys/Values: Passed!")
+    } else {
+        add_failed("For Each with Map Keys/Values: Failed!")
+    }
+}
+
 print("----------------------------------")
 print("Total Tests:")
 print(passed.size + failed.size)
