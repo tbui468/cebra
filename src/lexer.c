@@ -87,6 +87,7 @@ static Token read_keyword(char c) {
             break;
         case 'f':
             if (match_string("or")) return new_token(TOKEN_FOR);
+            if (match_string("oreach")) return new_token(TOKEN_FOR_EACH);
             if (match_string("loat")) return new_token(TOKEN_FLOAT_TYPE);
             if (match_string("alse")) return new_token(TOKEN_FALSE);
             break;

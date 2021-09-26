@@ -603,8 +603,11 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
         case NODE_FOR: {
             For* fo = (For*)node;
             start_scope(compiler);
+           
+            //initializer
             struct Sig* init = compile_node(compiler, fo->initializer, ret_sigs); //should leave no value on stack
 
+            //condition
             int condition_start = compiler->function->chunk.count;
             struct Sig* cond = compile_node(compiler, fo->condition, ret_sigs);
             if (!sig_is_type(cond, VAL_BOOL)) {
@@ -614,13 +617,14 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
             int body_jump = emit_jump(compiler, OP_JUMP);
 
+            //update
             int update_start = compiler->function->chunk.count;
             if (fo->update) {
                 struct Sig* up = compile_node(compiler, fo->update, ret_sigs);
-                emit_byte(compiler, OP_POP); //pop update
             }
             emit_jump_by(compiler, OP_JUMP_BACK, compiler->function->chunk.count + 3 - condition_start);
 
+            //body
             patch_jump(compiler, body_jump);
             emit_byte(compiler, OP_POP); //pop condition if true
             struct Sig* then_sig = compile_node(compiler, fo->then_block, ret_sigs);
@@ -628,6 +632,7 @@ static struct Sig* compile_node(struct Compiler* compiler, struct Node* node, st
 
             patch_jump(compiler, exit_jump);
             emit_byte(compiler, OP_POP); //pop condition if false
+
             end_scope(compiler);
             return make_prim_sig(VAL_NIL);
         }

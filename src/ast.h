@@ -24,6 +24,7 @@ typedef enum {
     NODE_IF_ELSE,
     NODE_WHILE,
     NODE_FOR,
+    NODE_FOR_EACH,
     NODE_FUN,
     NODE_RETURN,
     NODE_CALL,
@@ -110,6 +111,14 @@ typedef struct {
     struct Node* update;
     struct Node* then_block;
 } For;
+
+typedef struct {
+    struct Node base;
+    Token name;
+    struct Node* element;
+    struct Node* var_list;
+    struct Node* then_block;
+} ForEach;
 
 typedef struct {
     struct Node base;
@@ -211,6 +220,7 @@ struct Node* make_block(Token name, struct NodeList* dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
+struct Node* make_for_each(Token name, struct Node* element, struct Node* var_list, struct Node* then_block);
 struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Sig* sig, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, struct Node* left, struct NodeList* arguments);

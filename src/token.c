@@ -50,12 +50,15 @@ void print_token(Token token) {
         case TOKEN_RIGHT_BRACKET: printf("TOKEN_RIGHT_BRACKET"); break;
         case TOKEN_IN: printf("TOKEN_IN"); break;
         case TOKEN_MAP: printf("TOKEN_MAP"); break;
-        case TOKEN_EOF: printf("TOKEN_EOF"); break;
         case TOKEN_NIL: printf("TOKEN_NIL"); break;
+        case TOKEN_FOR_EACH: printf("TOKEN_FOR_EACH"); break;
+        case TOKEN_EOF: printf("TOKEN_EOF"); break;
         default: printf("Unrecognized token"); break;
     }
     printf(" [%d]", token.line);
 }
+
+//TODO: can probably eliminate/combine a lot of these Token creation functions
 
 Token make_dummy_token() {
     Token dummy;
@@ -82,4 +85,14 @@ Token copy_token(Token token) {
     copy.start = token.start;
     copy.length = token.length;
     return copy;
+}
+
+Token make_token(TokenType type, int line, const char* start, int length) {
+    Token token;
+    token.type = type;
+    token.line = line;
+    token.start = start;
+    token.length = length;
+
+    return token;
 }
