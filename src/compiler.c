@@ -720,8 +720,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Sig* sig_inst;
             if (compile_node(compiler, gp->inst, ret_sigs, &sig_inst) == RESULT_FAILED) return RESULT_FAILED;
 
-            //if (sig_inst == NULL) return make_prim_sig(VAL_NIL);
-
             if (sig_inst->type == SIG_LIST) {
                 if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_SIZE);
@@ -877,7 +875,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             add_error(compiler, var, "Local variable not declared.");
-            *node_sig = make_prim_sig(VAL_NIL);
             return RESULT_FAILED;
         }
         case NODE_GET_IDX: {
@@ -979,17 +976,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     add_error(compiler, call->name, "List constructor must have 1 argument for default value.");
                     return RESULT_FAILED;
                 }
-                //struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
                 struct Sig* list_template = sig_list->type;
                 if (list_template->type == SIG_IDENTIFIER) {
                     list_template = resolve_sig(compiler, ((struct SigIdentifier*)list_template)->identifier);
                 }
 
-                /*
-                if (!same_sig(arg_sig, list_template)) {
-                    add_error(compiler, call->name, "List type and argument type must be the same.");
-                }*/
                 emit_byte(compiler, OP_LIST);
                 *node_sig = sig;
                 return RESULT_SUCCESS;
@@ -1001,17 +993,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     add_error(compiler, call->name, "Map constructor must have 1 argument for default value.");
                     return RESULT_FAILED;
                 }
-                //struct Sig* arg_sig = compile_node(compiler, call->arguments->nodes[0], ret_sigs);
 
                 struct Sig* map_template = sig_map->type;
                 if (map_template->type == SIG_IDENTIFIER) {
                     map_template = resolve_sig(compiler, ((struct SigIdentifier*)map_template)->identifier);
                 }
 
-                /*
-                if (!same_sig(arg_sig, map_template)) {
-                    add_error(compiler, call->name, "Map type and argument type must be the same.");
-                }*/
                 emit_byte(compiler, OP_MAP);
                 *node_sig = sig;
                 return RESULT_SUCCESS;
@@ -1026,7 +1013,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             if (sig->type != SIG_FUN) {
                 add_error(compiler, call->name, "Calls must be used on a function type.");
-                *node_sig = make_prim_sig(VAL_NIL);
                 return RESULT_FAILED;
             }
 
@@ -1036,7 +1022,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             if (call->arguments->count != params->count) {
                 add_error(compiler, call->name, "Argument count must match function parameter count.");
-                *node_sig = make_prim_sig(VAL_NIL);
                 return RESULT_FAILED;
             }
 
