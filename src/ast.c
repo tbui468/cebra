@@ -219,23 +219,23 @@ struct Node* make_set_var(struct Node* left, struct Node* right) {
     return insert_node((struct Node*)set_var);
 }
 
-struct Node* make_get_idx(Token name, struct Node* left, struct Node* idx) {
-    GetIdx* get_idx = ALLOCATE(GetIdx);
-    get_idx->name = name;
-    get_idx->left = left;
-    get_idx->idx = idx;
-    get_idx->base.type = NODE_GET_IDX;
+struct Node* make_get_element(Token name, struct Node* left, struct Node* idx) {
+    GetElement* get_ele = ALLOCATE(GetElement);
+    get_ele->name = name;
+    get_ele->left = left;
+    get_ele->idx = idx;
+    get_ele->base.type = NODE_GET_ELEMENT;
 
-    return insert_node((struct Node*)get_idx);
+    return insert_node((struct Node*)get_ele);
 }
 
-struct Node* make_set_idx(struct Node* left, struct Node* right) {
-    SetIdx* set_idx = ALLOCATE(SetIdx);
-    set_idx->left = left;
-    set_idx->right = right;
-    set_idx->base.type = NODE_SET_IDX;
+struct Node* make_set_element(struct Node* left, struct Node* right) {
+    SetElement* set_ele = ALLOCATE(SetElement);
+    set_ele->left = left;
+    set_ele->right = right;
+    set_ele->base.type = NODE_SET_ELEMENT;
 
-    return insert_node((struct Node*)set_idx);
+    return insert_node((struct Node*)set_ele);
 }
 
 struct Node* make_call(Token name, struct Node* left, struct NodeList* arguments) {
@@ -386,25 +386,25 @@ void print_node(struct Node* node) {
             printf("SetVar stub");
             break;
         }
-        case NODE_GET_IDX: {
-            GetIdx* gi = (GetIdx*)node;
+        case NODE_GET_ELEMENT: {
+            GetElement* gi = (GetElement*)node;
             printf("( GetIdx ");
             if (gi->left != NULL) print_node(gi->left);
             if (gi->idx != NULL) print_node(gi->idx);
             printf(" )");
             break;
         }
-        case NODE_SET_IDX: {
+        case NODE_SET_ELEMENT: {
             printf("SetIdx stub");
             break;
         }
         case NODE_CALL: {
             printf("Call stub");
             break;
+        }
         case NODE_NIL: {
             printf("Nil stub");
             break;
-        }
         }
     } 
 }
@@ -512,14 +512,14 @@ void free_node(struct Node* node) {
             FREE(sv, SetVar);
             break;
         }
-        case NODE_GET_IDX: {
-            GetIdx* gv = (GetIdx*)node;
-            FREE(gv, GetIdx);
+        case NODE_GET_ELEMENT: {
+            GetElement* gv = (GetElement*)node;
+            FREE(gv, GetElement);
             break;
         }
-        case NODE_SET_IDX: {
-            SetIdx* sv = (SetIdx*)node;
-            FREE(sv, SetIdx);
+        case NODE_SET_ELEMENT: {
+            SetElement* sv = (SetElement*)node;
+            FREE(sv, SetElement);
             break;
         }
         case NODE_CALL: {

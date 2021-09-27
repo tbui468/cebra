@@ -57,6 +57,8 @@ const char* op_to_string(OpCode op) {
         case OP_LIST: return "OP_LIST";
         case OP_GET_SIZE: return "OP_GET_SIZE";
         case OP_SET_SIZE: return "OP_SET_SIZE";
+        case OP_GET_ELEMENT: return "OP_GET_ELEMENT";
+        case OP_SET_ELEMENT: return "OP_SET_ELEMENT";
         case OP_MAP: return "OP_MAP";
         case OP_GET_KEYS: return "OP_GET_KEYS";
         case OP_GET_VALUES: return "OP_GET_VALUES";

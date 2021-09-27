@@ -874,8 +874,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             add_error(compiler, var, "Local variable not declared.");
             return RESULT_FAILED;
         }
-        case NODE_GET_IDX: {
-            GetIdx* get_idx = (GetIdx*)node;
+        case NODE_GET_ELEMENT: {
+            GetElement* get_idx = (GetElement*)node;
             struct Sig* left_sig;
             if (compile_node(compiler, get_idx->left, ret_sigs, &left_sig) == RESULT_FAILED) return RESULT_FAILED;
             struct Sig* idx_sig;
@@ -887,7 +887,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     return RESULT_FAILED;
                 }
 
-                emit_byte(compiler, OP_GET_IDX);
+                emit_byte(compiler, OP_GET_ELEMENT);
                 *node_sig = ((struct SigList*)left_sig)->type;
                 return RESULT_SUCCESS;
             }
@@ -898,7 +898,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     return RESULT_FAILED;
                 }
 
-                emit_byte(compiler, OP_GET_IDX);
+                emit_byte(compiler, OP_GET_ELEMENT);
                 *node_sig = ((struct SigList*)left_sig)->type;
                 return RESULT_SUCCESS;
             }
@@ -907,9 +907,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
             return RESULT_FAILED;
         }
-        case NODE_SET_IDX: {
-            SetIdx* set_idx = (SetIdx*)node;
-            GetIdx* get_idx = (GetIdx*)(set_idx->left);
+        case NODE_SET_ELEMENT: {
+            SetElement* set_idx = (SetElement*)node;
+            GetElement* get_idx = (GetElement*)(set_idx->left);
 
             struct Sig* right_sig;
             if (compile_node(compiler, set_idx->right, ret_sigs, &right_sig) == RESULT_FAILED) return RESULT_FAILED;
@@ -933,7 +933,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     return RESULT_FAILED;
                 }
 
-                emit_byte(compiler, OP_SET_IDX);
+                emit_byte(compiler, OP_SET_ELEMENT);
                 *node_sig = right_sig;
                 return RESULT_SUCCESS;
             }
@@ -953,7 +953,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     return RESULT_FAILED;
                 }
 
-                emit_byte(compiler, OP_SET_IDX);
+                emit_byte(compiler, OP_SET_ELEMENT);
                 *node_sig = right_sig;
                 return RESULT_SUCCESS;
             }

@@ -257,7 +257,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                     ADD_ERROR(left_bracket, "Expect string after '[' for Map access, or int for List access.");
                     return RESULT_FAILED;
                 }
-                left = make_get_idx(parser.previous, left, idx);
+                left = make_get_element(parser.previous, left, idx);
                 if (!consume(TOKEN_RIGHT_BRACKET, "Expect ']' after index.")) return RESULT_FAILED;
                 break;
             default:
@@ -425,8 +425,8 @@ static ResultCode assignment(Token var_name, struct Node** node) {
             ADD_ERROR(name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
             return RESULT_FAILED;
         }
-        if (left->type == NODE_GET_IDX) {
-            left = make_set_idx(left, right);
+        if (left->type == NODE_GET_ELEMENT) {
+            left = make_set_element(left, right);
         } else if (left->type == NODE_GET_VAR) {
             left = make_set_var(left, right);
         } else { //NODE_GET_PROP
@@ -741,7 +741,7 @@ static ResultCode declaration(struct Node** node) {
         //body
         if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before foreach loop body.")) return RESULT_FAILED;
 
-        struct Node* get_element = make_get_idx(make_dummy_token(), list, get_idx);
+        struct Node* get_element = make_get_element(make_dummy_token(), list, get_idx);
         ((DeclVar*)element)->right = get_element;
         struct Node* then_block;
         if (block(element, &then_block) == RESULT_FAILED) {

@@ -17,50 +17,7 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    'consume' is too general and doesn't allow specific error messages - replacing it with match() + ADD_ERROR will be better
-
-    Change SigDecl to SigInferred for clarity
-
-    Remove '[line %d]' from ADD_ERROR.  Just use printf("[line %d] ", line) when printing error 
-        recall that we want line number also sort error messages
-        two fixed parameters (line number, message, followed by arguments for message)
-
-    ADD_ERROR needs to include a line number so that error messages can be sorted by line number
-        Need to make a Error struct with message + line number
-        first argument to macro is line number, which we can resuse
-    
-    replace add_error with new macro ADD_ERROR
-
-    need to convert consume() to incorporate ADD_ERROR
-
-    Have add_error include a way to print token in middle of error message
-        if embed is true, print the token identifier
-        add_error(token, message, embed?)
-        make a new one to test first, then replace all
-
-        add_error() could create a string using sprintf which is added to array of char*, char**
-
-
-    Need to deal with c-errors too (snprintf, reading from file, etc)
-    
-    put in 'if' into correctness.cbr to turn on/off tests - this will make it easier to
-        pinpoint failing tests/crashing tests
-        this doesn't work!!! Need a preprocesser to remove/add/replace code
-
-    Add enum support
-
-        //creates ObjEnum object (which is not like an instance since
-        //an instance doesn't need to be created, and dot notation
-        //is called directly on the enum type to get the field.
-        Token := enum {
-            plus
-            minus
-            star
-            divide
-        }
-
-        a: Token = Token.plus
-        b: Token = Token.star
+    OP_GET_IDX/OP_SET_IDX should really be called OP_GET_ELEMENT/OP_SET_ELEMENT
 
     Need to be able to read in a string and the process it
         get string size
@@ -87,8 +44,35 @@ IMPLEMENTATION:
         c := a[a.size - 1] //"d"
         d := sub_string(a, 0, 5) //"hello"
 
+    Add enum support
+        //creates ObjEnum object (which is not like an instance since
+        //an instance doesn't need to be created, and dot notation
+        //is called directly on the enum type to get the field.
+        Token := enum {
+            plus
+            minus
+            star
+            divide
+        }
 
-    OP_GET_IDX/OP_SET_IDX should really be called OP_GET_ELEMENT/OP_SET_ELEMENT
+        a: Token = Token.plus
+        b: Token = Token.star
+
+
+    struct Error (in parser.h) is a general error, and can be used for both the compiler and vm
+        get rid of ComilerError and RuntimeError
+
+    'consume' in parser is too general and doesn't allow specific error messages - replacing it with match() + ADD_ERROR will be better
+        but it's a lot more verbose
+
+    Change SigDecl to SigInferred for clarity
+        since SigDecl is only used with :=
+
+    Need to deal with c-errors too (snprintf, reading from file, etc)
+    
+    put in 'if' into correctness.cbr to turn on/off tests - this will make it easier to
+        pinpoint failing tests/crashing tests
+        this doesn't work!!! Need a preprocesser to remove/add/replace code
 
     combine Obj files together as best as possible - all the obj files is so confusing
         and messy.  Not using typedef on objs and

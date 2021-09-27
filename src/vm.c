@@ -380,7 +380,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             pop(vm);
             break;
         }
-        case OP_GET_IDX: {
+        case OP_GET_ELEMENT: {
             //[list | map][idx]
             Value left = peek(vm, 1);
             if (left.type == VAL_LIST) {
@@ -407,7 +407,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 break;
             }
         }
-        case OP_SET_IDX: {
+        case OP_SET_ELEMENT: {
             //[value][list | map][idx]
             Value left = peek(vm, 1);
             if (left.type == VAL_LIST) {
