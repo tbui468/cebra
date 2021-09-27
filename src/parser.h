@@ -8,19 +8,17 @@
 #include "table.h"
 
 
-typedef struct {
+struct Error {
     Token token;
     const char* message;
-} ParseError;
+};
 
 typedef struct {
     Token previous;
     Token current;
     Token next;
     Token next_next;
-    ParseError errors[256];
-    char* new_errors[256];
-    int new_error_count;
+    char* errors[256];
     int error_count;
 } Parser;
 

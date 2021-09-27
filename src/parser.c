@@ -8,9 +8,9 @@
         char* buf = ALLOCATE_ARRAY(char); \
         buf = GROW_ARRAY(buf, char, 100, 0); \
         snprintf(buf, 99, msg, __VA_ARGS__); \
-        if (parser.new_error_count < 256) { \
-            parser.new_errors[parser.new_error_count] = buf; \
-            parser.new_error_count++; \
+        if (parser.error_count < 256) { \
+            parser.errors[parser.error_count] = buf; \
+            parser.error_count++; \
         } \
     }
 
@@ -18,8 +18,6 @@ Parser parser;
 
 static ResultCode expression(Token var_name, struct Node** node);
 static ResultCode declaration(struct Node** node);
-static void add_error(Token token, const char* message);
-static void add_new_error(const char* message);
 static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode read_sig(Token var_name, struct Sig** sig);
 static ResultCode param_declaration(struct Node** node);
@@ -79,8 +77,9 @@ static bool consume(TokenType type, const char* message) {
         advance();
         return true;
     }
-    
-    add_error(parser.previous, message);
+
+    Token prev = parser.current;
+    ADD_ERROR("[line %d] Unexpected token '%.*s'.", prev.line, prev.length, prev.start);
     return false;
 }
 
@@ -769,43 +768,28 @@ static ResultCode declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static void add_error(Token token, const char* message) {
-    if (parser.error_count == 256) return;
-    ParseError error;
-    error.token = token;
-    error.message = message;
-    parser.errors[parser.error_count] = error;
-    parser.error_count++;
-}
-
-static void add_new_error(const char* message) {
-    if (parser.new_error_count == 256) return;
-    parser.new_errors[parser.new_error_count] = message;
-    parser.new_error_count++;
-}
-
 static void init_parser(const char* source) {
     init_lexer(source);
-    parser.error_count = 0;
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
+    parser.error_count = 0;
 }
 
 static void free_parser() {
-    for (int i = 0; i < parser.new_error_count; i++) {
-        FREE_ARRAY(parser.new_errors[i], char, 100);
+    for (int i = 0; i < parser.error_count; i++) {
+        FREE_ARRAY(parser.errors[i], char, 100);
     }
 }
 
-static int partition(ParseError* errors, int lo, int hi) {
-    ParseError pivot = errors[hi];
+static int partition(struct Error* errors, int lo, int hi) {
+    struct Error pivot = errors[hi];
     int i = lo - 1;
 
     for (int j = lo; j <= hi; j++) {
         if (errors[j].token.line <= pivot.token.line) {
             i++;
-            ParseError orig_i = errors[i];
+            struct Error orig_i = errors[i];
             errors[i] = errors[j];
             errors[j] = orig_i;
         }
@@ -813,7 +797,7 @@ static int partition(ParseError* errors, int lo, int hi) {
     return i;
 }
 
-static void quick_sort(ParseError* errors, int lo, int hi) {
+static void quick_sort(struct Error* errors, int lo, int hi) {
     int count = hi - lo + 1;
     if (count <= 0) return;
 
@@ -840,13 +824,10 @@ ResultCode parse(const char* source, struct NodeList* nl) {
     }
 
 
-    if (parser.new_error_count > 0) {
-        quick_sort(parser.errors, 0, parser.error_count - 1);
+    if (parser.error_count > 0) {
+        //quick_sort(parser.errors, 0, parser.error_count - 1);
         for (int i = 0; i < parser.error_count; i++) {
-            printf("[line %d] %s\n", parser.errors[i].token.line, parser.errors[i].message);
-        }
-        for (int i = 0; i < parser.new_error_count; i++) {
-            printf("%s\n", parser.new_errors[i]);
+            printf("%s\n", parser.errors[i]);
         }
         if (parser.error_count == 256) {
             printf("Parsing error count exceeded maximum of 256.\n");
