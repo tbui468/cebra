@@ -17,9 +17,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Move [line %d] out of error message
-        have first argument to ADD_ERROR() be the line number, followed by msg + arguments
-
     'consume' is too general and doesn't allow specific error messages - replacing it with match() + ADD_ERROR will be better
 
     Change SigDecl to SigInferred for clarity
