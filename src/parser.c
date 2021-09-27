@@ -213,9 +213,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
         return RESULT_SUCCESS;
     }
 
+    //empty return ('->') is same as returning 'nil'
     if (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_RIGHT_BRACE)) {
-        //TODO: *node should really be a nil, and then let Return take care of it
-        *node = NULL;
+        *node = make_nil(parser.previous);
         return RESULT_SUCCESS;
     }
 
@@ -828,7 +828,6 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right;
-        //TODO: NULL if '}', but is should be 'nil'
         if (expression(make_dummy_token(), &right) == RESULT_FAILED) {
             add_error(name, "Returned value must be expression, or empty (for nil return).");
             return RESULT_FAILED;

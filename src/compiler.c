@@ -702,9 +702,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Sig* sig;
             if (compile_node(compiler, ret->right, ret_sigs, &sig) == RESULT_FAILED) return RESULT_FAILED;
 
-            if (sig_is_type(sig, VAL_NIL)) {
-                emit_byte(compiler, OP_NIL);
-            }
             emit_byte(compiler, OP_RETURN);
             add_sig(ret_sigs, sig);
             *node_sig = sig;
