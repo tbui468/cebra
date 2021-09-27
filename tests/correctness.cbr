@@ -1,5 +1,32 @@
 //Correctness test
 
+//this won't work!  Need to make it a preprocessor directive so that code is NOT parsed/compiled
+basic := true
+equality := true
+inequality := true
+operations := true
+variables := true
+scopes := true
+loops := true
+functions_returning_primitives := true
+functions_returning_functions := true
+functions_as_parameters := true
+cascading_calls := true
+anonymous_functions := true
+closures_depth_1 := true
+closures_depth_2 := true
+closed_upvalues := true
+structs := true
+native_functions := true
+lists := true
+in_keyword := true
+maps := true
+nils_for_instances := true
+struct_inheritance := true
+duck_typing := true
+cast_to_string := true
+for_each_loop := true
+
 passed := List<string>()
 failed := List<string>()
 
@@ -10,8 +37,8 @@ add_passed := (msg: string) -> {
     passed[passed.size] = msg
 }
 
-{
-    print("***********Basic************")
+if basic {
+    print("-Basic")
     if true {
         add_passed("If / Else - Passed!")
     } else {
@@ -19,8 +46,8 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
-    print("***********Equality************")
+if equality {
+    print("-Equality")
     if 1 == 1 {
         add_passed("Integer Equal - Passed!")
     } else {
@@ -33,8 +60,8 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
-    print("***********Inequality************")
+if inequality {
+    print("-Inequality")
     if 1 < 2 {
         add_passed("Integer Less Than - Passed!")
     } else {
@@ -42,8 +69,8 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
-    print("***********Operations************")
+if operations {
+    print("-Operations")
     if 1 + 3 == 4 {
         add_passed("Integer Addition: Passed!")
     } else {
@@ -77,9 +104,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if variables {
     
-    print("***********Variables************")
+    print("-Variables")
     a: int = 1
     ai := 1
     if a == 1 and ai == 1 {
@@ -118,9 +145,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if scopes {
     
-    print("***********Scopes************")
+    print("-Scopes")
     a: int = 1
     ai := 1
     {
@@ -151,9 +178,9 @@ add_passed := (msg: string) -> {
     }}}
 }
 
-{
+if loops {
     
-    print("***********For Loops************")
+    print("-Loops")
     j: int = 0
     ji := 0
     for i: int = 0, i < 5, i = i + 1 {
@@ -213,9 +240,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if functions_returning_primitives {
     
-    print("***********Functions Return Primitives or Nil************")
+    print("-Functions Returning Primitives")
     a: () -> = () -> {
         add_passed("Zero Parameters / No Return: Passed!")
     }
@@ -273,9 +300,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if functions_returning_functions{
     
-    print("***********Functions Returning Functions************")
+    print("-Functions Returning Functions")
     a: () -> () -> = () -> () -> {
         b: () -> = () -> {
             add_passed("No Parameters / Nil Return: Passed!")
@@ -312,9 +339,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if functions_as_parameters {
     
-    print("***********Functions as Function Parameters************")
+    print("-Functions as Parameters")
 
     add: (int, int) -> int = (a: int, b: int) -> int {
         -> a + b
@@ -346,9 +373,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if cascading_calls {
     
-    print("***********Cascading Calls************")
+    print("-Cascading Calls")
 
     a: () -> () -> () -> int = () -> () -> () -> int {
         b: () -> () -> int = () -> () -> int {
@@ -395,9 +422,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if anonymous_functions{
     
-    print("***********Anonymous Functions************")
+    print("-Anonymous Functions")
 
     op: (int, int, (int, int) -> int) -> int = (a: int, b: int, c: (int, int) -> int) -> int {
         -> c(a, b)
@@ -415,9 +442,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if closures_depth_1 {
     
-    print("***********1 Depth Closures************")
+    print("-Closures Depth 1")
 
     a: int = 0
     ai := 0
@@ -469,9 +496,9 @@ add_passed := (msg: string) -> {
 
 }
 
-{
+if closures_depth_2 {
     
-    print("***********2+ Depth Closures************")
+    print("-Closures Depth 2")
 
     str1: string = "hello "
     str2: string = "world"
@@ -537,9 +564,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if closed_upvalues {
     
-    print("***********Closures: Closed Upvalues************")
+    print("-Closed Upvalues")
     outer: () -> () -> string = () -> () -> string {
         x: string = "outside"
         inner: () -> string = () -> string{
@@ -571,9 +598,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if structs {
     
-    print("***********Structs************")
+    print("-Structs")
     Dog: struct = struct {
         name: string = "Mittens"
         age: int = 3
@@ -706,9 +733,9 @@ add_passed := (msg: string) -> {
 
 }
 
-{
+if native_functions {
     
-    print("***********Native Functions************")
+    print("-Native Functions")
     a: float = clock()
     if a > -1.0 {
         add_passed("clock(): Passed!")
@@ -717,9 +744,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if lists {
     
-    print("***********Lists************")
+    print("-Lists")
     a: List<int> = List<int>()
 
     if a.size == 0 {
@@ -786,9 +813,9 @@ add_passed := (msg: string) -> {
 
 }
 
-{
+if in_keyword {
     
-    print("***********In Keyword************")
+    print("-In Keyword")
     list: List<int> = List<int>()
 
     if !(10 in list) {
@@ -807,9 +834,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if maps {
     
-    print("***********Maps************")
+    print("-Maps")
     map: Map<int> = Map<int>()
 
     if map["two"] == nil {
@@ -848,9 +875,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if nils_for_instances {
     
-    print("***********Nils For Instances************")
+    print("-Nils For Instances")
 
     Dog: struct = struct {
         name: string = "Bubbles"
@@ -887,9 +914,9 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
+if struct_inheritance{
     
-    print("***********Struct Inheritance************")
+    print("-Struct Inheritance")
 
     Animal: struct = struct {
         class: string = "Mammal"
@@ -920,10 +947,10 @@ add_passed := (msg: string) -> {
 
 }
 
-{
+if duck_typing {
 
     
-    print("***********Duck Typing************")
+    print("-Duck Typing")
     Animal: struct = struct {
         class: string = "Mammal"
     }
@@ -961,8 +988,8 @@ add_passed := (msg: string) -> {
 }
 
 
-{
-    print("***********Cast to String************")
+if cast_to_string{
+    print("-Cast to String")
     if string(true) == "true" and string(false) == "false" {
         add_passed("Cast Boolean to String: Passed!")
     } else {
@@ -988,8 +1015,8 @@ add_passed := (msg: string) -> {
     }
 }
 
-{
-    print("***********For Each Loop************")
+if for_each_loop {
+    print("-For Each Loop")
 
     a := List<int>()
     for i := 0, i < 10, i = i + 1 {

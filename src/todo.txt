@@ -18,6 +18,19 @@ ADDING FEATURES:
 IMPLEMENTATION:
 
     Use ResultCode in parser, and make struct Node* returns a parameter
+    finish changing expression(...) to using ResultCode.  
+
+        check that warnings don't appear.  Check that all 80 tests pass
+            put if in front of tests to turn on/off tests to pinpoint errors
+
+        primary should return a 'nil' for 'nil' returns (rather than a NULL)
+            and then treat it like any regular returned nil (it's popped, essentially)
+
+        change read_sig() to use ResultCode
+
+    Have add_error include a way to print token in middle of error message
+        if embed is true, print the token identifier
+        add_error(token, message, embed?)
     
     put in 'if' into correctness.cbr to turn on/off tests - this will make it easier to
         pinpoint failing tests/crashing tests
