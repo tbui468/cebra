@@ -9,7 +9,7 @@ static ResultCode expression(Token var_name, struct Node** node);
 static ResultCode declaration(struct Node** node);
 static void add_error(Token token, const char* message);
 static ResultCode block(struct Node* prepend, struct Node** node);
-static struct Sig* read_sig(Token var_name);
+static ResultCode read_sig(Token var_name, struct Sig** sig);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode var_declaration(struct Node** node);
 
@@ -100,8 +100,8 @@ static ResultCode primary(Token var_name, struct Node** node) {
     } else if (match(TOKEN_LIST)) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
-        struct Sig* template_type = read_sig(var_name);
-        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+        struct Sig* template_type;
+        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
             add_error(parser.previous, "List type inside <> must be valid.");
             return RESULT_FAILED;
         }
@@ -111,8 +111,8 @@ static ResultCode primary(Token var_name, struct Node** node) {
     } else if (match(TOKEN_MAP)) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
-        struct Sig* template_type = read_sig(var_name);
-        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+        struct Sig* template_type;
+        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
             add_error(parser.previous, "Map type inside <> must be valid.");
             return RESULT_FAILED;
         }
@@ -153,8 +153,8 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
             if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameter list.")) return RESULT_FAILED;
 
-            struct Sig* ret_sig = read_sig(var_name);
-            if (ret_sig == NULL) {
+            struct Sig* ret_sig;
+            if (read_sig(var_name, &ret_sig) == RESULT_FAILED) {
                 add_error(parser.previous, "Expect valid return type after function parameters.");
                 return RESULT_FAILED;
             }
@@ -186,7 +186,8 @@ static ResultCode primary(Token var_name, struct Node** node) {
     } else if (peek_one(TOKEN_CLASS)) {
         //this branch is only entered if next is TOKEN_CLASS
         //so read_sig(var_name) will always be valid, so no NULL check
-        struct Sig* right_sig = read_sig(var_name);
+        struct Sig* right_sig;
+        if (read_sig(var_name, &right_sig) == RESULT_FAILED) return RESULT_FAILED;
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
                              make_get_var(parser.previous, NULL) : 
@@ -558,90 +559,105 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static struct Sig* read_sig(Token var_name) {
+static ResultCode read_sig(Token var_name, struct Sig** sig) {
     if (parser.previous.type == TOKEN_COLON && peek_one(TOKEN_EQUAL)) {
-        return make_decl_sig();
+        *sig = make_decl_sig();
+        return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_LEFT_PAREN)) {
         struct Sig* params = make_array_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                struct Sig* param_sig = read_sig(var_name);
-                if (param_sig == NULL) {
+                struct Sig* param_sig;
+                if (read_sig(var_name, &param_sig) == RESULT_FAILED) {
                     add_error(var_name, "Invalid parameter type.");
-                    return NULL;
+                    return RESULT_FAILED;
                 }
                 add_sig((struct SigArray*)params, param_sig);
             } while(match(TOKEN_COMMA));
-            if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.")) return NULL;
+            if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.")) return RESULT_FAILED;
         }
-        if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.")) return NULL;
-        struct Sig* ret = read_sig(var_name);
-        if (ret == NULL) {
+        if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.")) return RESULT_FAILED;
+        struct Sig* ret;
+        if (read_sig(var_name, &ret) == RESULT_FAILED) {
             add_error(var_name, "Invalid return type.");
-            return NULL;
+            return RESULT_FAILED;
         }
-        return make_fun_sig(params, ret);
+        *sig = make_fun_sig(params, ret);
+        return RESULT_SUCCESS;
     }
 
-    if (match(TOKEN_INT_TYPE)) 
-        return make_prim_sig(VAL_INT);
+    if (match(TOKEN_INT_TYPE)) {
+        *sig = make_prim_sig(VAL_INT);
+        return RESULT_SUCCESS;
+    }
 
-    if (match(TOKEN_FLOAT_TYPE))
-        return make_prim_sig(VAL_FLOAT);
+    if (match(TOKEN_FLOAT_TYPE)) {
+        *sig = make_prim_sig(VAL_FLOAT);
+        return RESULT_SUCCESS;
+    }
     
-    if (match(TOKEN_BOOL_TYPE))
-        return make_prim_sig(VAL_BOOL);
+    if (match(TOKEN_BOOL_TYPE)) {
+        *sig = make_prim_sig(VAL_BOOL);
+        return RESULT_SUCCESS;
+    }
     
-    if (match(TOKEN_STRING_TYPE))
-        return make_prim_sig(VAL_STRING);
+    if (match(TOKEN_STRING_TYPE)) {
+        *sig = make_prim_sig(VAL_STRING);
+        return RESULT_SUCCESS;
+    }
 
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
-            if (!consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.")) return NULL;
-            return make_class_sig(var_name);
+            if (!consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.")) return RESULT_FAILED;
+            *sig = make_class_sig(var_name);
+            return RESULT_SUCCESS;
         }
 
-        return make_class_sig(var_name);
+        *sig = make_class_sig(var_name);
+        return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_LIST)) {
-        if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return NULL;
-        struct Sig* template_type = read_sig(var_name);
-        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+        if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
+        struct Sig* template_type;
+        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
             add_error(parser.previous, "List type inside <> must be valid.");
-            return NULL;
+            return RESULT_FAILED;
         }
-        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
-        return make_list_sig(template_type);
+        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
+        *sig = make_list_sig(template_type);
+        return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_MAP)) {
-        if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return NULL;
-        struct Sig* template_type = read_sig(var_name);
-        if (template_type == NULL || sig_is_type(template_type, VAL_NIL)) {
+        if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
+        struct Sig* template_type;
+        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
             add_error(parser.previous, "Map type inside <> must be valid.");
-            return NULL;
+            return RESULT_FAILED;
         }
-        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return NULL;
-        return make_map_sig(template_type);
+        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
+        *sig = make_map_sig(template_type);
+        return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_IDENTIFIER)) {
-        return make_identifier_sig(parser.previous);
+        *sig = make_identifier_sig(parser.previous);
+        return RESULT_SUCCESS;
     }
 
-    //TODO: testing - normally it's just NIL
     if (match(TOKEN_NIL) || 
-        //function definition
-        (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
-        //function declaration
-        (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))) {
-        return make_prim_sig(VAL_NIL);
+            //function definition
+            (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
+            //function declaration
+            (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))) {
+        *sig = make_prim_sig(VAL_NIL);
+        return RESULT_SUCCESS;
     }
 
-    return NULL;
+    return RESULT_FAILED;
 }
 
 static ResultCode param_declaration(struct Node** node) {
@@ -655,8 +671,8 @@ static ResultCode param_declaration(struct Node** node) {
         return RESULT_FAILED;
     }
 
-    struct Sig* sig = read_sig(var_name);
-    if (sig == NULL || sig_is_type(sig, VAL_NIL)) {
+    struct Sig* sig;
+    if (read_sig(var_name, &sig) == RESULT_FAILED || sig_is_type(sig, VAL_NIL)) {
         add_error(var_name, "Parameter type must be valid.");
         return RESULT_FAILED;
     }
@@ -670,8 +686,8 @@ static ResultCode var_declaration(struct Node** node) {
     Token var_name = parser.previous;
     match(TOKEN_COLON);  //var_declaration only called if this is true, so no need to check
 
-    struct Sig* sig = read_sig(var_name);
-    if (sig == NULL) {
+    struct Sig* sig;
+    if (read_sig(var_name, &sig) == RESULT_FAILED) {
         add_error(var_name, "Expecting variable type.");
         return RESULT_FAILED;
     }

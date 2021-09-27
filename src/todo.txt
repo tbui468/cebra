@@ -17,8 +17,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    change read_sig() to use ResultCode
-
     Have add_error include a way to print token in middle of error message
         if embed is true, print the token identifier
         add_error(token, message, embed?)
