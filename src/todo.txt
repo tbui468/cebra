@@ -17,6 +17,14 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Replace consume with match + ADD_ERROR
+
+    Change SigDecl to SigInferred for clarity
+
+    Remove '[line %d]' from ADD_ERROR.  Just use printf("[line %d] ", line) when printing error 
+        recall that we want line number also sort error messages
+        two fixed parameters (line number, message, followed by arguments for message)
+
     ADD_ERROR needs to include a line number so that error messages can be sorted by line number
         Need to make a Error struct with message + line number
         first argument to macro is line number, which we can resuse
