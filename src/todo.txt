@@ -17,7 +17,11 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    OP_GET_IDX/OP_SET_IDX should really be called OP_GET_ELEMENT/OP_SET_ELEMENT
+    Finish OP_SET_ELEMENT for strings - see vm for notes
+        clean up code for NODE_SET_ELEMENT and OP_SET_ELEMENT
+            for setting strings
+
+        Write tests for setting/getting chars from strings
 
     Need to be able to read in a string and the process it
         get string size

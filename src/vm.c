@@ -381,8 +381,20 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_GET_ELEMENT: {
-            //[list | map][idx]
+            //[list | map | string][idx]
             Value left = peek(vm, 1);
+            if (left.type == VAL_STRING) {
+                int idx = pop(vm).as.integer_type;
+                struct ObjString* str = left.as.string_type;
+                if (idx >= str->length) {
+                    add_error(vm, "Index out of bounds.");
+                    return RESULT_FAILED;
+                }
+                pop(vm);
+                struct ObjString* c = make_string(str->chars + idx, 1);
+                push(vm, to_string(c));
+                break; 
+            }
             if (left.type == VAL_LIST) {
                 int idx = pop(vm).as.integer_type;
                 struct ObjList* list = left.as.list_type;
@@ -408,8 +420,26 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             }
         }
         case OP_SET_ELEMENT: {
-            //[value][list | map][idx]
+            //[value][list | map | string][idx]
             Value left = peek(vm, 1);
+            if (left.type == VAL_STRING) {
+                //leave [value][new string] on stack so that SET_VAR can assign variable to new string
+                struct ObjString* str = left.as.string_type;
+                int idx = peek(vm, 0).as.integer_type;
+                Value value = peek(vm, 2); //should be a string with one character
+                if (value.as.string_type->length > 1) {
+                    add_error(vm, "Character at index must be set to character.");
+                }
+                char* final = ALLOCATE_ARRAY(char);
+                final = GROW_ARRAY(final, char, str->length + 1, 0);
+                memcpy(final, str->chars, str->length + 1);
+                final[idx] = *(value.as.string_type->chars);
+                struct ObjString* new_string = take_string(final, str->length);
+                pop(vm);
+                pop(vm);
+                push(vm, to_string(new_string));
+                break;
+            }
             if (left.type == VAL_LIST) {
                 struct ObjList* list = left.as.list_type;
                 int idx = peek(vm, 0).as.integer_type;

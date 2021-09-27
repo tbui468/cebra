@@ -881,6 +881,17 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Sig* idx_sig;
             if (compile_node(compiler, get_idx->idx, ret_sigs, &idx_sig) == RESULT_FAILED) return RESULT_FAILED;
 
+            if (sig_is_type(left_sig, VAL_STRING)) {
+                if (!sig_is_type(idx_sig, VAL_INT)) {
+                    add_error(compiler, get_idx->name, "Index must be integer type.");
+                    return RESULT_FAILED;
+                }
+
+                emit_byte(compiler, OP_GET_ELEMENT);
+                *node_sig = left_sig;
+                return RESULT_SUCCESS;
+            }
+
             if (left_sig->type == SIG_LIST) {
                 if (!sig_is_type(idx_sig, VAL_INT)) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
@@ -903,7 +914,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
 
-
             add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
             return RESULT_FAILED;
         }
@@ -917,6 +927,56 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (compile_node(compiler, get_idx->left, ret_sigs, &left_sig) == RESULT_FAILED) return RESULT_FAILED;
             struct Sig* idx_sig;
             if (compile_node(compiler, get_idx->idx, ret_sigs, &idx_sig) == RESULT_FAILED) return RESULT_FAILED;
+
+            if (sig_is_type(left_sig, VAL_STRING)) {
+                if (!sig_is_type(idx_sig, VAL_INT)) {
+                    add_error(compiler, get_idx->name, "Index must be integer type.");
+                    return RESULT_FAILED;
+                }
+
+                if (!sig_is_type(right_sig, VAL_STRING)) {
+                    add_error(compiler, get_idx->name, "Right side type must be a string type.");
+                    return RESULT_FAILED;
+                }
+
+                emit_byte(compiler, OP_SET_ELEMENT);
+                *node_sig = right_sig;
+
+                //set string to new modified string
+                Token var = ((GetElement*)(get_idx->left))->name;
+                struct Sig* var_sig = resolve_sig(compiler, var);
+                if (var_sig->type == SIG_IDENTIFIER) {
+                    var_sig = resolve_sig(compiler, ((struct SigIdentifier*)var_sig)->identifier);
+                }
+
+                int idx = resolve_local(compiler, var);
+                if (idx != -1) {
+                    if (!same_sig(var_sig, right_sig)) {
+                        add_error(compiler, var, "Right side type must match variable type.");
+                        return RESULT_FAILED;
+                    }
+
+                    emit_byte(compiler, OP_SET_LOCAL);
+                    emit_byte(compiler, idx);
+                    emit_byte(compiler, OP_POP);
+                    return RESULT_SUCCESS;
+                }
+
+                int upvalue_idx = resolve_upvalue(compiler, var);
+                if (upvalue_idx != -1) {
+                    if (!same_sig(var_sig, right_sig)) {
+                        add_error(compiler, var, "Right side type must match variable type.");
+                        return RESULT_FAILED;
+                    }
+
+                    emit_byte(compiler, OP_SET_UPVALUE);
+                    emit_byte(compiler, upvalue_idx);
+                    emit_byte(compiler, OP_POP);
+                    return RESULT_SUCCESS;
+                }
+
+                return RESULT_FAILED;
+            } //end of SET_ELEMENT for strings
 
             if (left_sig->type == SIG_LIST) {
                 if (!sig_is_type(idx_sig, VAL_INT)) {
