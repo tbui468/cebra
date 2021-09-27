@@ -3,11 +3,23 @@
 #include "lexer.h"
 #include "memory.h"
 
+#define ADD_ERROR(msg, ...) \
+    { \
+        char* buf = ALLOCATE_ARRAY(char); \
+        buf = GROW_ARRAY(buf, char, 100, 0); \
+        snprintf(buf, 99, msg, __VA_ARGS__); \
+        if (parser.new_error_count < 256) { \
+            parser.new_errors[parser.new_error_count] = buf; \
+            parser.new_error_count++; \
+        } \
+    }
+
 Parser parser;
 
 static ResultCode expression(Token var_name, struct Node** node);
 static ResultCode declaration(struct Node** node);
 static void add_error(Token token, const char* message);
+static void add_new_error(const char* message);
 static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode read_sig(Token var_name, struct Sig** sig);
 static ResultCode param_declaration(struct Node** node);
@@ -72,24 +84,6 @@ static bool consume(TokenType type, const char* message) {
     return false;
 }
 
-/*
-static struct NodeList* argument_list(Token var_name) {
-    struct NodeList* args = (struct NodeList*)make_node_list();
-    if (!match(TOKEN_RIGHT_PAREN)) {
-        do {
-            struct Node* arg = expression(var_name);
-            if (arg == NULL) {
-                add_error(parser.previous, "Invalid argument.");
-                return NULL;
-            }
-            add_node(args, arg); 
-        } while (match(TOKEN_COMMA));
-        if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.")) return NULL;
-    }
-
-    return args;
-}*/
-
 
 static ResultCode primary(Token var_name, struct Node** node) {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
@@ -102,7 +96,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
         struct Sig* template_type;
         if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
-            add_error(parser.previous, "List type inside <> must be valid.");
+            ADD_ERROR("[line %d] List must be initialized with valid type: List<[type]>().", var_name.line);
             return RESULT_FAILED;
         }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
@@ -113,7 +107,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
         struct Sig* template_type;
         if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
-            add_error(parser.previous, "Map type inside <> must be valid.");
+            ADD_ERROR("[line %d] Map must be initialized with valid type: Map<[type]>().", var_name.line);
             return RESULT_FAILED;
         }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
@@ -140,7 +134,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
                     if (param_declaration(&var_decl) == RESULT_FAILED) return RESULT_FAILED;
 
                     if (match(TOKEN_EQUAL)) {
-                        add_error(parser.previous, "Function parameters cannot be defined.");
+                        Token param_token = ((DeclVar*)var_decl)->name;
+                        ADD_ERROR("[line %d] Trying to assign parameter '%.*s'.  Function parameters cannot be assigned.", 
+                                  param_token.line, param_token.length, param_token.start);
                         return RESULT_FAILED;
                     }
 
@@ -155,15 +151,16 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
             struct Sig* ret_sig;
             if (read_sig(var_name, &ret_sig) == RESULT_FAILED) {
-                add_error(parser.previous, "Expect valid return type after function parameters.");
+                ADD_ERROR("[line %d] Expect valid return type after function parameters.", parser.previous.line);
                 return RESULT_FAILED;
             }
 
             if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.")) return RESULT_FAILED;
 
+            Token body_start = parser.previous;
             struct Node* body;
             if (block(NULL, &body) == RESULT_FAILED) {
-                add_error(parser.previous, "Expect '}' after function body.");
+                ADD_ERROR("[line %d] Expect '}' at end of function body starting at line %d.", body_start.line, body_start.line);
                 return RESULT_FAILED;
             }
 
@@ -176,7 +173,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         //check for group (expression in parentheses)
         struct Node* expr;
         if (expression(var_name, &expr) == RESULT_FAILED) {
-            add_error(parser.previous, "Expect expression after '('.");
+            ADD_ERROR("[line %d] Expect valid expression after '('.", name.line);
             return RESULT_FAILED;
         }
 
@@ -198,9 +195,8 @@ static ResultCode primary(Token var_name, struct Node** node) {
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* decl;
-            if (var_declaration(&decl) == RESULT_FAILED) return RESULT_FAILED;
-            if (decl->type != NODE_DECL_VAR) {
-                add_error(var_name, "Only primitive, function or struct definitions allowed in struct body.");
+            if (var_declaration(&decl) == RESULT_FAILED) {
+                ADD_ERROR("[line %d] Invalid field declaration in struct '%.*s'.", parser.previous.line, var_name.length, var_name.start);
                 return RESULT_FAILED;
             }
 
@@ -220,23 +216,13 @@ static ResultCode primary(Token var_name, struct Node** node) {
         return RESULT_SUCCESS;
     }
 
+    ADD_ERROR("[line %d] Found '%.*s' instead of expected expression.", parser.current.line, parser.current.length, parser.current.start);
     return RESULT_FAILED;
 }
 
 static ResultCode call_dot(Token var_name, struct Node** node) {
     struct Node* left;
     if (primary(var_name, &left) == RESULT_FAILED) {
-        switch(parser.previous.type) {
-            case TOKEN_DOT:
-                add_error(parser.previous, "Left of '.' must be a struct instance.");
-                break;
-            case TOKEN_LEFT_PAREN:
-                add_error(parser.previous, "Left of '(' must be an identifier.");
-                break;
-            case TOKEN_LEFT_BRACKET:
-                add_error(parser.previous, "Left of '[' must be a List or Map identifier.");
-                break;
-        }
         return RESULT_FAILED;
     }
 
@@ -252,7 +238,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                     do {
                         struct Node* arg;
                         if (expression(var_name, &arg) == RESULT_FAILED) {
-                            add_error(parser.previous, "Invalid argument.");
+                            ADD_ERROR("[line %d] Function call argument must be a valid expression.", parser.previous.line);
                             return RESULT_FAILED;
                         }
                         add_node(args, arg); 
@@ -263,9 +249,10 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 left = make_call(parser.previous, left, args);
                 break;
             case TOKEN_LEFT_BRACKET:
+                Token left_bracket = parser.previous;
                 struct Node* idx;
                 if (expression(var_name, &idx) == RESULT_FAILED) {
-                    add_error(parser.previous, "Index must be a string for Maps, or integer for Lists.");
+                    ADD_ERROR("[line %d] Expect string after '[' for Map access, or int for List access.", left_bracket.line);
                     return RESULT_FAILED;
                 }
                 left = make_get_idx(parser.previous, left, idx);
@@ -285,11 +272,7 @@ static ResultCode unary(Token var_name, struct Node** node) {
         Token op = parser.previous;
         struct Node* right;
         if (unary(var_name, &right) == RESULT_FAILED) {
-            if (op.type == TOKEN_MINUS) {
-                add_error(op, "Right side of '-' must be valid expression.");
-            } else {
-                add_error(op, "Right side of '!' must be valid expression.");
-            }
+            ADD_ERROR("[line %d] Right side of '%.*s' must be a valid expression.", op.line, op.length, op.start);
             return RESULT_FAILED;
         }
         *node = make_unary(parser.previous, right);
@@ -302,17 +285,6 @@ static ResultCode unary(Token var_name, struct Node** node) {
 static ResultCode factor(Token var_name, struct Node** node) {
     struct Node* left;
     if (unary(var_name, &left) == RESULT_FAILED) {
-        switch(parser.current.type) {
-            case TOKEN_MOD:
-                add_error(parser.previous, "Left hand side of '%' must evaluate to int.");
-                break;
-            case TOKEN_STAR:
-                add_error(parser.previous, "Left hand side of '*' must evaluate to int or float.");
-                break;
-            case TOKEN_SLASH:
-                add_error(parser.previous, "Left hand side of '/' must evaluate to int or float.");
-                break;
-        }
         return RESULT_FAILED;
     }
 
@@ -320,17 +292,7 @@ static ResultCode factor(Token var_name, struct Node** node) {
         Token name = parser.previous;
         struct Node* right;
         if (unary(var_name, &right) == RESULT_FAILED) {
-            switch(parser.previous.type) {
-                case TOKEN_MOD:
-                    add_error(name, "Right hand side of '%' must evaluate to int.");
-                    break;
-                case TOKEN_STAR:
-                    add_error(name, "Right hand side of '*' must evaluate to int or float.");
-                    break;
-                case TOKEN_SLASH:
-                    add_error(name, "Right hand side of '/' must evaluate to int or float.");
-                    break;
-            }
+            ADD_ERROR("[line %d] Right hand side of '%.*s' must be valid expresion.", name.line, name.length, name.start);
             return RESULT_FAILED;
         }
         left = make_binary(name, left, right);
@@ -343,14 +305,6 @@ static ResultCode factor(Token var_name, struct Node** node) {
 static ResultCode term(Token var_name, struct Node** node) {
     struct Node* left;
     if (factor(var_name, &left) == RESULT_FAILED) {
-        switch(parser.current.type) {
-            case TOKEN_PLUS:
-                add_error(parser.previous, "Left hand side of '+' must evaluate to int, float or string.");
-                break;
-            case TOKEN_MINUS:
-                add_error(parser.previous, "Left hand side of '-' must evaluate to int or float.");
-                break;
-        }
         return RESULT_FAILED;
     }
 
@@ -358,14 +312,7 @@ static ResultCode term(Token var_name, struct Node** node) {
         Token name = parser.previous;
         struct Node* right;
         if (factor(var_name, &right) == RESULT_FAILED) {
-            switch(parser.previous.type) {
-                case TOKEN_PLUS:
-                    add_error(name, "Right hand side of '+' must evaluate to int, float or string.");
-                    break;
-                case TOKEN_MINUS:
-                    add_error(name, "Right hand side of '-' must evaluate to int or float.");
-                    break;
-            }
+            ADD_ERROR("[line %d] Right hand side of '%.*s' must be a valid expression.", name.line, name.length, name.start);
             return RESULT_FAILED;
         }
         left = make_binary(name, left, right);
@@ -378,20 +325,6 @@ static ResultCode term(Token var_name, struct Node** node) {
 static ResultCode relation(Token var_name, struct Node** node) {
     struct Node* left;
     if (term(var_name, &left) == RESULT_FAILED) {
-        switch(parser.current.type) {
-            case TOKEN_LESS:
-                add_error(parser.previous, "Left hand side of '<' must be an expression.");
-                break;
-            case TOKEN_LESS_EQUAL:
-                add_error(parser.previous, "Left hand side of '<=' must be an expression.");
-                break;
-            case TOKEN_GREATER:
-                add_error(parser.previous, "Left hand side of '>' must be an expression.");
-                break;
-            case TOKEN_GREATER_EQUAL:
-                add_error(parser.previous, "Left hand side of '>=' must be an expression.");
-                break;
-        }
         return RESULT_FAILED;
     }
 
@@ -400,20 +333,7 @@ static ResultCode relation(Token var_name, struct Node** node) {
         Token name = parser.previous;
         struct Node* right;
         if (term(var_name, &right) == RESULT_FAILED) {
-            switch(parser.previous.type) {
-                case TOKEN_LESS:
-                    add_error(parser.previous, "Right hand side of '<' must be an expression.");
-                    break;
-                case TOKEN_LESS_EQUAL:
-                    add_error(parser.previous, "Right hand side of '<=' must be an expression.");
-                    break;
-                case TOKEN_GREATER:
-                    add_error(parser.previous, "Right hand side of '>' must be an expression.");
-                    break;
-                case TOKEN_GREATER_EQUAL:
-                    add_error(parser.previous, "Right hand side of '>=' must be an expression.");
-                    break;
-            }
+            ADD_ERROR("[line %d] Right hand side of '%.*s' must be a valid expression.", name.line, name.length, name.start);
             return RESULT_FAILED;
         }
         left = make_logical(name, left, right);
@@ -426,17 +346,6 @@ static ResultCode relation(Token var_name, struct Node** node) {
 static ResultCode equality(Token var_name, struct Node** node) {
     struct Node* left;
     if (relation(var_name, &left) == RESULT_FAILED) {
-        switch(parser.previous.type) {
-            case TOKEN_EQUAL_EQUAL:
-                add_error(parser.previous, "Left hand side of '==' must be an expression.");
-                break;
-            case TOKEN_BANG_EQUAL:
-                add_error(parser.previous, "Left hand side of '!=' must be an expression.");
-                break;
-            case TOKEN_IN:
-                add_error(parser.previous, "Left hand side of 'in' must be an expression.");
-                break;
-        }
         return RESULT_FAILED;
     }
 
@@ -444,15 +353,12 @@ static ResultCode equality(Token var_name, struct Node** node) {
         Token name = parser.previous;
         struct Node* right;
         if (relation(var_name, &right) == RESULT_FAILED) {
-            switch(parser.previous.type) {
-                case TOKEN_EQUAL_EQUAL:
-                    add_error(parser.previous, "Right hand side of '==' must be an expression.");
-                    break;
-                case TOKEN_BANG_EQUAL:
-                    add_error(parser.previous, "Right hand side of '!=' must be an expression.");
-                    break;
+            switch(name.type) {
                 case TOKEN_IN:
-                    add_error(parser.previous, "Right hand side of 'in' must be a List.");
+                    ADD_ERROR("[line %d] Right hand side of '%.*s' must be a List.", name.line, name.length, name.start);
+                    break;
+                default:
+                    ADD_ERROR("[line %d] Right hand side of '%.*s' must be a valid expression.", name.line, name.length, name.start);
                     break;
             }
             return RESULT_FAILED;
@@ -467,7 +373,6 @@ static ResultCode equality(Token var_name, struct Node** node) {
 static ResultCode and(Token var_name, struct Node** node) {
     struct Node* left;
     if (equality(var_name, &left) == RESULT_FAILED) {
-        add_error(parser.previous, "Left hand side of 'and' must evaluate to a boolean.");
         return RESULT_FAILED;
     }
 
@@ -475,7 +380,7 @@ static ResultCode and(Token var_name, struct Node** node) {
         Token name = parser.previous;
         struct Node* right;
         if (equality(var_name, &right) == RESULT_FAILED) {
-            add_error(parser.previous, "Right hand side of 'and' must evaluate to a boolean.");
+            ADD_ERROR("[line %d] Right hand side of '%.*s' must be a valid expression.", name.line, name.length, name.start);
             return RESULT_FAILED;
         }
         left = make_logical(name, left, right);
@@ -488,7 +393,6 @@ static ResultCode and(Token var_name, struct Node** node) {
 static ResultCode or(Token var_name, struct Node** node) {
     struct Node* left;
     if (and(var_name, &left) == RESULT_FAILED) {
-        add_error(parser.previous, "Left hand side of 'or' must evaluate to a boolean.");
         return RESULT_FAILED;
     }
 
@@ -496,7 +400,7 @@ static ResultCode or(Token var_name, struct Node** node) {
         Token name = parser.previous;
         struct Node* right;
         if (and(var_name, &right) == RESULT_FAILED) {
-            add_error(parser.previous, "Right hand side of 'or' must evaluate to a boolean.");
+            ADD_ERROR("[line %d] Right hand side of '%.*s' must be a valid expression.", name.line, name.length, name.start);
             return RESULT_FAILED;
         }
         left = make_logical(name, left, right);
@@ -509,14 +413,14 @@ static ResultCode or(Token var_name, struct Node** node) {
 static ResultCode assignment(Token var_name, struct Node** node) {
     struct Node* left;
     if (or(var_name, &left) == RESULT_FAILED) {
-        add_error(parser.previous, "Left hand side of '=' must be assignable.");
         return RESULT_FAILED;
     }
 
     while (match(TOKEN_EQUAL)) {
+        Token  name = parser.previous;
         struct Node* right;
         if (expression(var_name, &right) == RESULT_FAILED) {
-            add_error(parser.previous, "Right hand side of '=' must be an expression.");
+            ADD_ERROR("[line %d] Right hand side of '%.*s' must be a valid expression.", name.line, name.length, name.start);
             return RESULT_FAILED;
         }
         if (left->type == NODE_GET_IDX) {
@@ -565,13 +469,14 @@ static ResultCode read_sig(Token var_name, struct Sig** sig) {
         return RESULT_SUCCESS;
     }
 
+    //for explicit function type declaration
     if (match(TOKEN_LEFT_PAREN)) {
         struct Sig* params = make_array_sig();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Sig* param_sig;
                 if (read_sig(var_name, &param_sig) == RESULT_FAILED) {
-                    add_error(var_name, "Invalid parameter type.");
+                    ADD_ERROR("[line %d] Invalid parameter type for function declaration '%.*s'.", var_name.line, var_name.length, var_name.start);
                     return RESULT_FAILED;
                 }
                 add_sig((struct SigArray*)params, param_sig);
@@ -581,7 +486,7 @@ static ResultCode read_sig(Token var_name, struct Sig** sig) {
         if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.")) return RESULT_FAILED;
         struct Sig* ret;
         if (read_sig(var_name, &ret) == RESULT_FAILED) {
-            add_error(var_name, "Invalid return type.");
+            ADD_ERROR("[line %d] Invalid return type for function declaration '%.*s'.", var_name.line, var_name.length, var_name.start);
             return RESULT_FAILED;
         }
         *sig = make_fun_sig(params, ret);
@@ -696,7 +601,7 @@ static ResultCode var_declaration(struct Node** node) {
 
     struct Node* right;
     if (expression(var_name, &right) == RESULT_FAILED) {
-        add_error(var_name, "Variable must be assigned to valid expression.");
+        ADD_ERROR("[line %d] Variable '%.*s' must be assigned to valid expression at declaration.", var_name.line, var_name.length, var_name.start);
         return RESULT_FAILED;
     }
     *node = make_decl_var(var_name, sig, right);
@@ -871,12 +776,24 @@ static void add_error(Token token, const char* message) {
     parser.error_count++;
 }
 
+static void add_new_error(const char* message) {
+    if (parser.new_error_count == 256) return;
+    parser.new_errors[parser.new_error_count] = message;
+    parser.new_error_count++;
+}
+
 static void init_parser(const char* source) {
     init_lexer(source);
     parser.error_count = 0;
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
+}
+
+static void free_parser() {
+    for (int i = 0; i < parser.new_error_count; i++) {
+        FREE_ARRAY(parser.new_errors[i], char, 100);
+    }
 }
 
 static int partition(ParseError* errors, int lo, int hi) {
@@ -917,14 +834,19 @@ ResultCode parse(const char* source, struct NodeList* nl) {
         }
     }
 
-    if (parser.error_count > 0) {
+
+    if (parser.new_error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);
         for (int i = 0; i < parser.error_count; i++) {
             printf("[line %d] %s\n", parser.errors[i].token.line, parser.errors[i].message);
         }
+        for (int i = 0; i < parser.new_error_count; i++) {
+            printf("%s\n", parser.new_errors[i]);
+        }
         if (parser.error_count == 256) {
             printf("Parsing error count exceeded maximum of 256.\n");
         }
+        free_parser();
         return RESULT_FAILED;
     }
 

@@ -19,6 +19,8 @@ typedef struct {
     Token next;
     Token next_next;
     ParseError errors[256];
+    char* new_errors[256];
+    int new_error_count;
     int error_count;
 } Parser;
 
