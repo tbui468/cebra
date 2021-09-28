@@ -110,7 +110,6 @@ void print_object(struct Obj* obj) {
     }
 }
 
-
 void mark_object(struct Obj* obj) {
     if (obj == NULL) return;
     obj->is_marked = true;

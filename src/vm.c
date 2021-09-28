@@ -171,9 +171,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         }
         case OP_INSTANCE: {
             struct ObjClass* klass = pop(vm).as.class_type;
-            struct Table props = copy_table(&klass->props);
+            struct Table props;
+            init_table(&props);
             struct ObjInstance* inst = make_instance(props);
             push(vm, to_instance(inst));
+            copy_table(&inst->props, &klass->props);
             break;
         }
         case OP_NEGATE: {

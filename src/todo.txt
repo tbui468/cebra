@@ -15,21 +15,79 @@ ADDING FEATURES:
     Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
+    Dog := struct {
+        name := "Mittens"
+        friend: Dog = nil
+        list := List<int>()
+        map := Map<int>()
+    }
+
+    dog := Dog()
+    dog1 := Dog()
+    dog2 := Dog()
+    dog1.name = "Bubbles"
+    dog2.name = "Boxy"
+    dog1.friend = dog2
+    dog.friend = dog1
+    print(dog.friend.friend.name.size)
+    print(dog.friend.friend.name[3])
+
+    dog.list[0] = 99
+    dog.list[1] = 100
+    print(dog.list.size)
+    print(dog.list[0])
+    print(dog.list[1])
+    print(dog1.list.size) //this is a copy of dog.list, and it shouldn't be.  Not copying table when instantiating struct
+
+
+    dog.friend.list[0] = 888
+    print(dog.list[0])
+
+    //why is dog.map empty???  Maps work fine by themselves, but not when part of a struct
+    print("These three numbers should be: 2, 0, 0")
+    dog.map["one"] = 1
+    dog.map["two"] = 343
+    print(dog.map.keys.size)
+    print(dog.friend.map.keys.size)
+    print(dog.friend.friend.map.keys.size)
+
+    //dog.name[0] = "z" //this doesn't work accessing properties is the problem - see how this was handled with Maps/Lists
+
+
 IMPLEMENTATION:
 
-    This breaks: 
-        access from inside a struct is the problem.  It may be a problem with Lists and Maps too
-        Dog := struct {
-            name := "Mittens"
-            friend: Dog = nil
-        }
+    //Map in instance is valid after OP_INSTANCE
+    //Map is invalid when SET_ELEMENT 
+    //It's the GC!  When collect_garbage is commented out, it works fine
+    //marking objects, BUT not marking table in ObjMap (need to fill in mark_object() in obj.c) <-----THIS IS THE PROBLEM!!!!
+    //I wonder if this is the issue with setting chars/maps/lists in structs too????
+        print("These three numbers should be: 2, 0, 0")
+        dog.map["one"] = 1
+        dog.map["two"] = 343
+        print(dog.map.keys.size)
+        print(dog.friend.map.keys.size)
+        print(dog.friend.friend.map.keys.size)
 
-        dog := Dog()
-        dog1 := Dog()
-        dog1.name = "Bubbles"
-        dog.friend = dog1
-        print(dog.name.size)
-        print(dog.friend.name[0])
+    Creating new struct instances doesn't copy table now, making all Lists and Maps the same in structs 
+        strings work fine since altering the string creates a new string anyway.  In copy_table, 
+        the values need to be deep copied (instead of the shallow copying being done now)
+
+    This breaks: 
+        access strings from inside struct breaks:
+        need to do the same thing we do with Maps and Lists - if it's a GetVar, it's fine.
+            BUT if it's a GetProp, need to put the instance + prop name on stack so that VM
+            can access them to set table prop to RHS.
+                Dog := struct {
+                    name := "Mittens"
+                    friend: Dog = nil
+                }
+
+                dog := Dog()
+                dog1 := Dog()
+                dog1.name = "Bubbles"
+                dog.friend = dog1
+                print(dog.name.size)
+                print(dog.friend.name[0])
 
 
     Get/Set string size - larger size will fill with white space, shorter will trim

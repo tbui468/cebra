@@ -29,23 +29,25 @@ int free_table(struct Table* table) {
     return FREE_ARRAY(table->pairs, struct Pair, table->capacity);
 }
 
-struct Table copy_table(struct Table* table) {
-    struct Table copy;
-    init_table(&copy);
-    reset_table_capacity(&copy, table->capacity); 
+void copy_table(struct Table* dest, struct Table* src) {
+    reset_table_capacity(dest, src->capacity); 
 
-    for (int i = 0; i < table->capacity; i++) {
-        struct Pair* pair = &table->pairs[i];
+    for (int i = 0; i < src->capacity; i++) {
+        struct Pair* pair = &src->pairs[i];
         if (pair->key != NULL) {
-            set_table(&copy, pair->key, pair->value);
+            Value copy = copy_value(&pair->value);
+            //push_root(copy);
+            set_table(dest, pair->key, copy);
+            //pop_root();
         }
     }
-    return copy;
 }
 
 static void grow_table(struct Table* table) {
     int new_capacity = table->capacity * 2;
-    struct Table original = copy_table(table);
+    struct Table original;
+    init_table(&original);
+    copy_table(&original, table);
     reset_table_capacity(table, new_capacity);
 
     for (int i = 0; i < original.capacity; i++) {

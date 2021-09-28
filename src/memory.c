@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "obj_function.h"
 #include "obj_class.h"
+#include "obj_instance.h"
 
 MemoryManager mm;
 
@@ -181,6 +182,12 @@ static void trace_references() {
                 push_gray((struct Obj*)(oc->name));
                 break;
             }
+            case OBJ_INSTANCE: {
+                struct ObjInstance* oi = (struct ObjInstance*)obj;
+                //table of props
+                mark_table(&oi->props);
+                break;
+            }
             case OBJ_UPVALUE: {
                 struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
                 //closed value
@@ -280,7 +287,7 @@ void collect_garbage() {
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
     printf("Bytes allocated: %d\n", mm.allocated);
-    print_stack();
+    print_stack(mm.vm);
 #endif 
     mark_vm_roots();
     mark_compiler_roots();

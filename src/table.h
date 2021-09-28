@@ -18,8 +18,8 @@ struct Table {
 void init_table(struct Table* table);
 void set_table(struct Table* table, struct ObjString* key, Value value);
 bool get_from_table(struct Table* table, struct ObjString* key, Value* value);
-//void delete_pair(struct Table* table, ObjString* key);
-struct Table copy_table(struct Table* table);
+//void delete_pair(struct Table* table, ObjString* key); //TODO: not implemented yet
+void copy_table(struct Table* dest, struct Table* src);
 int free_table(struct Table* table);
 void print_table(struct Table* table);
 

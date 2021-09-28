@@ -290,21 +290,17 @@ struct Obj* get_object(Value* value) {
     }
 }
 
-
 Value copy_value(Value* value) {
     switch (value->type) {
-        case VAL_INT:
-            return to_integer(value->as.integer_type);
-        case VAL_FLOAT:
-            return to_float(value->as.float_type);
-        case VAL_BOOL:
-            return to_boolean(value->as.boolean_type);
-            break;
-        case VAL_STRING:
-            struct ObjString* str = value->as.string_type;
-            struct ObjString* copy = make_string(str->chars, str->length);
-            return to_string(copy);
+        case VAL_MAP:
+            struct ObjMap* orig_map = value->as.map_type;
+            struct ObjMap* map = make_map();
+            push_root(to_map(map));
+            map->default_value = orig_map->default_value;
+            copy_table(&map->table, &orig_map->table);
+            pop_root();
+            return to_map(map);
         default:
-            break;
+            return *value;
     }
 }
