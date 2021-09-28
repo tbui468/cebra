@@ -373,6 +373,8 @@ static void resolve_self_ref_sig(struct SigClass* sc) {
                 memcmp(sc->klass.start, sc2->klass.start, sc->klass.length) == 0) {
                 set_table(&sc->props, pair->key, to_sig((struct Sig*)sc)); 
             }
+        } else if(pair->key != NULL && pair->value.as.sig_type->type == SIG_DECL) {
+            set_table(&sc->props, pair->key, to_sig((struct Sig*)sc));
         }
     }
 }

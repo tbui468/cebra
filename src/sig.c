@@ -236,6 +236,7 @@ void print_sig(struct Sig* sig) {
             struct SigClass* sc = (struct SigClass*)sig;
             printf("( SigClass Stub");
             print_token(sc->klass);
+            printf(" )");
             break;
         case SIG_IDENTIFIER:
             printf("SigIdentifier Stub");
