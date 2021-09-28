@@ -36,9 +36,9 @@ void copy_table(struct Table* dest, struct Table* src) {
         struct Pair* pair = &src->pairs[i];
         if (pair->key != NULL) {
             Value copy = copy_value(&pair->value);
-            //push_root(copy);
+            push_root(copy);
             set_table(dest, pair->key, copy);
-            //pop_root();
+            pop_root();
         }
     }
 }

@@ -23,3 +23,11 @@ int add_value(struct ValueArray* va, Value value) {
     va->values[va->count] = value;
     return va->count++;
 }
+
+void copy_value_array(struct ValueArray* dest, struct ValueArray* src) {
+    free_value_array(dest);
+    init_value_array(dest);
+    for (int i = 0; i < src->count; i++) {
+        add_value(dest, copy_value(&src->values[i]));
+    }
+}

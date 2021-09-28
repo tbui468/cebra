@@ -28,6 +28,7 @@ cast_to_string := true
 for_each_loop := true
 get_set_char := true
 set_string_size := true
+lists_maps_in_structs := true
 
 passed := List<string>()
 failed := List<string>()
@@ -1093,11 +1094,47 @@ if set_string_size {
     }
 
     a.size = 8
-    print(a)
     if a == "Hello   " {
         add_passed("Set String Size, Larger: Passed!")
     } else {
         add_failed("Set String Size, Larger: Failed!")
+    }
+}
+
+if lists_maps_in_structs {
+    print("-Lists / Maps in Structs")
+
+    Dog := struct {
+        name := "Mittens"
+        friend: Dog = nil
+        list := List<int>()
+        map := Map<int>()
+    }
+
+    dog := Dog()
+    dog1 := Dog()
+    dog1.name = "Bubbles"
+    dog.friend = dog1
+
+    dog.map["one"] = 1
+    dog.map["two"] = 343
+    dog.friend.map["one"] = 2232
+
+    if dog.map.keys.size == 2 and dog.friend.map.keys.size == 1 {
+        add_passed("Maps Are Unique in Struct Instances: Passed!")
+    } else {
+        add_failed("Maps Are Unique in Struct Instances: Failed!")
+    }
+
+
+    dog.list[0] = 0
+    dog.list[1] = 1
+    dog1.list[0] = 0
+
+    if dog.list.size == 2 and dog.friend.list.size == 1 {
+        add_passed("Lists Are Unique in Struct Instances: Passed!")
+    } else {
+        add_failed("Lists Are Unique in Struct Instances: Failed!")
     }
 }
 

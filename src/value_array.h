@@ -12,5 +12,6 @@ struct ValueArray {
 void init_value_array(struct ValueArray* va);
 int free_value_array(struct ValueArray* va);
 int add_value(struct ValueArray* va, Value value);
+void copy_value_array(struct ValueArray* dest, struct ValueArray* src);
 
 #endif// CEBRA_VALUE_ARRAY_H
