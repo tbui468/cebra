@@ -26,6 +26,8 @@ struct_inheritance := true
 duck_typing := true
 cast_to_string := true
 for_each_loop := true
+get_set_char := true
+set_string_size := true
 
 passed := List<string>()
 failed := List<string>()
@@ -1050,6 +1052,52 @@ if for_each_loop {
         add_passed("For Each with Map Keys/Values: Passed!")
     } else {
         add_failed("For Each with Map Keys/Values: Failed!")
+    }
+}
+
+if get_set_char {
+    print("-Get / Set Char in String")
+
+    a := "Hello world!"
+    if a[0] == "H" and a[11] == "!" {
+        add_passed("Get Char: Passed!")
+    } else {
+        add_failed("Get Char: Failed!")
+    }
+
+    a[5] = "&"
+    if a == "Hello&world!" {
+        add_passed("Set Char: Passed!")
+    } else {
+        add_failed("Set Char: Failed!")
+    }
+
+    if (a[5] = "$") == "$" and a == "Hello$world!" {
+        add_passed("Set Char, Char result: Passed!")
+    } else {
+        add_failed("Set Char, Char result: Failed!")
+    }
+
+}
+
+if set_string_size {
+    print("-Set String Size")
+
+    a := "Hello world!"
+
+    a.size = 5
+    if a == "Hello" {
+        add_passed("Set String Size, Smaller: Passed!")
+    } else {
+        add_failed("Set String Size, Smaller: Failed!")
+    }
+
+    a.size = 8
+    print(a)
+    if a == "Hello   " {
+        add_passed("Set String Size, Larger: Passed!")
+    } else {
+        add_failed("Set String Size, Larger: Failed!")
     }
 }
 

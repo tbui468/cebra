@@ -17,36 +17,26 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Finish OP_SET_ELEMENT for strings - see vm for notes
-        clean up code for NODE_SET_ELEMENT and OP_SET_ELEMENT
-            for setting strings
-
-        Write tests for setting/getting chars from strings
-
-    Need to be able to read in a string and the process it
-        get string size
-        access substring in string using [] index
-            can take in index, or List of indices
-
-        sub_string := (str: string, lo: int, hi: int) -> string {
-            final: string = ""
-            for i: int = lo , i < hi, i = i + 1 {
-                final = final + str[i]
-            }
-            -> final
+    This breaks: 
+        access from inside a struct is the problem.  It may be a problem with Lists and Maps too
+        Dog := struct {
+            name := "Mittens"
+            friend: Dog = nil
         }
 
-        range := (lo: int, hi: int) -> List<int> {
-            list := List<int>()
-            for i: int = lo, i < hi, i = i + 1 {
-                list[list.size] = i
-            }
-        }
+        dog := Dog()
+        dog1 := Dog()
+        dog1.name = "Bubbles"
+        dog.friend = dog1
+        print(dog.name.size)
+        print(dog.friend.name[0])
 
-        a := "hello world"
-        b := a[0] //"h"
-        c := a[a.size - 1] //"d"
-        d := sub_string(a, 0, 5) //"hello"
+
+    Get/Set string size - larger size will fill with white space, shorter will trim
+
+    Sig is such a string name for Type <- change it to this
+
+    isalnum(), isalpha(), isdigit() can be used to clean up lexer since they're c functions
 
     Add enum support
         //creates ObjEnum object (which is not like an instance since

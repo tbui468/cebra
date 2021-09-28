@@ -377,6 +377,43 @@ static void resolve_self_ref_sig(struct SigClass* sc) {
     }
 }
 
+
+static ResultCode compile_set_var(struct Compiler* compiler, Token var, struct Sig* right_sig, bool pop, struct Sig** node_sig) {
+    struct Sig* var_sig = resolve_sig(compiler, var);
+    *node_sig = var_sig;
+    if (var_sig->type == SIG_IDENTIFIER) {
+        var_sig = resolve_sig(compiler, ((struct SigIdentifier*)var_sig)->identifier);
+    }
+    int idx = resolve_local(compiler, var);
+    if (idx != -1) {
+        if (!same_sig(var_sig, right_sig)) {
+            add_error(compiler, var, "Right side type must match variable type.");
+            return RESULT_FAILED;
+        }
+
+        emit_byte(compiler, OP_SET_LOCAL);
+        emit_byte(compiler, idx);
+        if (pop) emit_byte(compiler, OP_POP);
+        return RESULT_SUCCESS;
+    }
+
+    int upvalue_idx = resolve_upvalue(compiler, var);
+    if (upvalue_idx != -1) {
+        if (!same_sig(var_sig, right_sig)) {
+            add_error(compiler, var, "Right side type must match variable type.");
+            return RESULT_FAILED;
+        }
+
+        emit_byte(compiler, OP_SET_UPVALUE);
+        emit_byte(compiler, upvalue_idx);
+        if (pop) emit_byte(compiler, OP_POP);
+        return RESULT_SUCCESS;
+    }
+
+    add_error(compiler, var, "Local variable not declared.");
+    return RESULT_FAILED;
+}
+
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct SigArray* ret_sigs, struct Sig** node_sig) {
     if (node == NULL) {
         *node_sig = make_prim_sig(VAL_NIL);
@@ -723,7 +760,17 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     *node_sig = make_prim_sig(VAL_INT);
                     return RESULT_SUCCESS;
                 }
-                add_error(compiler, gp->prop, "Property doesn't exist on List.");
+                add_error(compiler, gp->prop, "Property doesn't exist on Lists.");
+                return RESULT_FAILED;
+            }
+
+            if (sig_is_type(sig_inst, VAL_STRING)) {
+                if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
+                    emit_byte(compiler, OP_GET_SIZE);
+                    *node_sig = make_prim_sig(VAL_INT);
+                    return RESULT_SUCCESS;
+                }
+                add_error(compiler, gp->prop, "Property doesn't exist on strings.");
                 return RESULT_FAILED;
             }
 
@@ -775,7 +822,23 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     *node_sig = make_prim_sig(VAL_INT);
                     return RESULT_SUCCESS;
                 }
-                add_error(compiler, prop, "Property doesn't exist on List.");
+                add_error(compiler, prop, "Property doesn't exist on Lists.");
+                return RESULT_FAILED;
+            }
+
+            if (sig_is_type(sig_inst, VAL_STRING)) {
+                if (prop.length == 4 && memcmp(prop.start, "size", prop.length) == 0) {
+                    //this will leave [size][new string] on the stack for SET_VAR to set to [new_string]
+                    emit_byte(compiler, OP_SET_SIZE);
+
+                    GetProp* gp = (GetProp*)(sp->inst);
+                    Token var = ((GetVar*)(gp->inst))->name;
+
+                    ResultCode result = compile_set_var(compiler, var, make_prim_sig(VAL_STRING), true, node_sig);
+                    *node_sig = make_prim_sig(VAL_INT); //We want to return an int (not string type)
+                    return result;
+                }
+                add_error(compiler, prop, "Property doesn't exist on strings.");
                 return RESULT_FAILED;
             }
 
@@ -840,39 +903,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 right_sig = resolve_sig(compiler, ((struct SigIdentifier*)right_sig)->identifier);
             }
 
+
             Token var = ((GetVar*)(sv->left))->name;
-            struct Sig* var_sig = resolve_sig(compiler, var);
-            if (var_sig->type == SIG_IDENTIFIER) {
-                var_sig = resolve_sig(compiler, ((struct SigIdentifier*)var_sig)->identifier);
-            }
-            int idx = resolve_local(compiler, var);
-            if (idx != -1) {
-                if (!same_sig(var_sig, right_sig)) {
-                    add_error(compiler, var, "Right side type must match variable type.");
-                    return RESULT_FAILED;
-                }
-
-                emit_byte(compiler, OP_SET_LOCAL);
-                emit_byte(compiler, idx);
-                *node_sig = var_sig;
-                return RESULT_SUCCESS;
-            }
-
-            int upvalue_idx = resolve_upvalue(compiler, var);
-            if (upvalue_idx != -1) {
-                if (!same_sig(var_sig, right_sig)) {
-                    add_error(compiler, var, "Right side type must match variable type.");
-                    return RESULT_FAILED;
-                }
-
-                emit_byte(compiler, OP_SET_UPVALUE);
-                emit_byte(compiler, upvalue_idx);
-                *node_sig = var_sig;
-                return RESULT_SUCCESS;
-            }
-
-            add_error(compiler, var, "Local variable not declared.");
-            return RESULT_FAILED;
+            return compile_set_var(compiler, var, right_sig, false, node_sig);
         }
         case NODE_GET_ELEMENT: {
             GetElement* get_idx = (GetElement*)node;
@@ -940,43 +973,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 emit_byte(compiler, OP_SET_ELEMENT);
-                *node_sig = right_sig;
 
                 //set string to new modified string
                 Token var = ((GetElement*)(get_idx->left))->name;
-                struct Sig* var_sig = resolve_sig(compiler, var);
-                if (var_sig->type == SIG_IDENTIFIER) {
-                    var_sig = resolve_sig(compiler, ((struct SigIdentifier*)var_sig)->identifier);
-                }
-
-                int idx = resolve_local(compiler, var);
-                if (idx != -1) {
-                    if (!same_sig(var_sig, right_sig)) {
-                        add_error(compiler, var, "Right side type must match variable type.");
-                        return RESULT_FAILED;
-                    }
-
-                    emit_byte(compiler, OP_SET_LOCAL);
-                    emit_byte(compiler, idx);
-                    emit_byte(compiler, OP_POP);
-                    return RESULT_SUCCESS;
-                }
-
-                int upvalue_idx = resolve_upvalue(compiler, var);
-                if (upvalue_idx != -1) {
-                    if (!same_sig(var_sig, right_sig)) {
-                        add_error(compiler, var, "Right side type must match variable type.");
-                        return RESULT_FAILED;
-                    }
-
-                    emit_byte(compiler, OP_SET_UPVALUE);
-                    emit_byte(compiler, upvalue_idx);
-                    emit_byte(compiler, OP_POP);
-                    return RESULT_SUCCESS;
-                }
-
-                return RESULT_FAILED;
-            } //end of SET_ELEMENT for strings
+                return compile_set_var(compiler, var, right_sig, true, node_sig);
+            } 
 
             if (left_sig->type == SIG_LIST) {
                 if (!sig_is_type(idx_sig, VAL_INT)) {
