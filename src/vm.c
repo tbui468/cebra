@@ -371,7 +371,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             }
         }
         case OP_SET_SIZE: {
-            //[new count][list]
+            //[new count][list | string]
             Value value = peek(vm, 0);
             int new_count = peek(vm, 1).as.integer_type;
             if (value.type == VAL_LIST) {
@@ -395,19 +395,16 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 
             if (value.type == VAL_STRING) {
                 struct ObjString* str = value.as.string_type;
-                char* arr = ALLOCATE_ARRAY(char);
-                arr = GROW_ARRAY(arr, char, new_count + 1, 0);
+                str->chars = GROW_ARRAY(str->chars, char, new_count + 1, str->length + 1);
                 if (str->length > new_count) {
-                    memcpy(arr, str->chars, new_count);
-                    arr[new_count] = '\0';
+                    str->chars[new_count] = '\0';
                 } else if (str->length < new_count) {
-                    memcpy(arr, str->chars, str->length);
-                    memset(arr + str->length, ' ', new_count - str->length);
-                    arr[new_count] = '\0';
+                    memset(str->chars + str->length, ' ', new_count - str->length);
+                    str->chars[new_count] = '\0';
                 }
-                struct ObjString* new_str = take_string(arr, new_count);
+                str->length = new_count;
+
                 pop(vm);
-                push(vm, to_string(new_str));
                 break;
             }
         }
@@ -458,18 +455,13 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 int idx = peek(vm, 0).as.integer_type;
                 Value value = peek(vm, 2); 
                 if (value.as.string_type->length > 1) {
-                    add_error(vm, "Character at index must be set to a strig with a single character.");
+                    add_error(vm, "Character at index can only be set to single character string.");
                 }
 
-                char* final = ALLOCATE_ARRAY(char);
-                final = GROW_ARRAY(final, char, str->length + 1, 0);
-                memcpy(final, str->chars, str->length + 1);
-                final[idx] = *(value.as.string_type->chars);
-                struct ObjString* new_string = take_string(final, str->length);
+                str->chars[idx] = *(value.as.string_type->chars);
 
                 pop(vm);
                 pop(vm);
-                push(vm, to_string(new_string));
                 break;
             }
             if (left.type == VAL_LIST) {

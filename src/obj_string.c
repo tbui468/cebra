@@ -37,3 +37,10 @@ struct ObjString* make_string(const char* start, int length) {
     return take_string(chars, length);
 }
 
+void swap_strings(struct ObjString* str1, struct ObjString* str2) {
+    struct ObjString temp = *str1;
+    *str1 = *str2;
+    *str2 = temp;
+
+    //resulting str1 ('abcde') is not in linked list and not deleted
+}

@@ -308,6 +308,10 @@ Value copy_value(Value* value) {
             copy_value_array(&list->values, &orig_list->values);
             pop_root();
             return to_list(list);
+        case VAL_STRING:
+            struct ObjString* orig_str = value->as.string_type;
+            struct ObjString* str = make_string(orig_str->chars, orig_str->length);
+            return to_string(str);
         default:
             return *value;
     }

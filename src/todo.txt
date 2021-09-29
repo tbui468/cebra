@@ -15,62 +15,46 @@ ADDING FEATURES:
     Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
-    Dog := struct {
-        name := "Mittens"
-        friend: Dog = nil
-        list := List<int>()
-        map := Map<int>()
-    }
-
-    dog := Dog()
-    dog1 := Dog()
-    dog2 := Dog()
-    dog1.name = "Bubbles"
-    dog2.name = "Boxy"
-    dog1.friend = dog2
-    dog.friend = dog1
-    print(dog.friend.friend.name.size)
-    print(dog.friend.friend.name[3])
-
-    dog.list[0] = 99
-    dog.list[1] = 100
-    print(dog.list.size)
-    print(dog.list[0])
-    print(dog.list[1])
-    print(dog1.list.size) //this is a copy of dog.list, and it shouldn't be.  Not copying table when instantiating struct
-
-
-    dog.friend.list[0] = 888
-    print(dog.list[0])
-
-    //why is dog.map empty???  Maps work fine by themselves, but not when part of a struct
-    print("These three numbers should be: 2, 0, 0")
-    dog.map["one"] = 1
-    dog.map["two"] = 343
-    print(dog.map.keys.size)
-    print(dog.friend.map.keys.size)
-    print(dog.friend.friend.map.keys.size)
-
-    //dog.name[0] = "z" //this doesn't work accessing properties is the problem - see how this was handled with Maps/Lists
 
 
 IMPLEMENTATION:
 
-    //Map in instance is valid after OP_INSTANCE
-    //Map is invalid when SET_ELEMENT 
-    //It's the GC!  When collect_garbage is commented out, it works fine
-    //marking objects, BUT not marking table in ObjMap (need to fill in mark_object() in obj.c) <-----THIS IS THE PROBLEM!!!!
-    //I wonder if this is the issue with setting chars/maps/lists in structs too????
-        print("These three numbers should be: 2, 0, 0")
-        dog.map["one"] = 1
-        dog.map["two"] = 343
-        print(dog.map.keys.size)
-        print(dog.friend.map.keys.size)
-        print(dog.friend.friend.map.keys.size)
+    CURRENT PROBLEM:
+        One possible solution to problems described below:
+            with a List/Map on the stack, GET/SET PROP (size, keys, values) and GET/SET ELEMENT
+            (list element or key/value in map) can all be used with the List/Map directly.
+            For SET PROP (size) and SET ELEMENT (char) with a string, can have two versions:
+                ....maybe think about this a little more... 
+                currently, setting string size or single char in string breaks when the string
+                is a property in an instance.  The currensetup doesn't work since we are assuming
+                the string is a local/upvalue - one solution is to add
 
-    Creating new struct instances doesn't copy table now, making all Lists and Maps the same in structs 
-        strings work fine since altering the string creates a new string anyway.  In copy_table, 
-        the values need to be deep copied (instead of the shallow copying being done now)
+        OR don't allow setting sizes or chars in strings - only allow getting for those
+            but I like the ability to set individual characters in a string...
+
+        NODE_SET_PROP currently emits OP_SET_SIZE for strings, BUT here's the problem:
+            the strings can come in two flavors - a local/upvalue OR a prop in an instance.
+            We are assuming it's a local/upvalue right now, so that when we try to set 
+            the size of dog.name or dog.friend.name etc, it crashes. 
+        
+            NODE_GET_PROP for strings (emitting OP_GET_SIZE) works fine since we are only
+            reading the ObjString* pushed to the top of the stack, and we don't need the local
+            index or instance property table to set it.  
+
+        Other problem: NODE_SET_ELEMENT has the same problem where when the string is a local/
+            upvalue it works fine.  BUT it'll crash if the string is a prop in an instance.
+
+            NODE_GET_ELEMENT works fine for both stand along strings and strings in instance tables
+            since once again (like in GET_PROP) the value is only read from the ObjString* on the top
+            of the stack and it doesn't need to be modified.
+
+        Lists and Maps using [] 
+            Why does list[0] = 23, dog.list[0] = 23, dog.friend.list[0] = 23 work?  BC we are modifying
+            the list/map itself in each case.
+
+            Strings themselves can't be modified - so setting a char inside of it or OP_SET_SIZE will have
+            to create a new string.  This requires knowing the original location (either on the stack, or a closed upvalue)
+            or in an instance (which can also be a local or closed upvalue) props table.
 
     This breaks: 
         access strings from inside struct breaks:
@@ -93,6 +77,13 @@ IMPLEMENTATION:
     Get/Set string size - larger size will fill with white space, shorter will trim
 
     Sig is such a string name for Type <- change it to this
+
+    group all code by data, not function (this will make it easier to add data and not forget anything)
+        -all object code should be in obj.c
+        -all value code should be in value.c
+        -merge all obj_* files into obj.h/.c as best as possible
+            -obj_instance should be moved into obj.h/obj.c
+            -.... what else?
 
     isalnum(), isalpha(), isdigit() can be used to clean up lexer since they're c functions
 

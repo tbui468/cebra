@@ -1079,6 +1079,31 @@ if get_set_char {
         add_failed("Set Char, Char result: Failed!")
     }
 
+
+    Dog := struct {
+        name := "Mittens"
+        friend: Dog = nil
+    }
+
+    dog1 := Dog()
+    dog2 := Dog()
+    dog1.friend = dog2
+    dog1.friend.name = "Bubbles"
+
+    if dog1.name[0] == "M" and dog1.friend.name[0] == "B" {
+        add_passed("Get Char When String is Property: Passed!")
+    } else {
+        add_failed("Get Char When String is Property: Failed!")
+    }
+
+    dog1.name[0] = "S"
+    dog1.friend.name[0] = "H"
+
+    if dog1.name == "Sittens" and dog1.friend.name == "Hubbles" {
+        add_passed("Set Char When String is Property: Passed!")
+    } else {
+        add_failed("Set Char When String is Property: Failed!")
+    } 
 }
 
 if set_string_size {
@@ -1098,6 +1123,31 @@ if set_string_size {
         add_passed("Set String Size, Larger: Passed!")
     } else {
         add_failed("Set String Size, Larger: Failed!")
+    }
+
+    Dog := struct {
+        name := "Mittens"
+        friend: Dog = nil
+    }
+
+    dog1 := Dog()
+    dog2 := Dog()
+    dog1.friend = dog2
+
+    dog1.name.size = 1
+    dog1.friend.name.size = 3
+    if dog1.name == "M" and dog1.friend.name == "Mit" {
+        add_passed("Set String Size Smaller When String is Property: Passed!")
+    } else {
+        add_failed("Set String Size Smaller When String is Property: Failed!")
+    }
+
+    dog1.name.size = 4
+    dog1.friend.name.size = 4
+    if dog1.name == "M   " and dog1.friend.name == "Mit " {
+        add_passed("Set String Size Larger When String is Property: Passed!")
+    } else {
+        add_failed("Set String Size Larger When String is Property: Failed!")
     }
 }
 
