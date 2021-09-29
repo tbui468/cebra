@@ -1,6 +1,5 @@
 set(Sources
     obj.c
-    obj_string.c
     table.c
     main.c
     memory.c
@@ -18,7 +17,6 @@ set(Sources
 
 set(Headers
     obj.h
-    obj_string.h
     table.h
     result_code.h
     common.h

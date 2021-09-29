@@ -5,7 +5,6 @@
 
 #include "compiler.h"
 #include "memory.h"
-#include "obj_string.h"
 #include "obj.h"
 
 struct Compiler* current_compiler = NULL;

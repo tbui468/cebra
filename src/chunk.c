@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "obj_string.h"
+#include "obj.h"
 #include "chunk.h"
 #include "memory.h"
 

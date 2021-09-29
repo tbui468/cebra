@@ -1,7 +1,6 @@
 #include "vm.h"
 #include "common.h"
 #include "memory.h"
-#include "obj_string.h"
 #include "obj.h"
 
 
