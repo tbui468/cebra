@@ -1,20 +1,11 @@
+#include <ctype.h>
 #include "common.h"
 #include "lexer.h"
 
 Lexer lexer;
 
-
-static bool is_numeric(char c) {
-    return c <= '9' && c >= '0';
-}
-
-static bool is_alpha(char c) {
-    return (c >= 'a' && c <= 'z') ||
-           (c >= 'A' && c <= 'Z'); 
-}
-
-static bool is_alpha_numeric(char c) {
-    return is_alpha(c) || is_numeric(c) || c == '_';
+static bool is_alpha_numeric(unsigned char c) {
+    return isalnum(c) || c == '_';
 }
 
 static bool is_whitespace(char c) {
@@ -24,7 +15,7 @@ static bool is_whitespace(char c) {
     return c == ' ' || c == '\n' || c == '\t' || c == '\r';
 }
 
-static char peek_char() {
+static unsigned char peek_char() {
     return lexer.source[lexer.current]; 
 }
 
@@ -36,7 +27,7 @@ static void consume_whitespace() {
     lexer.start = lexer.current;
 }
 
-char next_char() {
+unsigned char next_char() {
     return lexer.source[lexer.current++];
 }
 
@@ -53,7 +44,7 @@ static Token new_token(TokenType type) {
 }
 
 static void read_numbers() {
-    while (is_numeric(peek_char())) {
+    while (isdigit(peek_char())) {
         next_char();
     }
 }
@@ -126,7 +117,7 @@ Token next_token() {
 
     consume_whitespace();
 
-    char c = next_char();
+    unsigned char c = next_char();
 
     //skip line comments
     while (c == '/' && peek_char() == '/') {
@@ -138,13 +129,13 @@ Token next_token() {
     }
    
     //float with leading . 
-    if (c == '.' && is_numeric(peek_char())) {
+    if (c == '.' && isdigit(peek_char())) {
         read_numbers();
         return new_token(TOKEN_FLOAT);
     }
 
     //int or float (with possible trailing .)
-    if (is_numeric(c)) {
+    if (isdigit(c)) {
         read_numbers();
         if (peek_char() == '.') {
             next_char();
@@ -170,7 +161,7 @@ Token next_token() {
     }
 
     //keyword
-    if (is_alpha(c)) {
+    if (isalpha(c)) {
         return read_keyword(c);
     }
 

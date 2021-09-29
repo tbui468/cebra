@@ -19,18 +19,7 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    foward declare in header, but put .h file in beginning of .c for complete definition
-
     Sig is such a string name for Type <- change it to this
-
-    group all code by data, not function (this will make it easier to add data and not forget anything)
-        -all object code should be in obj.c
-        -all value code should be in value.c
-        -merge all obj_* files into obj.h/.c as best as possible
-            -obj_instance should be moved into obj.h/obj.c
-            -.... what else?
-
-    isalnum(), isalpha(), isdigit() can be used to clean up lexer since they're c functions
 
     Add enum support
         //creates ObjEnum object (which is not like an instance since
