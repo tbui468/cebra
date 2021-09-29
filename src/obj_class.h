@@ -11,6 +11,13 @@ struct ObjClass {
     struct Table props;
 };
 
+
+struct ObjInstance {
+    struct Obj base;
+    struct Table props;
+};
+
+struct ObjInstance* make_instance(struct Table table);
 struct ObjClass* make_class(struct ObjString* name);
 
 

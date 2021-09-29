@@ -6,7 +6,6 @@
 #include "obj_string.h"
 #include "obj_function.h"
 #include "obj_class.h"
-#include "obj_instance.h"
 
 
 Value to_float(double num) {

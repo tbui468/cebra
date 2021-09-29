@@ -19,8 +19,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Move string
-
     Sig is such a string name for Type <- change it to this
 
     group all code by data, not function (this will make it easier to add data and not forget anything)

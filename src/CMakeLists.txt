@@ -3,7 +3,6 @@ set(Sources
     obj_function.c
     obj_class.c
     obj_string.c
-    obj_instance.c
     table.c
     main.c
     memory.c
@@ -24,7 +23,6 @@ set(Headers
     obj_function.h
     obj_class.h
     obj_string.h
-    obj_instance.h
     table.h
     result_code.h
     common.h

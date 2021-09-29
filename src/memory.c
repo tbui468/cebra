@@ -2,7 +2,7 @@
 #include "memory.h"
 #include "obj_function.h"
 #include "obj_class.h"
-#include "obj_instance.h"
+
 
 MemoryManager mm;
 

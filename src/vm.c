@@ -4,7 +4,6 @@
 #include "obj_string.h"
 #include "obj_function.h"
 #include "obj_class.h"
-#include "obj_instance.h"
 
 
 #define READ_TYPE(frame, type) \
