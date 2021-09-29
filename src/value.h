@@ -13,7 +13,7 @@
 #define IS_CLASS(value) (value.type == VAL_CLASS)
 #define IS_INSTANCE(value) (value.type == VAL_INSTANCE)
 #define IS_NIL(value) (value.type == VAL_NIL)
-#define IS_SIG(value) (value.type == VAL_SIG)
+#define IS_TYPE(value) (value.type == VAL_TYPE)
 #define IS_NATIVE(value) (value.type == VAL_NATIVE)
 
 struct ObjInstance;
@@ -33,7 +33,7 @@ typedef enum {
     VAL_CLASS,
     VAL_INSTANCE,
     VAL_NIL,
-    VAL_SIG,
+    VAL_TYPE,
     VAL_NATIVE,
     VAL_LIST,
     VAL_MAP
@@ -49,7 +49,7 @@ typedef struct {
         struct ObjFunction* function_type;
         struct ObjClass* class_type;
         struct ObjInstance* instance_type;
-        struct Sig* sig_type;
+        struct Type* type_type;
         struct ObjNative* native_type;
         struct ObjList* list_type;
         struct ObjMap* map_type;
@@ -64,7 +64,7 @@ Value to_boolean(bool b);
 Value to_function(struct ObjFunction* obj);
 Value to_class(struct ObjClass* obj);
 Value to_instance(struct ObjInstance* obj);
-Value to_sig(struct Sig* sig);
+Value to_type(struct Type* type);
 Value to_native(struct ObjNative* obj);
 Value to_list(struct ObjList* obj);
 Value to_map(struct ObjMap* obj);

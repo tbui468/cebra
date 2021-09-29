@@ -124,10 +124,10 @@ static void mark_compiler_roots() {
         mark_object((struct Obj*)(current->function));
         push_gray((struct Obj*)(current->function));
 
-        struct Sig* sig = current->signatures;
-        while (sig != NULL) {
-            if (sig->type == SIG_CLASS) {
-                struct SigClass* sc = (struct SigClass*)sig;
+        struct Type* type = current->types;
+        while (type != NULL) {
+            if (type->type == TYPE_CLASS) {
+                struct TypeClass* sc = (struct TypeClass*)type;
                 for (int i = 0; i < sc->props.capacity; i++) {
                     struct Pair* pair = &sc->props.pairs[i];
                     if (pair->key != NULL) {
@@ -136,7 +136,7 @@ static void mark_compiler_roots() {
                     }
                 }                    
             }
-            sig = sig->next;
+            type = type->next;
         }
 
         current = current->enclosing;

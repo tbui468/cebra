@@ -23,7 +23,7 @@ Parser parser;
 static ResultCode expression(Token var_name, struct Node** node);
 static ResultCode declaration(struct Node** node);
 static ResultCode block(struct Node* prepend, struct Node** node);
-static ResultCode read_sig(Token var_name, struct Sig** sig);
+static ResultCode read_type(Token var_name, struct Type** type);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode var_declaration(struct Node** node);
 
@@ -97,24 +97,24 @@ static ResultCode primary(Token var_name, struct Node** node) {
     } else if (match(TOKEN_LIST)) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
-        struct Sig* template_type;
-        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
+        struct Type* template_type;
+        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
             ADD_ERROR(var_name, "List must be initialized with valid type: List<[type]>().");
             return RESULT_FAILED;
         }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
-        *node = make_get_var(identifier, make_list_sig(template_type)); 
+        *node = make_get_var(identifier, make_list_type(template_type)); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_MAP)) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
-        struct Sig* template_type;
-        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
+        struct Type* template_type;
+        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
             ADD_ERROR(var_name, "Map must be initialized with valid type: Map<[type]>().");
             return RESULT_FAILED;
         }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
-        *node = make_get_var(identifier, make_map_sig(template_type)); 
+        *node = make_get_var(identifier, make_map_type(template_type)); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IDENTIFIER)) {
         *node = make_get_var(parser.previous, NULL);
@@ -130,7 +130,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
             peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
             struct NodeList* params = (struct NodeList*)make_node_list();
             
-            struct Sig* param_sig = make_array_sig();
+            struct Type* param_type = make_array_type();
             if (!match(TOKEN_RIGHT_PAREN)) {
                 do {
                     struct Node* var_decl;
@@ -138,13 +138,13 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
                     if (match(TOKEN_EQUAL)) {
                         Token param_token = ((DeclVar*)var_decl)->name;
-                        ADD_ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be assigned.", 
+                        ADD_ERROR(param_token, "Trying to astypen parameter '%.*s'.  Function parameters cannot be astypened.", 
                                   param_token.length, param_token.start);
                         return RESULT_FAILED;
                     }
 
                     DeclVar* vd = (DeclVar*)var_decl;
-                    add_sig((struct SigArray*)param_sig, vd->sig);
+                    add_type((struct TypeArray*)param_type, vd->type);
                     add_node(params, var_decl);
                 } while (match(TOKEN_COMMA));
                 if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter list.")) return RESULT_FAILED;
@@ -152,8 +152,8 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
             if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameter list.")) return RESULT_FAILED;
 
-            struct Sig* ret_sig;
-            if (read_sig(var_name, &ret_sig) == RESULT_FAILED) {
+            struct Type* ret_type;
+            if (read_type(var_name, &ret_type) == RESULT_FAILED) {
                 ADD_ERROR(parser.previous, "Expect valid return type after function parameters.");
                 return RESULT_FAILED;
             }
@@ -167,9 +167,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
                 return RESULT_FAILED;
             }
 
-            struct Sig* fun_sig = make_fun_sig(param_sig, ret_sig); 
+            struct Type* fun_type = make_fun_type(param_type, ret_type); 
 
-            *node = make_decl_fun(var_name, params, fun_sig, body);
+            *node = make_decl_fun(var_name, params, fun_type, body);
             return RESULT_SUCCESS;
         }
 
@@ -185,9 +185,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
         return RESULT_SUCCESS;
     } else if (peek_one(TOKEN_CLASS)) {
         //this branch is only entered if next is TOKEN_CLASS
-        //so read_sig(var_name) will always be valid, so no NULL check
-        struct Sig* right_sig;
-        if (read_sig(var_name, &right_sig) == RESULT_FAILED) return RESULT_FAILED;
+        //so read_type(var_name) will always be valid, so no NULL check
+        struct Type* right_type;
+        if (read_type(var_name, &right_type) == RESULT_FAILED) return RESULT_FAILED;
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
                              make_get_var(parser.previous, NULL) : 
@@ -412,7 +412,7 @@ static ResultCode or(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode assignment(Token var_name, struct Node** node) {
+static ResultCode astypenment(Token var_name, struct Node** node) {
     struct Node* left;
     if (or(var_name, &left) == RESULT_FAILED) {
         return RESULT_FAILED;
@@ -439,7 +439,7 @@ static ResultCode assignment(Token var_name, struct Node** node) {
 }
 
 static ResultCode expression(Token var_name, struct Node** node) {
-    return assignment(var_name, node);
+    return astypenment(var_name, node);
 }
 
 static ResultCode block(struct Node* prepend, struct Node** node) {
@@ -465,93 +465,93 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode read_sig(Token var_name, struct Sig** sig) {
+static ResultCode read_type(Token var_name, struct Type** type) {
     if (parser.previous.type == TOKEN_COLON && peek_one(TOKEN_EQUAL)) {
-        *sig = make_decl_sig(); //inferred type signature TODO: should change name to SigInferred
+        *type = make_decl_type(); //inferred type typenature TODO: should change name to TypeInferred
         return RESULT_SUCCESS;
     }
 
     //for explicit function type declaration
     if (match(TOKEN_LEFT_PAREN)) {
-        struct Sig* params = make_array_sig();
+        struct Type* params = make_array_type();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
-                struct Sig* param_sig;
-                if (read_sig(var_name, &param_sig) == RESULT_FAILED) {
+                struct Type* param_type;
+                if (read_type(var_name, &param_type) == RESULT_FAILED) {
                     ADD_ERROR(var_name, "Invalid parameter type for function declaration '%.*s'.", var_name.length, var_name.start);
                     return RESULT_FAILED;
                 }
-                add_sig((struct SigArray*)params, param_sig);
+                add_type((struct TypeArray*)params, param_type);
             } while(match(TOKEN_COMMA));
             if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.")) return RESULT_FAILED;
         }
         if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.")) return RESULT_FAILED;
-        struct Sig* ret;
-        if (read_sig(var_name, &ret) == RESULT_FAILED) {
+        struct Type* ret;
+        if (read_type(var_name, &ret) == RESULT_FAILED) {
             ADD_ERROR(var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
             return RESULT_FAILED;
         }
-        *sig = make_fun_sig(params, ret);
+        *type = make_fun_type(params, ret);
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_INT_TYPE)) {
-        *sig = make_prim_sig(VAL_INT);
+        *type = make_prim_type(VAL_INT);
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_FLOAT_TYPE)) {
-        *sig = make_prim_sig(VAL_FLOAT);
+        *type = make_prim_type(VAL_FLOAT);
         return RESULT_SUCCESS;
     }
     
     if (match(TOKEN_BOOL_TYPE)) {
-        *sig = make_prim_sig(VAL_BOOL);
+        *type = make_prim_type(VAL_BOOL);
         return RESULT_SUCCESS;
     }
     
     if (match(TOKEN_STRING_TYPE)) {
-        *sig = make_prim_sig(VAL_STRING);
+        *type = make_prim_type(VAL_STRING);
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             if (!consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.")) return RESULT_FAILED;
-            *sig = make_class_sig(var_name);
+            *type = make_class_type(var_name);
             return RESULT_SUCCESS;
         }
 
-        *sig = make_class_sig(var_name);
+        *type = make_class_type(var_name);
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_LIST)) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
-        struct Sig* template_type;
-        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
+        struct Type* template_type;
+        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
             ADD_ERROR(var_name, "List '%.*s' declaration type invalid. Specify type inside '<>'.", var_name.length, var_name.start);
             return RESULT_FAILED;
         }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
-        *sig = make_list_sig(template_type);
+        *type = make_list_type(template_type);
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_MAP)) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
-        struct Sig* template_type;
-        if (read_sig(var_name, &template_type) == RESULT_FAILED || sig_is_type(template_type, VAL_NIL)) {
+        struct Type* template_type;
+        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
             ADD_ERROR(var_name, "Map '%.*s' declaration type invalid. Specify value type inside '<>'.", var_name.length, var_name.start);
             return RESULT_FAILED;
         }
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
-        *sig = make_map_sig(template_type);
+        *type = make_map_type(template_type);
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_IDENTIFIER)) {
-        *sig = make_identifier_sig(parser.previous);
+        *type = make_identifier_type(parser.previous);
         return RESULT_SUCCESS;
     }
 
@@ -560,7 +560,7 @@ static ResultCode read_sig(Token var_name, struct Sig** sig) {
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
             //function declaration
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))) {
-        *sig = make_prim_sig(VAL_NIL);
+        *type = make_prim_type(VAL_NIL);
         return RESULT_SUCCESS;
     }
 
@@ -578,13 +578,13 @@ static ResultCode param_declaration(struct Node** node) {
         return RESULT_FAILED;
     }
 
-    struct Sig* sig;
-    if (read_sig(var_name, &sig) == RESULT_FAILED || sig_is_type(sig, VAL_NIL)) {
+    struct Type* type;
+    if (read_type(var_name, &type) == RESULT_FAILED || type_is_type(type, VAL_NIL)) {
         ADD_ERROR(var_name, "Parameter identifier '%.*s' type invalid.", var_name.length, var_name.start);
         return RESULT_FAILED;
     }
 
-    *node = make_decl_var(var_name, sig, NULL);
+    *node = make_decl_var(var_name, type, NULL);
     return RESULT_SUCCESS;
 }
 
@@ -593,8 +593,8 @@ static ResultCode var_declaration(struct Node** node) {
     Token var_name = parser.previous;
     match(TOKEN_COLON);  //var_declaration only called if this is true, so no need to check
 
-    struct Sig* sig;
-    if (read_sig(var_name, &sig) == RESULT_FAILED) {
+    struct Type* type;
+    if (read_type(var_name, &type) == RESULT_FAILED) {
         ADD_ERROR(var_name, "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
                   var_name.length, var_name.start, var_name.length, var_name.start);
         return RESULT_FAILED;
@@ -604,10 +604,10 @@ static ResultCode var_declaration(struct Node** node) {
 
     struct Node* right;
     if (expression(var_name, &right) == RESULT_FAILED) {
-        ADD_ERROR(var_name, "Variable '%.*s' must be assigned to valid expression at declaration.", var_name.length, var_name.start);
+        ADD_ERROR(var_name, "Variable '%.*s' must be astypened to valid expression at declaration.", var_name.length, var_name.start);
         return RESULT_FAILED;
     }
-    *node = make_decl_var(var_name, sig, right);
+    *node = make_decl_var(var_name, type, right);
     return RESULT_SUCCESS;
 }
 
@@ -723,7 +723,7 @@ static ResultCode declaration(struct Node** node) {
         //initializer
         Token idx_token = make_token(TOKEN_IDENTIFIER, -1, "_idx_", 5);
         Token zero_token = make_token(TOKEN_INT, -1, "0", 1);
-        struct Node* initializer = make_decl_var(idx_token, make_prim_sig(VAL_INT), make_literal(zero_token));
+        struct Node* initializer = make_decl_var(idx_token, make_prim_type(VAL_INT), make_literal(zero_token));
 
         //condition 
         Token prop_token = make_token(TOKEN_IDENTIFIER, -1, "size", 4);

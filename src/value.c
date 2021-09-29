@@ -75,10 +75,10 @@ Value to_nil() {
     return value;
 }
 
-Value to_sig(struct Sig* sig) {
+Value to_type(struct Type* type) {
     Value value;
-    value.type = VAL_SIG;
-    value.as.sig_type = sig;
+    value.type = VAL_TYPE;
+    value.as.type_type = type;
     return value;
 }
 
@@ -209,9 +209,9 @@ void print_value(Value a) {
         case VAL_NIL:
             printf("%s", "<nil>");
             break;
-        case VAL_SIG:
-            printf("%s", "<sig> ");
-            print_sig(a.as.sig_type);
+        case VAL_TYPE:
+            printf("%s", "<type> ");
+            print_type(a.as.type_type);
             break;
         case VAL_NATIVE:
             printf("%s", "<native>");
@@ -238,7 +238,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_CLASS: return "VAL_CLASS";
         case VAL_INSTANCE: return "VAL_INSTANCE";
         case VAL_NIL: return "VAL_NIL";
-        case VAL_SIG: return "VAL_SIG";
+        case VAL_TYPE: return "VAL_TYPE";
         case VAL_NATIVE: return "VAL_NATIVE";
         case VAL_LIST: return "VAL_LIST";
         case VAL_MAP: return "VAL_MAP";
@@ -282,7 +282,7 @@ struct Obj* get_object(Value* value) {
         case VAL_FLOAT:
         case VAL_BOOL:
         case VAL_NIL:
-        case VAL_SIG:
+        case VAL_TYPE:
             return NULL;
     }
 }

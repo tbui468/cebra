@@ -34,21 +34,21 @@ void add_node(struct NodeList* nl, struct Node* node) {
  * Declarations
  */
 
-struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right) {
+struct Node* make_decl_var(Token name, struct Type* type, struct Node* right) {
     DeclVar* decl_var = ALLOCATE(DeclVar);
     decl_var->name = name;
-    decl_var->sig = sig;
+    decl_var->type = type;
     decl_var->right = right;
     decl_var->base.type = NODE_DECL_VAR;
 
     return insert_node((struct Node*)decl_var);
 }
 
-struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Sig* sig, struct Node* body) {
+struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Type* type, struct Node* body) {
     DeclFun* df = ALLOCATE(DeclFun);
     df->name = name;
     df->parameters = parameters;
-    df->sig = sig;
+    df->type = type;
     df->body = body;
     df->base.type = NODE_FUN;
 
@@ -201,7 +201,7 @@ struct Node* make_set_prop(struct Node* inst, struct Node* right) {
     return insert_node((struct Node*)set_prop);
 }
 
-struct Node* make_get_var(Token name, struct Sig* template_type) {
+struct Node* make_get_var(Token name, struct Type* template_type) {
     GetVar* get_var = ALLOCATE(GetVar);
     get_var->name = name;
     get_var->template_type = template_type;
@@ -378,7 +378,7 @@ void print_node(struct Node* node) {
             GetVar* gv = (GetVar*)node;
             printf("( GetVar ");
             print_token(gv->name);
-            if (gv->template_type != NULL) print_sig(gv->template_type);
+            if (gv->template_type != NULL) print_type(gv->template_type);
             printf(" )");
             break;
         }

@@ -19,7 +19,9 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Sig is such a string name for Type <- change it to this
+    Instead of having SigPrim, make SigInt, SigFloat, SigString, SigNil etc
+        so that the type can be check using sig->type == SIG_INT instead
+        of using sig_is_type(sig, VAL_NIL), which is strange
 
     Add enum support
         //creates ObjEnum object (which is not like an instance since

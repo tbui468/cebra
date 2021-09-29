@@ -5,7 +5,7 @@
 #include "token.h"
 #include "result_code.h"
 #include "value.h"
-#include "sig.h"
+#include "type.h"
 
 typedef enum {
     NODE_LITERAL,
@@ -52,7 +52,7 @@ struct NodeList {
 typedef struct {
     struct Node base;
     Token name;
-    struct Sig* sig;
+    struct Type* type;
     struct Node* right;
 } DeclVar;
 
@@ -60,7 +60,7 @@ typedef struct {
     struct Node base;
     Token name;
     struct NodeList* parameters;
-    struct Sig* sig;
+    struct Type* type;
     struct Node* body;
 } DeclFun;
 
@@ -69,7 +69,7 @@ typedef struct {
     Token name;
     struct Node* super;
     struct NodeList* decls;
-//    struct Sig* sig;
+//    struct Type* type;
 } DeclClass;
 
 /*
@@ -170,7 +170,7 @@ typedef struct {
 typedef struct {
     struct Node base;
     Token name;
-    struct Sig* template_type;
+    struct Type* template_type;
 } GetVar;
 
 typedef struct {
@@ -211,8 +211,8 @@ struct Node* make_literal(Token name);
 struct Node* make_unary(Token name, struct Node* right);
 struct Node* make_binary(Token name, struct Node* left, struct Node* right);
 struct Node* make_logical(Token name, struct Node* left, struct Node* right);
-struct Node* make_decl_var(Token name, struct Sig* sig, struct Node* right);
-struct Node* make_get_var(Token name, struct Sig* template_type);
+struct Node* make_decl_var(Token name, struct Type* type, struct Node* right);
+struct Node* make_get_var(Token name, struct Type* template_type);
 struct Node* make_set_var(struct Node* left, struct Node* right);
 struct Node* make_get_element(Token name, struct Node* left, struct Node* idx);
 struct Node* make_set_element(struct Node* left, struct Node* right);
@@ -221,7 +221,7 @@ struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
 struct Node* make_for_each(Token name, struct Node* element, struct Node* var_list, struct Node* then_block);
-struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Sig* sig, struct Node* body);
+struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Type* type, struct Node* body);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, struct Node* left, struct NodeList* arguments);
 struct Node* make_decl_class(Token name, struct Node* super, struct NodeList* decls);

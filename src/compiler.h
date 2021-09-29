@@ -18,7 +18,7 @@ struct Upvalue {
 
 typedef struct {
     Token name;
-    struct Sig* sig;
+    struct Type* type;
     int depth;
     bool is_captured;
 } Local;
@@ -33,7 +33,7 @@ struct Compiler {
     CompileError errors[256];
     int error_count;
     struct Compiler* enclosing;
-    struct Sig* signatures;
+    struct Type* types;
     struct Node* nodes;
 };
 

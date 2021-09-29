@@ -4,7 +4,7 @@ set(Sources
     main.c
     memory.c
     token.c
-    sig.c
+    type.c
     value.c
     lexer.c
     parser.c
@@ -22,7 +22,7 @@ set(Headers
     common.h
     memory.h
     token.h
-    sig.h
+    type.h
     value.h
     lexer.h
     parser.h
