@@ -98,7 +98,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
+        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
             ADD_ERROR(var_name, "List must be initialized with valid type: List<[type]>().");
             return RESULT_FAILED;
         }
@@ -109,7 +109,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
+        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
             ADD_ERROR(var_name, "Map must be initialized with valid type: Map<[type]>().");
             return RESULT_FAILED;
         }
@@ -496,22 +496,22 @@ static ResultCode read_type(Token var_name, struct Type** type) {
     }
 
     if (match(TOKEN_INT_TYPE)) {
-        *type = make_prim_type(VAL_INT);
+        *type = make_int_type();
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_FLOAT_TYPE)) {
-        *type = make_prim_type(VAL_FLOAT);
+        *type = make_float_type();
         return RESULT_SUCCESS;
     }
     
     if (match(TOKEN_BOOL_TYPE)) {
-        *type = make_prim_type(VAL_BOOL);
+        *type = make_bool_type();
         return RESULT_SUCCESS;
     }
     
     if (match(TOKEN_STRING_TYPE)) {
-        *type = make_prim_type(VAL_STRING);
+        *type = make_string_type();
         return RESULT_SUCCESS;
     }
 
@@ -529,7 +529,7 @@ static ResultCode read_type(Token var_name, struct Type** type) {
     if (match(TOKEN_LIST)) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
+        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
             ADD_ERROR(var_name, "List '%.*s' declaration type invalid. Specify type inside '<>'.", var_name.length, var_name.start);
             return RESULT_FAILED;
         }
@@ -541,7 +541,7 @@ static ResultCode read_type(Token var_name, struct Type** type) {
     if (match(TOKEN_MAP)) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || type_is_type(template_type, VAL_NIL)) {
+        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
             ADD_ERROR(var_name, "Map '%.*s' declaration type invalid. Specify value type inside '<>'.", var_name.length, var_name.start);
             return RESULT_FAILED;
         }
@@ -560,7 +560,7 @@ static ResultCode read_type(Token var_name, struct Type** type) {
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
             //function declaration
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))) {
-        *type = make_prim_type(VAL_NIL);
+        *type = make_nil_type();
         return RESULT_SUCCESS;
     }
 
@@ -579,7 +579,7 @@ static ResultCode param_declaration(struct Node** node) {
     }
 
     struct Type* type;
-    if (read_type(var_name, &type) == RESULT_FAILED || type_is_type(type, VAL_NIL)) {
+    if (read_type(var_name, &type) == RESULT_FAILED || type->type == TYPE_NIL) {
         ADD_ERROR(var_name, "Parameter identifier '%.*s' type invalid.", var_name.length, var_name.start);
         return RESULT_FAILED;
     }
@@ -723,7 +723,7 @@ static ResultCode declaration(struct Node** node) {
         //initializer
         Token idx_token = make_token(TOKEN_IDENTIFIER, -1, "_idx_", 5);
         Token zero_token = make_token(TOKEN_INT, -1, "0", 1);
-        struct Node* initializer = make_decl_var(idx_token, make_prim_type(VAL_INT), make_literal(zero_token));
+        struct Node* initializer = make_decl_var(idx_token, make_int_type(), make_literal(zero_token));
 
         //condition 
         Token prop_token = make_token(TOKEN_IDENTIFIER, -1, "size", 4);

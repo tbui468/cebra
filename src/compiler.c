@@ -85,14 +85,14 @@ static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, 
             int32_t integer = (int32_t)strtol(literal->name.start, NULL, 10);
             emit_byte(compiler, OP_CONSTANT); 
             emit_short(compiler, add_constant(compiler, to_integer(integer)));
-            *node_type = make_prim_type(VAL_INT);
+            *node_type = make_int_type();
             return RESULT_SUCCESS;
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
             emit_byte(compiler, OP_CONSTANT);
             emit_short(compiler, add_constant(compiler, to_float(f)));
-            *node_type = make_prim_type(VAL_FLOAT);
+            *node_type = make_float_type();
             return RESULT_SUCCESS;
         }
         case TOKEN_STRING: {
@@ -101,17 +101,17 @@ static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, 
             emit_byte(compiler, OP_CONSTANT);
             emit_short(compiler, add_constant(compiler, to_string(str)));
             pop_root();
-            *node_type = make_prim_type(VAL_STRING);
+            *node_type = make_string_type();
             return RESULT_SUCCESS;
         }
         case TOKEN_TRUE: {
             emit_byte(compiler, OP_TRUE);
-            *node_type = make_prim_type(VAL_BOOL);
+            *node_type = make_bool_type();
             return RESULT_SUCCESS;
         }
         case TOKEN_FALSE: {
             emit_byte(compiler, OP_FALSE);
-            *node_type = make_prim_type(VAL_BOOL);
+            *node_type = make_bool_type();
             return RESULT_SUCCESS;
         }
     }
@@ -142,7 +142,7 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
             add_error(compiler, logical->name, "Left and right types must match.");
             return RESULT_FAILED;
         }
-        *node_type = make_prim_type(VAL_BOOL);
+        *node_type = make_bool_type();
         return RESULT_SUCCESS;
     }
 
@@ -158,7 +158,7 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
             add_error(compiler, logical->name, "Left and right types must match.");
             return RESULT_FAILED;
         }
-        *node_type = make_prim_type(VAL_BOOL);
+        *node_type = make_bool_type();
         return RESULT_SUCCESS;
     }
 
@@ -179,7 +179,7 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
         }
 
         emit_byte(compiler, OP_IN_LIST);
-        *node_type = make_prim_type(VAL_BOOL);
+        *node_type = make_bool_type();
         return RESULT_SUCCESS;
     }
 
@@ -215,7 +215,7 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
             emit_byte(compiler, OP_NEGATE);
             break;
     }
-    *node_type = make_prim_type(VAL_BOOL);
+    *node_type = make_bool_type();
     return RESULT_SUCCESS;
 }
 
@@ -380,7 +380,7 @@ static void resolve_self_ref_type(struct TypeClass* sc) {
 
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
     if (node == NULL) {
-        *node_type = make_prim_type(VAL_NIL);
+        *node_type = make_nil_type();
         return RESULT_SUCCESS;
     }
     switch(node->type) {
@@ -399,8 +399,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (dv->type->type == TYPE_DECL) {
                 int idx = add_local(compiler, dv->name, dv->type);
                 if (compile_node(compiler, dv->right, NULL, &type) == RESULT_FAILED) return RESULT_FAILED;
-                if (type_is_type(type, VAL_NIL)) {
-                    add_error(compiler, dv->name, "Inferred type cannot be astypened to 'nil'.");
+                if (type->type == TYPE_NIL) {
+                    add_error(compiler, dv->name, "Inferred type cannot be assigned to 'nil'.");
                     return RESULT_FAILED;
                 }
                 set_local(compiler, dv->name, type, idx);
@@ -415,7 +415,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 int idx = add_local(compiler, dv->name, dv->type);
                 if (compile_node(compiler, dv->right, NULL, &type) == RESULT_FAILED) return RESULT_FAILED;
 
-                if (!type_is_type(type, VAL_NIL)) {
+                if (type->type != TYPE_NIL) {
                     set_local(compiler, dv->name, type, idx);
 
                     if (dv->type->type == TYPE_CLASS) {
@@ -464,7 +464,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             copy_errors(compiler, &func_comp);
 
             struct TypeFun* typefun = (struct TypeFun*)df->type;
-            if (inner_ret_types->count == 0 && !type_is_type(typefun->ret, VAL_NIL)) {
+            if (inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL) {
                 add_error(compiler, df->name, "Return type must match typenature in function declaration.");
                 return RESULT_FAILED;
             }
@@ -536,7 +536,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* type;
                 if (compile_node(compiler, node, (struct TypeArray*)class_ret_types, &type) == RESULT_FAILED) return RESULT_FAILED;
 
-                if (type_is_type(type, VAL_NIL)) {
+                if (type->type == TYPE_NIL) {
                     struct Type* dv_type = dv->type;
                     if (dv_type->type == TYPE_IDENTIFIER) {
                         dv_type = resolve_type(compiler, ((struct TypeIdentifier*)dv_type)->identifier);
@@ -590,10 +590,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (compile_node(compiler, es->expr, ret_types, &type) == RESULT_FAILED) return RESULT_FAILED;
 
             //while/if-else etc return VAL_NIL (and leave nothing on stack)
-            if (!type_is_type(type, VAL_NIL)) {
+            if (type->type != TYPE_NIL) {
                 emit_byte(compiler, OP_POP);
             }
-            *node_type = make_prim_type(VAL_NIL);
+            *node_type = make_nil_type();
             return RESULT_SUCCESS;
         }
         case NODE_BLOCK: {
@@ -604,7 +604,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 if (compile_node(compiler, block->decl_list->nodes[i], ret_types, &type) == RESULT_FAILED) return RESULT_FAILED;
             }
             end_scope(compiler);
-            *node_type = make_prim_type(VAL_NIL);
+            *node_type = make_nil_type();
             return RESULT_SUCCESS;
         }
         case NODE_IF_ELSE: {
@@ -612,7 +612,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* cond;
             if (compile_node(compiler, ie->condition, ret_types, &cond) == RESULT_FAILED) return RESULT_FAILED;
 
-            if (!type_is_type(cond, VAL_BOOL)) {
+            if (cond->type != TYPE_BOOL) {
                 add_error(compiler, ie->name, "Condition must evaluate to boolean.");
                 return RESULT_FAILED;
             }
@@ -629,7 +629,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* else_type;
             if (compile_node(compiler, ie->else_block, ret_types, &else_type) == RESULT_FAILED) return RESULT_FAILED;
             patch_jump(compiler, jump_else);
-            *node_type = make_prim_type(VAL_NIL);
+            *node_type = make_nil_type();
             return RESULT_SUCCESS;
         }
         case NODE_WHILE: {
@@ -637,7 +637,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             int start = compiler->function->chunk.count;
             struct Type* cond;
             if (compile_node(compiler, wh->condition, ret_types, &cond) == RESULT_FAILED) return RESULT_FAILED;
-            if (!type_is_type(cond, VAL_BOOL)) {
+            if (cond->type != TYPE_BOOL) {
                 add_error(compiler, wh->name, "Condition must evaluate to boolean.");
                 return RESULT_FAILED;
             }
@@ -653,7 +653,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             emit_jump_by(compiler, OP_JUMP_BACK, from - start);
             patch_jump(compiler, false_jump);   
             emit_byte(compiler, OP_POP);
-            *node_type = make_prim_type(VAL_NIL);
+            *node_type = make_nil_type();
             return RESULT_SUCCESS;
         }
         case NODE_FOR: {
@@ -668,7 +668,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             int condition_start = compiler->function->chunk.count;
             struct Type* cond;
             if (compile_node(compiler, fo->condition, ret_types, &cond) == RESULT_FAILED) return RESULT_FAILED;
-            if (!type_is_type(cond, VAL_BOOL)) {
+            if (cond->type != TYPE_BOOL) {
                 add_error(compiler, fo->name, "Condition must evaluate to boolean.");
                 return RESULT_FAILED;
             }
@@ -695,7 +695,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             emit_byte(compiler, OP_POP); //pop condition if false
 
             end_scope(compiler);
-            *node_type = make_prim_type(VAL_NIL);
+            *node_type = make_nil_type();
             return RESULT_SUCCESS;
         }
         case NODE_RETURN: {
@@ -721,17 +721,17 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (type_inst->type == TYPE_LIST) {
                 if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_SIZE);
-                    *node_type = make_prim_type(VAL_INT);
+                    *node_type = make_int_type();
                     return RESULT_SUCCESS;
                 }
                 add_error(compiler, gp->prop, "Property doesn't exist on Lists.");
                 return RESULT_FAILED;
             }
 
-            if (type_is_type(type_inst, VAL_STRING)) {
+            if (type_inst->type == TYPE_STRING) {
                 if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_SIZE);
-                    *node_type = make_prim_type(VAL_INT);
+                    *node_type = make_int_type();
                     return RESULT_SUCCESS;
                 }
                 add_error(compiler, gp->prop, "Property doesn't exist on strings.");
@@ -741,7 +741,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (type_inst->type == TYPE_MAP) {
                 if (gp->prop.length == 4 && memcmp(gp->prop.start, "keys", gp->prop.length) == 0) {
                     emit_byte(compiler, OP_GET_KEYS);
-                    *node_type = make_list_type(make_prim_type(VAL_STRING));
+                    *node_type = make_list_type(make_string_type());
                     return RESULT_SUCCESS;
                 }
                 if (gp->prop.length == 6 && memcmp(gp->prop.start, "values", gp->prop.length) == 0) {
@@ -783,17 +783,17 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (type_inst->type == TYPE_LIST) {
                 if (prop.length == 4 && memcmp(prop.start, "size", prop.length) == 0) {
                     emit_byte(compiler, OP_SET_SIZE);
-                    *node_type = make_prim_type(VAL_INT);
+                    *node_type = make_int_type();
                     return RESULT_SUCCESS;
                 }
                 add_error(compiler, prop, "Property doesn't exist on Lists.");
                 return RESULT_FAILED;
             }
 
-            if (type_is_type(type_inst, VAL_STRING)) {
+            if (type_inst->type == TYPE_STRING) {
                 if (prop.length == 4 && memcmp(prop.start, "size", prop.length) == 0) {
                     emit_byte(compiler, OP_SET_SIZE);
-                    *node_type = make_prim_type(VAL_INT);
+                    *node_type = make_int_type();
                     return RESULT_SUCCESS;
                 }
                 add_error(compiler, prop, "Property doesn't exist on strings.");
@@ -904,8 +904,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* idx_type;
             if (compile_node(compiler, get_idx->idx, ret_types, &idx_type) == RESULT_FAILED) return RESULT_FAILED;
 
-            if (type_is_type(left_type, VAL_STRING)) {
-                if (!type_is_type(idx_type, VAL_INT)) {
+            if (left_type->type == TYPE_STRING) {
+                if (idx_type->type != TYPE_INT) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
                     return RESULT_FAILED;
                 }
@@ -916,7 +916,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             if (left_type->type == TYPE_LIST) {
-                if (!type_is_type(idx_type, VAL_INT)) {
+                if (idx_type->type != TYPE_INT) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
                     return RESULT_FAILED;
                 }
@@ -927,7 +927,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             if (left_type->type == TYPE_MAP) {
-                if (!type_is_type(idx_type, VAL_STRING)) {
+                if (idx_type->type != TYPE_STRING) {
                     add_error(compiler, get_idx->name, "Key must be string type.");
                     return RESULT_FAILED;
                 }
@@ -951,13 +951,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* idx_type;
             if (compile_node(compiler, get_idx->idx, ret_types, &idx_type) == RESULT_FAILED) return RESULT_FAILED;
 
-            if (type_is_type(left_type, VAL_STRING)) {
-                if (!type_is_type(idx_type, VAL_INT)) {
+            if (left_type->type == TYPE_STRING) {
+                if (idx_type->type != VAL_INT) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
                     return RESULT_FAILED;
                 }
 
-                if (!type_is_type(right_type, VAL_STRING)) {
+                if (right_type->type != TYPE_STRING) {
                     add_error(compiler, get_idx->name, "Right side type must be a string type.");
                     return RESULT_FAILED;
                 }
@@ -968,7 +968,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             } 
 
             if (left_type->type == TYPE_LIST) {
-                if (!type_is_type(idx_type, VAL_INT)) {
+                if (idx_type->type != TYPE_INT) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
                     return RESULT_FAILED;
                 }
@@ -988,7 +988,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             if (left_type->type == TYPE_MAP) {
-                if (!type_is_type(idx_type, VAL_STRING)) {
+                if (idx_type->type != TYPE_STRING) {
                     add_error(compiler, get_idx->name, "Key must be string type.");
                     return RESULT_FAILED;
                 }
@@ -1099,7 +1099,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_NIL: {
             Nil* nil = (Nil*)node;
             emit_byte(compiler, OP_NIL);
-            *node_type =  make_prim_type(VAL_NIL);
+            *node_type =  make_nil_type();
             return RESULT_SUCCESS;
         }
     } 
@@ -1223,33 +1223,33 @@ static struct Type* define_native(struct Compiler* compiler, const char* name, V
 }
 
 static void define_clock(struct Compiler* compiler) {
-    define_native(compiler, "clock", clock_native, make_fun_type(make_array_type(), make_prim_type(VAL_FLOAT)));
+    define_native(compiler, "clock", clock_native, make_fun_type(make_array_type(), make_float_type()));
 }
 
 static void define_print(struct Compiler* compiler) {
-    struct Type* str_type = make_prim_type(VAL_STRING);
-    struct Type* int_type = make_prim_type(VAL_INT);
-    struct Type* float_type = make_prim_type(VAL_FLOAT);
-    struct Type* nil_type = make_prim_type(VAL_NIL);
+    struct Type* str_type = make_string_type();
+    struct Type* int_type = make_int_type();
+    struct Type* float_type = make_float_type();
+    struct Type* nil_type = make_nil_type();
     str_type->opt = int_type;
     int_type->opt = float_type;
     float_type->opt = nil_type;
     struct Type* sl = make_array_type();
     add_type((struct TypeArray*)sl, str_type);
-    define_native(compiler, "print", print_native, make_fun_type((struct Type*)sl, make_prim_type(VAL_NIL)));
+    define_native(compiler, "print", print_native, make_fun_type((struct Type*)sl, make_nil_type()));
 }
 
 static void define_string(struct Compiler* compiler) {
-    struct Type* int_type = make_prim_type(VAL_INT);
-    struct Type* float_type = make_prim_type(VAL_FLOAT);
-    struct Type* bool_type = make_prim_type(VAL_BOOL);
-    struct Type* nil_type = make_prim_type(VAL_NIL);
+    struct Type* int_type = make_int_type();
+    struct Type* float_type = make_float_type();
+    struct Type* bool_type = make_bool_type();
+    struct Type* nil_type = make_nil_type();
     int_type->opt = float_type;
     float_type->opt = bool_type;
     bool_type->opt = nil_type;
     struct Type* sl = make_array_type();
     add_type((struct TypeArray*)sl, int_type);
-    define_native(compiler, "string", string_native, make_fun_type((struct Type*)sl, make_prim_type(VAL_STRING)));
+    define_native(compiler, "string", string_native, make_fun_type((struct Type*)sl, make_string_type()));
 }
 
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {

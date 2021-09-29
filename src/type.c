@@ -44,15 +44,50 @@ struct Type* make_array_type() {
     return (struct Type*)type_list;
 }
 
-struct Type* make_prim_type(ValueType type) {
-    struct TypePrim* type_prim = ALLOCATE(struct TypePrim);
+struct Type* make_int_type() {
+    struct TypeInt* type = ALLOCATE(struct TypeInt);
 
-    type_prim->base.type = TYPE_PRIM;
-    type_prim->base.opt = NULL;
-    type_prim->type = type;
+    type->base.type = TYPE_INT;
+    type->base.opt = NULL;
     
-    insert_type((struct Type*)type_prim);
-    return (struct Type*)type_prim;
+    insert_type((struct Type*)type);
+    return (struct Type*)type;
+}
+struct Type* make_float_type() {
+    struct TypeFloat* type = ALLOCATE(struct TypeFloat);
+
+    type->base.type = TYPE_FLOAT;
+    type->base.opt = NULL;
+    
+    insert_type((struct Type*)type);
+    return (struct Type*)type;
+}
+struct Type* make_bool_type() {
+    struct TypeBool* type = ALLOCATE(struct TypeBool);
+
+    type->base.type = TYPE_BOOL;
+    type->base.opt = NULL;
+    
+    insert_type((struct Type*)type);
+    return (struct Type*)type;
+}
+struct Type* make_string_type() {
+    struct TypeString* type = ALLOCATE(struct TypeString);
+
+    type->base.type = TYPE_STRING;
+    type->base.opt = NULL;
+    
+    insert_type((struct Type*)type);
+    return (struct Type*)type;
+}
+struct Type* make_nil_type() {
+    struct TypeNil* type = ALLOCATE(struct TypeNil);
+
+    type->base.type = TYPE_NIL;
+    type->base.opt = NULL;
+    
+    insert_type((struct Type*)type);
+    return (struct Type*)type;
 }
 
 struct Type* make_fun_type(struct Type* params, struct Type* ret) {
@@ -135,8 +170,7 @@ bool is_duck(struct TypeClass* param, struct TypeClass* arg) {
 
 bool same_type(struct Type* type1, struct Type* type2) {
     if (type1 == NULL || type2 == NULL) return false;
-    if (type_is_type(type1, VAL_NIL) || type_is_type(type2, VAL_NIL)) return true;
-    if (type1->type != type2->type) return false;
+    if (type1->type == TYPE_NIL || type2->type == TYPE_NIL) return true;
 
     switch(type1->type) {
         case TYPE_ARRAY:
@@ -147,18 +181,6 @@ bool same_type(struct Type* type1, struct Type* type2) {
                 if (!same_type(sl1->types[i], sl2->types[i])) return false;
             }
             return true;
-        case TYPE_PRIM: {
-            struct Type* left = type1;
-            while (left != NULL) {
-                struct Type* right = type2;
-                while (right != NULL) {
-                    if (((struct TypePrim*)left)->type == ((struct TypePrim*)right)->type) return true;
-                    right = right->opt;
-                }
-                left = left->opt;
-            }
-            return false;
-        }
         case TYPE_FUN:
             struct TypeFun* sf1 = (struct TypeFun*)type1;
             struct TypeFun* sf2 = (struct TypeFun*)type2;
@@ -188,21 +210,18 @@ bool same_type(struct Type* type1, struct Type* type2) {
             return same_type(((struct TypeList*)type1)->type, ((struct TypeList*)type2)->type);
         case TYPE_MAP:
             return same_type(((struct TypeMap*)type1)->type, ((struct TypeMap*)type2)->type);
-        case TYPE_DECL:
-            return true;
+        default:
+            struct Type* left = type1;
+            while (left != NULL) {
+                struct Type* right = type2;
+                while (right != NULL) {
+                    if (left->type == right->type) return true;
+                    right = right->opt;
+                }
+                left = left->opt;
+            }
+            return false;
     }
-}
-
-bool type_is_type(struct Type* type, ValueType val) {
-    if (type->type != TYPE_PRIM) return false;
-
-    struct Type* current = type;
-    while (current != NULL) {
-        if (((struct TypePrim*)type)->type == val) return true; 
-        current = current->opt;
-    }
-
-    return false;
 }
 
 void print_type(struct Type* type) {
@@ -217,10 +236,6 @@ void print_type(struct Type* type) {
                 print_type(sl->types[i]);
             }
             printf(")");
-            break;
-        case TYPE_PRIM:
-            struct TypePrim* sp = (struct TypePrim*)type;
-            printf(" %s ", value_type_to_string(sp->type));
             break;
         case TYPE_FUN:
             struct TypeFun* sf = (struct TypeFun*)type;
@@ -247,8 +262,23 @@ void print_type(struct Type* type) {
         case TYPE_MAP:
             printf("TypeMap Stub");
             break;
+        case TYPE_INT:
+            printf("TypeInt stub");
+            break;
+        case TYPE_FLOAT:
+            printf("TypeFloat stub");
+            break;
+        case TYPE_BOOL:
+            printf("TypeBool stub");
+            break;
+        case TYPE_STRING:
+            printf("TypeString stub");
+            break;
+        case TYPE_NIL:
+            printf("TypeNil stub");
+            break;
         default:
-            printf("Invalid type");
+            printf("Invalid type.");
             break;
     }
 }
@@ -263,10 +293,6 @@ void free_type(struct Type* type) {
             struct TypeArray* sa = (struct TypeArray*)type;
             FREE_ARRAY(sa->types, struct Type*, sa->capacity);
             FREE(sa, struct TypeArray);
-            break;
-        case TYPE_PRIM:
-            struct TypePrim* type_prim = (struct TypePrim*)type;
-            FREE(type_prim, struct TypePrim);
             break;
         case TYPE_FUN:
             struct TypeFun* type_fun = (struct TypeFun*)type;
@@ -288,6 +314,26 @@ void free_type(struct Type* type) {
         case TYPE_MAP:
             struct TypeMap* sm = (struct TypeMap*)type;
             FREE(sm, struct TypeMap);
+            break;
+        case TYPE_INT:
+            struct TypeInt* type_int = (struct TypeInt*)type;
+            FREE(type_int, struct TypeInt);
+            break;
+        case TYPE_FLOAT:
+            struct TypeFloat* type_float = (struct TypeFloat*)type;
+            FREE(type_float, struct TypeFloat);
+            break;
+        case TYPE_BOOL:
+            struct TypeBool* type_bool = (struct TypeBool*)type;
+            FREE(type_bool, struct TypeBool);
+            break;
+        case TYPE_STRING:
+            struct TypeString* type_string = (struct TypeString*)type;
+            FREE(type_string, struct TypeString);
+            break;
+        case TYPE_NIL:
+            struct TypeNil* type_nil = (struct TypeNil*)type;
+            FREE(type_nil, struct TypeNil);
             break;
     }
 }

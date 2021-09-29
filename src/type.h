@@ -5,8 +5,12 @@
 #include "table.h"
 
 typedef enum {
+    TYPE_INT,
+    TYPE_FLOAT,
+    TYPE_BOOL,
+    TYPE_STRING,
+    TYPE_NIL,
     TYPE_ARRAY,
-    TYPE_PRIM,
     TYPE_FUN,
     TYPE_CLASS,
     TYPE_IDENTIFIER,
@@ -32,9 +36,24 @@ struct TypeArray {
     int capacity;
 };
 
-struct TypePrim {
+struct TypeInt {
     struct Type base;
-    ValueType type;
+};
+
+struct TypeFloat {
+    struct Type base;
+};
+
+struct TypeBool {
+    struct Type base;
+};
+
+struct TypeString {
+    struct Type base;
+};
+
+struct TypeNil {
+    struct Type base;
 };
 
 struct TypeFun {
@@ -69,7 +88,11 @@ void insert_type(struct Type* type);
 
 struct Type* make_array_type();
 void add_type(struct TypeArray* sl, struct Type* type);
-struct Type* make_prim_type(ValueType type);
+struct Type* make_int_type();
+struct Type* make_float_type();
+struct Type* make_bool_type();
+struct Type* make_string_type();
+struct Type* make_nil_type();
 struct Type* make_fun_type(struct Type* params, struct Type* ret);
 struct Type* make_class_type(Token klass);
 struct Type* make_identifier_type(Token identifier);
@@ -79,7 +102,6 @@ struct Type* make_decl_type();
 
 bool is_duck(struct TypeClass* sub, struct TypeClass* super);
 bool same_type(struct Type* type1, struct Type* type2);
-bool type_is_type(struct Type* type, ValueType val);
 void print_type(struct Type* type);
 
 struct Type* copy_type(struct Type* type);
