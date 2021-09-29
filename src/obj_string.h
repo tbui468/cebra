@@ -14,6 +14,5 @@ struct ObjString {
 
 struct ObjString* make_string(const char* start, int length);
 struct ObjString* take_string(char* start, int length);
-void swap_strings(struct ObjString* str1, struct ObjString* str2);
 
 #endif// CEBRA_OBJ_STRING_H
