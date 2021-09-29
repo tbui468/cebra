@@ -2,7 +2,8 @@
 #define CEBRA_TABLE_H
 
 #include "value.h"
-#include "obj_string.h"
+
+struct ObjString;
 
 struct Pair {
     struct ObjString* key;

@@ -2,7 +2,7 @@
 #include "common.h"
 #include "memory.h"
 #include "obj_string.h"
-#include "obj_class.h"
+#include "obj.h"
 
 
 #define READ_TYPE(frame, type) \

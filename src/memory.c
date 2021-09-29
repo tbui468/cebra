@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "memory.h"
-#include "obj_class.h"
+#include "obj.h"
 
 
 MemoryManager mm;
