@@ -75,6 +75,7 @@ static Token read_keyword(char c) {
             break;
         case 'e':
             if (match_string("lse")) return new_token(TOKEN_ELSE);
+            if (match_string("num")) return new_token(TOKEN_ENUM);
             break;
         case 'f':
             if (match_string("or")) return new_token(TOKEN_FOR);

@@ -61,6 +61,7 @@ const char* op_to_string(OpCode op) {
         case OP_MAP: return "OP_MAP";
         case OP_GET_KEYS: return "OP_GET_KEYS";
         case OP_GET_VALUES: return "OP_GET_VALUES";
+        case OP_ENUM: return "OP_ENUM";
         default: return "Unrecognized op";
     }
 }

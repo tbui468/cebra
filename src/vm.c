@@ -145,7 +145,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //[super | nil ]
             Value super_val = pop(vm);
             Value klass_val = read_constant(frame, READ_TYPE(frame, uint16_t));
-            struct ObjClass* klass = klass_val.as.class_type;
+            struct ObjClass* klass = klass_val.as.class_type; //TODO: should constant 
             push(vm, klass_val);
             if (super_val.type != VAL_NIL) {
                 struct ObjClass* super = super_val.as.class_type;
@@ -155,6 +155,17 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                         set_table(&klass->props, pair->key, pair->value);
                     }
                 } 
+            }
+            break;
+        }
+        case OP_ENUM: {
+            Value val_enum = read_constant(frame, READ_TYPE(frame, uint16_t));
+            push(vm, val_enum);
+            struct ObjEnum* obj_enum = val_enum.as.enum_type;
+            int count = READ_TYPE(frame, uint8_t);
+            for (int i = 0; i < count; i++) {
+                struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
+                set_table(&obj_enum->props, prop_name, to_integer(i));
             }
             break;
         }
@@ -237,13 +248,25 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 break;
             }
 
-            struct ObjInstance* inst = peek(vm, 0).as.instance_type;
-            struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
-            Value prop_val = to_nil();
-            get_from_table(&inst->props, prop_name, &prop_val);
-            pop(vm);
-            push(vm, prop_val);
-            break;
+            if (peek(vm, 0).type == VAL_INSTANCE) {
+                struct ObjInstance* inst = peek(vm, 0).as.instance_type;
+                struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
+                Value prop_val = to_nil();
+                get_from_table(&inst->props, prop_name, &prop_val);
+                pop(vm);
+                push(vm, prop_val);
+                break;
+            }
+
+            if (peek(vm, 0).type == VAL_ENUM) {
+                struct ObjEnum* inst = peek(vm, 0).as.enum_type;
+                struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
+                Value prop_val = to_nil();
+                get_from_table(&inst->props, prop_name, &prop_val);
+                pop(vm);
+                push(vm, prop_val);
+                break;
+            }
         }
         case OP_SET_PROP: {
             struct ObjInstance* inst = peek(vm, 0).as.instance_type;

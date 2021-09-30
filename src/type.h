@@ -16,7 +16,8 @@ typedef enum {
     TYPE_IDENTIFIER,
     TYPE_LIST,
     TYPE_MAP,
-    TYPE_DECL
+    TYPE_DECL, //TODO: should change to TYPE_INFER (and struct to TypeInfer)
+    TYPE_ENUM
 } TypeType;
 
 struct Type {
@@ -68,6 +69,12 @@ struct TypeClass {
     struct Table props;
 };
 
+struct TypeEnum {
+    struct Type base;
+    Token name;
+    struct Table props;
+};
+
 struct TypeIdentifier {
     struct Type base;
     Token identifier;
@@ -99,6 +106,7 @@ struct Type* make_identifier_type(Token identifier);
 struct Type* make_list_type(struct Type* type);
 struct Type* make_map_type(struct Type* type);
 struct Type* make_decl_type();
+struct Type* make_enum_type(Token name);
 
 bool is_duck(struct TypeClass* sub, struct TypeClass* super);
 bool same_type(struct Type* type1, struct Type* type2);

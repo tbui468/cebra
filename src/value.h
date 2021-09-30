@@ -23,6 +23,7 @@ struct ObjString;
 struct ObjNative;
 struct ObjList;
 struct ObjMap;
+struct ObjEnum;
 
 typedef enum {
     VAL_INT,
@@ -36,7 +37,8 @@ typedef enum {
     VAL_TYPE,
     VAL_NATIVE,
     VAL_LIST,
-    VAL_MAP
+    VAL_MAP,
+    VAL_ENUM
 } ValueType;
 
 typedef struct {
@@ -53,6 +55,7 @@ typedef struct {
         struct ObjNative* native_type;
         struct ObjList* list_type;
         struct ObjMap* map_type;
+        struct ObjEnum* enum_type;
     } as;
 } Value;
 
@@ -68,6 +71,7 @@ Value to_type(struct Type* type);
 Value to_native(struct ObjNative* obj);
 Value to_list(struct ObjList* obj);
 Value to_map(struct ObjMap* obj);
+Value to_enum(struct ObjEnum* obj);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);

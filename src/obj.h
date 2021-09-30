@@ -15,7 +15,8 @@ typedef enum {
     OBJ_UPVALUE,
     OBJ_NATIVE,
     OBJ_LIST,
-    OBJ_MAP
+    OBJ_MAP,
+    OBJ_ENUM
 } ObjType;
 
 struct Obj {
@@ -39,6 +40,12 @@ struct ObjClass {
 
 struct ObjInstance {
     struct Obj base;
+    struct Table props;
+};
+
+struct ObjEnum {
+    struct Obj base;
+    struct ObjString* name;
     struct Table props;
 };
 
@@ -89,6 +96,7 @@ struct ObjUpvalue* make_upvalue(Value* location);
 struct ObjNative* make_native(Value (*function)(int, Value*));
 struct ObjList* make_list();
 struct ObjMap* make_map();
+struct ObjEnum* make_enum(struct ObjString* name);
 
 
 #endif// CEBRA_OBJ_H

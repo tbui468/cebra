@@ -187,6 +187,14 @@ static void trace_references() {
                 mark_table(&oi->props);
                 break;
             }
+            case OBJ_ENUM: {
+                struct ObjEnum* oe = (struct ObjEnum*)obj;
+                mark_object((struct Obj*)oe->name);
+                push_gray((struct Obj*)(oe->name));
+
+                mark_table(&oe->props);
+                break;
+            }
             case OBJ_UPVALUE: {
                 struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
                 //closed value

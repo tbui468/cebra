@@ -40,6 +40,11 @@ int free_object(struct Obj* obj) {
             bytes_freed += free_table(&oi->props);
             bytes_freed += FREE(oi, struct ObjInstance);
             break;
+        case OBJ_ENUM:
+            struct ObjEnum* oe = (struct ObjEnum*)obj;
+            bytes_freed += free_table(&oe->props);
+            bytes_freed += FREE(oe, struct ObjEnum);
+            break;
         case OBJ_UPVALUE:
             struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
             bytes_freed += FREE(uv, struct ObjUpvalue);
@@ -80,6 +85,9 @@ void print_object(struct Obj* obj) {
             break;
         case OBJ_INSTANCE:
             printf("OBJ_INSTANCE: ");
+            break;
+        case OBJ_ENUM:
+            printf("OBJ_ENUM: ");
             break;
         case OBJ_UPVALUE:
             printf("OBJ_UPVALUE: ");
@@ -137,6 +145,21 @@ struct ObjInstance* make_instance(struct Table table) {
     insert_object((struct Obj*)obj);
     obj->props = table;
 
+    return obj;
+}
+
+struct ObjEnum* make_enum(struct ObjString* name) {
+    struct ObjEnum* obj = ALLOCATE(struct ObjEnum);
+    push_root(to_enum(obj));
+    obj->base.type = OBJ_ENUM;
+    obj->base.next = NULL;
+    obj->base.is_marked = false;
+    insert_object((struct Obj*)obj);
+    
+    obj->name = name;
+    init_table(&obj->props);
+
+    pop_root();
     return obj;
 }
 

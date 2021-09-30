@@ -208,6 +208,16 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
         *node = make_decl_class(var_name, super, nl);
         return RESULT_SUCCESS;
+    } else if (match(TOKEN_ENUM)) {
+        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before enum body.")) return RESULT_FAILED;
+        //read in enums
+        struct NodeList* nl = (struct NodeList*)make_node_list();
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            if (!consume(TOKEN_IDENTIFIER, "Expect enum list inside enum body.")) return RESULT_FAILED;
+            add_node(nl, make_decl_var(parser.previous, make_int_type(), NULL));
+        }
+        *node = make_decl_enum(var_name, nl);
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_NIL)) {
         *node = make_nil(parser.previous);
         return RESULT_SUCCESS;
@@ -412,7 +422,7 @@ static ResultCode or(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode astypenment(Token var_name, struct Node** node) {
+static ResultCode assignment(Token var_name, struct Node** node) {
     struct Node* left;
     if (or(var_name, &left) == RESULT_FAILED) {
         return RESULT_FAILED;
@@ -439,7 +449,7 @@ static ResultCode astypenment(Token var_name, struct Node** node) {
 }
 
 static ResultCode expression(Token var_name, struct Node** node) {
-    return astypenment(var_name, node);
+    return assignment(var_name, node);
 }
 
 static ResultCode block(struct Node* prepend, struct Node** node) {
@@ -523,6 +533,11 @@ static ResultCode read_type(Token var_name, struct Type** type) {
         }
 
         *type = make_class_type(var_name);
+        return RESULT_SUCCESS;
+    }
+
+    if (match(TOKEN_ENUM)) {
+        *type = make_enum_type(var_name);
         return RESULT_SUCCESS;
     }
 

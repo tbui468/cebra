@@ -50,6 +50,7 @@ typedef enum {
     TOKEN_MAP,
     TOKEN_NIL,
     TOKEN_FOR_EACH,
+    TOKEN_ENUM,
     TOKEN_EOF,
 } TokenType;
 

@@ -52,6 +52,7 @@ void print_token(Token token) {
         case TOKEN_MAP: printf("TOKEN_MAP"); break;
         case TOKEN_NIL: printf("TOKEN_NIL"); break;
         case TOKEN_FOR_EACH: printf("TOKEN_FOR_EACH"); break;
+        case TOKEN_ENUM: printf("TOKEN_ENUM"); break;
         case TOKEN_EOF: printf("TOKEN_EOF"); break;
         default: printf("Unrecognized token"); break;
     }

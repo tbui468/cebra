@@ -69,6 +69,13 @@ Value to_map(struct ObjMap* obj) {
     return value;
 }
 
+Value to_enum(struct ObjEnum* obj) {
+    Value value;
+    value.type = VAL_ENUM;
+    value.as.enum_type = obj;
+    return value;
+}
+
 Value to_nil() {
     Value value;
     value.type = VAL_NIL;
@@ -206,6 +213,9 @@ void print_value(Value a) {
         case VAL_INSTANCE:
             printf("%s", "<instance>");
             break;
+        case VAL_ENUM:
+            printf("%s", "<enum>");
+            break;
         case VAL_NIL:
             printf("%s", "<nil>");
             break;
@@ -242,6 +252,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_NATIVE: return "VAL_NATIVE";
         case VAL_LIST: return "VAL_LIST";
         case VAL_MAP: return "VAL_MAP";
+        case VAL_ENUM: return "VAL_ENUM";
         default: return "Unrecognized VAL_TYPE";
     }
 }
@@ -262,6 +273,10 @@ struct Obj* get_object(Value* value) {
         }
         case VAL_INSTANCE: {
             struct ObjInstance* obj = value->as.instance_type;
+            return (struct Obj*)obj;
+        }
+        case VAL_ENUM: {
+            struct ObjEnum* obj = value->as.enum_type;
             return (struct Obj*)obj;
         }
         case VAL_NATIVE: {

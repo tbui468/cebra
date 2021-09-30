@@ -30,7 +30,8 @@ typedef enum {
     NODE_CALL,
     NODE_EXPR_STMT,
     NODE_NIL,
-    NODE_LIST
+    NODE_LIST,
+    NODE_ENUM
 } NodeType;
 
 struct Node {
@@ -69,8 +70,14 @@ typedef struct {
     Token name;
     struct Node* super;
     struct NodeList* decls;
-//    struct Type* type;
 } DeclClass;
+
+struct DeclEnum {
+    struct Node base;
+    Token name;
+    struct Node* identifier;
+    struct NodeList* decls;
+};
 
 /*
  * Statements
@@ -229,6 +236,7 @@ struct Node* make_expr_stmt(struct Node* expr);
 struct Node* make_get_prop(struct Node* inst, Token prop);
 struct Node* make_set_prop(struct Node* inst, struct Node* right);
 struct Node* make_nil(Token name);
+struct Node* make_decl_enum(Token name, struct NodeList* decls);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

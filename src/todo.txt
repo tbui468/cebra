@@ -19,24 +19,18 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Instead of having SigPrim, make SigInt, SigFloat, SigString, SigNil etc
-        so that the type can be check using sig->type == SIG_INT instead
-        of using sig_is_type(sig, VAL_NIL), which is strange
+    Write tests for enums
 
-    Add enum support
-        //creates ObjEnum object (which is not like an instance since
-        //an instance doesn't need to be created, and dot notation
-        //is called directly on the enum type to get the field.
-        Token := enum {
-            plus
-            minus
-            star
-            divide
-        }
+    how about printing enums?
 
-        a: Token = Token.plus
-        b: Token = Token.star
+    When emitting opcodes for creating class, should create ObjClass in vm, NOT
+        in the compiler - which is what we are doing now.  Then we don't need to have
+        unnecessary push/pop roots calls in the compiler.  
 
+        Also, should use the compile_literal() function to compile class name and property
+        names, and then use them ... can we do this?
+
+    Can value_arrary.h/c be merged into value.h/c?
 
     struct Error (in parser.h) is a general error, and can be used for both the compiler and vm
         get rid of ComilerError and RuntimeError

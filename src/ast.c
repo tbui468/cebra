@@ -65,6 +65,16 @@ struct Node* make_decl_class(Token name, struct Node* super, struct NodeList* de
     return insert_node((struct Node*)dc);
 }
 
+struct Node* make_decl_enum(Token name, struct NodeList* decls) {
+    struct DeclEnum* de = ALLOCATE(struct DeclEnum);
+    de->name = name;
+    de->identifier = make_literal(name);
+    de->decls = decls;
+    de->base.type = NODE_ENUM;
+
+    return insert_node((struct Node*)de);
+}
+
 /*
  * Statements
  */
@@ -291,6 +301,11 @@ void print_node(struct Node* node) {
             printf("( DeclClass ");
             break;
         }
+        case NODE_ENUM: {
+            struct DeclEnum* de = (struct DeclEnum*)node;
+            printf("( DeclEnum ");
+            break;
+        }
         //Statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
@@ -340,7 +355,7 @@ void print_node(struct Node* node) {
         //struct Expressions
         case NODE_LITERAL: {
             Literal* literal = (Literal*)node;
-            printf(" %.*s ", literal->name.length, literal->name.start);
+            printf("( Literal [%.*s] )", literal->name.length, literal->name.start);
             break;
         }
         case NODE_BINARY: {
@@ -433,6 +448,11 @@ void free_node(struct Node* node) {
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             FREE(dc, DeclClass);
+            break;
+        }
+        case NODE_ENUM: {
+            struct DeclEnum* de = (struct DeclEnum*)node;
+            FREE(de, struct DeclEnum);
             break;
         }
         //Statements

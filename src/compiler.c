@@ -520,7 +520,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
 
             GetVar* super_gv = (GetVar*)(dc->super);
-            struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name); //TODO: do we really need super token?
+            struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name);
 
             //add struct properties
             for (int i = 0; i < dc->decls->count; i++) {
@@ -581,6 +581,37 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             pop_root();
 
             *node_type = (struct Type*)sc;
+            return RESULT_SUCCESS;
+        }
+        case NODE_ENUM: {
+            struct DeclEnum* de = (struct DeclEnum*)node;
+
+            struct ObjString* name = make_string(de->name.start, de->name.length);
+            push_root(to_string(name));
+            struct ObjEnum* obj_enum = make_enum(name);
+            push_root(to_enum(obj_enum));
+            
+            emit_byte(compiler, OP_ENUM);
+            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
+
+            pop_root();
+            pop_root();
+
+            int count = de->decls->count;
+            emit_byte(compiler, count);
+
+            struct TypeEnum* type = (struct TypeEnum*)make_enum_type(de->name);
+
+            for (int i = 0; i < count; i++) {
+                DeclVar* dv = (DeclVar*)(de->decls->nodes[i]);
+                struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
+                push_root(to_string(prop_name));
+                emit_short(compiler, add_constant(compiler, to_string(prop_name)));
+                set_table(&type->props, prop_name, to_type(make_int_type()));
+                pop_root();
+            }
+           
+            *node_type = (struct Type*)type;
             return RESULT_SUCCESS;
         }
         //statements
@@ -726,6 +757,24 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
                 add_error(compiler, gp->prop, "Property doesn't exist on Lists.");
                 return RESULT_FAILED;
+            }
+
+            if (type_inst->type == TYPE_ENUM) {
+                //should be Token enum on the stack...
+                emit_byte(compiler, OP_GET_PROP);
+                struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
+                push_root(to_string(name));
+                emit_short(compiler, add_constant(compiler, to_string(name))); 
+                pop_root();
+
+                Value type_val;
+                if (!get_from_table(&((struct TypeEnum*)type_inst)->props, name, &type_val)) {
+                    add_error(compiler, gp->prop, "Constant doesn't exist in enum.");
+                    return RESULT_FAILED;
+                }
+
+                *node_type = type_inst;
+                return RESULT_SUCCESS;
             }
 
             if (type_inst->type == TYPE_STRING) {

@@ -145,6 +145,17 @@ struct Type* make_map_type(struct Type* type) {
     return (struct Type*)sm;
 }
 
+struct Type* make_enum_type(Token name) {
+    struct TypeEnum* te = ALLOCATE(struct TypeEnum);
+
+    te->base.type = TYPE_ENUM;
+    te->name = name;
+    init_table(&te->props);
+
+    insert_type((struct Type*)te);
+    return (struct Type*)te;
+}
+
 bool is_duck(struct TypeClass* param, struct TypeClass* arg) {
     for (int i = 0; i < param->props.capacity; i++) {
         struct Pair* param_pair = &param->props.pairs[i];
@@ -210,6 +221,17 @@ bool same_type(struct Type* type1, struct Type* type2) {
             return same_type(((struct TypeList*)type1)->type, ((struct TypeList*)type2)->type);
         case TYPE_MAP:
             return same_type(((struct TypeMap*)type1)->type, ((struct TypeMap*)type2)->type);
+        case TYPE_ENUM:
+            struct TypeEnum* te1 = (struct TypeEnum*)type1;
+            struct TypeEnum* te2 = (struct TypeEnum*)type2;
+            if (te1->name.length != te2->name.length) return false;
+            if (memcmp(te1->name.start, te2->name.start, te1->name.length) != 0) return false;
+            return true;
+        case TYPE_INT:
+        case TYPE_FLOAT:
+        case TYPE_BOOL:
+        case TYPE_STRING:
+        case TYPE_DECL:
         default:
             struct Type* left = type1;
             while (left != NULL) {
@@ -252,6 +274,9 @@ void print_type(struct Type* type) {
             printf("( TypeClass Stub");
             print_token(sc->klass);
             printf(" )");
+            break;
+        case TYPE_ENUM:
+            printf("TypeEnum Stub");
             break;
         case TYPE_IDENTIFIER:
             printf("TypeIdentifier Stub");
@@ -302,6 +327,11 @@ void free_type(struct Type* type) {
             struct TypeClass* sc = (struct TypeClass*)type;
             free_table(&sc->props);
             FREE(sc, struct TypeClass);
+            break;
+        case TYPE_ENUM:
+            struct TypeEnum* te = (struct TypeEnum*)type;
+            free_table(&te->props);
+            FREE(te, struct TypeEnum);
             break;
         case TYPE_IDENTIFIER:
             struct TypeIdentifier* si = (struct TypeIdentifier*)type;
