@@ -29,6 +29,7 @@ for_each_loop := true
 get_set_char := true
 set_string_size := true
 lists_maps_in_structs := true
+enums := true
 
 passed := List<string>()
 failed := List<string>()
@@ -1185,6 +1186,36 @@ if lists_maps_in_structs {
         add_passed("Lists Are Unique in Struct Instances: Passed!")
     } else {
         add_failed("Lists Are Unique in Struct Instances: Failed!")
+    }
+}
+
+
+if enums {
+    print("-Enums")
+    Token := enum {
+        plus
+        minus
+        star
+        slash
+    }
+
+    a: Token = Token.plus
+    ai := Token.plus
+
+    if a == Token.plus and ai == Token.plus {
+        add_passed("Assigning Variables to Enum Constant: Passed!")
+    } else {
+        add_failed("Assigning Variables to Enum Constant: Failed!")
+    }
+
+    b: Token = Token.minus
+    bi := Token.minus
+    b = Token.plus
+    bi = Token.plus
+    if a == b and ai == bi {
+        add_passed("Reassigning Variables to Enum Constant: Passed!")
+    } else {
+        add_failed("Reassigning Variables to Enum Constant: Failed!")
     }
 }
 

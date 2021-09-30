@@ -19,9 +19,10 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Write tests for enums
+    Write tests for enums - include some for errors
 
-    how about printing enums?
+    how about printing enums? Add enum type as optional paramter type to print?  Then
+        just print it as an integer.
 
     When emitting opcodes for creating class, should create ObjClass in vm, NOT
         in the compiler - which is what we are doing now.  Then we don't need to have

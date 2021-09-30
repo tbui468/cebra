@@ -1111,6 +1111,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
 
+            //otherwise it's TYPE_FUN
 
             struct TypeFun* type_fun = (struct TypeFun*)type;
             struct TypeArray* params = (struct TypeArray*)(type_fun->params);
@@ -1124,6 +1125,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             for (int i = 0; i < min; i++) {
                 struct Type* arg_type;
                 if (compile_node(compiler, call->arguments->nodes[i], ret_types, &arg_type) == RESULT_FAILED) return RESULT_FAILED;
+
                 if (arg_type->type == TYPE_IDENTIFIER) {
                     arg_type = resolve_type(compiler, ((struct TypeIdentifier*)arg_type)->identifier);
                 }
@@ -1280,9 +1282,13 @@ static void define_print(struct Compiler* compiler) {
     struct Type* int_type = make_int_type();
     struct Type* float_type = make_float_type();
     struct Type* nil_type = make_nil_type();
+    //using dummy token with enum type to allow printing enums (as integer)
+    //otherwise the typechecker sees it as an error
+    struct Type* enum_type = make_enum_type(make_dummy_token());
     str_type->opt = int_type;
     int_type->opt = float_type;
     float_type->opt = nil_type;
+    nil_type->opt = enum_type;
     struct Type* sl = make_array_type();
     add_type((struct TypeArray*)sl, str_type);
     define_native(compiler, "print", print_native, make_fun_type((struct Type*)sl, make_nil_type()));

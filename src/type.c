@@ -6,6 +6,7 @@
 
 void insert_type(struct Type* type) {
     type->next = current_compiler->types;
+    type->opt = NULL;
     current_compiler->types = type;    
 }
 
@@ -25,7 +26,6 @@ struct Type* make_decl_type() {
     struct TypeDecl* sd = ALLOCATE(struct TypeDecl);
 
     sd->base.type = TYPE_DECL;
-    sd->base.opt = NULL;
 
     insert_type((struct Type*)sd);
     return (struct Type*)sd;
@@ -38,7 +38,6 @@ struct Type* make_array_type() {
     type_list->capacity = 0;
 
     type_list->base.type = TYPE_ARRAY;
-    type_list->base.opt = NULL;
 
     insert_type((struct Type*)type_list);
     return (struct Type*)type_list;
@@ -48,7 +47,6 @@ struct Type* make_int_type() {
     struct TypeInt* type = ALLOCATE(struct TypeInt);
 
     type->base.type = TYPE_INT;
-    type->base.opt = NULL;
     
     insert_type((struct Type*)type);
     return (struct Type*)type;
@@ -57,7 +55,6 @@ struct Type* make_float_type() {
     struct TypeFloat* type = ALLOCATE(struct TypeFloat);
 
     type->base.type = TYPE_FLOAT;
-    type->base.opt = NULL;
     
     insert_type((struct Type*)type);
     return (struct Type*)type;
@@ -66,7 +63,6 @@ struct Type* make_bool_type() {
     struct TypeBool* type = ALLOCATE(struct TypeBool);
 
     type->base.type = TYPE_BOOL;
-    type->base.opt = NULL;
     
     insert_type((struct Type*)type);
     return (struct Type*)type;
@@ -75,7 +71,6 @@ struct Type* make_string_type() {
     struct TypeString* type = ALLOCATE(struct TypeString);
 
     type->base.type = TYPE_STRING;
-    type->base.opt = NULL;
     
     insert_type((struct Type*)type);
     return (struct Type*)type;
@@ -84,7 +79,6 @@ struct Type* make_nil_type() {
     struct TypeNil* type = ALLOCATE(struct TypeNil);
 
     type->base.type = TYPE_NIL;
-    type->base.opt = NULL;
     
     insert_type((struct Type*)type);
     return (struct Type*)type;
@@ -94,7 +88,6 @@ struct Type* make_fun_type(struct Type* params, struct Type* ret) {
     struct TypeFun* type_fun = ALLOCATE(struct TypeFun);
 
     type_fun->base.type = TYPE_FUN;
-    type_fun->base.opt = NULL;
     type_fun->params = params;
     type_fun->ret = ret;
     
@@ -106,7 +99,6 @@ struct Type* make_class_type(Token klass) {
     struct TypeClass* sc = ALLOCATE(struct TypeClass);
 
     sc->base.type = TYPE_CLASS;
-    sc->base.opt = NULL;
     sc->klass = klass;
     init_table(&sc->props);
 
@@ -118,7 +110,6 @@ struct Type* make_identifier_type(Token identifier) {
     struct TypeIdentifier* si = ALLOCATE(struct TypeIdentifier);
 
     si->base.type = TYPE_IDENTIFIER;
-    si->base.opt = NULL;
     si->identifier = identifier;
 
     insert_type((struct Type*)si);
