@@ -444,6 +444,20 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
 
+            //TODO: resolve any identifiers in function type 
+            //doing the same thing in SET_PROP - need to find a systematic way of
+            //resolving identifiers instead of doing in randomly throughout code
+            struct TypeFun* fun_type = (struct TypeFun*)(df->type);
+            if (fun_type->ret->type == TYPE_IDENTIFIER) {
+                fun_type->ret = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
+            }
+            struct TypeArray* params = (struct TypeArray*)(fun_type->params);
+            for (int i = 0; i < params->count; i++) {
+                if (params->types[i]->type == TYPE_IDENTIFIER) {
+                    params->types[i] = resolve_type(compiler, ((struct TypeIdentifier*)(params->types[i]))->identifier);
+                }
+            }
+
             struct Compiler func_comp;
             init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count);
             set_local(&func_comp, df->name, df->type, 0);
@@ -866,8 +880,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             Value type_val = to_nil();
             get_from_table(&((struct TypeClass*)type_inst)->props, name, &type_val);
 
+            //TODO: should find a way to resolve identifiers immediately when possible instead of right before checking
+            if (right_type->type == TYPE_IDENTIFIER) {
+                right_type = resolve_type(compiler, ((struct TypeIdentifier*)right_type)->identifier);
+            }
+
             if (!same_type(type_val.as.type_type, right_type)) {
-                add_error(compiler, prop, "Property and astypenment types must match.");
+                add_error(compiler, prop, "Property and assignment types must match.");
                 return RESULT_FAILED;
             }
 

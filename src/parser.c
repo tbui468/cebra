@@ -183,41 +183,6 @@ static ResultCode primary(Token var_name, struct Node** node) {
         if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.")) return RESULT_FAILED;
         *node = expr;
         return RESULT_SUCCESS;
-    } else if (peek_one(TOKEN_CLASS)) {
-        //this branch is only entered if next is TOKEN_CLASS
-        //so read_type(var_name) will always be valid, so no NULL check
-        struct Type* right_type;
-        if (read_type(var_name, &right_type) == RESULT_FAILED) return RESULT_FAILED;
-
-        struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
-                             make_get_var(parser.previous, NULL) : 
-                             NULL;
-
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.")) return RESULT_FAILED;
-
-        struct NodeList* nl = (struct NodeList*)make_node_list();
-        while (!match(TOKEN_RIGHT_BRACE)) {
-            struct Node* decl;
-            if (var_declaration(&decl) == RESULT_FAILED) {
-                ADD_ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", var_name.length, var_name.start);
-                return RESULT_FAILED;
-            }
-
-            add_node(nl, decl);
-        }
-
-        *node = make_decl_class(var_name, super, nl);
-        return RESULT_SUCCESS;
-    } else if (match(TOKEN_ENUM)) {
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before enum body.")) return RESULT_FAILED;
-        //read in enums
-        struct NodeList* nl = (struct NodeList*)make_node_list();
-        while (!match(TOKEN_RIGHT_BRACE)) {
-            if (!consume(TOKEN_IDENTIFIER, "Expect enum list inside enum body.")) return RESULT_FAILED;
-            add_node(nl, make_decl_var(parser.previous, make_int_type(), NULL));
-        }
-        *node = make_decl_enum(var_name, nl);
-        return RESULT_SUCCESS;
     } else if (match(TOKEN_NIL)) {
         *node = make_nil(parser.previous);
         return RESULT_SUCCESS;
@@ -619,7 +584,7 @@ static ResultCode var_declaration(struct Node** node) {
 
     struct Node* right;
     if (expression(var_name, &right) == RESULT_FAILED) {
-        ADD_ERROR(var_name, "Variable '%.*s' must be astypened to valid expression at declaration.", var_name.length, var_name.start);
+        ADD_ERROR(var_name, "Variable '%.*s' must be assigned to valid expression at declaration.", var_name.length, var_name.start);
         return RESULT_FAILED;
     }
     *node = make_decl_var(var_name, type, right);
@@ -629,6 +594,53 @@ static ResultCode var_declaration(struct Node** node) {
 static ResultCode declaration(struct Node** node) {
     if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
         return var_declaration(node);
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
+        match(TOKEN_IDENTIFIER);
+        Token enum_name = parser.previous;
+        match(TOKEN_COLON_COLON);
+        struct Type* type = make_enum_type(enum_name);
+
+        match(TOKEN_ENUM);
+        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before enum body.")) return RESULT_FAILED;
+        //read in enums
+        struct NodeList* nl = (struct NodeList*)make_node_list();
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            if (!consume(TOKEN_IDENTIFIER, "Expect enum list inside enum body.")) return RESULT_FAILED;
+            add_node(nl, make_decl_var(parser.previous, make_int_type(), NULL));
+        }
+        struct Node* right = make_decl_enum(enum_name, nl);
+        *node = make_decl_var(enum_name, type, right);
+        return RESULT_SUCCESS;
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
+        match(TOKEN_IDENTIFIER);
+        Token struct_name = parser.previous;
+        match(TOKEN_COLON_COLON);
+        struct Type* type = make_class_type(struct_name);
+
+        //TODO: not really using this read_sig call since it's fixed now: struct or struct < superstruct
+        struct Type* right_type;
+        if (read_type(struct_name, &right_type) == RESULT_FAILED) return RESULT_FAILED; 
+
+        struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
+                             make_get_var(parser.previous, NULL) : 
+                             NULL;
+
+        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.")) return RESULT_FAILED;
+
+        struct NodeList* nl = (struct NodeList*)make_node_list();
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            struct Node* decl;
+            if (var_declaration(&decl) == RESULT_FAILED) {
+                ADD_ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
+                return RESULT_FAILED;
+            }
+
+            add_node(nl, decl);
+        }
+
+        struct Node* right = make_decl_class(struct_name, super, nl);
+        *node = make_decl_var(struct_name, type, right);
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;
         if (block(NULL, node) == RESULT_FAILED) {

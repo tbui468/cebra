@@ -270,7 +270,8 @@ void print_type(struct Type* type) {
             printf("TypeEnum Stub");
             break;
         case TYPE_IDENTIFIER:
-            printf("TypeIdentifier Stub");
+            struct TypeIdentifier* ti = (struct TypeIdentifier*)type;
+            printf("TypeIdentifier [%.*s]", ti->identifier.length, ti->identifier.start);
             break;
         case TYPE_LIST:
             printf("TypeList Stub");

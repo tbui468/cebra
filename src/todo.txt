@@ -18,18 +18,135 @@ ADDING FEATURES:
 
 
 IMPLEMENTATION:
+    Since enums and structs are new types AND they can't be passed around (?), should change notation 
+        to show that:
 
-    Write tests for enums - include some for errors
+        //Cannot be reassigned since they aren't regular variables
+        //structs and enums are NOT first class, so they can't be passed around and variables can be assigned to them
+        //but functions are
+        Animal :: struct {
+        }
+        Dog :: struct < Animal {
+        }
+        Token :: enum {
+        }
+        add :: (n: int) -> int {
+            -> 2
+        }
 
-    how about printing enums? Add enum type as optional paramter type to print?  Then
-        just print it as an integer.
+        //function type is (param0, param1, ...) -> ret_type
+        peek :: (fun: (int) -> int, fun2: (int) -> int) -> {
+        }
 
-    When emitting opcodes for creating class, should create ObjClass in vm, NOT
-        in the compiler - which is what we are doing now.  Then we don't need to have
-        unnecessary push/pop roots calls in the compiler.  
+        fun := peek //functions can be passed around like so
 
-        Also, should use the compile_literal() function to compile class name and property
-        names, and then use them ... can we do this?
+        dog := Dog()
+
+        num := 23
+
+        1. Enums
+        2. Structs (including Inheritance)
+        3. Functions
+
+    Make old way of declaring structs/enums/functions errors
+        how to do this?
+        IDENTIFIER + COLON_COLON + STRUCT
+
+    Get rid of duck typing - since we want to keep things explicit
+        update tests for duck typing
+        need to include superstruct when declaring structs if we get rid of duck typing
+
+    If instance is type type substruct, then type of the varible can be superstruct type:
+        Expr := struct {
+            token: Token = nil
+        }
+
+        PrimaryExpr := struct < Expr {
+        } 
+
+        BinaryExpr := struct < Expr {
+            left: Expr = nil
+            right: Expr = nil
+        }
+
+        parse_expression := () -> Expr {
+            -> PrimaryExpr() //or BinaryExpr(), since we don't know at compile time
+        }
+
+        print_expr := (primary: PrimaryExpr) -> {
+            print(primary.literal)
+            ->
+        }
+
+        print_expr := (binary: BinaryExpr) -> {
+            print(binary.token.literal)
+            print_expr(binary.left)
+            print_expr(binary.right)
+            ->
+        }
+        a: PrimaryExpr = PrimaryExpr() //type is PrimaryExpr
+        b: Expr = parse_expression() //also of type Expr
+
+        print_expr(a) //can decide at compile time since we should know
+        //Compile time: can check that the type is equal, OR type is superstruct of the overloads (PrimaryExpr and BinaryExpr)
+            //if types equal, then function can be specified at compile time.
+        //Runtime: if type is superstruct of overloads, then at runtime need to iterate over overloads to find one with matching type
+            //this will require adding type info to instances and functions so they can be checked at runtime
+        print_expr(b) //if type is PrimaryExpr or BinaryExpr, function can be decided at compile time
+
+    Continue writing basic interpreter - add any errors below and fix them afterwards
+        really need to find a formal way of resolving TypeIdentifier in one place
+            instead of having it scattered all over compiler...
+
+
+    This crashes since parse_factor() is not defined
+        parse_term := () -> Expr {
+            left := parse_factor()
+
+            while match(TokenType.plus) or match(TokenType.minus) {
+                left = make_binary_expr(previous_token, left, parse_primary())
+            }
+
+            -> left
+        }
+
+    This crashes - enum name is misspelled (should be ASTType.primary)
+        PrimaryExpr := struct < Expr {
+            type := ASype.primary
+            token: Token = nil
+        }
+
+    This breaks compiler but doesn't show error:
+        src := "212 + 42"
+
+        TokenType := enum {
+            number
+            plus
+            minus
+        }
+
+        Token := struct {
+            TokenType := TokenType.number //Var identifier is expected, but using enum identifer... (but what if user tries to declara new enum???)
+            identifier := ""
+        }
+
+    This breaks compiler without showing error:
+        Token token = Token() //may be related to error above too
+
+    This breaks compiler since 'char_remaing' is not defined, but shows no error
+        if char_remaing {
+
+        }
+
+    would like to be able to do this to simplify code further:
+        p := PrimaryExpr(ASTType.primary, token)
+        b := BinaryExpr(ASTType.binary, token, left, right)
+
+        No arguments to use all default values.
+        Or leave argument empty to use default, eg:
+            c := BinaryExpr(, token,, right) //use default for type and left
+
+    Make function to convert char to ASCII, or allow char (and string?) comparisons using <, <=, >, >=
 
     Can value_arrary.h/c be merged into value.h/c?
 
@@ -48,9 +165,6 @@ IMPLEMENTATION:
         pinpoint failing tests/crashing tests
         this doesn't work!!! Need a preprocesser to remove/add/replace code
 
-    combine Obj files together as best as possible - all the obj files is so confusing
-        and messy.  Not using typedef on objs and
-
     int casting (string, float)
         if string cannot be converted, ??
 
@@ -58,11 +172,6 @@ IMPLEMENTATION:
         if string cannot be converted, ??
 
     type() function that returns 'int', 'string', 'bool', 'float', 'Dog', '(int) -> string' in string format
-
-    to_string, to_function, to_integer, etc really all should be to_value() and
-        then a switch inside can switch based on type 
-
-        but this will be tricky since they all take in different arguments
 
     change name of TOKEN_STRING_TYPE to TOKEN_STRING_IDENTIFIER so that it can
         be used for both type AND casting to strings

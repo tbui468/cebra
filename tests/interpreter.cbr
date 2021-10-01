@@ -1,0 +1,186 @@
+//mini-interpreter to test cebra capabilities
+
+//***********source************
+//src := "212 + 42 * (232 -1)"
+src := "212 + 42"
+
+//************lexer************
+TokenType := enum {
+    default
+    number
+    plus
+    minus
+    star
+    slash
+    left_paren
+    right_paren
+    eof
+}
+
+Token := struct {
+    type := TokenType.default
+    literal := ""
+}
+
+index := 0
+current_char := ""
+
+is_digit := (char: string) -> bool {
+    -> char == "0" or
+       char == "1" or
+       char == "2" or
+       char == "3" or
+       char == "4" or
+       char == "5" or
+       char == "6" or
+       char == "7" or
+       char == "8" or
+       char == "9"
+}
+
+is_whitespace := (char: string) -> bool {
+    -> char == " "
+}
+
+peek := (fun: (string) -> bool) -> bool {
+    if index >= src.size {
+        -> false
+    } 
+    -> fun(src[index])
+}
+
+next_char := () -> bool {
+    if index >= src.size {
+        -> false
+    }
+    current_char = src[index]
+    index = index + 1
+    -> true
+}
+
+next_token := () -> Token {
+
+    while peek(is_whitespace) {
+        next_char()
+    }
+
+    if next_char() {
+        token := Token()
+        token.literal = current_char
+        if current_char == "+" {
+            token.type = TokenType.plus
+            -> token
+            //-> Token(TokenType.plus, "+") //would like to be able to do this
+        } 
+        if current_char == "-" {
+            token.type = TokenType.minus
+            -> token
+        }
+        if current_char == "*" {
+            token.type = TokenType.star
+            -> token
+        }
+        if current_char == "*" {
+            token.type = TokenType.slash
+            -> token
+        }
+        if current_char == "(" {
+            token.type = TokenType.left_paren
+            -> token
+        }
+        if current_char == ")" {
+            token.type = TokenType.right_paren
+            -> token
+        }
+        //if number
+        num_string := current_char
+        while peek(is_digit) {
+            next_char()
+            num_string = num_string + current_char 
+        }
+        token.type = TokenType.number
+        token.literal = num_string
+        -> token 
+    } else {
+        token := Token()
+        token.type = TokenType.eof
+        -> token
+    }
+}
+
+//***********AST************
+ASTType := enum {
+    primary
+    binary 
+}
+
+Expr := struct {
+    type := ASTType.primary
+}
+
+PrimaryExpr := struct < Expr { //< Expr not really necessary, but nice documenation
+    type := ASTType.primary
+    token: Token = nil
+}
+
+BinaryExpr := struct < Expr { //< Expr also not necessary
+    type := ASTType.binary
+    token: Token = nil
+    left: Expr = nil
+    right: Expr = nil
+}
+
+make_primary_expr := (token: Token) -> Expr {
+    primary := PrimaryExpr()
+    primary.token = token
+    -> primary
+}
+
+make_binary_expr := (token: Token, left: Expr, right: Expr) -> Expr {
+    binary := BinaryExpr()
+    binary.token = token
+    binary.left = left
+    binary.right = right
+    -> binary
+}
+
+//*********parser***********
+previous_token: Token = nil
+current_token := next_token()
+
+match := (type: TokenType) -> bool {
+    if type == current_token.type {
+        previous_token = current_token
+        current_token = next_token()
+        -> true
+    } 
+    -> false
+}
+
+parse_primary := () -> Expr {
+    if match(TokenType.number) {
+        -> make_primary_expr(previous_token)
+    }
+}
+
+parse_term := () -> Expr {
+    left := parse_primary()
+
+    while match(TokenType.plus) or match(TokenType.minus) {
+        left = make_binary_expr(previous_token, left, parse_primary())
+    }
+
+    -> left
+}
+
+parse_expression := () -> Expr {
+    -> parse_term()
+}
+
+
+
+//*********driver***********
+root := parse_expression()
+
+print_expr(root)
+
