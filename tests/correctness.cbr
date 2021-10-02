@@ -26,8 +26,8 @@ struct_inheritance := true
 duck_typing := true
 cast_to_string := true
 for_each_loop := true
-get_set_char := true
-set_string_size := true
+get_char := true
+get_string_size := true
 lists_maps_in_structs := true
 enums := true
 
@@ -1057,8 +1057,8 @@ if for_each_loop {
     }
 }
 
-if get_set_char {
-    print("-Get / Set Char in String")
+if get_char {
+    print("-Get Char in String")
 
     a := "Hello world!"
     if a[0] == "H" and a[11] == "!" {
@@ -1066,20 +1066,6 @@ if get_set_char {
     } else {
         add_failed("Get Char: Failed!")
     }
-
-    a[5] = "&"
-    if a == "Hello&world!" {
-        add_passed("Set Char: Passed!")
-    } else {
-        add_failed("Set Char: Failed!")
-    }
-
-    if (a[5] = "$") == "$" and a == "Hello$world!" {
-        add_passed("Set Char, Char result: Passed!")
-    } else {
-        add_failed("Set Char, Char result: Failed!")
-    }
-
 
     Dog :: struct {
         name := "Mittens"
@@ -1097,33 +1083,17 @@ if get_set_char {
         add_failed("Get Char When String is Property: Failed!")
     }
 
-    dog1.name[0] = "S"
-    dog1.friend.name[0] = "H"
-
-    if dog1.name == "Sittens" and dog1.friend.name == "Hubbles" {
-        add_passed("Set Char When String is Property: Passed!")
-    } else {
-        add_failed("Set Char When String is Property: Failed!")
-    } 
 }
 
-if set_string_size {
+if get_string_size {
     print("-Set String Size")
 
     a := "Hello world!"
 
-    a.size = 5
-    if a == "Hello" {
-        add_passed("Set String Size, Smaller: Passed!")
+    if a.size == 12 {
+        add_passed("Get String Size: Passed!")
     } else {
-        add_failed("Set String Size, Smaller: Failed!")
-    }
-
-    a.size = 8
-    if a == "Hello   " {
-        add_passed("Set String Size, Larger: Passed!")
-    } else {
-        add_failed("Set String Size, Larger: Failed!")
+        add_failed("Get String Size: Failed!")
     }
 
     Dog :: struct {
@@ -1132,24 +1102,17 @@ if set_string_size {
     }
 
     dog1 := Dog()
+    dog1.name = "Mit"
     dog2 := Dog()
     dog1.friend = dog2
+    dog2.name = "Mitts"
 
-    dog1.name.size = 1
-    dog1.friend.name.size = 3
-    if dog1.name == "M" and dog1.friend.name == "Mit" {
-        add_passed("Set String Size Smaller When String is Property: Passed!")
+    if dog1.name.size == 3 and dog1.friend.name.size == 5 {
+        add_passed("Get String As Property: Passed!")
     } else {
-        add_failed("Set String Size Smaller When String is Property: Failed!")
+        add_failed("Get String As Property: Failed!")
     }
-
-    dog1.name.size = 4
-    dog1.friend.name.size = 4
-    if dog1.name == "M   " and dog1.friend.name == "Mit " {
-        add_passed("Set String Size Larger When String is Property: Passed!")
-    } else {
-        add_failed("Set String Size Larger When String is Property: Failed!")
-    }
+    
 }
 
 if lists_maps_in_structs {

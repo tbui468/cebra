@@ -853,6 +853,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
 
+            /*
             if (type_inst->type == TYPE_STRING) {
                 if (prop.length == 4 && memcmp(prop.start, "size", prop.length) == 0) {
                     emit_byte(compiler, OP_SET_SIZE);
@@ -861,7 +862,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
                 add_error(compiler, prop, "Property doesn't exist on strings.");
                 return RESULT_FAILED;
-            }
+            }*/
 
             if (type_inst->type == TYPE_IDENTIFIER) {
                 type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
@@ -871,27 +872,32 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 type_inst = resolve_type(compiler, ((struct TypeClass*)type_inst)->klass);
             }
 
-            struct ObjString* name = make_string(prop.start, prop.length);
-            push_root(to_string(name));
-            emit_byte(compiler, OP_SET_PROP);
-            emit_short(compiler, add_constant(compiler, to_string(name))); 
-            pop_root();
+            if (type_inst->type == TYPE_CLASS) {
+                struct ObjString* name = make_string(prop.start, prop.length);
+                push_root(to_string(name));
+                emit_byte(compiler, OP_SET_PROP);
+                emit_short(compiler, add_constant(compiler, to_string(name))); 
+                pop_root();
 
-            Value type_val = to_nil();
-            get_from_table(&((struct TypeClass*)type_inst)->props, name, &type_val);
+                Value type_val = to_nil();
+                get_from_table(&((struct TypeClass*)type_inst)->props, name, &type_val);
 
-            //TODO: should find a way to resolve identifiers immediately when possible instead of right before checking
-            if (right_type->type == TYPE_IDENTIFIER) {
-                right_type = resolve_type(compiler, ((struct TypeIdentifier*)right_type)->identifier);
+                //TODO: should find a way to resolve identifiers immediately when possible instead of right before checking
+                if (right_type->type == TYPE_IDENTIFIER) {
+                    right_type = resolve_type(compiler, ((struct TypeIdentifier*)right_type)->identifier);
+                }
+
+                if (!same_type(type_val.as.type_type, right_type)) {
+                    add_error(compiler, prop, "Property and assignment types must match.");
+                    return RESULT_FAILED;
+                }
+
+                *node_type = right_type;
+                return RESULT_SUCCESS;
             }
 
-            if (!same_type(type_val.as.type_type, right_type)) {
-                add_error(compiler, prop, "Property and assignment types must match.");
-                return RESULT_FAILED;
-            }
-
-            *node_type = right_type;
-            return RESULT_SUCCESS;
+            add_error(compiler, prop, "Property cannot be set.");
+            return RESULT_FAILED;
         }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
@@ -1019,6 +1025,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* idx_type;
             if (compile_node(compiler, get_idx->idx, ret_types, &idx_type) == RESULT_FAILED) return RESULT_FAILED;
 
+            /*
             if (left_type->type == TYPE_STRING) {
                 if (idx_type->type != VAL_INT) {
                     add_error(compiler, get_idx->name, "Index must be integer type.");
@@ -1033,7 +1040,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_SET_ELEMENT);
                 *node_type = right_type;
                 return RESULT_SUCCESS;
-            } 
+            } */
 
             if (left_type->type == TYPE_LIST) {
                 if (idx_type->type != TYPE_INT) {

@@ -18,43 +18,88 @@ ADDING FEATURES:
 
 
 IMPLEMENTATION:
-    Since enums and structs are new types AND they can't be passed around (?), should change notation 
-        to show that:
 
-        //Cannot be reassigned since they aren't regular variables
-        //structs and enums are NOT first class, so they can't be passed around and variables can be assigned to them
-        //but functions are
-        Animal :: struct {
-        }
-        Dog :: struct < Animal {
-        }
-        Token :: enum {
-        }
-        add :: (n: int) -> int {
-            -> 2
-        }
+TokenType :: enum {
+    default
+    number
+    plus
+    minus
+    star
+    slash
+    left_paren
+    right_paren
+    eof
+}
 
-        //function type is (param0, param1, ...) -> ret_type
-        peek :: (fun: (int) -> int, fun2: (int) -> int) -> {
-        }
+a: TokenType = TokenType.number
+b := TokenType.plus
 
-        fun := peek //functions can be passed around like so
+print(a)
+print(b)
 
-        dog := Dog()
+Animal :: struct {
 
-        num := 23
+}
 
-        1. Enums
-        2. Structs (including Inheritance)
-        3. Functions
+Dog :: struct < Animal {
 
-    Make old way of declaring structs/enums/functions errors
-        how to do this?
-        IDENTIFIER + COLON_COLON + STRUCT
+}
 
-    Get rid of duck typing - since we want to keep things explicit
-        update tests for duck typing
-        need to include superstruct when declaring structs if we get rid of duck typing
+add := (a: int, b: int) -> int {
+    -> a + b
+}
+
+sub := (a: int, b: int) -> {
+    -> a - b
+}
+
+binary := (fun: (int, int) -> int, a: int, b: int) -> int {
+    -> fun(a, b)
+}
+
+binary2 := binary
+
+print(binary2(add, 1, 2))
+print(binary2(sub, 1, 2))
+
+    Get rid of duck typing - since we want to keep things explicit, use struct names and
+        superstruct names to deal with types.
+        A struct type can be used in place of a superstruct type
+            check if instance type (or its superstruct type) is same as variable/parameter/return type
+            any other checks are done at runtime (such as if property access is valid)
+        A superstruct type CANNOT be used in place of a struct type
+            can check this a compile time
+
+        Still need identifers (and then resolve them to structs and enums)
+        Need to save superstruct name in struct signatures too
+        Compile-time:
+            For variables, types must match:
+                p: PrimaryExpr = PrimaryExpr() //valid
+                p: Expr = PrimaryExpr() //valid
+            For function return types:
+                parse_primary := () -> PrimaryExpr {
+                    primary: PrimaryExpr = PrimaryExpr()
+                    -> primary //if instance type is equal to return type, then valid
+                }
+                parse_primary := () -> Expr {
+                    primary: PrimaryExpr = PrimaryExpr() //valid return type since return type is superstruct of instance type
+                    -> primary //OR superstruc type of instance is equal to return type, then valid
+                }
+                parse_primary := () -> PrimaryExpr {
+                    expr: Expr = Expr()
+                    -> expr //compilation error!!!
+                }
+            For function parameters:
+                p1 := PrimaryExpr()
+                p2 := parse_expression() //could return a PrimaryExpr or BinaryExpr, we don't know
+                print_expr := (primary: PrimaryExpr) -> {
+                }
+                print_expr := (binary: BinaryExpr) -> {
+                }
+                print_expr(primary) //valid compilation
+        Run-time:
+            check property types are valid for the instance type
+            when calling functions, need to check overloads
 
     If instance is type type substruct, then type of the varible can be superstruct type:
         Expr := struct {
