@@ -18,8 +18,11 @@
         return RESULT_FAILED; \
     }
 
-#define CONSUME(token_type, msg) \
-    if (!consume(token_type, msg)) return RESULT_FAILED
+#define CONSUME(token_type, token, msg, ...) \
+    if (!match(token_type)) { \
+        ADD_ERROR(token, msg, __VA_ARGS__); \
+        return RESULT_FAILED; \
+    }
 
 #define ADD_ERROR(tkn, msg, ...) \
     { \
@@ -94,16 +97,6 @@ static void synchronize() {
     }
 }
 
-static bool consume(TokenType type, const char* message) {
-    if (type == parser.current.type) {
-        advance();
-        return true;
-    }
-
-    Token prev = parser.current;
-    ADD_ERROR(prev, "Unexpected token '%.*s'.", prev.length, prev.start);
-    return false;
-}
 
 
 static ResultCode primary(Token var_name, struct Node** node) {
@@ -114,18 +107,18 @@ static ResultCode primary(Token var_name, struct Node** node) {
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LIST)) {
         Token identifier = parser.previous;
-        if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LESS, identifier, "Expect '<' after 'List'.");
         struct Type* template_type;
         PARSE_TYPE(var_name, &template_type, var_name, "List must be initialized with valid type: List<[type]>().");
-        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
+        CONSUME(TOKEN_GREATER, identifier, "Expect '>' after type.");
         *node = make_get_var(identifier, make_list_type(template_type)); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_MAP)) {
         Token identifier = parser.previous;
-        if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LESS, identifier, "Expect '<' after 'Map'.");
         struct Type* template_type;
         PARSE_TYPE(var_name, &template_type, var_name, "Map must be initialized with valid type: Map<[type]>().");
-        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
+        CONSUME(TOKEN_GREATER, identifier, "Expect '>' after type.");
         *node = make_get_var(identifier, make_map_type(template_type)); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IDENTIFIER)) {
@@ -150,7 +143,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
                     if (match(TOKEN_EQUAL)) {
                         Token param_token = ((DeclVar*)var_decl)->name;
-                        ADD_ERROR(param_token, "Trying to astypen parameter '%.*s'.  Function parameters cannot be astypened.", 
+                        ADD_ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be astypened.", 
                                   param_token.length, param_token.start);
                         return RESULT_FAILED;
                     }
@@ -159,15 +152,15 @@ static ResultCode primary(Token var_name, struct Node** node) {
                     add_type((struct TypeArray*)param_type, vd->type);
                     add_node(params, var_decl);
                 } while (match(TOKEN_COMMA));
-                if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter list.")) return RESULT_FAILED;
+                CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter list.");
             }
 
-            if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameter list.")) return RESULT_FAILED;
+            CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
 
             struct Type* ret_type;
             PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
 
-            if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.")) return RESULT_FAILED;
+            CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
 
             Token body_start = parser.previous;
             struct Node* body;
@@ -186,7 +179,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         struct Node* expr;
         PARSE(expression, var_name, &expr, name, "Expect valid expression after '('.");
 
-        if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.")) return RESULT_FAILED;
+        CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after expression.");
         *node = expr;
         return RESULT_SUCCESS;
     } else if (match(TOKEN_NIL)) {
@@ -205,14 +198,12 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
 static ResultCode call_dot(Token var_name, struct Node** node) {
     struct Node* left;
-    if (primary(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(primary, var_name, &left);
 
     while ((match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
         switch(parser.previous.type) {
             case TOKEN_DOT:
-                if (!consume(TOKEN_IDENTIFIER, "Expect identifier after '.'.")) return RESULT_FAILED;
+                CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect identifier after '.'.");
                 left = make_get_prop(left, parser.previous);
                 break;
             case TOKEN_LEFT_PAREN:
@@ -223,7 +214,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                         PARSE(expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
                         add_node(args, arg); 
                     } while (match(TOKEN_COMMA));
-                    if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.")) return RESULT_FAILED;
+                    CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after arguments.");
                 }
 
                 left = make_call(parser.previous, left, args);
@@ -233,7 +224,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 struct Node* idx;
                 PARSE(expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
                 left = make_get_element(parser.previous, left, idx);
-                CONSUME(TOKEN_RIGHT_BRACKET, "Expect ']' after index.");
+                CONSUME(TOKEN_RIGHT_BRACKET, left_bracket, "Expect ']' after index.");
                 break;
             default:
                 break;
@@ -414,9 +405,9 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
                 PARSE_TYPE(var_name, &param_type, var_name, "Invalid parameter type for function declaration '%.*s'.", var_name.length, var_name.start);
                 add_type((struct TypeArray*)params, param_type);
             } while(match(TOKEN_COMMA));
-            if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.")) return RESULT_FAILED;
+            CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter types.");
         }
-        if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.")) return RESULT_FAILED;
+        CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' followed by return type.");
         struct Type* ret;
         PARSE_TYPE(var_name, &ret, var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
         *type = make_fun_type(params, ret);
@@ -445,7 +436,7 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
 
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
-            if (!consume(TOKEN_IDENTIFIER, "Expect superclass identifier after '<'.")) return RESULT_FAILED;
+            CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect superclass identifier after '<'.");
             *type = make_class_type(var_name);
             return RESULT_SUCCESS;
         }
@@ -460,19 +451,19 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     }
 
     if (match(TOKEN_LIST)) {
-        if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LESS, parser.previous, "Expect '<' after 'List'.");
         struct Type* template_type;
         PARSE_TYPE(var_name, &template_type, var_name, "List '%.*s' declaration type invalid. Specify type inside '<>'.",  var_name.length, var_name.start);
-        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
+        CONSUME(TOKEN_GREATER, parser.previous, "Expect '>' after type.");
         *type = make_list_type(template_type);
         return RESULT_SUCCESS;
     }
 
     if (match(TOKEN_MAP)) {
-        if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LESS, parser.previous, "Expect '<' after 'Map'.");
         struct Type* template_type;
         PARSE_TYPE(var_name, &template_type, var_name, "Map '%.*s' declaration type invalid. Specify value type inside '<>'.", var_name.length, var_name.start);
-        if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
+        CONSUME(TOKEN_GREATER, parser.previous, "Expect '>' after type.");
         *type = make_map_type(template_type);
         return RESULT_SUCCESS;
     }
@@ -495,15 +486,9 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
 }
 
 static ResultCode param_declaration(struct Node** node) {
-    if (!match(TOKEN_IDENTIFIER)) {
-        ADD_ERROR(parser.previous, "Parameter declaration must begin with an identifier.");
-        return RESULT_FAILED;
-    }
+    CONSUME(TOKEN_IDENTIFIER, parser.previous, "Parameter declaration must begin with an identifier.");
     Token var_name = parser.previous;
-    if (!match(TOKEN_COLON)) {
-        ADD_ERROR(var_name, "Parameter identifier '%.*s' must be followed by ':'.", var_name.length, var_name.start);
-        return RESULT_FAILED;
-    }
+    CONSUME(TOKEN_COLON, var_name, "Parameter identifier '%.*s' must be followed by ':'.", var_name.length, var_name.start);
 
     struct Type* type;
     PARSE_TYPE(var_name, &type, var_name, "Parameter identifier '%.*s' type invalid.", var_name.length, var_name.start);
@@ -521,7 +506,7 @@ static ResultCode var_declaration(struct Node** node) {
     PARSE_TYPE(var_name, &type, var_name, "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
                   var_name.length, var_name.start, var_name.length, var_name.start);
 
-    if (!consume(TOKEN_EQUAL, "Variables must be defined at declaration.")) return RESULT_FAILED;
+    CONSUME(TOKEN_EQUAL, var_name, "Variables must be defined at declaration.");
 
     struct Node* right;
 
@@ -540,11 +525,11 @@ static ResultCode declaration(struct Node** node) {
         struct Type* type = make_enum_type(enum_name);
 
         match(TOKEN_ENUM);
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before enum body.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before enum body.");
         //read in enums
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
-            if (!consume(TOKEN_IDENTIFIER, "Expect enum list inside enum body.")) return RESULT_FAILED;
+            CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect enum list inside enum body.");
             add_node(nl, make_decl_var(parser.previous, make_int_type(), NULL));
         }
         struct Node* right = make_decl_enum(enum_name, nl);
@@ -564,7 +549,7 @@ static ResultCode declaration(struct Node** node) {
                              make_get_var(parser.previous, NULL) : 
                              NULL;
 
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before class body.");
 
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
@@ -593,7 +578,7 @@ static ResultCode declaration(struct Node** node) {
         struct Node* condition;
         PARSE(expression, make_dummy_token(), &condition, name, "Expect boolean expression after 'if'.");
 
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after 'if' condition.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' after 'if' condition.");
 
         Token left_brace_token = parser.previous;
         struct Node* then_block;
@@ -605,7 +590,7 @@ static ResultCode declaration(struct Node** node) {
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
             Token else_token = parser.previous;
-            if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after 'else'.")) return RESULT_FAILED;
+            CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' after 'else'.");
 
             if (block(NULL, &else_block) == RESULT_FAILED) {
                 ADD_ERROR(else_token, "Expect closing '}' to end 'else' statement body.");
@@ -619,7 +604,7 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
         struct Node* condition;
         PARSE(expression, make_dummy_token(), &condition, name, "Expect condition after 'while'.");
-        if (!consume(TOKEN_LEFT_BRACE, "Expect boolean expression and '{' after 'while'.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
 
         struct Node* then_block;
         if (block(NULL, &then_block) == RESULT_FAILED) {
@@ -636,13 +621,13 @@ static ResultCode declaration(struct Node** node) {
                 ADD_ERROR(name, "Expect initializer or empty space for first item in 'for' loop.");
                 return RESULT_FAILED;
             }
-            if (!consume(TOKEN_COMMA, "Expect ',' after for-loop initializer.")) return RESULT_FAILED;
+            CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
         }
 
         struct Node* condition = NULL;
         if (!match(TOKEN_COMMA)) {
             PARSE(expression, make_dummy_token(), &condition, name, "Expect condition or empty space for second item in 'for' loop.");
-            if (!consume(TOKEN_COMMA, "Expect ',' after for-loop condition.")) return RESULT_FAILED;
+            CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
         }
 
         struct Node* update = NULL;
@@ -650,7 +635,7 @@ static ResultCode declaration(struct Node** node) {
             struct Node* update_expr;
             PARSE(expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
             update = make_expr_stmt(update_expr);
-            if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after for-loop update.")) return RESULT_FAILED;
+            CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after for-loop update.");
         }
 
         struct Node* then_block;
@@ -666,7 +651,7 @@ static ResultCode declaration(struct Node** node) {
         struct Node* element;
         if (param_declaration(&element) == RESULT_FAILED) return RESULT_FAILED;
 
-        if (!consume(TOKEN_IN, "Expect 'in' after element declaration.")) return RESULT_FAILED;
+        CONSUME(TOKEN_IN, name, "Expect 'in' after element declaration.");
 
         struct Node* list;
         PARSE(expression, make_dummy_token(), &list, name, "Expect List identifier after 'in' in foreach loop.");
@@ -690,7 +675,7 @@ static ResultCode declaration(struct Node** node) {
         struct Node* update = make_expr_stmt(make_set_var(get_idx, sum)); 
 
         //body
-        if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before foreach loop body.")) return RESULT_FAILED;
+        CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' before foreach loop body.");
 
         struct Node* get_element = make_get_element(make_dummy_token(), list, get_idx);
         ((DeclVar*)element)->right = get_element;

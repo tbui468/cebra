@@ -49,18 +49,20 @@ parse_expression := () -> Expr {
 
 
 IMPLEMENTATION:
-    Wrap parse_expr/compile_node in a MACRO so that errors can be returned in a more concise way
-        if (parse_primary(struct Node** node) == RESULT_FAILED) return RESULT_FAILED;
-        PARSE(parse_primary, node)
-        PARSE(parse_binary, node)
 
-    CONSUME macro could just be calls to match() 
+    ADD_ERROR() should also have 'return RESULT_FAILED;' at the end
+   
+    Change ADD_ERROR() to ERROR() to make it consistent with other macros
 
-    read_type should be a switch, and not a bunch of 'if' statements
+    parse_type should be a switch, and not a bunch of 'if' statements
         change name to parse_type, and make PARSE_TYPE macro
 
-    is Token var_name in expression parsing calls still used?  Recall that how variables/structs/functions/enums
-        are declared was changed
+        make a peek(0) return the next token
+
+    primary in parser should also use a switch
+
+    see if Token var_name propagated through the descent parser is being used
+        Recall that how variables/structs/functions/enums are declared was changed
 
     Add 'as' keyword
         'instance as superstruct'
