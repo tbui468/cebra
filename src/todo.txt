@@ -18,49 +18,76 @@ ADDING FEATURES:
 
 
 IMPLEMENTATION:
+    Wrap parse_expr/compile_node in a MACRO so that errors can be returned in a more concise way
+        if (parse_primary(struct Node** node) == RESULT_FAILED) return RESULT_FAILED;
+        PARSE(parse_primary, node)
+        PARSE(parse_binary, node)
 
-TokenType :: enum {
-    default
-    number
-    plus
-    minus
-    star
-    slash
-    left_paren
-    right_paren
-    eof
-}
+    Add 'as' keyword
+        'instance as superstruct'
+            check if the superstruct is valid for the given type at compile time
+            if so,
+            GetVar now needs to peek if new few tokens are TOKEN_AS + TOKEN_IDENTIFIER so
+                the the returned type for typechecker can cast appropriately
+                make a new field in GetVar called 'cast' of type Token.
+        'instance as substruct' changes type in compiler, BUT also need to check at runtime
+            to make sure that casting is valid - ObjInstance needs to be instantiated with
+            a copy of the type (two types need to be stored, the current type and the original type...?)
+            current type is used to see what properties are available
+            original type is used to determine what casts are valid
 
-a: TokenType = TokenType.number
-b := TokenType.plus
+    make all casting use this format????
+        a: int = 4
+        b := a as float + 23.2
+        print("a: " + a as string)
 
-print(a)
-print(b)
+        'as' keyword binds tighter than '+ and -' (term)
+            unary?
+            call_dot?
 
-Animal :: struct {
+            b := a*a as float
+            b := a + a as float
+            b := a < b as string
+        
+    A for function parameters and returns, a substruct type can be used instead, and the type
+        is cast to the superstruct type.  Maybe require the cast to be explicit????
 
-}
+    For the other way around, the superstruct is cast to the substruct type - if failed, then
+        runtime error.
 
-Dog :: struct < Animal {
+    For overloaded functions, cast downwards from highest superstruct:
+        eg Dog < Canine < Animal
+        Will attempt casting to Canine and if that fails, then Dog
+        will repeat for all overloads of a function until one is successful or all overloads are tried
 
-}
+    Casting must be explicit.  So expr := PrimaryExpr() as Expr to cast to Expr
+        //will need to check at runtime to see if successful or not
+        primary_expr := expr as PrimaryExpr //cast to substruct
 
-add := (a: int, b: int) -> int {
-    -> a + b
-}
+        //this can be checked at compile time
+        -> primary_expr as Expr //or -> PrimaryExpr() as Expr
 
-sub := (a: int, b: int) -> {
-    -> a - b
-}
+    print_expr(expr: Expr) -> {
+        if expr as PrimaryExpr != nil {
+            p := expr as PrimaryExpr
+            print(p.literal) 
+        }
+        if expr as BinaryExpr != nil {
+            b := expr as BinaryExpr
+            print_expr(b.left)
+            print_expr(b.right)
+        }
+    }
 
-binary := (fun: (int, int) -> int, a: int, b: int) -> int {
-    -> fun(a, b)
-}
+    Function overloading is just syntactic sugar at this point
+    print_expr(primary: PrimaryExpr) {
+        print(primary.litera)
+    }
 
-binary2 := binary
-
-print(binary2(add, 1, 2))
-print(binary2(sub, 1, 2))
+    print_expr(binary: BinaryExpr) {
+        print_expr(binary.left)
+        print_expr(binary.right)
+    }
 
     Get rid of duck typing - since we want to keep things explicit, use struct names and
         superstruct names to deal with types.
@@ -70,7 +97,7 @@ print(binary2(sub, 1, 2))
         A superstruct type CANNOT be used in place of a struct type
             can check this a compile time
 
-        Still need identifers (and then resolve them to structs and enums)
+        Still need identifiers (and then resolve them to structs and enums)
         Need to save superstruct name in struct signatures too
         Compile-time:
             For variables, types must match:
