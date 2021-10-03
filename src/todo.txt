@@ -16,12 +16,51 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 
+TokenType :: enum {
+    number
+    plus
+    minus
+    star
+    slash
+}
+
+Expr :: struct {
+}
+
+PrimaryExpr :: struct < Expr {
+
+}
+
+BinaryExpr :: struct < Expr {
+
+}
+
+parse_primary := () -> Expr {
+    -> PrimaryExpr() as Expr
+}
+
+parse_term := () -> Expr {
+
+}
+
+parse_expression := () -> Expr {
+    -> parse_term()
+}
+
 
 IMPLEMENTATION:
     Wrap parse_expr/compile_node in a MACRO so that errors can be returned in a more concise way
         if (parse_primary(struct Node** node) == RESULT_FAILED) return RESULT_FAILED;
         PARSE(parse_primary, node)
         PARSE(parse_binary, node)
+
+    CONSUME macro could just be calls to match() 
+
+    read_type should be a switch, and not a bunch of 'if' statements
+        change name to parse_type, and make PARSE_TYPE macro
+
+    is Token var_name in expression parsing calls still used?  Recall that how variables/structs/functions/enums
+        are declared was changed
 
     Add 'as' keyword
         'instance as superstruct'

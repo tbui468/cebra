@@ -3,6 +3,24 @@
 #include "lexer.h"
 #include "memory.h"
 
+#define PARSE(fun, var_name, node_ptr, token, msg, ...) \
+    if (fun(var_name, node_ptr) == RESULT_FAILED) { \
+        if (token.type != TOKEN_DUMMY) ADD_ERROR(token, msg, __VA_ARGS__); \
+        return RESULT_FAILED; \
+    }
+
+#define PARSE_WITHOUT_MSG(fun, var_name, node_ptr) \
+    PARSE(fun, var_name, node_ptr, make_dummy_token(), "")
+
+#define PARSE_TYPE(var_name, type_ptr, token, msg, ...) \
+    if (parse_type(var_name, type_ptr) == RESULT_FAILED) { \
+        ADD_ERROR(token, msg, __VA_ARGS__); \
+        return RESULT_FAILED; \
+    }
+
+#define CONSUME(token_type, msg) \
+    if (!consume(token_type, msg)) return RESULT_FAILED
+
 #define ADD_ERROR(tkn, msg, ...) \
     { \
         if (parser.error_count < 256) { \
@@ -23,7 +41,7 @@ Parser parser;
 static ResultCode expression(Token var_name, struct Node** node);
 static ResultCode declaration(struct Node** node);
 static ResultCode block(struct Node* prepend, struct Node** node);
-static ResultCode read_type(Token var_name, struct Type** type);
+static ResultCode parse_type(Token var_name, struct Type** type);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode var_declaration(struct Node** node);
 
@@ -98,10 +116,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
-            ADD_ERROR(var_name, "List must be initialized with valid type: List<[type]>().");
-            return RESULT_FAILED;
-        }
+        PARSE_TYPE(var_name, &template_type, var_name, "List must be initialized with valid type: List<[type]>().");
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
         *node = make_get_var(identifier, make_list_type(template_type)); 
         return RESULT_SUCCESS;
@@ -109,10 +124,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token identifier = parser.previous;
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
-            ADD_ERROR(var_name, "Map must be initialized with valid type: Map<[type]>().");
-            return RESULT_FAILED;
-        }
+        PARSE_TYPE(var_name, &template_type, var_name, "Map must be initialized with valid type: Map<[type]>().");
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
         *node = make_get_var(identifier, make_map_type(template_type)); 
         return RESULT_SUCCESS;
@@ -153,10 +165,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
             if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' after parameter list.")) return RESULT_FAILED;
 
             struct Type* ret_type;
-            if (read_type(var_name, &ret_type) == RESULT_FAILED) {
-                ADD_ERROR(parser.previous, "Expect valid return type after function parameters.");
-                return RESULT_FAILED;
-            }
+            PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
 
             if (!consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.")) return RESULT_FAILED;
 
@@ -175,10 +184,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
         //check for group (expression in parentheses)
         struct Node* expr;
-        if (expression(var_name, &expr) == RESULT_FAILED) {
-            ADD_ERROR(name, "Expect valid expression after '('.");
-            return RESULT_FAILED;
-        }
+        PARSE(expression, var_name, &expr, name, "Expect valid expression after '('.");
 
         if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.")) return RESULT_FAILED;
         *node = expr;
@@ -214,10 +220,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 if (!match(TOKEN_RIGHT_PAREN)) {
                     do {
                         struct Node* arg;
-                        if (expression(var_name, &arg) == RESULT_FAILED) {
-                            ADD_ERROR(parser.previous, "Function call argument must be a valid expression.");
-                            return RESULT_FAILED;
-                        }
+                        PARSE(expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
                         add_node(args, arg); 
                     } while (match(TOKEN_COMMA));
                     if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.")) return RESULT_FAILED;
@@ -228,12 +231,9 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
             case TOKEN_LEFT_BRACKET:
                 Token left_bracket = parser.previous;
                 struct Node* idx;
-                if (expression(var_name, &idx) == RESULT_FAILED) {
-                    ADD_ERROR(left_bracket, "Expect string after '[' for Map access, or int for List access.");
-                    return RESULT_FAILED;
-                }
+                PARSE(expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
                 left = make_get_element(parser.previous, left, idx);
-                if (!consume(TOKEN_RIGHT_BRACKET, "Expect ']' after index.")) return RESULT_FAILED;
+                CONSUME(TOKEN_RIGHT_BRACKET, "Expect ']' after index.");
                 break;
             default:
                 break;
@@ -248,10 +248,7 @@ static ResultCode unary(Token var_name, struct Node** node) {
     if (match(TOKEN_MINUS) || match(TOKEN_BANG)) {
         Token op = parser.previous;
         struct Node* right;
-        if (unary(var_name, &right) == RESULT_FAILED) {
-            ADD_ERROR(op, "Right side of '%.*s' must be a valid expression.", op.length, op.start);
-            return RESULT_FAILED;
-        }
+        PARSE(unary, var_name, &right, op, "Right side of '%.*s' must be a valid expression.", op.length, op.start);
         *node = make_unary(parser.previous, right);
         return RESULT_SUCCESS;
     }
@@ -261,17 +258,12 @@ static ResultCode unary(Token var_name, struct Node** node) {
 
 static ResultCode factor(Token var_name, struct Node** node) {
     struct Node* left;
-    if (unary(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(unary, var_name, &left);
 
     while (match(TOKEN_STAR) || match(TOKEN_SLASH) || match(TOKEN_MOD)) {
         Token name = parser.previous;
         struct Node* right;
-        if (unary(var_name, &right) == RESULT_FAILED) {
-            ADD_ERROR(name, "Right hand side of '%.*s' must be valid expresion.", name.length, name.start);
-            return RESULT_FAILED;
-        }
+        PARSE(unary, var_name, &right, name, "Right hand side of '%.*s' must be valid expresion.", name.length, name.start);
         left = make_binary(name, left, right);
     }
 
@@ -281,17 +273,12 @@ static ResultCode factor(Token var_name, struct Node** node) {
 
 static ResultCode term(Token var_name, struct Node** node) {
     struct Node* left;
-    if (factor(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(factor, var_name, &left);
 
     while (match(TOKEN_PLUS) || match(TOKEN_MINUS)) {
         Token name = parser.previous;
         struct Node* right;
-        if (factor(var_name, &right) == RESULT_FAILED) {
-            ADD_ERROR(name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-            return RESULT_FAILED;
-        }
+        PARSE(factor, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_binary(name, left, right);
     }
 
@@ -301,18 +288,13 @@ static ResultCode term(Token var_name, struct Node** node) {
 
 static ResultCode relation(Token var_name, struct Node** node) {
     struct Node* left;
-    if (term(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(term, var_name, &left);
 
     while (match(TOKEN_LESS) || match(TOKEN_LESS_EQUAL) ||
            match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
         Token name = parser.previous;
         struct Node* right;
-        if (term(var_name, &right) == RESULT_FAILED) {
-            ADD_ERROR(name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-            return RESULT_FAILED;
-        }
+        PARSE(term, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_logical(name, left, right);
     }
 
@@ -322,23 +304,15 @@ static ResultCode relation(Token var_name, struct Node** node) {
 
 static ResultCode equality(Token var_name, struct Node** node) {
     struct Node* left;
-    if (relation(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(relation, var_name, &left);
 
     while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL) || match(TOKEN_IN)) {
         Token name = parser.previous;
         struct Node* right;
-        if (relation(var_name, &right) == RESULT_FAILED) {
-            switch(name.type) {
-                case TOKEN_IN:
-                    ADD_ERROR(name, "Right hand side of '%.*s' must be a List.", name.length, name.start);
-                    break;
-                default:
-                    ADD_ERROR(name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-                    break;
-            }
-            return RESULT_FAILED;
+        if (name.type == TOKEN_IN) {
+            PARSE(relation, var_name, &right, name, "Right hand side of '%.*s' must be a List.", name.length, name.start);
+        } else {
+            PARSE(relation, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         }
         left = make_logical(name, left, right);
     }
@@ -349,17 +323,12 @@ static ResultCode equality(Token var_name, struct Node** node) {
 
 static ResultCode and(Token var_name, struct Node** node) {
     struct Node* left;
-    if (equality(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(equality, var_name, &left);
 
     while (match(TOKEN_AND)) {
         Token name = parser.previous;
         struct Node* right;
-        if (equality(var_name, &right) == RESULT_FAILED) {
-            ADD_ERROR(name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-            return RESULT_FAILED;
-        }
+        PARSE(equality, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_logical(name, left, right);
     }
 
@@ -369,17 +338,12 @@ static ResultCode and(Token var_name, struct Node** node) {
 
 static ResultCode or(Token var_name, struct Node** node) {
     struct Node* left;
-    if (and(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(and, var_name, &left);
 
     while (match(TOKEN_OR)) {
         Token name = parser.previous;
         struct Node* right;
-        if (and(var_name, &right) == RESULT_FAILED) {
-            ADD_ERROR(name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-            return RESULT_FAILED;
-        }
+        PARSE(and, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_logical(name, left, right);
     }
 
@@ -389,17 +353,12 @@ static ResultCode or(Token var_name, struct Node** node) {
 
 static ResultCode assignment(Token var_name, struct Node** node) {
     struct Node* left;
-    if (or(var_name, &left) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
+    PARSE_WITHOUT_MSG(or, var_name, &left);
 
     while (match(TOKEN_EQUAL)) {
         Token  name = parser.previous;
         struct Node* right;
-        if (expression(var_name, &right) == RESULT_FAILED) {
-            ADD_ERROR(name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-            return RESULT_FAILED;
-        }
+        PARSE(expression, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         if (left->type == NODE_GET_ELEMENT) {
             left = make_set_element(left, right);
         } else if (left->type == NODE_GET_VAR) {
@@ -440,7 +399,7 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode read_type(Token var_name, struct Type** type) {
+static ResultCode parse_type(Token var_name, struct Type** type) {
     if (parser.previous.type == TOKEN_COLON && peek_one(TOKEN_EQUAL)) {
         *type = make_decl_type(); //inferred type typenature TODO: should change name to TypeInferred
         return RESULT_SUCCESS;
@@ -452,20 +411,14 @@ static ResultCode read_type(Token var_name, struct Type** type) {
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Type* param_type;
-                if (read_type(var_name, &param_type) == RESULT_FAILED) {
-                    ADD_ERROR(var_name, "Invalid parameter type for function declaration '%.*s'.", var_name.length, var_name.start);
-                    return RESULT_FAILED;
-                }
+                PARSE_TYPE(var_name, &param_type, var_name, "Invalid parameter type for function declaration '%.*s'.", var_name.length, var_name.start);
                 add_type((struct TypeArray*)params, param_type);
             } while(match(TOKEN_COMMA));
             if (!consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter types.")) return RESULT_FAILED;
         }
         if (!consume(TOKEN_RIGHT_ARROW, "Expect '->' followed by return type.")) return RESULT_FAILED;
         struct Type* ret;
-        if (read_type(var_name, &ret) == RESULT_FAILED) {
-            ADD_ERROR(var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
-            return RESULT_FAILED;
-        }
+        PARSE_TYPE(var_name, &ret, var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
         *type = make_fun_type(params, ret);
         return RESULT_SUCCESS;
     }
@@ -509,10 +462,7 @@ static ResultCode read_type(Token var_name, struct Type** type) {
     if (match(TOKEN_LIST)) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'List'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
-            ADD_ERROR(var_name, "List '%.*s' declaration type invalid. Specify type inside '<>'.", var_name.length, var_name.start);
-            return RESULT_FAILED;
-        }
+        PARSE_TYPE(var_name, &template_type, var_name, "List '%.*s' declaration type invalid. Specify type inside '<>'.",  var_name.length, var_name.start);
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
         *type = make_list_type(template_type);
         return RESULT_SUCCESS;
@@ -521,10 +471,7 @@ static ResultCode read_type(Token var_name, struct Type** type) {
     if (match(TOKEN_MAP)) {
         if (!consume(TOKEN_LESS, "Expect '<' after 'Map'.")) return RESULT_FAILED;
         struct Type* template_type;
-        if (read_type(var_name, &template_type) == RESULT_FAILED || template_type->type == TYPE_NIL) {
-            ADD_ERROR(var_name, "Map '%.*s' declaration type invalid. Specify value type inside '<>'.", var_name.length, var_name.start);
-            return RESULT_FAILED;
-        }
+        PARSE_TYPE(var_name, &template_type, var_name, "Map '%.*s' declaration type invalid. Specify value type inside '<>'.", var_name.length, var_name.start);
         if (!consume(TOKEN_GREATER, "Expect '>' after type.")) return RESULT_FAILED;
         *type = make_map_type(template_type);
         return RESULT_SUCCESS;
@@ -559,10 +506,7 @@ static ResultCode param_declaration(struct Node** node) {
     }
 
     struct Type* type;
-    if (read_type(var_name, &type) == RESULT_FAILED || type->type == TYPE_NIL) {
-        ADD_ERROR(var_name, "Parameter identifier '%.*s' type invalid.", var_name.length, var_name.start);
-        return RESULT_FAILED;
-    }
+    PARSE_TYPE(var_name, &type, var_name, "Parameter identifier '%.*s' type invalid.", var_name.length, var_name.start);
 
     *node = make_decl_var(var_name, type, NULL);
     return RESULT_SUCCESS;
@@ -574,19 +518,14 @@ static ResultCode var_declaration(struct Node** node) {
     match(TOKEN_COLON);  //var_declaration only called if this is true, so no need to check
 
     struct Type* type;
-    if (read_type(var_name, &type) == RESULT_FAILED) {
-        ADD_ERROR(var_name, "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
+    PARSE_TYPE(var_name, &type, var_name, "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
                   var_name.length, var_name.start, var_name.length, var_name.start);
-        return RESULT_FAILED;
-    }
 
     if (!consume(TOKEN_EQUAL, "Variables must be defined at declaration.")) return RESULT_FAILED;
 
     struct Node* right;
-    if (expression(var_name, &right) == RESULT_FAILED) {
-        ADD_ERROR(var_name, "Variable '%.*s' must be assigned to valid expression at declaration.", var_name.length, var_name.start);
-        return RESULT_FAILED;
-    }
+
+    PARSE(expression, var_name, &right, var_name, "Variable '%.*s' must be assigned to valid expression at declaration.", var_name.length, var_name.start);
     *node = make_decl_var(var_name, type, right);
     return RESULT_SUCCESS;
 }
@@ -619,7 +558,7 @@ static ResultCode declaration(struct Node** node) {
 
         //TODO: not really using this read_sig call since it's fixed now: struct or struct < superstruct
         struct Type* right_type;
-        if (read_type(struct_name, &right_type) == RESULT_FAILED) return RESULT_FAILED; 
+        PARSE_TYPE(struct_name, &right_type, struct_name, "Invalid type.");
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
                              make_get_var(parser.previous, NULL) : 
@@ -652,10 +591,7 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
 
         struct Node* condition;
-        if (expression(make_dummy_token(), &condition) == RESULT_FAILED) {
-            ADD_ERROR(name, "Expect boolean expression after 'if'.");
-            return RESULT_FAILED;
-        }
+        PARSE(expression, make_dummy_token(), &condition, name, "Expect boolean expression after 'if'.");
 
         if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after 'if' condition.")) return RESULT_FAILED;
 
@@ -682,10 +618,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
         struct Node* condition;
-        if (expression(make_dummy_token(), &condition) == RESULT_FAILED) {
-            ADD_ERROR(name, "Expect condition after 'while'.");
-            return RESULT_FAILED;
-        }
+        PARSE(expression, make_dummy_token(), &condition, name, "Expect condition after 'while'.");
         if (!consume(TOKEN_LEFT_BRACE, "Expect boolean expression and '{' after 'while'.")) return RESULT_FAILED;
 
         struct Node* then_block;
@@ -708,20 +641,14 @@ static ResultCode declaration(struct Node** node) {
 
         struct Node* condition = NULL;
         if (!match(TOKEN_COMMA)) {
-            if (expression(make_dummy_token(), &condition) == RESULT_FAILED) {
-                ADD_ERROR(name, "Expect condition or empty space for second item in 'for' loop.");
-                return RESULT_FAILED;
-            }
+            PARSE(expression, make_dummy_token(), &condition, name, "Expect condition or empty space for second item in 'for' loop.");
             if (!consume(TOKEN_COMMA, "Expect ',' after for-loop condition.")) return RESULT_FAILED;
         }
 
         struct Node* update = NULL;
         if (!match(TOKEN_LEFT_BRACE)) {
             struct Node* update_expr;
-            if (expression(make_dummy_token(), &update_expr) == RESULT_FAILED) {
-                ADD_ERROR(name, "Expect update or empty space for third item in 'for' loop.");
-                return RESULT_FAILED;
-            }
+            PARSE(expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
             update = make_expr_stmt(update_expr);
             if (!consume(TOKEN_LEFT_BRACE, "Expect '{' after for-loop update.")) return RESULT_FAILED;
         }
@@ -742,10 +669,7 @@ static ResultCode declaration(struct Node** node) {
         if (!consume(TOKEN_IN, "Expect 'in' after element declaration.")) return RESULT_FAILED;
 
         struct Node* list;
-        if (expression(make_dummy_token(), &list) == RESULT_FAILED) {
-            ADD_ERROR(name, "Expect List identifier after 'in' in foreach loop.");
-            return RESULT_FAILED;
-        }
+        PARSE(expression, make_dummy_token(), &list, name, "Expect List identifier after 'in' in foreach loop.");
 
         //initializer
         Token idx_token = make_token(TOKEN_IDENTIFIER, -1, "_idx_", 5);
@@ -781,19 +705,13 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right;
-        if (expression(make_dummy_token(), &right) == RESULT_FAILED) {
-            ADD_ERROR(name, "Return value must be and expression, or leave empty for 'nil' return.");
-            return RESULT_FAILED;
-        }
+        PARSE(expression, make_dummy_token(), &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
         *node = make_return(name, right);
         return RESULT_SUCCESS;
     }
 
     struct Node* expr;
-    if (expression(make_dummy_token(), &expr) == RESULT_FAILED) {
-        ADD_ERROR(parser.previous, "Invalid expression.");
-        return RESULT_FAILED;
-    }
+    PARSE(expression, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
     
     *node = make_expr_stmt(expr);
     return RESULT_SUCCESS;

@@ -418,6 +418,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         dv->type = resolve_type(compiler, dv->name);
                     }
 
+                    if (dv->type->type == TYPE_LIST) {
+                        struct TypeList* tl = (struct TypeList*)(dv->type);
+                        CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
+                    }
+
+                    if (dv->type->type == TYPE_MAP) {
+                        struct TypeMap* tm = (struct TypeMap*)(dv->type);
+                        CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
+                    }
+
                     CHECK_TYPE(!same_type(dv->type, type), dv->name,
                                "Declaration type and right hand side type must match.");
                 }
@@ -445,6 +455,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 if (params->types[i]->type == TYPE_IDENTIFIER) {
                     params->types[i] = resolve_type(compiler, ((struct TypeIdentifier*)(params->types[i]))->identifier);
                 }
+                CHECK_TYPE(params->types[i]->type == TYPE_NIL, df->name, "Parameter identifier type invalid.");
             }
 
             struct Compiler func_comp;
@@ -468,7 +479,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             struct TypeFun* typefun = (struct TypeFun*)df->type;
             CHECK_TYPE(inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL, df->name, 
-                       "Return type must match typenature in function declaration.");
+                       "Return type must match type in function declaration.");
 
             struct Type* ret_type = typefun->ret;
             if (ret_type->type == TYPE_IDENTIFIER) {
@@ -1022,6 +1033,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     list_template = resolve_type(compiler, ((struct TypeIdentifier*)list_template)->identifier);
                 }
 
+                CHECK_TYPE(list_template->type == TYPE_NIL, call->name, "List must be initialized with valid type: List<[type]>().");
+
                 emit_byte(compiler, OP_LIST);
                 *node_type = type;
                 return RESULT_SUCCESS;
@@ -1038,6 +1051,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 if (map_template->type == TYPE_IDENTIFIER) {
                     map_template = resolve_type(compiler, ((struct TypeIdentifier*)map_template)->identifier);
                 }
+
+                CHECK_TYPE(map_template->type == TYPE_NIL, call->name, "Map must be initialized with valid type: Map<[type]>().");
 
                 emit_byte(compiler, OP_MAP);
                 *node_type = type;
