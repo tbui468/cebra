@@ -82,11 +82,13 @@ Value less_values(Value a, Value b);
 Value greater_values(Value a, Value b);
 Value mod_values(Value a, Value b);
 Value equal_values(Value a, Value b);
+Value cast_primitive(ValueType to_type, Value* value);
 void print_value(Value a);
 const char* value_type_to_string(ValueType type);
-
 struct Obj* get_object(Value* value);
 Value copy_value(Value* value);
+
+//casting
 
 #endif// CEBRA_VALUE_H
 

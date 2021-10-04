@@ -114,6 +114,7 @@ static void close_upvalues(VM* vm, Value* location) {
     }
 }
 
+
 ResultCode execute_frame(VM* vm, CallFrame* frame) {
     uint8_t op = READ_TYPE(frame, uint8_t);
     switch(op) {
@@ -550,6 +551,14 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                     add_value(&list->values, pair->value);
                 }
             }
+            break;
+        }
+        case OP_CAST: {
+            uint8_t to_type = READ_TYPE(frame, uint8_t);
+            Value value = peek(vm, 0);
+            Value result = cast_primitive(to_type, &value);
+            pop(vm);
+            push(vm, result);
             break;
         }
     } 

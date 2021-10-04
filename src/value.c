@@ -187,6 +187,103 @@ Value equal_values(Value a, Value b) {
     }
 }
 
+static Value cast_to_string(Value* value) {
+    switch(value->type) {
+        case VAL_INT: {
+            int num = value->as.integer_type;
+
+            char* str = ALLOCATE_ARRAY(char);
+            str = GROW_ARRAY(str, char, 80, 0);
+            int len = sprintf(str, "%d", num);
+            str = GROW_ARRAY(str, char, len + 1, 80);
+
+            return to_string(take_string(str, len));
+        }
+        case VAL_FLOAT: {
+            double num = value->as.float_type;
+
+            char* str = ALLOCATE_ARRAY(char);
+            str = GROW_ARRAY(str, char, 80, 0);
+            int len = sprintf(str, "%f", num);
+            str = GROW_ARRAY(str, char, len + 1, 80);
+
+            return to_string(take_string(str, len));
+        }
+        case VAL_BOOL:
+            if (value->as.boolean_type) {
+                return to_string(make_string("true", 4));
+            }
+            return to_string(make_string("false", 5));
+        case VAL_NIL:
+            return to_string(make_string("nil", 3));
+        default:
+            return to_nil();
+    }
+}
+
+static Value cast_to_int(Value* value) {
+    switch(value->type) {
+        case VAL_STRING:
+            char* end;
+            long i = strtol(value->as.string_type->chars, &end, 10);
+            return to_integer(i);
+        case VAL_FLOAT:
+            return to_integer((int)(value->as.float_type));
+        case VAL_BOOL:
+            if (value->as.boolean_type) return to_integer(1);
+            return to_integer(0);
+        default:
+            return to_nil();
+    }
+}
+static Value cast_to_float(Value* value) {
+    switch(value->type) {
+        case VAL_STRING:
+            char* end;
+            double d = strtod(value->as.string_type->chars, &end);
+            return to_float(d);
+        case VAL_INT:
+            return to_float((double)(value->as.integer_type));
+        case VAL_BOOL:
+            if (value->as.boolean_type) return to_float(1.0);
+            return to_float(0.0);
+        default:
+            return to_nil();
+    }
+}
+static Value cast_to_bool(Value* value) {
+    switch(value->type) {
+        case VAL_STRING:
+            struct ObjString* str = value->as.string_type;
+            if (str->length == 0) return to_boolean(false);
+            return to_boolean(true);
+        case VAL_INT:
+            if (value->as.integer_type <= 0) return to_boolean(false);
+            return to_boolean(true);
+        case VAL_FLOAT:
+            if (value->as.float_type <= 0.0) return to_boolean(false);
+            return to_boolean(true);
+        default:
+            return to_nil();
+    }
+}
+
+Value cast_primitive(ValueType to_type, Value* value) {
+    switch(to_type) {
+        case VAL_STRING:
+            return cast_to_string(value);
+        case VAL_INT:
+            return cast_to_int(value);
+        case VAL_FLOAT:
+            return cast_to_float(value);
+        case VAL_BOOL:
+            return cast_to_bool(value);
+        default:
+            return to_nil();
+    }
+
+}
+
 
 void print_value(Value a) {
     switch(a.type) {
@@ -328,3 +425,5 @@ Value copy_value(Value* value) {
             return *value;
     }
 }
+
+

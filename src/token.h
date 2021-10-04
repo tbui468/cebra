@@ -51,6 +51,7 @@ typedef enum {
     TOKEN_NIL,
     TOKEN_FOR_EACH,
     TOKEN_ENUM,
+    TOKEN_AS,
     TOKEN_EOF,
 } TokenType;
 

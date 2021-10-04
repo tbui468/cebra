@@ -24,12 +24,15 @@ maps := true
 nils_for_instances := true
 struct_inheritance := true
 duck_typing := true
-cast_to_string := true
 for_each_loop := true
 get_char := true
 get_string_size := true
 lists_maps_in_structs := true
 enums := true
+cast_to_string := true
+cast_to_int := true
+cast_to_float := true
+cast_to_bool := true
 
 passed := List<string>()
 failed := List<string>()
@@ -992,33 +995,6 @@ if duck_typing {
 }
 
 
-if cast_to_string{
-    print("-Cast to String")
-    if string(true) == "true" and string(false) == "false" {
-        add_passed("Cast Boolean to String: Passed!")
-    } else {
-        add_failed("Cast Boolean to String: Failed!")
-    }
-
-    if string(nil) == "nil" {
-        add_passed("Cast Nil to String: Passed!")
-    } else {
-        add_passed("Cast Nil to String: Failed!")
-    }
-
-    a: bool = string(0) == "0"
-    b: bool = string(-1) == "-1"
-    c: bool = string(1) == "1"
-    d: bool = string(9000111000111000111) == "9000111000111000111"
-    e: bool = string(-9000111000111000111) == "-9000111000111000111"
-
-    if a and b and c and d and e {
-        add_passed("Cast Int to String: Passed!")
-    } else {
-        add_passed("Cast Int to String: Failed!")
-    }
-}
-
 if for_each_loop {
     print("-For Each Loop")
 
@@ -1191,6 +1167,103 @@ if enums {
         add_passed("Comparing Enum Constants: Passed!")
     } else {
         add_failed("Comparing Enum Constants: Failed!")
+    }
+}
+
+if cast_to_string {
+    print("-Cast to String")
+
+    if 4 as string == "4" and -32 as string == "-32" {
+        add_passed("Cast Integer to String: Passed!")
+    } else {
+        add_failed("Cast Integer to String: Failed!")
+    }
+
+    fp := -2.3 as string
+    if fp[0] == "-" and fp[1] == "2" and fp[2] == "." and fp[3] == "3" {
+        add_passed("Cast Float to String: Passed!")
+    } else {
+        add_failed("Cast Float to String: Failed!")
+    }
+
+    if true as string == "true" and false as string == "false" {
+        add_passed("Cast Boolean to String: Passed!")
+    } else {
+        add_failed("Cast Boolean to String: Failed!")
+    }
+
+    if nil as string == "nil" {
+        add_passed("Cast Nil to String: Passed!")
+    } else {
+        add_passed("Cast Nil to String: Failed!")
+    }
+}
+
+if cast_to_int {
+    //string, float, bool
+    print("-Cast to Int")
+    if "4" as int == 4 and "-32" as int == -32 and "-2.3" as int == -2 {
+        add_passed("Cast String to Integer: Passed!")
+    } else {
+        add_failed("Cast String to Integer: Failed!")
+    }
+
+    if -2.3 as int == -2 and 23.2 as int == 23 {
+        add_passed("Cast Float to Int: Passed!")
+    } else {
+        add_failed("Cast Float to Int: Failed!")
+    }
+
+    if true as int == 1 and false as int == 0 {
+        add_passed("Cast Boolean to Int: Passed!")
+    } else {
+        add_failed("Cast Boolean to Int: Failed!")
+    }
+}
+if cast_to_float {
+    //string, int, bool
+    print("-Cast to Float")
+
+    if "23.2" as float < 23.25 and "23.2" as float > 23.19 {
+        add_passed("Cast String to Float: Passed!")
+    } else {
+        add_failed("Cast String to Float: Failed!")
+    }
+
+    if 23 as float < 23.5 and 23 as float > 22.9 {
+        add_passed("Cast Int to Float: Passed!")    
+    } else {
+        add_failed("Cast Int to Float: Failed!")    
+    }
+
+    t := true as float
+    f := false as float
+    if (t > .5 and t < 1.5) and (f > -0.5 and f < 0.5) {
+        add_passed("Cast Bool to Float: Passed!")    
+    } else {
+        add_failed("Cast Bool to Float: Failed!")    
+    }
+}
+if cast_to_bool {
+    //string, int, float
+    print("-Cast to Bool")
+
+    if !("" as bool) and ("adf" as bool) {
+        add_passed("Cast String to Bool: Passed!")
+    } else {
+        add_failed("Cast String to Bool: Failed!")
+    }
+
+    if !(0 as bool) and 1 as bool {
+        add_passed("Cast Int to Bool: Passed!")
+    } else {
+        add_failed("Cast Int to Bool: Failed!")
+    }
+
+    if !(0.0 as bool) and 1.0 as bool {
+        add_passed("Cast Float to Bool: Passed!")
+    } else {
+        add_failed("Cast Float to Bool: Failed!")
     }
 }
 

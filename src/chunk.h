@@ -45,6 +45,7 @@ typedef enum {
     OP_MAP,
     OP_GET_KEYS,
     OP_GET_VALUES,
+    OP_CAST,
     OP_ENUM
 } OpCode;
 

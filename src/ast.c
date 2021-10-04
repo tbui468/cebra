@@ -266,6 +266,16 @@ struct Node* make_nil(Token name) {
     return insert_node((struct Node*)nil);
 }
 
+struct Node* make_cast(Token name, struct Node* left, struct Type* type) {
+    Cast* cast = ALLOCATE(Cast);
+    cast->name = name;
+    cast->left = left;
+    cast->type = type;
+    cast->base.type = NODE_CAST;
+
+    return insert_node((struct Node*)cast);
+}
+
 /*
  * Utility
  */
@@ -421,6 +431,10 @@ void print_node(struct Node* node) {
             printf("Nil stub");
             break;
         }
+        case NODE_CAST: {
+            printf("Cast stub");
+            break;
+        }
     } 
 }
 
@@ -550,6 +564,11 @@ void free_node(struct Node* node) {
         case NODE_NIL: {
             Nil* nil = (Nil*)node;
             FREE(nil, Nil);
+            break;
+        }
+        case NODE_CAST: {
+            Cast* cast = (Cast*)node;
+            FREE(cast, Cast);
             break;
         }
     } 

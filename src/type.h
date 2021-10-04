@@ -66,6 +66,7 @@ struct TypeFun {
 struct TypeClass {
     struct Type base;
     Token klass;
+    Token super;
     struct Table props;
 };
 
@@ -101,7 +102,7 @@ struct Type* make_bool_type();
 struct Type* make_string_type();
 struct Type* make_nil_type();
 struct Type* make_fun_type(struct Type* params, struct Type* ret);
-struct Type* make_class_type(Token klass);
+struct Type* make_class_type(Token klass, Token super);
 struct Type* make_identifier_type(Token identifier);
 struct Type* make_list_type(struct Type* type);
 struct Type* make_map_type(struct Type* type);
@@ -110,6 +111,7 @@ struct Type* make_enum_type(Token name);
 
 bool is_duck(struct TypeClass* sub, struct TypeClass* super);
 bool same_type(struct Type* type1, struct Type* type2);
+bool is_primitive(struct Type* type);
 void print_type(struct Type* type);
 
 struct Type* copy_type(struct Type* type);

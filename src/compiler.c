@@ -517,7 +517,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct ObjClass* klass = make_class(name);
             push_root(to_class(klass));
 
-            struct TypeClass* super_type;
+            struct TypeClass* super_type = NULL;
             if (dc->super != NULL) {
                 struct Type* s;
                 COMPILE_NODE(dc->super, ret_types, &s);
@@ -529,8 +529,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
 
-            GetVar* super_gv = (GetVar*)(dc->super);
-            struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name);
+            //GetVar* super_gv = (GetVar*)(dc->super);
+            struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name, super_type != NULL ? super_type->super : make_dummy_token());
 
             //add struct properties
             for (int i = 0; i < dc->decls->count; i++) {
@@ -1107,6 +1107,41 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             *node_type =  make_nil_type();
             return RESULT_SUCCESS;
         }
+        case NODE_CAST: {
+            Cast* cast = (Cast*)node;
+            struct Type* left;
+            COMPILE_NODE(cast->left, ret_types, &left);
+
+            if (is_primitive(left) && is_primitive(cast->type)) {
+                CHECK_TYPE(left->type == TYPE_NIL && cast->type->type != TYPE_STRING, cast->name, "'nil' types can only be cast to string.");
+                CHECK_TYPE(cast->type->type == TYPE_NIL, cast->name, "Cannot cast to 'nil' type.");
+                CHECK_TYPE(left->type == cast->type->type, cast->name, "Cannot cast to same type.");
+                emit_byte(compiler, OP_CAST);
+                emit_byte(compiler, cast->type->type);
+                *node_type = cast->type;
+                return RESULT_SUCCESS;
+            }
+
+            if (left->type == TYPE_IDENTIFIER) {
+                left = resolve_type(compiler, ((struct TypeIdentifier*)left)->identifier);
+            }
+
+            if (cast->type->type == TYPE_IDENTIFIER) {
+                cast->type = resolve_type(compiler, ((struct TypeIdentifier*)(cast->type))->identifier);
+            }
+
+            CHECK_TYPE(left->type != TYPE_CLASS || cast->type->type != TYPE_CLASS, 
+                    cast->name, "Type casts with 'as' must be applied to structure types or primitive types.");
+
+            struct TypeClass* from = (struct TypeClass*)(left);
+            struct TypeClass* to = (struct TypeClass*)(cast->type);
+
+            //check if there is a proper sub/super struct relationship between from/to
+            //if not, add error
+            //otherwise don't emit anything - assume it's a valid cast and let vm catch errors at runtime
+            //set return node to 'to' type so that type checker higher up the AST works
+            return RESULT_SUCCESS;
+        }
     } 
 }
 
@@ -1264,7 +1299,7 @@ static void define_string(struct Compiler* compiler) {
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     define_clock(compiler);
     define_print(compiler);
-    define_string(compiler);
+//    define_string(compiler);
 
     struct TypeArray* ret_types;
     ResultCode result = compile_function(compiler, nl, &ret_types);

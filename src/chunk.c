@@ -62,6 +62,7 @@ const char* op_to_string(OpCode op) {
         case OP_GET_KEYS: return "OP_GET_KEYS";
         case OP_GET_VALUES: return "OP_GET_VALUES";
         case OP_ENUM: return "OP_ENUM";
+        case OP_CAST: return "OP_CAST";
         default: return "Unrecognized op";
     }
 }

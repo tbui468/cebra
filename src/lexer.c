@@ -69,6 +69,7 @@ static Token read_keyword(char c) {
     switch(c) {
         case 'a':
             if (match_string("nd")) return new_token(TOKEN_AND);
+            if (match_string("s")) return new_token(TOKEN_AS);
             break;
         case 'b':
             if (match_string("ool")) return new_token(TOKEN_BOOL_TYPE);

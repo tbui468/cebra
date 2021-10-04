@@ -5,7 +5,9 @@
 
 #define PARSE(fun, var_name, node_ptr, token, msg, ...) \
     if (fun(var_name, node_ptr) == RESULT_FAILED) { \
-        if (token.type != TOKEN_DUMMY) ADD_ERROR(token, msg, __VA_ARGS__); \
+        if (token.type != TOKEN_DUMMY) { \
+            ERROR(token, msg, __VA_ARGS__); \
+        } \
         return RESULT_FAILED; \
     }
 
@@ -14,17 +16,15 @@
 
 #define PARSE_TYPE(var_name, type_ptr, token, msg, ...) \
     if (parse_type(var_name, type_ptr) == RESULT_FAILED) { \
-        ADD_ERROR(token, msg, __VA_ARGS__); \
-        return RESULT_FAILED; \
+        ERROR(token, msg, __VA_ARGS__); \
     }
 
 #define CONSUME(token_type, token, msg, ...) \
     if (!match(token_type)) { \
-        ADD_ERROR(token, msg, __VA_ARGS__); \
-        return RESULT_FAILED; \
+        ERROR(token, msg, __VA_ARGS__); \
     }
 
-#define ADD_ERROR(tkn, msg, ...) \
+#define ERROR(tkn, msg, ...) \
     { \
         if (parser.error_count < 256) { \
             char* buf = ALLOCATE_ARRAY(char); \
@@ -36,6 +36,7 @@
             parser.errors[parser.error_count] = error; \
             parser.error_count++; \
         } \
+        return RESULT_FAILED; \
     }
 
 
@@ -143,9 +144,8 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
                     if (match(TOKEN_EQUAL)) {
                         Token param_token = ((DeclVar*)var_decl)->name;
-                        ADD_ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be astypened.", 
+                        ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be astypened.", 
                                   param_token.length, param_token.start);
-                        return RESULT_FAILED;
                     }
 
                     DeclVar* vd = (DeclVar*)var_decl;
@@ -165,8 +165,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
             Token body_start = parser.previous;
             struct Node* body;
             if (block(NULL, &body) == RESULT_FAILED) {
-                ADD_ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
-                return RESULT_FAILED;
+                ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
             }
 
             struct Type* fun_type = make_fun_type(param_type, ret_type); 
@@ -247,14 +246,29 @@ static ResultCode unary(Token var_name, struct Node** node) {
     return call_dot(var_name, node);
 }
 
-static ResultCode factor(Token var_name, struct Node** node) {
+static ResultCode cast(Token var_name, struct Node** node) {
     struct Node* left;
     PARSE_WITHOUT_MSG(unary, var_name, &left);
+
+    while (match(TOKEN_AS)) {
+        Token name = parser.previous;
+        struct Type* type;
+        PARSE_TYPE(var_name, &type, var_name, "Expect type to cast to after 'as'.");
+        left = make_cast(name, left, type);
+    }
+
+    *node = left;
+    return RESULT_SUCCESS;
+}
+
+static ResultCode factor(Token var_name, struct Node** node) {
+    struct Node* left;
+    PARSE_WITHOUT_MSG(cast, var_name, &left);
 
     while (match(TOKEN_STAR) || match(TOKEN_SLASH) || match(TOKEN_MOD)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(unary, var_name, &right, name, "Right hand side of '%.*s' must be valid expresion.", name.length, name.start);
+        PARSE(cast, var_name, &right, name, "Right hand side of '%.*s' must be valid expresion.", name.length, name.start);
         left = make_binary(name, left, right);
     }
 
@@ -437,11 +451,11 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect superclass identifier after '<'.");
-            *type = make_class_type(var_name);
+            *type = make_class_type(var_name, parser.previous);
             return RESULT_SUCCESS;
         }
 
-        *type = make_class_type(var_name);
+        *type = make_class_type(var_name, make_dummy_token());
         return RESULT_SUCCESS;
     }
 
@@ -539,7 +553,7 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_IDENTIFIER);
         Token struct_name = parser.previous;
         match(TOKEN_COLON_COLON);
-        struct Type* type = make_class_type(struct_name);
+        struct Type* type = make_class_type(struct_name, make_dummy_token());
 
         //TODO: not really using this read_sig call since it's fixed now: struct or struct < superstruct
         struct Type* right_type;
@@ -555,8 +569,7 @@ static ResultCode declaration(struct Node** node) {
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* decl;
             if (var_declaration(&decl) == RESULT_FAILED) {
-                ADD_ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
-                return RESULT_FAILED;
+                ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
             }
 
             add_node(nl, decl);
@@ -568,8 +581,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;
         if (block(NULL, node) == RESULT_FAILED) {
-            ADD_ERROR(name, "Block starting at line %d not closed with '}'.", name.line);
-            return RESULT_FAILED;
+            ERROR(name, "Block starting at line %d not closed with '}'.", name.line);
         }
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IF)) {
@@ -583,8 +595,7 @@ static ResultCode declaration(struct Node** node) {
         Token left_brace_token = parser.previous;
         struct Node* then_block;
         if (block(NULL, &then_block) == RESULT_FAILED) {
-            ADD_ERROR(left_brace_token, "Expect closing '}' to end 'if' statement body.");
-            return RESULT_FAILED;
+            ERROR(left_brace_token, "Expect closing '}' to end 'if' statement body.");
         }
 
         struct Node* else_block = NULL;
@@ -593,8 +604,7 @@ static ResultCode declaration(struct Node** node) {
             CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' after 'else'.");
 
             if (block(NULL, &else_block) == RESULT_FAILED) {
-                ADD_ERROR(else_token, "Expect closing '}' to end 'else' statement body.");
-                return RESULT_FAILED;
+                ERROR(else_token, "Expect closing '}' to end 'else' statement body.");
             }
         }
 
@@ -608,8 +618,7 @@ static ResultCode declaration(struct Node** node) {
 
         struct Node* then_block;
         if (block(NULL, &then_block) == RESULT_FAILED) {
-            ADD_ERROR(name, "Expect close '}' after 'while' body.");
-            return RESULT_FAILED;
+            ERROR(name, "Expect close '}' after 'while' body.");
         }
         *node = make_while(name, condition, then_block);
         return RESULT_SUCCESS;
@@ -618,8 +627,7 @@ static ResultCode declaration(struct Node** node) {
         struct Node* initializer = NULL;
         if (!match(TOKEN_COMMA)) {
             if (declaration(&initializer) == RESULT_FAILED) {
-                ADD_ERROR(name, "Expect initializer or empty space for first item in 'for' loop.");
-                return RESULT_FAILED;
+                ERROR(name, "Expect initializer or empty space for first item in 'for' loop.");
             }
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
         }
@@ -640,8 +648,7 @@ static ResultCode declaration(struct Node** node) {
 
         struct Node* then_block;
         if (block(NULL, &then_block) == RESULT_FAILED) {
-            ADD_ERROR(name, "Expect closing '}' after for-loop body.");
-            return RESULT_FAILED;
+            ERROR(name, "Expect closing '}' after for-loop body.");
         }
 
         *node = make_for(name, initializer, condition, update, then_block);
@@ -681,8 +688,7 @@ static ResultCode declaration(struct Node** node) {
         ((DeclVar*)element)->right = get_element;
         struct Node* then_block;
         if (block(element, &then_block) == RESULT_FAILED) {
-            ADD_ERROR(name, "Expect closing '}' after foreach loop body.");
-            return RESULT_FAILED;
+            ERROR(name, "Expect closing '}' after foreach loop body.");
         }
 
         *node = make_for(name, initializer, condition, update, then_block);

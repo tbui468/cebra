@@ -16,53 +16,58 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 
-TokenType :: enum {
-    number
-    plus
-    minus
-    star
-    slash
+a := 4 as string
+
+Animal :: struct {
+    class := "Mammal"
 }
 
-Expr :: struct {
+Dog :: struct < Animal {
+    name := "Mittens"
+    fur_color := "Brown"
 }
 
-PrimaryExpr :: struct < Expr {
-
+Lizard :: struct < Animal {
+    class := "Reptile"
+    name := "Lizzy"
+    scale_color := "Green"
 }
 
-BinaryExpr :: struct < Expr {
+animals := List<Animal>()
+animals[0] = Dog() as Animal
+animals[1] = Lizard() as Animal
 
+get_class := (a: Animal) -> {
+    print(a.class)
 }
 
-parse_primary := () -> Expr {
-    -> PrimaryExpr() as Expr
+get_color := (a: Animal) -> {
+    if a as Lizard != nil {
+        print((a as Lizard).scale_color)
+    }
+
+    if a as Dog != nil {
+        print((a as Dog).fur_color)
+    }    
 }
-
-parse_term := () -> Expr {
-
-}
-
-parse_expression := () -> Expr {
-    -> parse_term()
-}
-
 
 IMPLEMENTATION:
+    Finished NODE_CAST - see notes in compiler
+        Write tests for valid primitive casts:
+            string -> string, int, float, bool
+            int -> string, int, float, bool
+            float -> string, int bool
+            bool -> string, int, float
+            nil -> string
 
-    ADD_ERROR() should also have 'return RESULT_FAILED;' at the end
-   
-    Change ADD_ERROR() to ERROR() to make it consistent with other macros
+        get struct to struct casting working
+            mostly just need to check that casting to/from two structs with sub/super relationship
+            need to also check multiple levels of inheritance
 
-    parse_type should be a switch, and not a bunch of 'if' statements
-        change name to parse_type, and make PARSE_TYPE macro
-
-        make a peek(0) return the next token
-
-    primary in parser should also use a switch
-
-    see if Token var_name propagated through the descent parser is being used
-        Recall that how variables/structs/functions/enums are declared was changed
+            Need to change TypeClass
+                base
+                Token klass
+                struct TypeClass* super
 
     Add 'as' keyword
         'instance as superstruct'
@@ -76,6 +81,13 @@ IMPLEMENTATION:
             a copy of the type (two types need to be stored, the current type and the original type...?)
             current type is used to see what properties are available
             original type is used to determine what casts are valid
+
+    invalid casts return a nil
+        casting to/from primitive types can be resolved at compile time
+        casting to base-types can be resolved at compile time
+        casting to sub-types must be resolved at runtime - need to include runtime errors
+            in case client code does not check for 'nil' and attempts to access invalid
+            fields
 
     make all casting use this format????
         a: int = 4
@@ -212,6 +224,17 @@ IMPLEMENTATION:
             instead of having it scattered all over compiler...
 
 
+    parse_type() should be a switch, and not a bunch of 'if' statements
+        change name to parse_type, and make PARSE_TYPE macro
+
+        make a peek(0) return the next token
+
+        primary() in parser should also use a switch
+
+    see if Token var_name propagated through the descent parser is being used
+        Recall that how variables/structs/functions/enums are declared was changed
+
+
     This crashes since parse_factor() is not defined
         parse_term := () -> Expr {
             left := parse_factor()
@@ -222,6 +245,10 @@ IMPLEMENTATION:
 
             -> left
         }
+
+    This crashes since fp was not declared
+        fp = -2.3 as string
+        print(fp[2])
 
     This crashes - enum name is misspelled (should be ASTType.primary)
         PrimaryExpr := struct < Expr {

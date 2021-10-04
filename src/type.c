@@ -95,11 +95,12 @@ struct Type* make_fun_type(struct Type* params, struct Type* ret) {
     return (struct Type*)type_fun;
 }
 
-struct Type* make_class_type(Token klass) {
+struct Type* make_class_type(Token klass, Token super) {
     struct TypeClass* sc = ALLOCATE(struct TypeClass);
 
     sc->base.type = TYPE_CLASS;
     sc->klass = klass;
+    sc->super = super;
     init_table(&sc->props);
 
     insert_type((struct Type*)sc);
@@ -145,6 +146,15 @@ struct Type* make_enum_type(Token name) {
 
     insert_type((struct Type*)te);
     return (struct Type*)te;
+}
+
+
+bool is_primitive(struct Type* type) {
+    return type->type == TYPE_INT ||
+           type->type == TYPE_FLOAT ||
+           type->type == TYPE_BOOL ||
+           type->type == TYPE_STRING ||
+           type->type == TYPE_NIL;
 }
 
 bool is_duck(struct TypeClass* param, struct TypeClass* arg) {
