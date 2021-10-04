@@ -64,10 +64,11 @@ static void emit_short(struct Compiler* compiler, uint16_t bytes) {
     compiler->function->chunk.count += 2;
 }
 
+/*
 static void emit_bytes(struct Compiler* compiler, uint8_t byte1, uint8_t byte2) {
     emit_byte(compiler, byte1);
     emit_byte(compiler, byte2);
-}
+}*/
 
 static int emit_jump(struct Compiler* compiler, OpCode op) {
     emit_byte(compiler, op);
@@ -395,10 +396,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                            "Inferred type cannot be assigned to 'nil.");
 
                 set_local(compiler, dv->name, type, idx);
-
-                if (type->type == TYPE_CLASS) {
-                    resolve_self_ref_type((struct TypeClass*)type);
-                }
             }
             
             //explicit type, defined and parameters
@@ -408,11 +405,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 if (type->type != TYPE_NIL) {
                     set_local(compiler, dv->name, type, idx);
-
-                    if (dv->type->type == TYPE_CLASS) {
-                        resolve_self_ref_type((struct TypeClass*)type);
-                        dv->type = type;
-                    }
 
                     if (dv->type->type == TYPE_IDENTIFIER) {
                         dv->type = resolve_type(compiler, dv->name);
@@ -512,6 +504,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
 
+            if (declared_in_scope(compiler, dc->name)) {
+                add_error(compiler, dc->name, "Identifier already defined.");
+                return RESULT_FAILED;
+            }
+
+            int set_idx = add_local(compiler, dc->name, make_decl_type());
+
             struct ObjString* name = make_string(dc->name.start, dc->name.length);
             push_root(to_string(name));
             struct ObjClass* klass = make_class(name);
@@ -527,9 +526,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             emit_byte(compiler, OP_CLASS);
-            emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
+            emit_short(compiler, add_constant(compiler, to_class(klass)));
 
-            //GetVar* super_gv = (GetVar*)(dc->super);
             struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name, (struct Type*)super_type);
 
             //add struct properties
@@ -564,7 +562,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 pop_root();
             }
 
-
             if (dc->super != NULL) {
                 //type checking overwritten properties
                 for (int i = 0; i < sc->props.capacity; i++) {
@@ -576,7 +573,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                                    "Overwritten property must of same type.");
                     }
                 }
-                //inheriting properties in typenature
+                //inheriting properties in type
                 for (int i = 0; i < super_type->props.capacity; i++) {
                     struct Pair* pair = &super_type->props.pairs[i];
                     if (pair->key != NULL) {
@@ -584,6 +581,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     }
                 }
             }
+
+            resolve_self_ref_type(sc);
+            set_local(compiler, dc->name, (struct Type*)sc, set_idx);
 
             pop_root();
             pop_root();
@@ -593,6 +593,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         }
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;
+
+            /******new stuff*******/
+            //check if name used already
+            if (declared_in_scope(compiler, de->name)) {
+                add_error(compiler, de->name, "Identifier already defined.");
+                return RESULT_FAILED;
+            }
+            /**********************/
 
             struct ObjString* name = make_string(de->name.start, de->name.length);
             push_root(to_string(name));
@@ -618,6 +626,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 set_table(&type->props, prop_name, to_type(make_int_type()));
                 pop_root();
             }
+            
+            /********new stuff*********/
+                int idx = add_local(compiler, de->name, (struct Type*)type);
+            /********************/
            
             *node_type = (struct Type*)type;
             return RESULT_SUCCESS;
@@ -1216,37 +1228,6 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
     return ret_result;
 }
 
-static Value string_native(int arg_count, Value* args) {
-    switch(args[0].type) {
-        case VAL_INT: {
-            int num = args[0].as.integer_type;
-
-            char* str = ALLOCATE_ARRAY(char);
-            str = GROW_ARRAY(str, char, 80, 0);
-            int len = sprintf(str, "%d", num);
-            str = GROW_ARRAY(str, char, len + 1, 80);
-
-            return to_string(take_string(str, len));
-        }
-        case VAL_FLOAT: {
-            double num = args[0].as.float_type;
-
-            char* str = ALLOCATE_ARRAY(char);
-            str = GROW_ARRAY(str, char, 80, 0);
-            int len = sprintf(str, "%f", num);
-            str = GROW_ARRAY(str, char, len + 1, 80);
-
-            return to_string(take_string(str, len));
-        }
-        case VAL_BOOL:
-            if (args[0].as.boolean_type) {
-                return to_string(make_string("true", 4));
-            }
-            return to_string(make_string("false", 5));
-        case VAL_NIL:
-            return to_string(make_string("nil", 3));
-    }
-}
 
 static Value clock_native(int arg_count, Value* args) {
     return to_float((double)clock() / CLOCKS_PER_SEC);
@@ -1272,7 +1253,7 @@ static Value print_native(int arg_count, Value* args) {
     return to_nil();
 }
 
-static struct Type* define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Type* type) {
+static void define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Type* type) {
     add_local(compiler, make_artificial_token(name), type);
     emit_byte(compiler, OP_NATIVE);
     Value native = to_native(make_native(function));
@@ -1302,23 +1283,10 @@ static void define_print(struct Compiler* compiler) {
     define_native(compiler, "print", print_native, make_fun_type((struct Type*)sl, make_nil_type()));
 }
 
-static void define_string(struct Compiler* compiler) {
-    struct Type* int_type = make_int_type();
-    struct Type* float_type = make_float_type();
-    struct Type* bool_type = make_bool_type();
-    struct Type* nil_type = make_nil_type();
-    int_type->opt = float_type;
-    float_type->opt = bool_type;
-    bool_type->opt = nil_type;
-    struct Type* sl = make_array_type();
-    add_type((struct TypeArray*)sl, int_type);
-    define_native(compiler, "string", string_native, make_fun_type((struct Type*)sl, make_string_type()));
-}
 
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     define_clock(compiler);
     define_print(compiler);
-//    define_string(compiler);
 
     struct TypeArray* ret_types;
     ResultCode result = compile_function(compiler, nl, &ret_types);

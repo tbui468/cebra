@@ -536,7 +536,6 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_IDENTIFIER);
         Token enum_name = parser.previous;
         match(TOKEN_COLON_COLON);
-        struct Type* type = make_enum_type(enum_name);
 
         match(TOKEN_ENUM);
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before enum body.");
@@ -546,19 +545,19 @@ static ResultCode declaration(struct Node** node) {
             CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect enum list inside enum body.");
             add_node(nl, make_decl_var(parser.previous, make_int_type(), NULL));
         }
-        struct Node* right = make_decl_enum(enum_name, nl);
-        *node = make_decl_var(enum_name, type, right);
+        *node = make_decl_enum(enum_name, nl);
         return RESULT_SUCCESS;
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
         match(TOKEN_IDENTIFIER);
         Token struct_name = parser.previous;
         match(TOKEN_COLON_COLON);
-        //struct Type* type = make_class_type(struct_name, make_dummy_token());
 
-        //TODO: not really using this read_sig call since it's fixed now: struct or struct < superstruct
         struct Type* right_type;
         PARSE_TYPE(struct_name, &right_type, struct_name, "Invalid type.");
 
+        //TODO: PARSE_TYPE should really be the result we used for make_decl_var
+        //  instead of making a struct Node* super... (why did we do this?)
+        //  and it's using a make_get_var() ?  Why not make_identifier() instead?
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
                              make_get_var(parser.previous, NULL) : 
                              NULL;
@@ -575,8 +574,7 @@ static ResultCode declaration(struct Node** node) {
             add_node(nl, decl);
         }
 
-        struct Node* right = make_decl_class(struct_name, super, nl);
-        *node = make_decl_var(struct_name, right_type, right);
+        *node = make_decl_class(struct_name, super, nl);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;

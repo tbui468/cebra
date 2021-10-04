@@ -146,8 +146,9 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //[super | nil ]
             Value super_val = pop(vm);
             Value klass_val = read_constant(frame, READ_TYPE(frame, uint16_t));
-            struct ObjClass* klass = klass_val.as.class_type; //TODO: should constant 
+            struct ObjClass* klass = klass_val.as.class_type; //how are the fields in here???
             push(vm, klass_val);
+            //copy all inherited fields
             if (super_val.type != VAL_NIL) {
                 struct ObjClass* super = super_val.as.class_type;
                 for (int i = 0; i < super->props.capacity; i++) {
@@ -157,6 +158,8 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                     }
                 } 
             }
+            //OP_ADD_PROP is emitted by compiler to add/overwrite properties in klass_val 
+            //immediately after OP_CLASS + constant idx
             break;
         }
         case OP_ENUM: {

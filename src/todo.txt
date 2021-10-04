@@ -53,8 +53,6 @@ get_color := (a: Animal) -> {
 
 IMPLEMENTATION:
 
-    Struct compilation and parsing is messy - should try to clean this up before adding more
-    
     Finished NODE_CAST:
         invalid struct casts (when casting to substruct) needs to put a 'nil' on the stack
         Emitting OP for casting up not necessary - the instance is already compiled and on the stack
