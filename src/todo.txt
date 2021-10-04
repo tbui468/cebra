@@ -52,172 +52,35 @@ get_color := (a: Animal) -> {
 }
 
 IMPLEMENTATION:
-    Finished NODE_CAST - see notes in compiler
-        Write tests for valid primitive casts:
-            string -> string, int, float, bool
-            int -> string, int, float, bool
-            float -> string, int bool
-            bool -> string, int, float
-            nil -> string
 
-        get struct to struct casting working
-            mostly just need to check that casting to/from two structs with sub/super relationship
-            need to also check multiple levels of inheritance
+    Struct compilation and parsing is messy - should try to clean this up before adding more
+    
+    Finished NODE_CAST:
+        invalid struct casts (when casting to substruct) needs to put a 'nil' on the stack
+        Emitting OP for casting up not necessary - the instance is already compiled and on the stack
 
-            Need to change TypeClass
-                base
-                Token klass
-                struct TypeClass* super
+        When casting down, need to emit OP_CAST to check if valid cast - pop instance and push 'nil' if invalid
+        ObjClass needs a way to access super...
 
-    Add 'as' keyword
-        'instance as superstruct'
-            check if the superstruct is valid for the given type at compile time
-            if so,
-            GetVar now needs to peek if new few tokens are TOKEN_AS + TOKEN_IDENTIFIER so
-                the the returned type for typechecker can cast appropriately
-                make a new field in GetVar called 'cast' of type Token.
-        'instance as substruct' changes type in compiler, BUT also need to check at runtime
-            to make sure that casting is valid - ObjInstance needs to be instantiated with
-            a copy of the type (two types need to be stored, the current type and the original type...?)
-            current type is used to see what properties are available
-            original type is used to determine what casts are valid
+            Dog < Canine < Animal
+            casting from Animal to Dog
+            casting from Canine to Dog
 
-    invalid casts return a nil
-        casting to/from primitive types can be resolved at compile time
-        casting to base-types can be resolved at compile time
-        casting to sub-types must be resolved at runtime - need to include runtime errors
-            in case client code does not check for 'nil' and attempts to access invalid
-            fields
-
-    make all casting use this format????
-        a: int = 4
-        b := a as float + 23.2
-        print("a: " + a as string)
-
-        'as' keyword binds tighter than '+ and -' (term)
-            unary?
-            call_dot?
-
-            b := a*a as float
-            b := a + a as float
-            b := a < b as string
-        
-    A for function parameters and returns, a substruct type can be used instead, and the type
-        is cast to the superstruct type.  Maybe require the cast to be explicit????
-
-    For the other way around, the superstruct is cast to the substruct type - if failed, then
-        runtime error.
-
-    For overloaded functions, cast downwards from highest superstruct:
-        eg Dog < Canine < Animal
-        Will attempt casting to Canine and if that fails, then Dog
-        will repeat for all overloads of a function until one is successful or all overloads are tried
-
-    Casting must be explicit.  So expr := PrimaryExpr() as Expr to cast to Expr
-        //will need to check at runtime to see if successful or not
-        primary_expr := expr as PrimaryExpr //cast to substruct
-
-        //this can be checked at compile time
-        -> primary_expr as Expr //or -> PrimaryExpr() as Expr
-
-    print_expr(expr: Expr) -> {
-        if expr as PrimaryExpr != nil {
-            p := expr as PrimaryExpr
-            print(p.literal) 
-        }
-        if expr as BinaryExpr != nil {
-            b := expr as BinaryExpr
-            print_expr(b.left)
-            print_expr(b.right)
-        }
-    }
-
-    Function overloading is just syntactic sugar at this point
-    print_expr(primary: PrimaryExpr) {
-        print(primary.litera)
-    }
-
-    print_expr(binary: BinaryExpr) {
-        print_expr(binary.left)
-        print_expr(binary.right)
-    }
+            Dog < Canine (implicitly inherits from Animal)
+                casting to Animal is okay (need to check ALL superstructs)
+                    Dog -> Canine
+                    Dog -> Animal
+                    Canine -> Animal
+                    = can cast to ANY struct type >= up the hierarchy from klass
+                Can be cast down in multiple ways:
+                    Animal -> Canine
+                    Animal -> Dog
+                    Canine -> Dog
+            Dog < Animal (does NOT inherit from Canine)
 
     Get rid of duck typing - since we want to keep things explicit, use struct names and
-        superstruct names to deal with types.
-        A struct type can be used in place of a superstruct type
-            check if instance type (or its superstruct type) is same as variable/parameter/return type
-            any other checks are done at runtime (such as if property access is valid)
-        A superstruct type CANNOT be used in place of a struct type
-            can check this a compile time
-
-        Still need identifiers (and then resolve them to structs and enums)
-        Need to save superstruct name in struct signatures too
-        Compile-time:
-            For variables, types must match:
-                p: PrimaryExpr = PrimaryExpr() //valid
-                p: Expr = PrimaryExpr() //valid
-            For function return types:
-                parse_primary := () -> PrimaryExpr {
-                    primary: PrimaryExpr = PrimaryExpr()
-                    -> primary //if instance type is equal to return type, then valid
-                }
-                parse_primary := () -> Expr {
-                    primary: PrimaryExpr = PrimaryExpr() //valid return type since return type is superstruct of instance type
-                    -> primary //OR superstruc type of instance is equal to return type, then valid
-                }
-                parse_primary := () -> PrimaryExpr {
-                    expr: Expr = Expr()
-                    -> expr //compilation error!!!
-                }
-            For function parameters:
-                p1 := PrimaryExpr()
-                p2 := parse_expression() //could return a PrimaryExpr or BinaryExpr, we don't know
-                print_expr := (primary: PrimaryExpr) -> {
-                }
-                print_expr := (binary: BinaryExpr) -> {
-                }
-                print_expr(primary) //valid compilation
-        Run-time:
-            check property types are valid for the instance type
-            when calling functions, need to check overloads
-
-    If instance is type type substruct, then type of the varible can be superstruct type:
-        Expr := struct {
-            token: Token = nil
-        }
-
-        PrimaryExpr := struct < Expr {
-        } 
-
-        BinaryExpr := struct < Expr {
-            left: Expr = nil
-            right: Expr = nil
-        }
-
-        parse_expression := () -> Expr {
-            -> PrimaryExpr() //or BinaryExpr(), since we don't know at compile time
-        }
-
-        print_expr := (primary: PrimaryExpr) -> {
-            print(primary.literal)
-            ->
-        }
-
-        print_expr := (binary: BinaryExpr) -> {
-            print(binary.token.literal)
-            print_expr(binary.left)
-            print_expr(binary.right)
-            ->
-        }
-        a: PrimaryExpr = PrimaryExpr() //type is PrimaryExpr
-        b: Expr = parse_expression() //also of type Expr
-
-        print_expr(a) //can decide at compile time since we should know
-        //Compile time: can check that the type is equal, OR type is superstruct of the overloads (PrimaryExpr and BinaryExpr)
-            //if types equal, then function can be specified at compile time.
-        //Runtime: if type is superstruct of overloads, then at runtime need to iterate over overloads to find one with matching type
-            //this will require adding type info to instances and functions so they can be checked at runtime
-        print_expr(b) //if type is PrimaryExpr or BinaryExpr, function can be decided at compile time
+        need to keep props in TypeClass for type checking properties, but
+        struct types can be compared using names...
 
     Continue writing basic interpreter - add any errors below and fix them afterwards
         really need to find a formal way of resolving TypeIdentifier in one place
@@ -245,6 +108,10 @@ IMPLEMENTATION:
 
             -> left
         }
+
+    This crashes since 'animal' is not defined (typo since we called it 'a')
+        a := dog as Animal
+        d := animal as Dog
 
     This crashes since fp was not declared
         fp = -2.3 as string

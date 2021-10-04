@@ -451,11 +451,11 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect superclass identifier after '<'.");
-            *type = make_class_type(var_name, parser.previous);
+            *type = make_class_type(var_name, make_identifier_type(parser.previous));
             return RESULT_SUCCESS;
         }
 
-        *type = make_class_type(var_name, make_dummy_token());
+        *type = make_class_type(var_name, NULL);
         return RESULT_SUCCESS;
     }
 
@@ -553,7 +553,7 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_IDENTIFIER);
         Token struct_name = parser.previous;
         match(TOKEN_COLON_COLON);
-        struct Type* type = make_class_type(struct_name, make_dummy_token());
+        //struct Type* type = make_class_type(struct_name, make_dummy_token());
 
         //TODO: not really using this read_sig call since it's fixed now: struct or struct < superstruct
         struct Type* right_type;
@@ -576,7 +576,7 @@ static ResultCode declaration(struct Node** node) {
         }
 
         struct Node* right = make_decl_class(struct_name, super, nl);
-        *node = make_decl_var(struct_name, type, right);
+        *node = make_decl_var(struct_name, right_type, right);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;

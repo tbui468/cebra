@@ -530,7 +530,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             emit_short(compiler, add_constant(compiler, to_class(klass))); //should be created in vm
 
             //GetVar* super_gv = (GetVar*)(dc->super);
-            struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name, super_type != NULL ? super_type->super : make_dummy_token());
+            struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name, (struct Type*)super_type);
 
             //add struct properties
             for (int i = 0; i < dc->decls->count; i++) {
@@ -1136,10 +1136,29 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct TypeClass* from = (struct TypeClass*)(left);
             struct TypeClass* to = (struct TypeClass*)(cast->type);
 
-            //check if there is a proper sub/super struct relationship between from/to
-            //if not, add error
-            //otherwise don't emit anything - assume it's a valid cast and let vm catch errors at runtime
-            //set return node to 'to' type so that type checker higher up the AST works
+            CHECK_TYPE(from->klass.length == to->klass.length && 
+                       memcmp(from->klass.start, to->klass.start, from->klass.length) == 0, 
+                       cast->name, "Cannot cast to own type.");
+
+            bool valid_cast = false;
+            if (from->super != NULL) {
+                Token super_tok = ((struct TypeClass*)(from->super))->klass;
+                Token class_tok = to->klass;
+                if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
+                    valid_cast = true;
+                }
+            }
+
+            if (to->super != NULL) {
+                Token super_tok = ((struct TypeClass*)(to->super))->klass;
+                Token class_tok = from->klass;
+                if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
+                    valid_cast = true;
+                }
+            }
+
+            CHECK_TYPE(!valid_cast, cast->name, "Invalid casting of struct type.");
+            *node_type =  cast->type;
             return RESULT_SUCCESS;
         }
     } 

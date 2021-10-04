@@ -66,7 +66,7 @@ struct TypeFun {
 struct TypeClass {
     struct Type base;
     Token klass;
-    Token super;
+    struct Type* super;
     struct Table props;
 };
 
@@ -102,7 +102,7 @@ struct Type* make_bool_type();
 struct Type* make_string_type();
 struct Type* make_nil_type();
 struct Type* make_fun_type(struct Type* params, struct Type* ret);
-struct Type* make_class_type(Token klass, Token super);
+struct Type* make_class_type(Token klass, struct Type* super);
 struct Type* make_identifier_type(Token identifier);
 struct Type* make_list_type(struct Type* type);
 struct Type* make_map_type(struct Type* type);

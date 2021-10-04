@@ -95,7 +95,7 @@ struct Type* make_fun_type(struct Type* params, struct Type* ret) {
     return (struct Type*)type_fun;
 }
 
-struct Type* make_class_type(Token klass, Token super) {
+struct Type* make_class_type(Token klass, struct Type* super) {
     struct TypeClass* sc = ALLOCATE(struct TypeClass);
 
     sc->base.type = TYPE_CLASS;
