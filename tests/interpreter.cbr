@@ -5,7 +5,7 @@
 src := "212 + 42"
 
 //************lexer************
-TokenType := enum {
+TokenType :: enum {
     default
     number
     plus
@@ -17,7 +17,7 @@ TokenType := enum {
     eof
 }
 
-Token := struct {
+Token :: struct {
     type := TokenType.default
     literal := ""
 }
@@ -109,23 +109,15 @@ next_token := () -> Token {
 }
 
 //***********AST************
-ASTType := enum {
-    primary
-    binary 
-}
 
-Expr := struct {
-    type := ASTType.primary
-}
-
-PrimaryExpr := struct < Expr { //< Expr not really necessary, but nice documenation
-    type := ASTType.primary
+Expr :: struct {
     token: Token = nil
 }
 
-BinaryExpr := struct < Expr { //< Expr also not necessary
-    type := ASTType.binary
-    token: Token = nil
+PrimaryExpr :: struct < Expr { 
+}
+
+BinaryExpr :: struct < Expr { 
     left: Expr = nil
     right: Expr = nil
 }
@@ -133,7 +125,7 @@ BinaryExpr := struct < Expr { //< Expr also not necessary
 make_primary_expr := (token: Token) -> Expr {
     primary := PrimaryExpr()
     primary.token = token
-    -> primary
+    -> primary as Expr
 }
 
 make_binary_expr := (token: Token, left: Expr, right: Expr) -> Expr {
@@ -141,7 +133,7 @@ make_binary_expr := (token: Token, left: Expr, right: Expr) -> Expr {
     binary.token = token
     binary.left = left
     binary.right = right
-    -> binary
+    -> binary as Expr
 }
 
 //*********parser***********
@@ -177,10 +169,20 @@ parse_expression := () -> Expr {
     -> parse_term()
 }
 
+print_expr := (expr: Expr) -> {
+    if expr as PrimaryExpr != nil {
+        print("( Primary " + expr.token.literal + " )")
+    }
 
+    if expr as BinaryExpr != nil {
+        b := expr as BinaryExpr
+        print("( " + expr.token.literal)
+        print_expr(b.left)
+        print_expr(b.right)
+        print(" )")
+    }
+}
 
 //*********driver***********
 root := parse_expression()
-
 print_expr(root)
-

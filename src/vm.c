@@ -571,6 +571,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 struct ObjString* type = read_constant(frame, to_type).as.string_type;
                 Value val;
                 if (get_from_table(&inst->klass->types, type, &val)) {
+                    //leave instance as is if valid cast
                     break;
                 }
                 pop(vm);

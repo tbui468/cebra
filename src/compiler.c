@@ -526,13 +526,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     struct TypeClass* tc = (struct TypeClass*)current;
                     struct ObjString* class_name = make_string(tc->klass.start, tc->klass.length);
                     push_root(to_string(class_name));
-                    set_table(&types, class_name, to_nil());
+                    set_table(&klass->types, class_name, to_nil());
                     current = tc->super;
                     pop_root();
                 }
             }
-
-
 
             //push superstruct onto stack if it exists, otherwise push 'nil'
             struct TypeClass* super_type = NULL;
@@ -1197,7 +1195,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             emit_byte(compiler, OP_CAST);
             struct ObjString* to_struct = make_string(to->klass.start, to->klass.length);
+            push_root(to_string(to_struct));
             emit_short(compiler, add_constant(compiler, to_string(to_struct)));
+            pop_root();
 
             *node_type =  cast->type;
             return RESULT_SUCCESS;
