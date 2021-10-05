@@ -35,6 +35,7 @@ struct Compiler {
     struct Compiler* enclosing;
     struct Type* types;
     struct Node* nodes;
+    struct Table globals;
 };
 
 extern struct Compiler* current_compiler;

@@ -64,12 +64,6 @@ static void emit_short(struct Compiler* compiler, uint16_t bytes) {
     compiler->function->chunk.count += 2;
 }
 
-/*
-static void emit_bytes(struct Compiler* compiler, uint8_t byte1, uint8_t byte2) {
-    emit_byte(compiler, byte1);
-    emit_byte(compiler, byte2);
-}*/
-
 static int emit_jump(struct Compiler* compiler, OpCode op) {
     emit_byte(compiler, op);
     emit_byte(compiler, 0xff);
@@ -367,22 +361,6 @@ static void resolve_self_ref_type(struct TypeClass* sc) {
             set_table(&sc->props, pair->key, to_type((struct Type*)sc));
         }
     }
-}
-
-static bool is_castable_struct(struct TypeClass* to, struct TypeClass* from) {
-    if (to->super == NULL) return false;
-
-    struct Type* t = to->super;
-    while (t != NULL) {
-        Token super_tok = ((struct TypeClass*)t)->klass;
-        Token class_tok = from->klass;
-        if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
-            return true;
-        }
-        t = ((struct TypeClass*)t)->super;
-    }
-
-    return false;
 }
 
 
@@ -1195,9 +1173,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                        memcmp(from->klass.start, to->klass.start, from->klass.length) == 0, 
                        cast->name, "Attempting to cast to own type.");
 
-            bool valid_cast = is_castable_struct(from, to) || is_castable_struct(to, from);
+            bool cast_up = is_substruct(from, to);
+            bool cast_down = is_substruct(to, from);
+            bool valid_cast = cast_up || cast_down;
 
-            CHECK_TYPE(!valid_cast, cast->name, "Struct instances must be cast only to superstructs or substructs.");
+            CHECK_TYPE(!(cast_up || cast_down), cast->name, "Struct instances must be cast only to superstructs or substructs.");
 
             emit_byte(compiler, OP_CAST);
             struct ObjString* to_struct = make_string(to->klass.start, to->klass.length);
@@ -1211,6 +1191,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
     } 
 }
 
+
 void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count) {
     struct ObjString* name = make_string(start, length);
     push_root(to_string(name));
@@ -1223,6 +1204,7 @@ void init_compiler(struct Compiler* compiler, const char* start, int length, int
     compiler->upvalue_count = 0;
     compiler->types = NULL;
     compiler->nodes = NULL;
+    init_table(&compiler->globals);
 
     compiler->enclosing = current_compiler;
     current_compiler = compiler;
@@ -1239,6 +1221,7 @@ void free_compiler(struct Compiler* compiler) {
         compiler->nodes = compiler->nodes->next;
         free_node(previous);
     }
+    free_table(&compiler->globals);
     current_compiler = compiler->enclosing;
     //popping function name object and function object pushed onto stack in init_compiler()
     pop_root();

@@ -157,6 +157,22 @@ bool is_primitive(struct Type* type) {
            type->type == TYPE_NIL;
 }
 
+bool is_substruct(struct TypeClass* substruct, struct TypeClass* superstruct) {
+    if (substruct->super == NULL) return false;
+
+    struct Type* t = substruct->super;
+    while (t != NULL) {
+        Token super_tok = ((struct TypeClass*)t)->klass;
+        Token class_tok = superstruct->klass;
+        if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
+            return true;
+        }
+        t = ((struct TypeClass*)t)->super;
+    }
+
+    return false;
+}
+
 bool same_type(struct Type* type1, struct Type* type2) {
     if (type1 == NULL || type2 == NULL) return false;
     if (type1->type == TYPE_NIL || type2->type == TYPE_NIL) return true;

@@ -109,7 +109,7 @@ struct Type* make_map_type(struct Type* type);
 struct Type* make_decl_type();
 struct Type* make_enum_type(Token name);
 
-bool is_duck(struct TypeClass* sub, struct TypeClass* super);
+bool is_substruct(struct TypeClass* substruct, struct TypeClass* superstruct);
 bool same_type(struct Type* type1, struct Type* type2);
 bool is_primitive(struct Type* type);
 void print_type(struct Type* type);

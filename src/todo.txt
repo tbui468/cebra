@@ -17,6 +17,57 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    is_substruct(sub_struct, super_struct)
+        is_substruct(to, from); //casting down
+        is_substruct(from, to); //casting up
+
+    If dog, 
+
+    Make all functions/structs/enums global - no repeating identifiers
+        if necessary, add namespaces later
+
+    How about this?  Add the globals when parsing?  Only need to add code
+    in three places (since we can also skip anonymous functions)
+        don't allow functions/enums/structs with repeated names, regardless
+        of scope or inside function... but I don't like this idea... we need
+        the ability to define functions inside a function ...
+        could make a globals table for each function (each which contains a NodeArray)
+        So when we go over to the compiler, each function (and NodeArray) has its own
+        globals table.  If a global can't be found in a function, can search function
+        enclosing it...
+
+        Enums won't ever reference anything, so a single pass will be enough
+
+        Structs may reference itself or other structs/enums, so
+            need to skip fields with identifiers for enums/structs
+            will need to compile (or at least iterate throught) the struct bodies
+
+        Function prototype - skip any enum/struct parameters or returns
+            we don't care about compiling function bodies.  Parameters/Returns
+            will only be function types, primitives, enums, or structs.
+
+        After all enums, structs and function types are added to globals,
+            go through all Struct/Function globals and resolve any identifier
+            fields/parameters/returns to the final types - just change the reference
+            to the one already inside the globals table.
+
+    Add globals table to compiler (name + type) for type checking
+
+    On first pass, only add name + type to globals - skip compilation of everything
+
+    On second pass, compile everything.  If global, need to add new op, OP_GLOBAL, to
+    add to globals table in vm
+
+    Resolving identifiers (which I called vars) needs to check locals->upvalues->globals
+        add GET_GLOBAL op
+    
+    Add globals table to vm for runtime Value
+       
+    Update vm OP_GLOBAL to add to globals table
+
+    Update vm OP_GET_GLOBAL to get globals - no OP_SET_GLOBAL for now since they
+        should be immutable
+
     Add functions, structs, enums to a globals table when they are compiled the first time - 
         skip the body, and only compile the prototype of each.  The globals need to be passed
         to the vm too, right?
