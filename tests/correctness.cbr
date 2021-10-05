@@ -33,6 +33,7 @@ cast_to_string := true
 cast_to_int := true
 cast_to_float := true
 cast_to_bool := true
+cast_struct_instances := true
 
 passed := List<string>()
 failed := List<string>()
@@ -1244,6 +1245,7 @@ if cast_to_float {
         add_failed("Cast Bool to Float: Failed!")    
     }
 }
+
 if cast_to_bool {
     //string, int, float
     print("-Cast to Bool")
@@ -1265,6 +1267,48 @@ if cast_to_bool {
     } else {
         add_failed("Cast Float to Bool: Failed!")
     }
+}
+
+if cast_struct_instances {
+    Animal :: struct {
+        class := "Default"
+    }
+
+    Canine :: struct < Animal {
+        class := "Canine"
+    }
+    Dog :: struct < Canine {
+        name := "Mittens"
+        fur_color := "Brown"
+    }
+    Lizard :: struct < Animal {
+        class := "Reptile"
+        name := "Lizzy"
+        scale_color := "Green"
+    }
+
+    canine := Canine()
+    if (canine as Animal) as Canine != nil {
+        add_passed("Cast Structure Instance Down - Valid: Passed!")
+    } else {
+        add_failed("Cast Structure Instance Down - Valid: Failed!")
+    }
+
+    animal := Animal()
+    if canine as Dog == nil and animal as Canine == nil and animal as Dog == nil {
+        add_passed("Cast Structure Down - Nil: Passed!")
+    } else {
+        add_failed("Cast Structure Down - Nil: Failed!")
+    }
+
+    dog := Dog()
+    liz := Lizard()
+    if dog as Animal != nil and dog as Canine != nil and liz as Animal != nil {
+        add_passed("Cast Structure Instance Up: Passed!") 
+    } else {
+        add_failed("Cast Structure Instance Up: Failed!") 
+    }
+
 }
 
 print("----------------------------------")

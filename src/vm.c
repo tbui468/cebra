@@ -249,19 +249,18 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_GET_PROP: {
             if (peek(vm, 0).type == VAL_NIL) {
                 READ_TYPE(frame, uint16_t);
-                break;
+                add_error(vm, "Attempting to access property of a 'nil'.");
+                return RESULT_FAILED;
             }
 
             if (peek(vm, 0).type == VAL_INSTANCE) {
                 struct ObjInstance* inst = peek(vm, 0).as.instance_type;
                 struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                 Value prop_val = to_nil();
-                if (get_from_table(&inst->props, prop_name, &prop_val)) {
-                    pop(vm);
-                    push(vm, prop_val);
-                    break;
-                }
-                //add erro
+                get_from_table(&inst->props, prop_name, &prop_val);
+                pop(vm);
+                push(vm, prop_val);
+                break;
             }
 
             if (peek(vm, 0).type == VAL_ENUM) {
@@ -275,6 +274,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             }
         }
         case OP_SET_PROP: {
+            if (peek(vm, 0).type == VAL_NIL) {
+                READ_TYPE(frame, uint16_t);
+                add_error(vm, "Attempting to set property of a 'nil'.");
+                pop(vm);
+                return RESULT_FAILED;
+            }
             struct ObjInstance* inst = peek(vm, 0).as.instance_type;
             Value value = peek(vm, 1);
             struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
@@ -594,12 +599,20 @@ ResultCode run(VM* vm, struct ObjFunction* script) {
     while (vm->frame_count > 0) {
         CallFrame* frame = &vm->frames[vm->frame_count - 1];
         ResultCode result = execute_frame(vm, frame);
-        if (vm->error_count > 0) {
-            for (int i = 0; i < vm->error_count; i++) {
-                printf("%s\n", vm->errors[i].message);
-            }
-            return RESULT_FAILED;
+    }
+
+    if (vm->error_count > 0) {
+        for (int i = 0; i < vm->error_count; i++) {
+            printf("Runtime Error: ");
+            printf("%s\n", vm->errors[i].message);
         }
+        
+        //clear the stack so that the GC can free memory
+        while (vm->stack_top > vm->stack) {
+            pop(vm);
+        }            
+
+        return RESULT_FAILED;
     }
 
     return RESULT_SUCCESS;

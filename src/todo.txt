@@ -52,12 +52,6 @@ get_color := (a: Animal) -> {
 }
 
 IMPLEMENTATION:
-    Add runtime errors to vm so that SET/GET PROPS fails if property not found
-
-    Write tests for casting structs
-        Dog -> Canine -> Animal
-        Lizard -> Animal
-        Write casting tests for all combinations
 
     Get rid of duck typing - since we want to keep things explicit, use struct names and
         need to keep props in TypeClass for type checking properties, but
@@ -70,6 +64,10 @@ IMPLEMENTATION:
         really need to find a formal way of resolving TypeIdentifier in one place
             instead of having it scattered all over compiler...
 
+    need to make runtime errors leave stack/OpPtr in proper state so that
+        more errors can be found during runtime (currently only done for OP_GET_PROP and OP_SET_PROP)
+        Add lines to runtime errors... could we emit line numbers along with Ops?
+        maybe add compilation errors before doing the runtime ones
 
     parse_type() should be a switch, and not a bunch of 'if' statements
         change name to parse_type, and make PARSE_TYPE macro
