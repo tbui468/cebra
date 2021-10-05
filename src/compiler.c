@@ -484,7 +484,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     inner_type = resolve_type(compiler, ((struct TypeIdentifier*)inner_type)->identifier);
                 }
                 CHECK_TYPE(!same_type(ret_type, inner_type), df->name, 
-                           "Return type must match typenature in function declaration.");
+                           "Return type must match type in function declaration.");
             }
 
             int f_idx = add_constant(compiler, to_function(func_comp.function));
@@ -513,9 +513,28 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             struct ObjString* name = make_string(dc->name.start, dc->name.length);
             push_root(to_string(name));
-            struct ObjClass* klass = make_class(name);
-            push_root(to_class(klass));
 
+            struct Table types;
+            init_table(&types);
+            set_table(&types, name, to_nil());
+            struct ObjClass* klass = make_class(name, types);
+            push_root(to_class(klass));
+            if (dc->super != NULL) {
+                GetVar* gv = (GetVar*)(dc->super);
+                struct Type* current = resolve_type(compiler, gv->name);
+                while (current != NULL) {
+                    struct TypeClass* tc = (struct TypeClass*)current;
+                    struct ObjString* class_name = make_string(tc->klass.start, tc->klass.length);
+                    push_root(to_string(class_name));
+                    set_table(&types, class_name, to_nil());
+                    current = tc->super;
+                    pop_root();
+                }
+            }
+
+
+
+            //push superstruct onto stack if it exists, otherwise push 'nil'
             struct TypeClass* super_type = NULL;
             if (dc->super != NULL) {
                 struct Type* s;
@@ -527,6 +546,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(klass)));
+
+            pop_root();
+            pop_root();
 
             struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name, (struct Type*)super_type);
 
@@ -585,22 +607,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             resolve_self_ref_type(sc);
             set_local(compiler, dc->name, (struct Type*)sc, set_idx);
 
-            pop_root();
-            pop_root();
-
             *node_type = (struct Type*)sc;
             return RESULT_SUCCESS;
         }
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;
 
-            /******new stuff*******/
-            //check if name used already
             if (declared_in_scope(compiler, de->name)) {
                 add_error(compiler, de->name, "Identifier already defined.");
                 return RESULT_FAILED;
             }
-            /**********************/
 
             struct ObjString* name = make_string(de->name.start, de->name.length);
             push_root(to_string(name));
@@ -627,9 +643,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 pop_root();
             }
             
-            /********new stuff*********/
-                int idx = add_local(compiler, de->name, (struct Type*)type);
-            /********************/
+            add_local(compiler, de->name, (struct Type*)type);
            
             *node_type = (struct Type*)type;
             return RESULT_SUCCESS;
@@ -1129,7 +1143,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 CHECK_TYPE(cast->type->type == TYPE_NIL, cast->name, "Cannot cast to 'nil' type.");
                 CHECK_TYPE(left->type == cast->type->type, cast->name, "Cannot cast to same type.");
                 emit_byte(compiler, OP_CAST);
-                emit_byte(compiler, cast->type->type);
+                emit_short(compiler, cast->type->type);
                 *node_type = cast->type;
                 return RESULT_SUCCESS;
             }
@@ -1152,24 +1166,39 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                        memcmp(from->klass.start, to->klass.start, from->klass.length) == 0, 
                        cast->name, "Cannot cast to own type.");
 
+            //TODO: these two checks aren't sufficient to check types...
+            //not chaining higher levels
             bool valid_cast = false;
             if (from->super != NULL) {
-                Token super_tok = ((struct TypeClass*)(from->super))->klass;
-                Token class_tok = to->klass;
-                if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
-                    valid_cast = true;
+                struct Type* t = from->super;
+                while (t != NULL) {
+                    Token super_tok = ((struct TypeClass*)t)->klass;
+                    Token class_tok = to->klass;
+                    if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
+                        valid_cast = true;
+                    }
+                    t = ((struct TypeClass*)t)->super;
                 }
             }
 
             if (to->super != NULL) {
-                Token super_tok = ((struct TypeClass*)(to->super))->klass;
-                Token class_tok = from->klass;
-                if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
-                    valid_cast = true;
+                struct Type* t = to->super;
+                while (t != NULL) {
+                    Token super_tok = ((struct TypeClass*)t)->klass;
+                    Token class_tok = from->klass;
+                    if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
+                        valid_cast = true;
+                    }
+                    t = ((struct TypeClass*)t)->super;
                 }
             }
 
-            CHECK_TYPE(!valid_cast, cast->name, "Invalid casting of struct type.");
+            CHECK_TYPE(!valid_cast, cast->name, "Struct instances must be cast only to superstructs or substructs.");
+
+            emit_byte(compiler, OP_CAST);
+            struct ObjString* to_struct = make_string(to->klass.start, to->klass.length);
+            emit_short(compiler, add_constant(compiler, to_string(to_struct)));
+
             *node_type =  cast->type;
             return RESULT_SUCCESS;
         }
@@ -1205,6 +1234,7 @@ void free_compiler(struct Compiler* compiler) {
         free_node(previous);
     }
     current_compiler = compiler->enclosing;
+    //popping function name object and function object pushed onto stack in init_compiler()
     pop_root();
     pop_root();
 }

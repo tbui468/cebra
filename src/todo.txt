@@ -52,33 +52,19 @@ get_color := (a: Animal) -> {
 }
 
 IMPLEMENTATION:
+    Add runtime errors to vm so that SET/GET PROPS fails if property not found
 
-    Finished NODE_CAST:
-        invalid struct casts (when casting to substruct) needs to put a 'nil' on the stack
-        Emitting OP for casting up not necessary - the instance is already compiled and on the stack
-
-        When casting down, need to emit OP_CAST to check if valid cast - pop instance and push 'nil' if invalid
-        ObjClass needs a way to access super...
-
-            Dog < Canine < Animal
-            casting from Animal to Dog
-            casting from Canine to Dog
-
-            Dog < Canine (implicitly inherits from Animal)
-                casting to Animal is okay (need to check ALL superstructs)
-                    Dog -> Canine
-                    Dog -> Animal
-                    Canine -> Animal
-                    = can cast to ANY struct type >= up the hierarchy from klass
-                Can be cast down in multiple ways:
-                    Animal -> Canine
-                    Animal -> Dog
-                    Canine -> Dog
-            Dog < Animal (does NOT inherit from Canine)
+    Write tests for casting structs
+        Dog -> Canine -> Animal
+        Lizard -> Animal
+        Write casting tests for all combinations
 
     Get rid of duck typing - since we want to keep things explicit, use struct names and
         need to keep props in TypeClass for type checking properties, but
         struct types can be compared using names...
+
+    Is there a way to clean up struct casting?  It's a mess now with a types table in ObjClass
+    and messy superstruct checks in CAST (and somewhere else)
 
     Continue writing basic interpreter - add any errors below and fix them afterwards
         really need to find a formal way of resolving TypeIdentifier in one place

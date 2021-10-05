@@ -185,7 +185,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             struct ObjClass* klass = pop(vm).as.class_type;
             struct Table props;
             init_table(&props);
-            struct ObjInstance* inst = make_instance(props);
+            struct ObjInstance* inst = make_instance(props, klass);
             push(vm, to_instance(inst));
             copy_table(&inst->props, &klass->props);
             break;
@@ -256,10 +256,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 struct ObjInstance* inst = peek(vm, 0).as.instance_type;
                 struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                 Value prop_val = to_nil();
-                get_from_table(&inst->props, prop_name, &prop_val);
-                pop(vm);
-                push(vm, prop_val);
-                break;
+                if (get_from_table(&inst->props, prop_name, &prop_val)) {
+                    pop(vm);
+                    push(vm, prop_val);
+                    break;
+                }
+                //add erro
             }
 
             if (peek(vm, 0).type == VAL_ENUM) {
@@ -557,8 +559,19 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_CAST: {
-            uint8_t to_type = READ_TYPE(frame, uint8_t);
+            uint16_t to_type = READ_TYPE(frame, uint16_t);
             Value value = peek(vm, 0);
+            if (value.type == VAL_INSTANCE) {
+                struct ObjInstance* inst = value.as.instance_type;
+                struct ObjString* type = read_constant(frame, to_type).as.string_type;
+                Value val;
+                if (get_from_table(&inst->klass->types, type, &val)) {
+                    break;
+                }
+                pop(vm);
+                push(vm, to_nil());
+                break;
+            }
             Value result = cast_primitive(to_type, &value);
             pop(vm);
             push(vm, result);

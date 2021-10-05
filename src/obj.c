@@ -33,6 +33,7 @@ int free_object(struct Obj* obj) {
             //NOTE: this only frees the table entries - the key and any heap allocated values will
             //be freed by the GC
             bytes_freed += free_table(&oc->props);
+            bytes_freed += free_table(&oc->types);
             bytes_freed += FREE(oc, struct ObjClass);
             break;
         case OBJ_INSTANCE:
@@ -122,28 +123,29 @@ void mark_object(struct Obj* obj) {
 }
 
 
-struct ObjClass* make_class(struct ObjString* name) {
+struct ObjClass* make_class(struct ObjString* name, struct Table types) {
     struct ObjClass* obj = ALLOCATE(struct ObjClass);
     push_root(to_class(obj));
     obj->base.type = OBJ_CLASS;
     obj->base.next = NULL;
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
-
     obj->name = name;
     init_table(&obj->props);
+    obj->types = types;
 
     pop_root();
     return obj;
 }
 
-struct ObjInstance* make_instance(struct Table table) {
+struct ObjInstance* make_instance(struct Table table, struct ObjClass* klass) {
     struct ObjInstance* obj = ALLOCATE(struct ObjInstance);
     obj->base.type = OBJ_INSTANCE;
     obj->base.next = NULL;
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
     obj->props = table;
+    obj->klass = klass;
 
     return obj;
 }
