@@ -17,14 +17,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Functions using :: notation is messy 
-        currently in NODE_FUN, checks if token length == 0 in both is_declared_in_scope()
-        and to see whether to add the function as a local - need to skip checking declaration
-        and adding to locals if anonymous function. 
-
-        Maybe add in a field in DeclFun called 'anonymous' instead?  So if this is true, we
-        skip adding to locals and skip checking function name collision?
-
     Add functions, structs, enums to a globals table when they are compiled the first time - 
         skip the body, and only compile the prototype of each.  The globals need to be passed
         to the vm too, right?

@@ -282,8 +282,7 @@ static struct Type* resolve_type(struct Compiler* compiler, Token name) {
 static bool declared_in_scope(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
-        if (local->name.length != 0 && 
-            local->name.length == name.length && 
+        if (local->name.length == name.length && 
             memcmp(local->name.start, name.start, name.length) == 0) {
             if (compiler->scope_depth == local->depth) return true; 
             else return false;
@@ -452,14 +451,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
 
-            if (declared_in_scope(compiler, df->name)) {
-                add_error(compiler, df->name, "Identifier already defined.");
-                return RESULT_FAILED;
-            }
 
             int set_idx = 0;
-            if (df->name.length != 0) 
+            if (df->name.length != 0) {
+                if (declared_in_scope(compiler, df->name)) {
+                    add_error(compiler, df->name, "Identifier already defined.");
+                    return RESULT_FAILED;
+                }
+
                 set_idx = add_local(compiler, df->name, make_decl_type());
+            }
 
             //TODO: resolve any identifiers in function type 
             //doing the same thing in SET_PROP - need to find a systematic way of
@@ -524,8 +525,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             free_compiler(&func_comp);
 
-            if (df->name.length != 0) 
+            if (df->name.length != 0) {
                 set_local(compiler, df->name, (struct Type*)(df->type), set_idx);
+            }
 
             *node_type = df->type;
             return RESULT_SUCCESS;
