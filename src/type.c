@@ -157,29 +157,6 @@ bool is_primitive(struct Type* type) {
            type->type == TYPE_NIL;
 }
 
-bool is_duck(struct TypeClass* param, struct TypeClass* arg) {
-    for (int i = 0; i < param->props.capacity; i++) {
-        struct Pair* param_pair = &param->props.pairs[i];
-        if (param_pair->key != NULL) {
-            Value arg_value;
-            if (!get_from_table(&arg->props, param_pair->key, &arg_value))
-                return false;
-
-            struct Type* param_type = param_pair->value.as.type_type;
-            struct Type* arg_type = arg_value.as.type_type;
-
-            if (IS_CLASS(param_pair->value) && IS_CLASS(arg_value)) {
-                if (!is_duck((struct TypeClass*)param_type, (struct TypeClass*)arg_type)) {
-                    return false;
-                }
-            } else {
-                if (!same_type(param_type, arg_type)) return false;
-            }
-        }
-    }
-    return true;
-}
-
 bool same_type(struct Type* type1, struct Type* type2) {
     if (type1 == NULL || type2 == NULL) return false;
     if (type1->type == TYPE_NIL || type2->type == TYPE_NIL) return true;
@@ -200,19 +177,7 @@ bool same_type(struct Type* type1, struct Type* type2) {
         case TYPE_CLASS:
             struct TypeClass* sc1 = (struct TypeClass*)type1;
             struct TypeClass* sc2 = (struct TypeClass*)type2;
-            //only checking typenature types (and not recursively comparing properties that are struct types)
-            //since structs can hold references to themselves.  Doing so could loop indefinitely.
-            for (int i = 0; i < sc1->props.capacity; i++) {
-                struct Pair* pair = &sc1->props.pairs[i];
-                if (pair->key != NULL) {
-                    Value value;
-                    if (!get_from_table(&sc2->props, pair->key, &value))
-                        return false;
-                    if (pair->value.as.type_type->type != value.as.type_type->type)
-                        return false;
-                }
-            }
-            return true;
+            return sc1->klass.length == sc2->klass.length && memcmp(sc1->klass.start, sc2->klass.start, sc1->klass.length) == 0;
         case TYPE_IDENTIFIER:
             struct TypeIdentifier* si1 = (struct TypeIdentifier*)type1; 
             struct TypeIdentifier* si2 = (struct TypeIdentifier*)type2; 

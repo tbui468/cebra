@@ -23,7 +23,7 @@ in_keyword := true
 maps := true
 nils_for_instances := true
 struct_inheritance := true
-duck_typing := true
+struct_typing := true
 for_each_loop := true
 get_char := true
 get_string_size := true
@@ -955,10 +955,10 @@ if struct_inheritance{
 
 }
 
-if duck_typing {
+if struct_typing {
 
     
-    print("-Duck Typing")
+    print("-Struct Typing")
     Animal :: struct {
         class: string = "Mammal"
     }
@@ -974,14 +974,15 @@ if duck_typing {
 
     make_bird: () -> Animal = () -> Animal {
         b: Bird = Bird()
-        -> b
+        -> b as Animal
     }
 
 
-    a: Bird = Bird()
+    a: Animal = Bird() as Animal
     fun(a)
+    b := a as Bird
 
-    if a.name == "Flappy" and a.class == "Reptile" {
+    if b.name == "Flappy" and b.class == "Reptile" {
         add_passed("Function Modify Struct Instance: Passed!")
     } else {
         add_failed("Function Modify Struct Instance: Failed!")

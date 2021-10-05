@@ -369,6 +369,22 @@ static void resolve_self_ref_type(struct TypeClass* sc) {
     }
 }
 
+static bool is_castable_struct(struct TypeClass* to, struct TypeClass* from) {
+    if (to->super == NULL) return false;
+
+    struct Type* t = to->super;
+    while (t != NULL) {
+        Token super_tok = ((struct TypeClass*)t)->klass;
+        Token class_tok = from->klass;
+        if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
+            return true;
+        }
+        t = ((struct TypeClass*)t)->super;
+    }
+
+    return false;
+}
+
 
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
     if (node == NULL) {
@@ -1162,34 +1178,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             CHECK_TYPE(from->klass.length == to->klass.length && 
                        memcmp(from->klass.start, to->klass.start, from->klass.length) == 0, 
-                       cast->name, "Cannot cast to own type.");
+                       cast->name, "Attempting to cast to own type.");
 
-            //TODO: these two checks aren't sufficient to check types...
-            //not chaining higher levels
-            bool valid_cast = false;
-            if (from->super != NULL) {
-                struct Type* t = from->super;
-                while (t != NULL) {
-                    Token super_tok = ((struct TypeClass*)t)->klass;
-                    Token class_tok = to->klass;
-                    if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
-                        valid_cast = true;
-                    }
-                    t = ((struct TypeClass*)t)->super;
-                }
-            }
-
-            if (to->super != NULL) {
-                struct Type* t = to->super;
-                while (t != NULL) {
-                    Token super_tok = ((struct TypeClass*)t)->klass;
-                    Token class_tok = from->klass;
-                    if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
-                        valid_cast = true;
-                    }
-                    t = ((struct TypeClass*)t)->super;
-                }
-            }
+            bool valid_cast = is_castable_struct(from, to) || is_castable_struct(to, from);
 
             CHECK_TYPE(!valid_cast, cast->name, "Struct instances must be cast only to superstructs or substructs.");
 

@@ -52,11 +52,6 @@ get_color := (a: Animal) -> {
 }
 
 IMPLEMENTATION:
-
-    Continue writing basic interpreter - add any errors below and fix them afterwards
-        really need to find a formal way of resolving TypeIdentifier in one place
-            instead of having it scattered all over compiler...
-
     Get rid of duck typing - since we want to keep things explicit, use struct names and
         need to keep props in TypeClass for type checking properties, but
         struct types can be compared using names...
@@ -66,7 +61,17 @@ IMPLEMENTATION:
         maybe this can be simplified along with removal of duck-typing - will need a way to check
         if structs are related (the exact code we need is already in NODE_CAST).
 
-    need to make runtime errors leave stack/OpPtr in proper state so that
+    Continue writing basic interpreter - add any errors below and fix them afterwards
+        big problem: we need to access parse_expression() in parse_primary(), but
+        the declaration needs to come after....
+
+        will need to do two passes to solve this problem: first pass resolves all :: notation - 
+            struct, enum, function declarations. 
+
+            The first pass could shove all that into a global table - then we can access them
+            as needed during the second pass when all other code is compiled
+
+    need to make runtime errors leave stack/OpPtr in valid state so that
         more errors can be found during runtime (currently only done for OP_GET_PROP and OP_SET_PROP)
         Add lines to runtime errors... could we emit line numbers along with Ops?
         maybe add compilation errors before doing the runtime ones
@@ -81,6 +86,19 @@ IMPLEMENTATION:
     see if Token var_name propagated through the descent parser is being used
         Recall that how variables/structs/functions/enums are declared was changed
 
+
+    This should create error:
+        Animal :: struct {
+            class: string = "Mammal"
+        }
+
+        Bird :: struct < Animal {
+            class: string = "Avian"
+            name: string = "Flappy"
+        }
+
+        a: Animal = Bird() //this should give error since Bird() returns Bird type, not Animal
+        //user must explicitly cast to Animal type
 
     This crashes since parse_factor() is not defined
         parse_term := () -> Expr {
