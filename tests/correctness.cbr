@@ -38,10 +38,10 @@ cast_struct_instances := true
 passed := List<string>()
 failed := List<string>()
 
-add_failed := (msg: string) -> {
+add_failed :: (msg: string) -> {
     failed[failed.size] = msg
 }
-add_passed := (msg: string) -> {
+add_passed :: (msg: string) -> {
     passed[passed.size] = msg
 }
 
@@ -251,19 +251,19 @@ if loops {
 if functions_returning_primitives {
     
     print("-Functions Returning Primitives")
-    a: () -> = () -> {
+    a :: () -> {
         add_passed("Zero Parameters / No Return: Passed!")
     }
-    ai := () -> {
+    ai :: () -> {
         add_passed("Zero Parameters / No Return (Inferred): Passed!")
     }
     a()
     ai()
 
-    b: () -> int = () -> int {
+    b :: () -> int {
         -> -1
     }
-    bi := () -> int {
+    bi :: () -> int {
         -> -1
     }
     if b() == -1 and bi() == -1 {
@@ -272,14 +272,14 @@ if functions_returning_primitives {
         add_failed("Zero Parameters / Integer Return: Failed!")
     }
 
-    c: (int) -> = (i: int) -> {
+    c :: (i: int) -> {
         if i == 2 {
             add_passed("Integer Parameter: Passed!")
         } else {
             add_failed("Integer Parameter: Failed!")
         }
     }
-    ci := (i: int) -> {
+    ci :: (i: int) -> {
         if i == 2 {
             add_passed("Integer Parameter (Inferred): Passed!")
         } else {
@@ -289,13 +289,13 @@ if functions_returning_primitives {
     c(2)
     ci(2)
 
-    fib: (int) -> int = (i: int) -> int {
+    fib :: (i: int) -> int {
         if i < 2 {
             -> i
         }
         -> fib(i - 1) + fib(i - 2)
     }
-    fibi := (i: int) -> int {
+    fibi :: (i: int) -> int {
         if i < 2 {
             -> i
         }
@@ -311,14 +311,14 @@ if functions_returning_primitives {
 if functions_returning_functions{
     
     print("-Functions Returning Functions")
-    a: () -> () -> = () -> () -> {
-        b: () -> = () -> {
+    a :: () -> () -> {
+        b :: () -> {
             add_passed("No Parameters / Nil Return: Passed!")
         }
         -> b
     }
-    ai := () -> () -> {
-        bi := () -> {
+    ai :: () -> () -> {
+        bi :: () -> {
             add_passed("No Parameters / Nil Return (Inferred): Passed!")
         }
         -> bi
@@ -327,14 +327,14 @@ if functions_returning_functions{
     a()()
     ai()()
 
-    c: () -> (int) -> int = () -> (int) -> int {
-        d: (int) -> int = (n: int) -> int {
+    c :: () -> (int) -> int {
+        d :: (n: int) -> int {
             -> n * 2
         }
         -> d
     }
-    ci := () -> (int) -> int {
-        di := (n: int) -> int {
+    ci :: () -> (int) -> int {
+        di :: (n: int) -> int {
             -> n * 2
         }
         -> di
@@ -351,24 +351,24 @@ if functions_as_parameters {
     
     print("-Functions as Parameters")
 
-    add: (int, int) -> int = (a: int, b: int) -> int {
+    add :: (a: int, b: int) -> int {
         -> a + b
     }
-    addi := (a: int, b: int) -> int {
+    addi :: (a: int, b: int) -> int {
         -> a + b
     }
 
-    mul: (int, int) -> int = (a: int, b: int) -> int {
+    mul :: (a: int, b: int) -> int {
         -> a * b
     }
-    muli := (a: int, b: int) -> int {
+    muli :: (a: int, b: int) -> int {
         -> a * b
     }
 
-    fun: (int, int, (int, int)->int) -> int = (a: int, b: int, c: (int, int)->int) -> int {
+    fun :: (a: int, b: int, c: (int, int)->int) -> int {
         -> c(a, b)
     }
-    funi := (a: int, b: int, c: (int, int)->int) -> int {
+    funi :: (a: int, b: int, c: (int, int)->int) -> int {
         -> c(a, b)
     }
 
@@ -385,18 +385,18 @@ if cascading_calls {
     
     print("-Cascading Calls")
 
-    a: () -> () -> () -> int = () -> () -> () -> int {
-        b: () -> () -> int = () -> () -> int {
-            c: () -> int = () -> int {
+    a :: () -> () -> () -> int {
+        b :: () -> () -> int {
+            c :: () -> int {
                 -> 1
             }
             -> c
         }
         -> b
     }
-    ai := () -> () -> () -> int {
-        bi := () -> () -> int {
-            ci := () -> int {
+    ai :: () -> () -> () -> int {
+        bi :: () -> () -> int {
+            ci :: () -> int {
                 -> 1
             }
             -> ci
@@ -410,14 +410,14 @@ if cascading_calls {
         add_failed("Triple calls: Failed!")
     }
 
-    d: () -> (int) -> int = () -> (int) -> int {
-        e: (int) -> int = (n: int) -> int {
+    d :: () -> (int) -> int {
+        e :: (n: int) -> int {
             -> 2 * n
         }
         -> e
     }
-    di := () -> (int) -> int {
-        ei := (n: int) -> int {
+    di :: () -> (int) -> int {
+        ei :: (n: int) -> int {
             -> 2 * n
         }
         -> ei
@@ -430,14 +430,14 @@ if cascading_calls {
     }
 }
 
-if anonymous_functions{
+if anonymous_functions {
     
     print("-Anonymous Functions")
 
-    op: (int, int, (int, int) -> int) -> int = (a: int, b: int, c: (int, int) -> int) -> int {
+    op :: (a: int, b: int, c: (int, int) -> int) -> int {
         -> c(a, b)
     }
-    opi := (a: int, b: int, c: (int, int) -> int) -> int {
+    opi :: (a: int, b: int, c: (int, int) -> int) -> int {
         -> c(a, b)
     }
 
@@ -456,10 +456,10 @@ if closures_depth_1 {
 
     a: int = 0
     ai := 0
-    b: () -> = () -> {
+    b :: () -> {
         a = a + 1
     }
-    bi := () -> {
+    bi :: () -> {
         ai = ai + 1
     }
 
@@ -483,10 +483,10 @@ if closures_depth_1 {
 
     var: string = "hello world"
     vari := "hello world"
-    c: () -> string = () -> string {
+    c :: () -> string {
         -> var + "!"
     }
-    ci := () -> string {
+    ci :: () -> string {
         -> vari + "!"
     }
 
@@ -510,8 +510,8 @@ if closures_depth_2 {
 
     str1: string = "hello "
     str2: string = "world"
-    a: () -> () -> string = () -> () -> string {
-        b: () -> string = () -> string {
+    a :: () -> () -> string {
+        b :: () -> string {
             -> str1 + str2
         }
         -> b
@@ -520,8 +520,8 @@ if closures_depth_2 {
 
     str1i := "hello "
     str2i := "world"
-    ai := () -> () -> string {
-        bi := () -> string {
+    ai :: () -> () -> string {
+        bi :: () -> string {
             -> str1i + str2i
         }
         -> bi
@@ -535,9 +535,9 @@ if closures_depth_2 {
         add_failed("Open upvalues, Depth 2: Failed!")
     }
 
-    x: () -> () -> () -> string = () -> () -> () -> string {
-        y: () -> () -> string = () -> () -> string {
-            z: () -> string = () -> string {
+    x :: () -> () -> () -> string {
+        y :: () -> () -> string {
+            z :: () -> string {
                 -> str1 + str2
             }
             -> z
@@ -547,9 +547,9 @@ if closures_depth_2 {
     xx: () -> () -> string = x()
     yy: () -> string = xx()
 
-    xi := () -> () -> () -> string {
-        yi := () -> () -> string {
-            zi := () -> string {
+    xi :: () -> () -> () -> string {
+        yi :: () -> () -> string {
+            zi :: () -> string {
                 -> str1i + str2i
             }
             -> zi
@@ -575,18 +575,18 @@ if closures_depth_2 {
 if closed_upvalues {
     
     print("-Closed Upvalues")
-    outer: () -> () -> string = () -> () -> string {
+    outer :: () -> () -> string {
         x: string = "outside"
-        inner: () -> string = () -> string{
+        inner :: () -> string{
             -> x
         }
         -> inner
     }
     closure: () -> string = outer()
 
-    outeri := () -> () -> string {
+    outeri :: () -> () -> string {
         x := "outside"
-        inneri := () -> string{
+        inneri :: () -> string{
             -> x
         }
         -> inneri
@@ -614,49 +614,38 @@ if structs {
         age: int = 3
         length: float = 100.2
     }
-    Dogi :: struct {
-        namei := "Mittens"
-        agei := 1 + 2
-        lengthi := 100.2
-    }
 
     dog: Dog = Dog()
-    dogi := Dogi()
-    if dog.name == "Mittens" and dogi.namei == "Mittens" {
+    if dog.name == "Mittens" {
         add_passed("Get Property: Passed!")
     } else {
         add_failed("Get Property: Failed!")
     }
     dog.name = "Bubbles"
-    dogi.namei = "Bubbles"
-    if dog.name == "Bubbles" and dogi.namei == "Bubbles" {
+    if dog.name == "Bubbles" {
         add_passed("Set Property: Passed!")
     } else {
         add_failed("Set Property: Failed!")
     }
 
-    increment: () -> = () -> {
+    increment :: () -> {
         dog.age = dog.age + 1
-    }
-    incrementi := () -> {
-        dogi.agei = dogi.agei + 1
     }
 
     increment()
-    incrementi()
 
-    if dog.age == 4 and dogi.agei == 4 {
+    if dog.age == 4 {
         add_passed("Instance Upvalue: Passed!")
     } else {
         add_failed("Instance Upvalue: Failed!")
     }
 
-    outer: () -> () -> = () -> () -> {
+    outer :: () -> () -> {
         Cat :: struct {
             name: string = "Whiskey"
             age: int = 2
         }
-        inner: () -> = () -> {
+        inner :: () -> {
             c: Cat = Cat()
             if c.name == "Whiskey" and c.age == 2 {
                 add_passed("Class upvalue: Passed!")
@@ -670,26 +659,8 @@ if structs {
     dog1: Dog = Dog()
     dog1.age = 5
 
-    outeri := () -> () -> {
-        Cati :: struct {
-            namei := "Whiskey"
-            agei := 2
-        }
-        inneri := () -> {
-            ci := Cati()
-            if ci.namei == "Whiskey" and ci.agei == 2 {
-                add_passed("Class upvalue (Inferred): Passed!")
-            } else {
-                add_failed("Class upvalue (Inferred): Failed!")
-            } 
-        } 
-        -> inneri
-    }
-    outeri()()
-    dog1i := Dogi()
-    dog1i.agei = 5
 
-    if dog1.age == 5 and dog1i.agei == 5 {
+    if dog1.age == 5 {
         add_passed("Property Assignment: Passed!")
     } else {
         add_failed("Property Assignment: Failed!")
@@ -697,43 +668,29 @@ if structs {
 
     dog2: Dog = Dog()
     dog1.age = dog2.age = 10
-    dog2i := Dogi()
-    dog1i.agei = dog2i.agei = 10
-    if dog1.age == 10 and dog2.age == 10 and
-        dog1i.agei == 10 and dog2i.agei == 10 
-    {
+    if dog1.age == 10 and dog2.age == 10 {
         add_passed("Cascade Property Assignment: Passed!")
     } else {
         add_failed("Cascade Property Assignment: Failed!")
     }
 
     dog3: Dog = Dog()
-    dog_age: (Dog) -> = (d: Dog) -> {
+    dog_age :: (d: Dog) -> {
         d.age = 10
     }
     dog_age(dog3)
-    dog3i := Dogi()
-    dog_agei := (d: Dogi) -> {
-        d.agei = 10
-    }
-    dog_agei(dog3i)
-    if dog3.age == 10 and dog3i.agei == 10 {
+    if dog3.age == 10 {
         add_passed("Instance as Parameter: Passed!")
     } else {
         add_failed("Instance as Parameter: Failed!")
     }
 
-    dog_factory: () -> Dog = () -> Dog {
+    dog_factory :: () -> Dog {
         d: Dog = Dog()
         d.age = 100
         -> d
     }
-    dog_factoryi := () -> Dogi {
-        d := Dogi()
-        d.agei = 100
-        -> d
-    }
-    if dog_factory().age == 100 and dog_factoryi().agei == 100 {
+    if dog_factory().age == 100 {
         add_passed("Instance as Return: Passed!")
     } else {
         add_failed("Instance as Return: Failed!")
@@ -968,11 +925,11 @@ if struct_typing {
         name: string = "Flappy"
     }
 
-    fun: (Animal) -> = (a: Animal) -> {
+    fun :: (a: Animal) -> {
         a.class = "Reptile"
     }
 
-    make_bird: () -> Animal = () -> Animal {
+    make_bird :: () -> Animal {
         b: Bird = Bird()
         -> b as Animal
     }

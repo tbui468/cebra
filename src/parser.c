@@ -25,19 +25,19 @@
     }
 
 #define ERROR(tkn, msg, ...) \
-    { \
-        if (parser.error_count < 256) { \
-            char* buf = ALLOCATE_ARRAY(char); \
-            buf = GROW_ARRAY(buf, char, 100, 0); \
-            snprintf(buf, 99, msg, __VA_ARGS__); \
-            struct Error error; \
-            error.message = buf; \
-            error.token = tkn; \
-            parser.errors[parser.error_count] = error; \
-            parser.error_count++; \
-        } \
-        return RESULT_FAILED; \
-    }
+{ \
+    if (parser.error_count < 256) { \
+        char* buf = ALLOCATE_ARRAY(char); \
+        buf = GROW_ARRAY(buf, char, 100, 0); \
+        snprintf(buf, 99, msg, __VA_ARGS__); \
+        struct Error error; \
+        error.message = buf; \
+        error.token = tkn; \
+        parser.errors[parser.error_count] = error; \
+        parser.error_count++; \
+    } \
+    return RESULT_FAILED; \
+}
 
 
 Parser parser;
@@ -82,8 +82,8 @@ static bool peek_two(TokenType type1, TokenType type2) {
 }
 static bool peek_three(TokenType type1, TokenType type2, TokenType type3) {
     return parser.current.type == type1 && 
-           parser.next.type == type2 &&
-           parser.next_next.type == type3;
+        parser.next.type == type2 &&
+        parser.next_next.type == type3;
 }
 
 static void synchronize() {
@@ -99,11 +99,51 @@ static void synchronize() {
 }
 
 
+static ResultCode parse_function(Token var_name, struct Node** node) {
+    struct NodeList* params = (struct NodeList*)make_node_list();
+
+    struct Type* param_type = make_array_type();
+    if (!match(TOKEN_RIGHT_PAREN)) {
+        do {
+            struct Node* var_decl;
+            if (param_declaration(&var_decl) == RESULT_FAILED) return RESULT_FAILED;
+
+            if (match(TOKEN_EQUAL)) {
+                Token param_token = ((DeclVar*)var_decl)->name;
+                ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be astypened.", 
+                        param_token.length, param_token.start);
+            }
+
+            DeclVar* vd = (DeclVar*)var_decl;
+            add_type((struct TypeArray*)param_type, vd->type);
+            add_node(params, var_decl);
+        } while (match(TOKEN_COMMA));
+        CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter list.");
+    }
+
+    CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
+
+    struct Type* ret_type;
+    PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
+
+    CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
+
+    Token body_start = parser.previous;
+    struct Node* body;
+    if (block(NULL, &body) == RESULT_FAILED) {
+        ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
+    }
+
+    struct Type* fun_type = make_fun_type(param_type, ret_type); 
+
+    *node = make_decl_fun(var_name, params, fun_type, body);
+    return RESULT_SUCCESS;
+}
 
 static ResultCode primary(Token var_name, struct Node** node) {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
-        match(TOKEN_STRING) || match(TOKEN_TRUE) ||
-        match(TOKEN_FALSE)) {
+            match(TOKEN_STRING) || match(TOKEN_TRUE) ||
+            match(TOKEN_FALSE)) {
         *node = make_literal(parser.previous);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LIST)) {
@@ -132,45 +172,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_PAREN)) {
         Token name = parser.previous;
-        if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
-            peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
-            struct NodeList* params = (struct NodeList*)make_node_list();
-            
-            struct Type* param_type = make_array_type();
-            if (!match(TOKEN_RIGHT_PAREN)) {
-                do {
-                    struct Node* var_decl;
-                    if (param_declaration(&var_decl) == RESULT_FAILED) return RESULT_FAILED;
 
-                    if (match(TOKEN_EQUAL)) {
-                        Token param_token = ((DeclVar*)var_decl)->name;
-                        ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be astypened.", 
-                                  param_token.length, param_token.start);
-                    }
-
-                    DeclVar* vd = (DeclVar*)var_decl;
-                    add_type((struct TypeArray*)param_type, vd->type);
-                    add_node(params, var_decl);
-                } while (match(TOKEN_COMMA));
-                CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter list.");
-            }
-
-            CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
-
-            struct Type* ret_type;
-            PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
-
-            CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
-
-            Token body_start = parser.previous;
-            struct Node* body;
-            if (block(NULL, &body) == RESULT_FAILED) {
-                ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
-            }
-
-            struct Type* fun_type = make_fun_type(param_type, ret_type); 
-
-            *node = make_decl_fun(var_name, params, fun_type, body);
+        if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
+            PARSE(parse_function, make_dummy_token(), node, name, "Invalid function declaration.");
             return RESULT_SUCCESS;
         }
 
@@ -296,7 +300,7 @@ static ResultCode relation(Token var_name, struct Node** node) {
     PARSE_WITHOUT_MSG(term, var_name, &left);
 
     while (match(TOKEN_LESS) || match(TOKEN_LESS_EQUAL) ||
-           match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
+            match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
         Token name = parser.previous;
         struct Node* right;
         PARSE(term, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
@@ -437,12 +441,12 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
         *type = make_float_type();
         return RESULT_SUCCESS;
     }
-    
+
     if (match(TOKEN_BOOL_TYPE)) {
         *type = make_bool_type();
         return RESULT_SUCCESS;
     }
-    
+
     if (match(TOKEN_STRING_TYPE)) {
         *type = make_string_type();
         return RESULT_SUCCESS;
@@ -518,7 +522,7 @@ static ResultCode var_declaration(struct Node** node) {
 
     struct Type* type;
     PARSE_TYPE(var_name, &type, var_name, "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
-                  var_name.length, var_name.start, var_name.length, var_name.start);
+            var_name.length, var_name.start, var_name.length, var_name.start);
 
     CONSUME(TOKEN_EQUAL, var_name, "Variables must be defined at declaration.");
 
@@ -559,8 +563,8 @@ static ResultCode declaration(struct Node** node) {
         //  instead of making a struct Node* super... (why did we do this?)
         //  and it's using a make_get_var() ?  Why not make_identifier() instead?
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
-                             make_get_var(parser.previous, NULL) : 
-                             NULL;
+            make_get_var(parser.previous, NULL) : 
+            NULL;
 
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before class body.");
 
@@ -575,6 +579,14 @@ static ResultCode declaration(struct Node** node) {
         }
 
         *node = make_decl_class(struct_name, super, nl);
+        return RESULT_SUCCESS;
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
+        match(TOKEN_IDENTIFIER);
+        Token var_name = parser.previous;
+        match(TOKEN_COLON_COLON);
+        match(TOKEN_LEFT_PAREN);
+
+        PARSE(parse_function, var_name, node, var_name, "Invalid function declaration.");
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;
@@ -701,7 +713,7 @@ static ResultCode declaration(struct Node** node) {
 
     struct Node* expr;
     PARSE(expression, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
-    
+
     *node = make_expr_stmt(expr);
     return RESULT_SUCCESS;
 }

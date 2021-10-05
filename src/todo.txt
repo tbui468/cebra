@@ -15,51 +15,25 @@ ADDING FEATURES:
     Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
-
-a := 4 as string
-
-Animal :: struct {
-    class := "Mammal"
-}
-
-Dog :: struct < Animal {
-    name := "Mittens"
-    fur_color := "Brown"
-}
-
-Lizard :: struct < Animal {
-    class := "Reptile"
-    name := "Lizzy"
-    scale_color := "Green"
-}
-
-animals := List<Animal>()
-animals[0] = Dog() as Animal
-animals[1] = Lizard() as Animal
-
-get_class := (a: Animal) -> {
-    print(a.class)
-}
-
-get_color := (a: Animal) -> {
-    if a as Lizard != nil {
-        print((a as Lizard).scale_color)
-    }
-
-    if a as Dog != nil {
-        print((a as Dog).fur_color)
-    }    
-}
-
 IMPLEMENTATION:
-    Get rid of duck typing - since we want to keep things explicit, use struct names and
-        need to keep props in TypeClass for type checking properties, but
-        struct types can be compared using names...
 
-    Is there a way to clean up struct casting?  It's a mess now with a types table in ObjClass
-    and messy superstruct checks in CAST (and somewhere else)
-        maybe this can be simplified along with removal of duck-typing - will need a way to check
-        if structs are related (the exact code we need is already in NODE_CAST).
+    Functions using :: notation is messy 
+        currently in NODE_FUN, checks if token length == 0 in both is_declared_in_scope()
+        and to see whether to add the function as a local - need to skip checking declaration
+        and adding to locals if anonymous function. 
+
+        Maybe add in a field in DeclFun called 'anonymous' instead?  So if this is true, we
+        skip adding to locals and skip checking function name collision?
+
+    Add functions, structs, enums to a globals table when they are compiled the first time - 
+        skip the body, and only compile the prototype of each.  The globals need to be passed
+        to the vm too, right?
+
+        on the second pass, look up identifiers in locals/upvalues first, and then globals
+
+        in compile_script, check if each node is a NODE_ENUM, NODE_CLASS or NODE_FUN and add
+            their prototypes to globals.  Skip everything else.  On the second pass compile
+            everything.
 
     Continue writing basic interpreter - add any errors below and fix them afterwards
         big problem: we need to access parse_expression() in parse_primary(), but
@@ -147,13 +121,16 @@ IMPLEMENTATION:
 
         }
 
-    would like to be able to do this to simplify code further:
+    Struct constructors - would like to be able to do this to simplify code further:
         p := PrimaryExpr(ASTType.primary, token)
         b := BinaryExpr(ASTType.binary, token, left, right)
 
         No arguments to use all default values.
         Or leave argument empty to use default, eg:
             c := BinaryExpr(, token,, right) //use default for type and left
+
+    Set memory limit by using system call setrlimit() so that I can put in guards for when memory
+        runs out.
 
     Make function to convert char to ASCII, or allow char (and string?) comparisons using <, <=, >, >=
 
