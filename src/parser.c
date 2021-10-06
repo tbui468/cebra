@@ -543,15 +543,24 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_ENUM);
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before enum body.");
 
-        //create enum type to fill in
+        //create enum type to fill
         struct TypeEnum* type = (struct TypeEnum*)make_enum_type(enum_name);
         struct ObjString* enum_string = make_string(enum_name.start, enum_name.length);
         push_root(to_string(enum_string));
+
+        //check for global name collision
+        Value v;
+        if (get_from_table(parser.globals, enum_string, &v)) {
+            pop_root();
+            ERROR(enum_name, "The identifier for this enum is already used.");
+        }
+
+        //set globals in parser (which compiler uses)
         set_table(parser.globals, enum_string, to_type((struct Type*)type));
         pop_root();
 
+        //fill in enum type props
         struct NodeList* nl = (struct NodeList*)make_node_list();
-
         while (!match(TOKEN_RIGHT_BRACE)) {
             CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect enum list inside enum body.");
             struct Node* dv = make_decl_var(parser.previous, make_int_type(), NULL);
@@ -580,7 +589,55 @@ static ResultCode declaration(struct Node** node) {
 
         struct Type* struct_type;
         PARSE_TYPE(struct_name, &struct_type, struct_name, "Invalid type.");
+        struct ObjString* struct_string = make_string(struct_name.start, struct_name.length);
+        push_root(to_string(struct_string));
 
+        //check for global name collision
+        Value v;
+        if (get_from_table(parser.globals, struct_string, &v)) {
+            pop_root();
+            ERROR(struct_name, "The identifier for this struct is already used.");
+        }
+
+        //set globals in parser (which compiler uses)
+        set_table(parser.globals, struct_string, to_type((struct Type*)struct_type));
+        pop_root();
+
+        struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
+            make_get_var(parser.previous, NULL) : 
+            NULL;
+
+        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before class body.");
+
+        struct NodeList* nl = (struct NodeList*)make_node_list();
+        while (!match(TOKEN_RIGHT_BRACE)) {
+            struct Node* decl;
+            if (var_declaration(&decl) == RESULT_FAILED) {
+                ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
+            }
+
+            DeclVar* dv = (DeclVar*)decl;
+            Token prop_name = dv->name;
+            struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
+            push_root(to_string(prop_string));
+
+            struct TypeClass* tc = (struct TypeClass*)struct_type;
+
+            Value v;
+            if (get_from_table(&tc->props, prop_string, &v)) {
+                pop_root();
+                ERROR(prop_name, "Field name already used once in this struct.");
+            }
+
+            set_table(&tc->props, prop_string, to_type(dv->type));
+            pop_root();
+
+            add_node(nl, decl);
+        }
+
+        *node = make_decl_class(struct_name, super, nl);
+        return RESULT_SUCCESS;
+        /*
         //TODO: PARSE_TYPE should really be the result we used for make_decl_var
         //  instead of making a struct Node* super... (why did we do this?)
         //  and it's using a make_get_var() ?  Why not make_identifier() instead?
@@ -606,7 +663,7 @@ static ResultCode declaration(struct Node** node) {
         //TODO: need to add final struct type to parser.globals
 
         *node = make_decl_class(struct_name, super, nl);
-        return RESULT_SUCCESS;
+        return RESULT_SUCCESS;*/
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
         match(TOKEN_IDENTIFIER);
         Token var_name = parser.previous;
@@ -804,6 +861,35 @@ ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals)
         }
     }
 
+    //resolve identifiers in structs (and later functions)
+    for (int i = 0; i < parser.globals->capacity; i++) {
+        struct Pair* pair = &parser.globals->pairs[i];
+        if (pair->value.type == VAL_TYPE) {
+            struct Type* type = pair->value.as.type_type;
+            if (type->type == TYPE_CLASS) {
+                struct TypeClass* tc = (struct TypeClass*)type;
+                for (int j = 0; j < tc->props.capacity; j++) {
+                    struct Pair* inner_pair = &tc->props.pairs[j];
+                    if (inner_pair->value.type == VAL_TYPE) {
+                        struct Type* type = inner_pair->value.as.type_type;
+                        if (type->type == TYPE_IDENTIFIER) {
+                            struct TypeIdentifier* id = (struct TypeIdentifier*)type;
+                            struct ObjString* identifier = make_string(id->identifier.start, id->identifier.length);
+                            push_root(to_string(identifier));
+                            Value resolved_id;
+                            if (get_from_table(parser.globals, identifier, &resolved_id)) {
+                                set_table(&tc->props, inner_pair->key, resolved_id);
+                                pop_root();
+                            } else {
+                                pop_root();
+                                ERROR(make_dummy_token(), "Identifier not declared.");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     //TODO: resolve identifiers in globals
     //  May need two steps for structs
     //      1. resolve all identifiers into Enum/Struct/Function types
@@ -814,7 +900,7 @@ ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals)
     //          prop types are the same.  Currently doing this check in compiler but
     //          will need to move it all here if we want all global types to be complete
     //          when we get to the compiler.
-    print_table(parser.globals);
+//    print_table(parser.globals);
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);

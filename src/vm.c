@@ -46,7 +46,6 @@ ResultCode init_vm(VM* vm) {
 
 ResultCode free_vm(VM* vm) {
     pop_stack(vm);
-    free_table(&vm->globals);
     return RESULT_SUCCESS;
 }
 

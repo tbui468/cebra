@@ -259,14 +259,22 @@ static int add_upvalue(struct Compiler* compiler, struct Upvalue upvalue) {
 static struct Type* resolve_type(struct Compiler* compiler, Token name) {
     struct Compiler* current = compiler;
     do {
+        //check locals
         for (int i = current->locals_count - 1; i >= 0; i--) {
             Local* local = &current->locals[i];
             if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
                 return current->locals[i].type;
             }
         }
+        //check globals
+        struct ObjString* str = make_string(name.start, name.length);
+        Value val;
+        if (get_from_table(&current->globals, str, &val)) {
+            return val.as.type_type;
+        }
         current = current->enclosing;
     } while(current != NULL);
+
 
     add_error(compiler, name, "Local variable not declared.");
 
@@ -429,7 +437,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
 
-
             int set_idx = 0;
             if (df->name.length != 0) {
                 if (declared_in_scope(compiler, df->name)) {
@@ -443,10 +450,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //TODO: resolve any identifiers in function type 
             //doing the same thing in SET_PROP - need to find a systematic way of
             //resolving identifiers instead of doing in randomly throughout code
+            //This should be in done in parser after all globals
             struct TypeFun* fun_type = (struct TypeFun*)(df->type);
             if (fun_type->ret->type == TYPE_IDENTIFIER) {
                 fun_type->ret = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
             }
+
             struct TypeArray* params = (struct TypeArray*)(fun_type->params);
             for (int i = 0; i < params->count; i++) {
                 if (params->types[i]->type == TYPE_IDENTIFIER) {
@@ -475,6 +484,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             copy_errors(compiler, &func_comp);
 
             struct TypeFun* typefun = (struct TypeFun*)df->type;
+            //resolve parameter/return types TODO: should do this in parser after parsing all globals
+            //I know!! It's being resolved to a null
+
             CHECK_TYPE(inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL, df->name, 
                        "Return type must match type in function declaration.");
 
@@ -513,6 +525,38 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
 
+            //set up objects
+            struct ObjString* struct_string = make_string(dc->name.start, dc->name.length);
+            push_root(to_string(struct_string));
+            struct Table struct_types; //for inheritance
+            init_table(&struct_types);
+            set_table(&struct_types, struct_string, to_nil());
+            struct ObjClass* struct_obj = make_class(struct_string, struct_types);
+            push_root(to_class(struct_obj));
+
+            //fill up &struct_obj->props
+            int count = dc->decls->count;
+            for (int i = 0; i < count; i++) {
+                DeclVar* dv = (DeclVar*)(dc->decls->nodes[i]);
+                struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
+                push_root(to_string(prop_name));
+                set_table(&struct_obj->props, prop_name, to_nil()); //setting to 'nil' for now
+                pop_root();
+            }
+
+            //set globals in vm
+            set_table(&mm.vm->globals, struct_string, to_class(struct_obj));
+
+            //Get type already completely defined in parser
+            Value v;
+            get_from_table(&compiler->globals, struct_string, &v);
+            *node_type = v.as.type_type;
+
+            pop_root(); //struct ObjStruct* 'obj_enum'
+            pop_root(); //struct ObjString* 'name'
+            return RESULT_SUCCESS;
+
+            /*
             if (declared_in_scope(compiler, dc->name)) {
                 add_error(compiler, dc->name, "Identifier already defined.");
                 return RESULT_FAILED;
@@ -615,7 +659,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             set_local(compiler, dc->name, (struct Type*)sc, set_idx);
 
             *node_type = (struct Type*)sc;
-            return RESULT_SUCCESS;
+            return RESULT_SUCCESS;*/
         }
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;
@@ -636,16 +680,15 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 pop_root();
             }
 
-            //emit codes to vm
-            emit_byte(compiler, OP_ADD_GLOBAL);
-            emit_short(compiler, add_constant(compiler, to_string(name)));
-            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
-            pop_root(); //struct ObjEnum* 'obj_enum'
+            //set globals in vm
+            set_table(&mm.vm->globals, name, to_enum(obj_enum));
 
             //Get type already completely defined in parser
             Value v;
             get_from_table(&compiler->globals, name, &v);
             *node_type = v.as.type_type;
+
+            pop_root(); //struct ObjEnum* 'obj_enum'
             pop_root(); //struct ObjString* 'name'
             return RESULT_SUCCESS;
         }
@@ -871,9 +914,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
             }
 
+            /*
             if (type_inst->type == TYPE_CLASS) {
                 type_inst = resolve_type(compiler, ((struct TypeClass*)type_inst)->klass);
-            }
+            }*/
 
             if (type_inst->type == TYPE_CLASS) {
                 struct ObjString* name = make_string(prop.start, prop.length);
@@ -895,7 +939,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 *node_type = right_type;
                 return RESULT_SUCCESS;
             }
-
             add_error(compiler, prop, "Property cannot be set.");
             return RESULT_FAILED;
         }
@@ -927,20 +970,24 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
 
-            //check if global
+            //check if global -this needs to check enclosing compiler too
             struct ObjString* name = make_string(gv->name.start, gv->name.length);
             push_root(to_string(name));
             Value v;
-            if (get_from_table(&compiler->globals, name, &v)) {
-                emit_byte(compiler, OP_GET_GLOBAL);
-                emit_short(compiler, add_constant(compiler, to_string(name)));
-                pop_root();
-                *node_type = v.as.type_type;
-                return RESULT_SUCCESS;
-            }
+            struct Compiler* current = compiler;
+            do {
+                if (get_from_table(&current->globals, name, &v)) {
+                    emit_byte(compiler, OP_GET_GLOBAL);
+                    emit_short(compiler, add_constant(compiler, to_string(name)));
+                    pop_root();
+                    *node_type = v.as.type_type;
+                    return RESULT_SUCCESS;
+                }
+                current = current->enclosing;
+            } while (current != NULL);
             pop_root();
 
-            add_error(compiler, gv->name, "Local variable not declared.");
+            add_error(compiler, gv->name, "[GetVar] Local variable not declared.");
             return RESULT_FAILED;
         }
         case NODE_SET_VAR: {

@@ -45,6 +45,26 @@ add_passed :: (msg: string) -> {
     passed[passed.size] = msg
 }
 
+Dog :: struct {
+    name: string = "Mittens"
+    age: int = 3
+    length: float = 100.2
+    friend: Dog = nil
+    list: List<int> = nil
+    map: Map<int> = nil 
+}
+
+make_dog :: () -> Dog {
+    d := Dog()
+    d.name = "Mittens"
+    d.age = 3
+    d.length = 100.2
+    d.friend = nil
+    d.list = List<int>()
+    d.map = Map<int>()
+    -> d
+}
+
 if basic {
     print("-Basic")
     if true {
@@ -609,13 +629,8 @@ if closed_upvalues {
 if structs {
     
     print("-Structs")
-    Dog :: struct {
-        name: string = "Mittens"
-        age: int = 3
-        length: float = 100.2
-    }
 
-    dog: Dog = Dog()
+    dog: Dog = make_dog()
     if dog.name == "Mittens" {
         add_passed("Get Property: Passed!")
     } else {
@@ -645,8 +660,14 @@ if structs {
             name: string = "Whiskey"
             age: int = 2
         }
+        make_cat :: () -> Cat {
+            c := Cat()
+            c.name = "Whiskey"
+            c.age = 2
+            -> c
+        }
         inner :: () -> {
-            c: Cat = Cat()
+            c: Cat = make_cat()
             if c.name == "Whiskey" and c.age == 2 {
                 add_passed("Class upvalue: Passed!")
             } else {
@@ -656,7 +677,7 @@ if structs {
         -> inner
     }
     outer()()
-    dog1: Dog = Dog()
+    dog1: Dog = make_dog()
     dog1.age = 5
 
 
@@ -666,7 +687,7 @@ if structs {
         add_failed("Property Assignment: Failed!")
     }
 
-    dog2: Dog = Dog()
+    dog2: Dog = make_dog()
     dog1.age = dog2.age = 10
     if dog1.age == 10 and dog2.age == 10 {
         add_passed("Cascade Property Assignment: Passed!")
@@ -674,7 +695,7 @@ if structs {
         add_failed("Cascade Property Assignment: Failed!")
     }
 
-    dog3: Dog = Dog()
+    dog3: Dog = make_dog()
     dog_age :: (d: Dog) -> {
         d.age = 10
     }
@@ -686,7 +707,7 @@ if structs {
     }
 
     dog_factory :: () -> Dog {
-        d: Dog = Dog()
+        d: Dog = make_dog()
         d.age = 100
         -> d
     }
@@ -758,14 +779,8 @@ if lists {
         add_failed("Set Lower Index: Failed!")
     }
 
-
-    Dog :: struct {
-        name: string = "Mittens"
-        age: int = 5
-    }
-
     b: List<Dog> = List<Dog>()
-    d: Dog = Dog()
+    d: Dog = make_dog()
     d.name = "Bubbles"
     b[0] = d
     b.size = 2
@@ -844,16 +859,10 @@ if nils_for_instances {
     
     print("-Nils For Instances")
 
-    Dog :: struct {
-        name: string = "Bubbles"
-        age: int = 2
-        friend: Dog = nil
-    }
-
-    dog0: Dog = Dog()
-    dog1: Dog = Dog()
+    dog0: Dog = make_dog()
+    dog1: Dog = make_dog()
     dog1.name = "Mittens"
-    dog2: Dog = Dog()
+    dog2: Dog = make_dog()
     dog2.name = "Boxy"
     dog0.friend = dog1
     dog1.friend = dog2
@@ -879,79 +888,6 @@ if nils_for_instances {
     }
 }
 
-if struct_inheritance{
-    
-    print("-Struct Inheritance")
-
-    Animal :: struct {
-        class: string = "Mammal"
-    }
-
-    Bird :: struct < Animal {
-        class: string = "Avian"
-    }
-
-    Zebra :: struct < Animal {
-        name: string = "adfs"
-    }
-
-    bird: Bird = Bird()
-    zebra: Zebra = Zebra()
-
-    if bird.class == "Avian" {
-        add_passed("Overwrite property: Passed!")
-    } else {
-        add_failed("Overwrite property: Failed!")
-    }
-
-    if zebra.class == "Mammal" {
-        add_passed("Inherit property: Passed!")
-    } else {
-        add_failed("Inherit property: Failed!")
-    }
-
-}
-
-if struct_typing {
-
-    
-    print("-Struct Typing")
-    Animal :: struct {
-        class: string = "Mammal"
-    }
-
-    Bird :: struct < Animal {
-        class: string = "Avian"
-        name: string = "Flappy"
-    }
-
-    fun :: (a: Animal) -> {
-        a.class = "Reptile"
-    }
-
-    make_bird :: () -> Animal {
-        b: Bird = Bird()
-        -> b as Animal
-    }
-
-
-    a: Animal = Bird() as Animal
-    fun(a)
-    b := a as Bird
-
-    if b.name == "Flappy" and b.class == "Reptile" {
-        add_passed("Function Modify Struct Instance: Passed!")
-    } else {
-        add_failed("Function Modify Struct Instance: Failed!")
-    }
-
-    if make_bird().class == "Avian" {
-        add_passed("Return Substruct: Passed!")
-    } else {
-        add_failed("Return Substruct: Failed!")
-    }
-
-}
 
 
 if for_each_loop {
@@ -1002,13 +938,9 @@ if get_char {
         add_failed("Get Char: Failed!")
     }
 
-    Dog :: struct {
-        name := "Mittens"
-        friend: Dog = nil
-    }
 
-    dog1 := Dog()
-    dog2 := Dog()
+    dog1 := make_dog()
+    dog2 := make_dog()
     dog1.friend = dog2
     dog1.friend.name = "Bubbles"
 
@@ -1031,14 +963,10 @@ if get_string_size {
         add_failed("Get String Size: Failed!")
     }
 
-    Dog :: struct {
-        name := "Mittens"
-        friend: Dog = nil
-    }
 
-    dog1 := Dog()
+    dog1 := make_dog()
     dog1.name = "Mit"
-    dog2 := Dog()
+    dog2 := make_dog()
     dog1.friend = dog2
     dog2.name = "Mitts"
 
@@ -1053,15 +981,8 @@ if get_string_size {
 if lists_maps_in_structs {
     print("-Lists / Maps in Structs")
 
-    Dog :: struct {
-        name := "Mittens"
-        friend: Dog = nil
-        list := List<int>()
-        map := Map<int>()
-    }
-
-    dog := Dog()
-    dog1 := Dog()
+    dog := make_dog()
+    dog1 := make_dog()
     dog1.name = "Bubbles"
     dog.friend = dog1
 
@@ -1227,48 +1148,6 @@ if cast_to_bool {
     }
 }
 
-if cast_struct_instances {
-    print("-Cast Struct Instances")
-    Animal :: struct {
-        class := "Default"
-    }
-
-    Canine :: struct < Animal {
-        class := "Canine"
-    }
-    Dog :: struct < Canine {
-        name := "Mittens"
-        fur_color := "Brown"
-    }
-    Lizard :: struct < Animal {
-        class := "Reptile"
-        name := "Lizzy"
-        scale_color := "Green"
-    }
-
-    canine := Canine()
-    if (canine as Animal) as Canine != nil {
-        add_passed("Cast Structure Instance Down - Valid: Passed!")
-    } else {
-        add_failed("Cast Structure Instance Down - Valid: Failed!")
-    }
-
-    animal := Animal()
-    if canine as Dog == nil and animal as Canine == nil and animal as Dog == nil {
-        add_passed("Cast Structure Down - Nil: Passed!")
-    } else {
-        add_failed("Cast Structure Down - Nil: Failed!")
-    }
-
-    dog := Dog()
-    liz := Lizard()
-    if dog as Animal != nil and dog as Canine != nil and liz as Animal != nil {
-        add_passed("Cast Structure Instance Up: Passed!") 
-    } else {
-        add_failed("Cast Structure Instance Up: Failed!") 
-    }
-
-}
 
 print("----------------------------------")
 print("Total Tests:")

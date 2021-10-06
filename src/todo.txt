@@ -16,16 +16,65 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+
+    Code is a fucking mess - need to figure out how I want to deal with compiler globals - each compiler having
+        its own table is a bit much when only the top level one is needed.  
+
+        As long as both the compiler and parser have access to the type globals, it's fine
+
+        Resolving identifiers at end of parser is also messy
+
+    Implement struct inheritance 
+        test on failed tests in invalid_tests.cbr
+
+    Put tests removed from correctness.cbr back in and run tests again
+        note: all structs instantiate to 'nil' now
+        need to make a wrapper to instantiate structs for now
+
+    Change functions to global:
+        Problem with all functions being able to capture state (closures)
+            Closure need to be declared before usage so that the current state can be captured - this prevents us from 
+            declaring functions anywhere.
+        Could what Golang does: only anonymous functions can capture - they are declared and invoked at the same time so
+            that prevents the above runtime error!  I like this technique - it's very elegant.
+
     
-    When the parser adds and error for enum element names colliding, not all memory
-        is freed
+    Could try this:
+        Add all names of globals to vm.globals with a temp value place holder BEFORE compiling globals
+        compile all globals (will need to assume any captured variables in functions are valid...)
+            this causes other problems though... with upvalues not working the way they should (I think)
+            since capturing values normally depends on order of declaration
+        compile everything else
 
-    Over in compiler, how to deal with adding enums?  Skip adding them to locals.
-        OP_ADD_GLOBAL
-        OP_GET_GLOBAL
-        add globals table to vm 
+    It's crashing at runtime.  This doesn't work because the 
+    globals still haven't been added to the vm (it's only in the compiler globals table
+    so that there isn't a compiler error).  We need to make sure that ALL globals are compiled before
+    anything else in this order: enum -> structs -> functions
 
-    Need to check in parser if global is already used once - should add error if global name is repeated
+    But won't this be problematic for functions calling themselves?
+
+        print("hi")
+        a := Token.cat
+        b := Token.dog
+        print(a)
+        print(b)
+
+        Token :: enum {
+            cat
+            dog
+            bird
+        }
+
+    Since we don't allow function names to overlap anymore, this will break some tests
+        is this okay?  Or is function scopes something we want to keep?
+
+    Follow the steps taken to implement Enums in globals:
+        Change structs to globals - need to make sure that
+            a second step is taken after parsing where we resolve any identifiers
+
+        Change functions to globals - resolve identifiers 
+
+        Finally check that this allows use 
 
     Make all functions/structs/enums global - no repeating identifiers
         if necessary, add namespaces later.  Globals become really tricky

@@ -118,6 +118,7 @@ int main(int argc, char** argv) {
     VM vm;
     mm.vm = &vm;
     init_vm(&vm);
+    mm.vm_globals_initialized = true;
     ////////////////
 
     ResultCode result = RESULT_SUCCESS;
@@ -127,11 +128,19 @@ int main(int argc, char** argv) {
         result = run_script(&vm, argv[1]);
     }
 
+    //Note: need to free table and set
+    //vm_globals_initialized to false so
+    //GC doesn't try to mark vm.globals
+    //////////////////////////
+    free_table(&vm.globals);
+    mm.vm_globals_initialized = false;
+    ////////////////////////////
+
 #ifdef DEBUG_STRESS_GC
     collect_garbage();
 #endif
-
     free_vm(&vm);
+
     free_memory_manager();
 
     print_memory();

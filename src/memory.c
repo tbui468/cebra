@@ -62,6 +62,8 @@ void init_memory_manager() {
     mm.grays = (struct Obj**)realloc(NULL, 0);
     mm.gray_capacity = 0;
     mm.gray_count = 0;
+    mm.vm = NULL;
+    mm.vm_globals_initialized = false;
 }
 
 
@@ -103,7 +105,11 @@ static void mark_vm_roots() {
         mark_object((struct Obj*)current);
         push_gray((struct Obj*)current);
         current = current->next;
-    }    
+    }
+
+    if (mm.vm_globals_initialized) { //This doesn't work - need to init table before marking
+        mark_table(&mm.vm->globals);
+    }
 }
 
 static void mark_compiler_roots() {

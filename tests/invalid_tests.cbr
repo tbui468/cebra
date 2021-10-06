@@ -1,0 +1,116 @@
+
+if struct_inheritance{
+    
+    print("-Struct Inheritance")
+
+    Animal :: struct {
+        class: string = "Mammal"
+    }
+
+    Bird :: struct < Animal {
+        class: string = "Avian"
+    }
+
+    Zebra :: struct < Animal {
+        name: string = "adfs"
+    }
+
+    bird: Bird = Bird()
+    zebra: Zebra = Zebra()
+
+    if bird.class == "Avian" {
+        add_passed("Overwrite property: Passed!")
+    } else {
+        add_failed("Overwrite property: Failed!")
+    }
+
+    if zebra.class == "Mammal" {
+        add_passed("Inherit property: Passed!")
+    } else {
+        add_failed("Inherit property: Failed!")
+    }
+
+}
+
+if struct_typing {
+    
+    print("-Struct Typing")
+    Animal :: struct {
+        class: string = "Mammal"
+    }
+
+    Bird :: struct < Animal {
+        class: string = "Avian"
+        name: string = "Flappy"
+    }
+
+    fun :: (a: Animal) -> {
+        a.class = "Reptile"
+    }
+
+    make_bird :: () -> Animal {
+        b: Bird = Bird()
+        -> b as Animal
+    }
+
+
+    a: Animal = Bird() as Animal
+    fun(a)
+    b := a as Bird
+
+    if b.name == "Flappy" and b.class == "Reptile" {
+        add_passed("Function Modify Struct Instance: Passed!")
+    } else {
+        add_failed("Function Modify Struct Instance: Failed!")
+    }
+
+    if make_bird().class == "Avian" {
+        add_passed("Return Substruct: Passed!")
+    } else {
+        add_failed("Return Substruct: Failed!")
+    }
+
+}
+
+if cast_struct_instances {
+    print("-Cast Struct Instances")
+    Animal :: struct {
+        class := "Default"
+    }
+
+    Canine :: struct < Animal {
+        class := "Canine"
+    }
+    Dog :: struct < Canine {
+        name := "Mittens"
+        fur_color := "Brown"
+    }
+    Lizard :: struct < Animal {
+        class := "Reptile"
+        name := "Lizzy"
+        scale_color := "Green"
+    }
+
+    canine := Canine()
+    if (canine as Animal) as Canine != nil {
+        add_passed("Cast Structure Instance Down - Valid: Passed!")
+    } else {
+        add_failed("Cast Structure Instance Down - Valid: Failed!")
+    }
+
+    animal := Animal()
+    if canine as Dog == nil and animal as Canine == nil and animal as Dog == nil {
+        add_passed("Cast Structure Down - Nil: Passed!")
+    } else {
+        add_failed("Cast Structure Down - Nil: Failed!")
+    }
+
+    dog := make_dog()
+    liz := Lizard()
+    if dog as Animal != nil and dog as Canine != nil and liz as Animal != nil {
+        add_passed("Cast Structure Instance Up: Passed!") 
+    } else {
+        add_failed("Cast Structure Instance Up: Failed!") 
+    }
+
+}
