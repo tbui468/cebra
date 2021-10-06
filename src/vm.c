@@ -24,6 +24,12 @@ void push(VM* vm, Value value) {
     vm->stack_top++;
 }
 
+void pop_stack(VM* vm) {
+    while (vm->stack_top > vm->stack) {
+        pop(vm);
+    }            
+}
+
 static Value peek(VM* vm, int depth) {
     return *(vm->stack_top - 1 - depth);
 }
@@ -33,11 +39,14 @@ ResultCode init_vm(VM* vm) {
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
     vm->error_count = 0;
+    init_table(&vm->globals);
 
     return RESULT_SUCCESS;
 }
 
 ResultCode free_vm(VM* vm) {
+    pop_stack(vm);
+    free_table(&vm->globals);
     return RESULT_SUCCESS;
 }
 
@@ -162,6 +171,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //immediately after OP_CLASS + constant idx
             break;
         }
+                       /*
         case OP_ENUM: {
             Value val_enum = read_constant(frame, READ_TYPE(frame, uint16_t));
             push(vm, val_enum);
@@ -172,7 +182,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 set_table(&obj_enum->props, prop_name, to_integer(i));
             }
             break;
-        }
+        }*/
         case OP_ADD_PROP: {
             //current stack: [script]...[class][value]
             push_root(read_constant(frame, READ_TYPE(frame, uint16_t)));
@@ -583,6 +593,19 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             push(vm, result);
             break;
         }
+        case OP_ADD_GLOBAL: {
+            Value name = read_constant(frame, READ_TYPE(frame, uint16_t));
+            Value val = read_constant(frame, READ_TYPE(frame, uint16_t));
+            set_table(&vm->globals, name.as.string_type, val);
+            break;
+        }
+        case OP_GET_GLOBAL: {
+            Value name = read_constant(frame, READ_TYPE(frame, uint16_t));
+            Value val;
+            get_from_table(&vm->globals, name.as.string_type, &val);
+            push(vm, val);
+            break;
+        }
     } 
 
 #ifdef DEBUG_TRACE
@@ -607,11 +630,7 @@ ResultCode run(VM* vm, struct ObjFunction* script) {
             printf("Runtime Error: ");
             printf("%s\n", vm->errors[i].message);
         }
-        
-        //clear the stack so that the GC can free memory
-        while (vm->stack_top > vm->stack) {
-            pop(vm);
-        }            
+        pop_stack(vm);
 
         return RESULT_FAILED;
     }

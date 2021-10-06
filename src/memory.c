@@ -54,31 +54,19 @@ int free_mem(void* ptr, size_t size) {
     return size;
 }
 
-void init_memory_manager(VM* vm) {
+void init_memory_manager() {
     mm.allocated = 0;
     mm.next_gc = 1024 * 1024;
     mm.objects = NULL;
-    mm.vm = vm;
     //NOTE: using system realloc since we don't want GC to collect within a GC collection
     mm.grays = (struct Obj**)realloc(NULL, 0);
     mm.gray_capacity = 0;
     mm.gray_count = 0;
-   // init_table(&mm.structs);
 }
 
 
 void free_memory_manager() {
     free((void*)mm.grays);
-
-    //manually free strings from structs table (used in parser)
-    /*
-    for (int i = 0; i < mm.structs.capacity; i++) {
-        struct Pair* pair = &mm.structs.pairs[i];
-        if (pair->key != NULL) {
-            free_object((struct Obj*)(pair->key));       
-        } 
-    }
-    free_table(&mm.structs);*/
 }
 
 void print_memory() {
@@ -121,26 +109,31 @@ static void mark_vm_roots() {
 static void mark_compiler_roots() {
     struct Compiler* current = current_compiler;
     while (current != NULL) {
+        mark_table(&current->globals);
+
         mark_object((struct Obj*)(current->function));
         push_gray((struct Obj*)(current->function));
 
         struct Type* type = current->types;
         while (type != NULL) {
-            if (type->type == TYPE_CLASS) {
-                struct TypeClass* sc = (struct TypeClass*)type;
-                for (int i = 0; i < sc->props.capacity; i++) {
-                    struct Pair* pair = &sc->props.pairs[i];
-                    if (pair->key != NULL) {
-                        mark_object((struct Obj*)(pair->key));
-                        push_gray((struct Obj*)(pair->key));
-                    }
-                }                    
+            switch(type->type) {
+                case TYPE_ENUM:
+                    struct TypeEnum* te = (struct TypeEnum*)type;
+                    mark_table(&te->props);
+                    break;
+                case TYPE_CLASS:
+                    struct TypeClass* sc = (struct TypeClass*)type;
+                    mark_table(&sc->props);
+                    break;
+                default:
+                    break;
             }
             type = type->next;
         }
 
         current = current->enclosing;
     }
+
 }
 
 static void trace_references() {

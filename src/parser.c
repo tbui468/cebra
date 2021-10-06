@@ -540,24 +540,46 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_IDENTIFIER);
         Token enum_name = parser.previous;
         match(TOKEN_COLON_COLON);
-
         match(TOKEN_ENUM);
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before enum body.");
-        //read in enums
+
+        //create enum type to fill in
+        struct TypeEnum* type = (struct TypeEnum*)make_enum_type(enum_name);
+        struct ObjString* enum_string = make_string(enum_name.start, enum_name.length);
+        push_root(to_string(enum_string));
+        set_table(parser.globals, enum_string, to_type((struct Type*)type));
+        pop_root();
+
         struct NodeList* nl = (struct NodeList*)make_node_list();
+
         while (!match(TOKEN_RIGHT_BRACE)) {
             CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect enum list inside enum body.");
-            add_node(nl, make_decl_var(parser.previous, make_int_type(), NULL));
+            struct Node* dv = make_decl_var(parser.previous, make_int_type(), NULL);
+            Token dv_name = ((DeclVar*)dv)->name;
+            struct ObjString* prop_name = make_string(dv_name.start, dv_name.length);
+            push_root(to_string(prop_name));
+
+            Value v;
+            if (get_from_table(&type->props, prop_name, &v)) {
+                pop_root();
+                ERROR(dv_name, "Element name already used once in this enum.");
+            }
+
+            set_table(&type->props, prop_name, to_type(make_int_type()));
+            pop_root();
+            add_node(nl, dv);
         }
+
         *node = make_decl_enum(enum_name, nl);
+
         return RESULT_SUCCESS;
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
         match(TOKEN_IDENTIFIER);
         Token struct_name = parser.previous;
         match(TOKEN_COLON_COLON);
 
-        struct Type* right_type;
-        PARSE_TYPE(struct_name, &right_type, struct_name, "Invalid type.");
+        struct Type* struct_type;
+        PARSE_TYPE(struct_name, &struct_type, struct_name, "Invalid type.");
 
         //TODO: PARSE_TYPE should really be the result we used for make_decl_var
         //  instead of making a struct Node* super... (why did we do this?)
@@ -575,8 +597,13 @@ static ResultCode declaration(struct Node** node) {
                 ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
             }
 
+            //TODO: need to get decl and add to struct type
+            //  need struct properties for type checking
+
             add_node(nl, decl);
         }
+
+        //TODO: need to add final struct type to parser.globals
 
         *node = make_decl_class(struct_name, super, nl);
         return RESULT_SUCCESS;
@@ -587,6 +614,9 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_LEFT_PAREN);
 
         PARSE(parse_function, var_name, node, var_name, "Invalid function declaration.");
+
+        //TODO: need to get node function final type and add to parser.globals
+        
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;
@@ -718,12 +748,13 @@ static ResultCode declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static void init_parser(const char* source) {
+static void init_parser(const char* source, struct Table* globals) {
     init_lexer(source);
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
     parser.error_count = 0;
+    parser.globals = globals;
 }
 
 static void free_parser() {
@@ -758,8 +789,8 @@ static void quick_sort(struct Error* errors, int lo, int hi) {
     quick_sort(errors, p + 1, hi);
 }
 
-ResultCode parse(const char* source, struct NodeList* nl) {
-    init_parser(source);
+ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals) {
+    init_parser(source, globals);
 
     ResultCode result = RESULT_SUCCESS;
 
@@ -773,6 +804,17 @@ ResultCode parse(const char* source, struct NodeList* nl) {
         }
     }
 
+    //TODO: resolve identifiers in globals
+    //  May need two steps for structs
+    //      1. resolve all identifiers into Enum/Struct/Function types
+    //            (including types in TypeClass->props)
+    //      2. Update TypeClass props table by going up the struct heirarchy
+    //          and copying all props that don't already exist
+    //          BUT, will need to do some checking here to make sure that overwritten
+    //          prop types are the same.  Currently doing this check in compiler but
+    //          will need to move it all here if we want all global types to be complete
+    //          when we get to the compiler.
+    print_table(parser.globals);
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);

@@ -17,7 +17,7 @@ ResultCode run_source(VM* vm, const char* source) {
 
     printf("Before parser\n");
     struct Node* nl = make_node_list();
-    ResultCode parse_result = parse(source, (struct NodeList*)nl);
+    ResultCode parse_result = parse(source, (struct NodeList*)nl, &script_compiler.globals);
     printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
@@ -53,6 +53,7 @@ ResultCode run_source(VM* vm, const char* source) {
     free_compiler(&script_compiler);
 
     printf("Before run\n");
+    //pop_roots here - no longer need to pop_roots
     ResultCode run_result = run(vm, script_compiler.function);
     printf("After run\n");
 
@@ -109,10 +110,15 @@ ResultCode run_script(VM* vm, const char* path) {
 
 int main(int argc, char** argv) {
 
+    //Note: memory manage needs a pointer to vm,
+    //and vm needs memory manager initialized before
+    //it can be initialized - this ordering is important
+    ////////////////
+    init_memory_manager();
     VM vm;
+    mm.vm = &vm;
     init_vm(&vm);
-
-    init_memory_manager(&vm);
+    ////////////////
 
     ResultCode result = RESULT_SUCCESS;
     if (argc == 1) {

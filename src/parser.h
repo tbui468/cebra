@@ -20,9 +20,10 @@ typedef struct {
     Token next_next;
     struct Error errors[256];
     int error_count;
+    struct Table* globals;
 } Parser;
 
-ResultCode parse(const char* source, struct NodeList* nl);
+ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H

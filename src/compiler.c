@@ -620,39 +620,33 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;
 
-            if (declared_in_scope(compiler, de->name)) {
-                add_error(compiler, de->name, "Identifier already defined.");
-                return RESULT_FAILED;
-            }
-
+            //set up objects
             struct ObjString* name = make_string(de->name.start, de->name.length);
             push_root(to_string(name));
             struct ObjEnum* obj_enum = make_enum(name);
             push_root(to_enum(obj_enum));
-            
-            emit_byte(compiler, OP_ENUM);
-            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
 
-            pop_root();
-            pop_root();
-
+            //fill up &obj_enum->props
             int count = de->decls->count;
-            emit_byte(compiler, count);
-
-            struct TypeEnum* type = (struct TypeEnum*)make_enum_type(de->name);
-
             for (int i = 0; i < count; i++) {
                 DeclVar* dv = (DeclVar*)(de->decls->nodes[i]);
                 struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
                 push_root(to_string(prop_name));
-                emit_short(compiler, add_constant(compiler, to_string(prop_name)));
-                set_table(&type->props, prop_name, to_type(make_int_type()));
+                set_table(&obj_enum->props, prop_name, to_integer(i));
                 pop_root();
             }
-            
-            add_local(compiler, de->name, (struct Type*)type);
-           
-            *node_type = (struct Type*)type;
+
+            //emit codes to vm
+            emit_byte(compiler, OP_ADD_GLOBAL);
+            emit_short(compiler, add_constant(compiler, to_string(name)));
+            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
+            pop_root(); //struct ObjEnum* 'obj_enum'
+
+            //Get type already completely defined in parser
+            Value v;
+            get_from_table(&compiler->globals, name, &v);
+            *node_type = v.as.type_type;
+            pop_root(); //struct ObjString* 'name'
             return RESULT_SUCCESS;
         }
         //statements
@@ -909,6 +903,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             GetVar* gv = (GetVar*)node;
 
             //List/Map creation
+            //TODO: this is completely out of place
+            //  should move this elsewhere or create a new type of AST node
+            //  instead of tacking on 'template_type' field to GetVar
             if (gv->template_type != NULL) {
                 *node_type = gv->template_type;
                 return RESULT_SUCCESS;
@@ -929,6 +926,19 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 *node_type = resolve_type(compiler, gv->name);
                 return RESULT_SUCCESS;
             }
+
+            //check if global
+            struct ObjString* name = make_string(gv->name.start, gv->name.length);
+            push_root(to_string(name));
+            Value v;
+            if (get_from_table(&compiler->globals, name, &v)) {
+                emit_byte(compiler, OP_GET_GLOBAL);
+                emit_short(compiler, add_constant(compiler, to_string(name)));
+                pop_root();
+                *node_type = v.as.type_type;
+                return RESULT_SUCCESS;
+            }
+            pop_root();
 
             add_error(compiler, gv->name, "Local variable not declared.");
             return RESULT_FAILED;
