@@ -17,6 +17,8 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Delete class_compiler - I don't think we use it for anything
+
     Code is a fucking mess - need to figure out how I want to deal with compiler globals - each compiler having
         its own table is a bit much when only the top level one is needed.  
 

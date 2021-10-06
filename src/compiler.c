@@ -17,7 +17,7 @@
                 }
 
 struct Compiler* current_compiler = NULL;
-struct Compiler* class_compiler = NULL;
+struct Compiler* script_compiler = NULL;
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type);
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array);
 
@@ -266,15 +266,15 @@ static struct Type* resolve_type(struct Compiler* compiler, Token name) {
                 return current->locals[i].type;
             }
         }
-        //check globals
-        struct ObjString* str = make_string(name.start, name.length);
-        Value val;
-        if (get_from_table(&current->globals, str, &val)) {
-            return val.as.type_type;
-        }
         current = current->enclosing;
     } while(current != NULL);
 
+    //check globals
+    struct ObjString* str = make_string(name.start, name.length);
+    Value val;
+    if (get_from_table(&script_compiler->globals, str, &val)) {
+        return val.as.type_type;
+    }
 
     add_error(compiler, name, "Local variable not declared.");
 
@@ -974,20 +974,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct ObjString* name = make_string(gv->name.start, gv->name.length);
             push_root(to_string(name));
             Value v;
-            struct Compiler* current = compiler;
-            do {
-                if (get_from_table(&current->globals, name, &v)) {
-                    emit_byte(compiler, OP_GET_GLOBAL);
-                    emit_short(compiler, add_constant(compiler, to_string(name)));
-                    pop_root();
-                    *node_type = v.as.type_type;
-                    return RESULT_SUCCESS;
-                }
-                current = current->enclosing;
-            } while (current != NULL);
+            if (get_from_table(&script_compiler->globals, name, &v)) {
+                emit_byte(compiler, OP_GET_GLOBAL);
+                emit_short(compiler, add_constant(compiler, to_string(name)));
+                pop_root();
+                *node_type = v.as.type_type;
+                return RESULT_SUCCESS;
+            }
             pop_root();
 
-            add_error(compiler, gv->name, "[GetVar] Local variable not declared.");
+            add_error(compiler, gv->name, "Attempting to access undeclared variable.");
             return RESULT_FAILED;
         }
         case NODE_SET_VAR: {
@@ -1361,6 +1357,7 @@ static void define_print(struct Compiler* compiler) {
 
 
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
+    script_compiler = compiler;
     define_clock(compiler);
     define_print(compiler);
 

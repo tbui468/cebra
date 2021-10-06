@@ -846,6 +846,27 @@ static void quick_sort(struct Error* errors, int lo, int hi) {
     quick_sort(errors, p + 1, hi);
 }
 
+static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
+    for (int j = 0; j < tc->props.capacity; j++) {
+        struct Pair* inner_pair = &tc->props.pairs[j];
+        if (inner_pair->value.type == VAL_TYPE && inner_pair->value.as.type_type->type == TYPE_IDENTIFIER) {
+            struct Type* type = inner_pair->value.as.type_type;
+            struct TypeIdentifier* id = (struct TypeIdentifier*)type;
+            struct ObjString* identifier = make_string(id->identifier.start, id->identifier.length);
+            push_root(to_string(identifier));
+            Value resolved_id;
+            if (get_from_table(parser.globals, identifier, &resolved_id)) {
+                set_table(&tc->props, inner_pair->key, resolved_id);
+                pop_root();
+            } else {
+                pop_root();
+                ERROR(make_dummy_token(), "Identifier not declared.");
+            }
+        }
+    }
+    return RESULT_SUCCESS;
+}
+
 ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals) {
     init_parser(source, globals);
 
@@ -861,33 +882,13 @@ ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals)
         }
     }
 
-    //resolve identifiers in structs (and later functions)
+    //resolve identifiers in structs
     for (int i = 0; i < parser.globals->capacity; i++) {
         struct Pair* pair = &parser.globals->pairs[i];
-        if (pair->value.type == VAL_TYPE) {
+        if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
             struct Type* type = pair->value.as.type_type;
-            if (type->type == TYPE_CLASS) {
-                struct TypeClass* tc = (struct TypeClass*)type;
-                for (int j = 0; j < tc->props.capacity; j++) {
-                    struct Pair* inner_pair = &tc->props.pairs[j];
-                    if (inner_pair->value.type == VAL_TYPE) {
-                        struct Type* type = inner_pair->value.as.type_type;
-                        if (type->type == TYPE_IDENTIFIER) {
-                            struct TypeIdentifier* id = (struct TypeIdentifier*)type;
-                            struct ObjString* identifier = make_string(id->identifier.start, id->identifier.length);
-                            push_root(to_string(identifier));
-                            Value resolved_id;
-                            if (get_from_table(parser.globals, identifier, &resolved_id)) {
-                                set_table(&tc->props, inner_pair->key, resolved_id);
-                                pop_root();
-                            } else {
-                                pop_root();
-                                ERROR(make_dummy_token(), "Identifier not declared.");
-                            }
-                        }
-                    }
-                }
-            }
+            struct TypeClass* tc = (struct TypeClass*)type;
+            ResultCode result = resolve_struct_identifiers(tc);
         }
     }
     //TODO: resolve identifiers in globals
