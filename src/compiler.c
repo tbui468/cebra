@@ -534,7 +534,39 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct ObjClass* struct_obj = make_class(struct_string, struct_types);
             push_root(to_class(struct_obj));
 
-            //fill up &struct_obj->props
+            struct Type* current = resolve_type(compiler, dc->name);
+            print_type(current);
+            while (current != NULL) {
+                //add struct + supers to types table for runtime cast checks
+                struct TypeClass* tc = (struct TypeClass*)current;
+                struct ObjString* class_name = make_string(tc->klass.start, tc->klass.length);
+                push_root(to_string(class_name));
+                set_table(&struct_obj->types, class_name, to_nil());
+
+                //add super properties to &struct_obj->props - only names; the values defautl to 'nil'
+                //to make sure that lower hierarchy struct properties overwrite,
+                //only set to table if it doesn't exit yet.  For repeated properties,
+                //need to check that they are of the same type
+                int count = tc->props.capacity; 
+                for (int i = 0; i < count; i++) {
+                    struct Pair* pair = &tc->props.pairs[i];
+                    if (pair->key != NULL) {
+                        Value val;
+                        if (!get_from_table(&struct_obj->props, pair->key, &val)) {
+                            set_table(&struct_obj->props, pair->key, to_nil());
+                        } else {
+                            CHECK_TYPE(!same_type(val.as.type_type, pair->value.as.type_type), dc->name, 
+                                       "Overwritten struct properties must be of the same type.");
+                        }
+                    } 
+                }
+
+                pop_root();
+                current = tc->super;
+            }
+
+            /*
+            //fill up other fields in &struct_obj->props
             int count = dc->decls->count;
             for (int i = 0; i < count; i++) {
                 DeclVar* dv = (DeclVar*)(dc->decls->nodes[i]);
@@ -542,7 +574,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 push_root(to_string(prop_name));
                 set_table(&struct_obj->props, prop_name, to_nil()); //setting to 'nil' for now
                 pop_root();
-            }
+            }*/
 
             //set globals in vm
             set_table(&mm.vm->globals, struct_string, to_class(struct_obj));
@@ -883,9 +915,18 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             emit_short(compiler, add_constant(compiler, to_string(name))); 
             pop_root();
 
-            Value type_val;
-            if (!get_from_table(&((struct TypeClass*)type_inst)->props, name, &type_val)) {
-                add_error(compiler, gp->prop, "Property doesn't exist on struct.");
+            Value type_val = to_nil();
+            struct Type* current = type_inst;
+            while (current != NULL) {
+                struct TypeClass* tc = (struct TypeClass*)current;
+                if (get_from_table(&tc->props, name, &type_val)) {
+                    break;
+                }
+                current = tc->super;
+            }
+
+            if (current == NULL) {
+                add_error(compiler, gp->prop, "Property not found in instance.");
                 return RESULT_FAILED;
             }
 
@@ -914,11 +955,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
             }
 
-            /*
-            if (type_inst->type == TYPE_CLASS) {
-                type_inst = resolve_type(compiler, ((struct TypeClass*)type_inst)->klass);
-            }*/
-
             if (type_inst->type == TYPE_CLASS) {
                 struct ObjString* name = make_string(prop.start, prop.length);
                 push_root(to_string(name));
@@ -927,7 +963,19 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 pop_root();
 
                 Value type_val = to_nil();
-                get_from_table(&((struct TypeClass*)type_inst)->props, name, &type_val);
+                struct Type* current = type_inst;
+                while (current != NULL) {
+                    struct TypeClass* tc = (struct TypeClass*)current;
+                    if (get_from_table(&tc->props, name, &type_val)) {
+                        break;
+                    }
+                    current = tc->super;
+                }
+
+                if (current == NULL) {
+                    add_error(compiler, prop, "Property not found in instance.");
+                    return RESULT_FAILED;
+                }
 
                 //TODO: should find a way to resolve identifiers immediately when possible instead of right before checking
                 if (right_type->type == TYPE_IDENTIFIER) {

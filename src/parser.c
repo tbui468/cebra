@@ -604,8 +604,8 @@ static ResultCode declaration(struct Node** node) {
         pop_root();
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
-            make_get_var(parser.previous, NULL) : 
-            NULL;
+                             make_get_var(parser.previous, NULL) : 
+                             NULL;
 
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before class body.");
 
@@ -847,6 +847,7 @@ static void quick_sort(struct Error* errors, int lo, int hi) {
 }
 
 static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
+    //resolve properties
     for (int j = 0; j < tc->props.capacity; j++) {
         struct Pair* inner_pair = &tc->props.pairs[j];
         if (inner_pair->value.type == VAL_TYPE && inner_pair->value.as.type_type->type == TYPE_IDENTIFIER) {
@@ -862,6 +863,20 @@ static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
                 pop_root();
                 ERROR(make_dummy_token(), "Identifier not declared.");
             }
+        }
+    }
+    //resolve structs inherited from
+    if (tc->super != NULL && tc->super->type == TYPE_IDENTIFIER)  {
+        struct TypeIdentifier* id = (struct TypeIdentifier*)(tc->super);
+        struct ObjString* super_string = make_string(id->identifier.start, id->identifier.length);
+        push_root(to_string(super_string));
+        Value resolved_id;
+        if (get_from_table(parser.globals, super_string, &resolved_id)) {
+            tc->super = resolved_id.as.type_type;
+            pop_root();
+        } else {
+            pop_root();
+            ERROR(make_dummy_token(), "Identifier not declared.");
         }
     }
     return RESULT_SUCCESS;
@@ -901,7 +916,7 @@ ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals)
     //          prop types are the same.  Currently doing this check in compiler but
     //          will need to move it all here if we want all global types to be complete
     //          when we get to the compiler.
-//    print_table(parser.globals);
+    print_table(parser.globals);
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);

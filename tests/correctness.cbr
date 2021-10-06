@@ -45,6 +45,9 @@ add_passed :: (msg: string) -> {
     passed[passed.size] = msg
 }
 
+//currently all fields are set to 'nil' on instantiation (ignoring the defaults)
+//so Dog.name ignores "Mittens" and is in fact defaulted to 'nil'
+//and requires a function ('make_dog') to initialize fields.
 Dog :: struct {
     name: string = "Mittens"
     age: int = 3

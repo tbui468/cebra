@@ -17,17 +17,10 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Delete class_compiler - I don't think we use it for anything
-
-    Code is a fucking mess - need to figure out how I want to deal with compiler globals - each compiler having
-        its own table is a bit much when only the top level one is needed.  
-
-        As long as both the compiler and parser have access to the type globals, it's fine
-
-        Resolving identifiers at end of parser is also messy
-
     Implement struct inheritance 
+        how was inheritance in parser/compiler done again?
         test on failed tests in invalid_tests.cbr
+        look at code in NODE_CLASS to see what needs to be included in new version
 
     Put tests removed from correctness.cbr back in and run tests again
         note: all structs instantiate to 'nil' now
