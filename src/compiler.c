@@ -535,7 +535,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             push_root(to_class(struct_obj));
 
             struct Type* current = resolve_type(compiler, dc->name);
-            print_type(current);
             while (current != NULL) {
                 //add struct + supers to types table for runtime cast checks
                 struct TypeClass* tc = (struct TypeClass*)current;
@@ -550,14 +549,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 int count = tc->props.capacity; 
                 for (int i = 0; i < count; i++) {
                     struct Pair* pair = &tc->props.pairs[i];
-                    if (pair->key != NULL) {
-                        Value val;
-                        if (!get_from_table(&struct_obj->props, pair->key, &val)) {
-                            set_table(&struct_obj->props, pair->key, to_nil());
-                        } else {
-                            CHECK_TYPE(!same_type(val.as.type_type, pair->value.as.type_type), dc->name, 
-                                       "Overwritten struct properties must be of the same type.");
-                        }
+                    Value val;
+                    if (pair->key != NULL && !get_from_table(&struct_obj->props, pair->key, &val)) {
+                        set_table(&struct_obj->props, pair->key, to_nil());
                     } 
                 }
 

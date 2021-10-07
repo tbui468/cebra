@@ -17,6 +17,52 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Not a big fan of not being able to set struct fields to an expression as
+        a default value (currently setting them all to nil).
+
+        One possible solution: Have all enums/structs/functions use a separate compiler (similar to how functions do it now)
+        that is then run before the main code...but this is messy
+
+        Another option: Go do the two pass parser/compiler - this will allow us to reuse compilation code for compiling structs
+            Keep the parser the same - it still fills in compiler.globals with enum/struct/function types for type checker during compilation.
+
+            Just need to replace NODE_ENUM/NODE_CLASS with new code - how about this?  During parsing, could take nodes that have
+            NODE_ENUM, NODE_CLASS, and NODE_FUNCTION (not anonymous - need to disallow upvalues in 'regular' :: functions) and put
+            them in a linked list for compiler.  Skip putting them in the regular AST node. Then before compiling main script body, compile this so
+            that they are all compiled at the beginning.
+
+            Will need to redo enum/struct compilation so that it compiles through the VM
+
+    We want TypeClass props and ObjClass props to match ALL the time.  
+        Animal :: struct {
+            class := "mammal"
+        }
+        Canine :: struct < Animal {
+            domestic := true
+        }
+        Dog :: struct < Canine {
+            name := "Mittens"
+        }
+        Wolf :: struct < Canine {
+            domestic := false
+            name := "Wolfie"
+        }
+        Lizard :: struct < Animal {
+            class := "reptile"
+            domestic := false
+            name := "Lizzy"
+        }
+
+    Overwritting properties in substructs is crashing
+        Turned off CHECK_TYPE in NODE_CLASS so that it runs - a compilation error should be shown
+            when substruct overrides superstruct property with a different type
+
+            Best way - Update TypeClass->props so that each supstruct type includes the base struct
+               property types.  This is the simpliest way - just copy them over while
+               in the parser.  Can also check that overwritten types are of correct type at this time.
+
+               In the compiler, can just copy properties over...?
+
     Implement struct inheritance 
         how was inheritance in parser/compiler done again?
         test on failed tests in invalid_tests.cbr

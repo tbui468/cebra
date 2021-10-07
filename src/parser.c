@@ -882,6 +882,28 @@ static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
     return RESULT_SUCCESS;
 }
 
+static ResultCode copy_down_props(struct TypeClass* klass) {
+    struct Type* super_type = klass->super;
+    while (super_type != NULL) {
+        struct TypeClass* super = (struct TypeClass*)super_type;
+        for (int j = 0; j < super->props.capacity; j++) {
+            struct Pair* pair = &super->props.pairs[j];
+            if (pair->key != NULL) {
+                Value val;
+                if (get_from_table(&klass->props, pair->key, &val)) {
+                    if (!same_type(val.as.type_type, pair->value.as.type_type)) {
+                        ERROR(make_dummy_token(), "Overwritten properties must share same type.");
+                    }
+                } else {
+                    set_table(&klass->props, pair->key, pair->value);
+                }
+            }
+        }
+        super_type = super->super;
+    }
+    return RESULT_SUCCESS;
+}
+
 ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals) {
     init_parser(source, globals);
 
@@ -903,7 +925,17 @@ ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals)
         if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
             struct Type* type = pair->value.as.type_type;
             struct TypeClass* tc = (struct TypeClass*)type;
-            ResultCode result = resolve_struct_identifiers(tc);
+            if (resolve_struct_identifiers(tc) == RESULT_FAILED) break;
+        }
+    }
+
+    //for each TypeClass*, copy down props and check that overwritten props are of same type
+    for (int i = 0; i < parser.globals->capacity; i++) {
+        struct Pair* pair = &parser.globals->pairs[i];
+        if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
+            struct Type* type = pair->value.as.type_type;
+            struct TypeClass* klass = (struct TypeClass*)type; //this is the substruct we want to copy all props into
+            if (copy_down_props(klass) == RESULT_FAILED) break;
         }
     }
     //TODO: resolve identifiers in globals
