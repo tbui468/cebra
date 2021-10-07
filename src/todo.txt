@@ -16,22 +16,12 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    Switch enums back to compiling to a global inside of vm (rather than setting global in compiler)
+        this will allow more flexible assignment of values to each element
 
-    Not a big fan of not being able to set struct fields to an expression as
-        a default value (currently setting them all to nil).
-
-        One possible solution: Have all enums/structs/functions use a separate compiler (similar to how functions do it now)
-        that is then run before the main code...but this is messy
-
-        Another option: Go do the two pass parser/compiler - this will allow us to reuse compilation code for compiling structs
-            Keep the parser the same - it still fills in compiler.globals with enum/struct/function types for type checker during compilation.
-
-            Just need to replace NODE_ENUM/NODE_CLASS with new code - how about this?  During parsing, could take nodes that have
-            NODE_ENUM, NODE_CLASS, and NODE_FUNCTION (not anonymous - need to disallow upvalues in 'regular' :: functions) and put
-            them in a linked list for compiler.  Skip putting them in the regular AST node. Then before compiling main script body, compile this so
-            that they are all compiled at the beginning.
-
-            Will need to redo enum/struct compilation so that it compiles through the VM
+    Swtich structs back to compiling in vm so that default values can be used
+        if a field is a instance, should copy that instance type rather than using
+        a reference (eg, Dog(), List<int>() and Map<int>())
 
     We want TypeClass props and ObjClass props to match ALL the time.  
         Animal :: struct {

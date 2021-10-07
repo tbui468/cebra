@@ -58,6 +58,19 @@ static void print_all_tokens() {
     printf("******end**********\n");
 }
 
+void add_to_compile_pass(struct Node* decl, struct NodeList* first, struct NodeList* second) {
+    switch(decl->type) {
+        case NODE_ENUM:
+            add_node(first, decl);
+            break;
+        case NODE_CLASS: //include in first pass
+        case NODE_FUN: //include in first pass
+        default:
+            add_node(second, decl);
+            break;
+    }
+}
+
 static void advance() {
     parser.previous = parser.current;
     parser.current = parser.next;
@@ -399,7 +412,7 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
         }
         struct Node* decl;
         if (declaration(&decl) == RESULT_SUCCESS) {
-            add_node(body, decl);
+            add_to_compile_pass(decl, parser.first_pass_nl, body);
         } else {
             synchronize();
         }
@@ -555,7 +568,7 @@ static ResultCode declaration(struct Node** node) {
             ERROR(enum_name, "The identifier for this enum is already used.");
         }
 
-        //set globals in parser (which compiler uses)
+        //set globals in parser (which compiler uses for type checking)
         set_table(parser.globals, enum_string, to_type((struct Type*)type));
         pop_root();
 
@@ -723,7 +736,7 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
         struct Node* initializer = NULL;
         if (!match(TOKEN_COMMA)) {
-            if (declaration(&initializer) == RESULT_FAILED) {
+            if (declaration(&initializer) == RESULT_FAILED) { //TODO: should this be var_decl???  This would allow other declarations here
                 ERROR(name, "Expect initializer or empty space for first item in 'for' loop.");
             }
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
@@ -805,13 +818,14 @@ static ResultCode declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static void init_parser(const char* source, struct Table* globals) {
+static void init_parser(const char* source, struct Table* globals, struct NodeList* first_pass_nl) {
     init_lexer(source);
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
     parser.error_count = 0;
     parser.globals = globals;
+    parser.first_pass_nl = first_pass_nl;
 }
 
 static void free_parser() {
@@ -904,15 +918,15 @@ static ResultCode copy_down_props(struct TypeClass* klass) {
     return RESULT_SUCCESS;
 }
 
-ResultCode parse(const char* source, struct NodeList* nl, struct Table* globals) {
-    init_parser(source, globals);
+ResultCode parse(const char* source, struct NodeList* first_pass_nl, struct NodeList* nl, struct Table* globals) {
+    init_parser(source, globals, first_pass_nl);
 
     ResultCode result = RESULT_SUCCESS;
 
     while(parser.current.type != TOKEN_EOF) {
         struct Node* decl;
         if (declaration(&decl) == RESULT_SUCCESS) {
-            add_node(nl, decl);
+            add_to_compile_pass(decl, parser.first_pass_nl, nl);
         } else {
             synchronize();
             result = RESULT_FAILED;

@@ -43,7 +43,7 @@ extern struct Compiler* script_compiler;
 
 void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count);
 void free_compiler(struct Compiler* compiler);
-ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl);
+ResultCode compile_script(struct Compiler* compiler, struct NodeList* first_pass_nl, struct NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(struct Compiler* compiler);
 
