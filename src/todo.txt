@@ -17,41 +17,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    We want ADD_GLOBAL to grab the object from the stack and add it to the globals table.
-        Need to redo OP_ENUM to push enum onto st
-
-    Switch structs to use ADD_GLOBAL for compilation
-        check that basics tests (where superstructs are compiled first) work
-        write test where superstruct is declared second - this test should fail
-            to find global identifier
-
-        Write code to reorder struct compilation based on inheritance
-            then check if the above test passes
-
-    Swtich structs back to compiling in vm so that default values can be used
-        if a field is a instance, should copy that instance type rather than using
-        a reference (eg, Dog(), List<int>() and Map<int>())
-
-    We want TypeClass props and ObjClass props to match ALL the time.  
-        Animal :: struct {
-            class := "mammal"
-        }
-        Canine :: struct < Animal {
-            domestic := true
-        }
-        Dog :: struct < Canine {
-            name := "Mittens"
-        }
-        Wolf :: struct < Canine {
-            domestic := false
-            name := "Wolfie"
-        }
-        Lizard :: struct < Animal {
-            class := "reptile"
-            domestic := false
-            name := "Lizzy"
-        }
-
     Put tests removed from correctness.cbr back in and run tests again
         note: all structs instantiate to 'nil' now
         need to make a wrapper to instantiate structs for now
@@ -170,6 +135,8 @@ IMPLEMENTATION:
     see if Token var_name propagated through the descent parser is being used
         Recall that how variables/structs/functions/enums are declared was changed
 
+    This should create an error: 
+    z := Zebra //wrong syntax for instantiating struct (missing '()')
 
     This should create error:
         Animal :: struct {

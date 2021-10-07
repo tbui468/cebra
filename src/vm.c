@@ -630,7 +630,6 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
 }
 
 ResultCode run(VM* vm, struct ObjFunction* script) {
-
     push(vm, to_function(script));
     call(vm, script);
 

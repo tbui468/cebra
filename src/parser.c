@@ -933,19 +933,31 @@ static ResultCode copy_down_props(struct TypeClass* klass) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, DeclClass* dc) {
+static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, DeclClass* dc, struct NodeList* first_pass_nl) {
     if (dc->super != NULL) {
-        add_struct_by_order(nl, struct_set, (DeclClass*)(dc->super));
+        GetVar* gv = (GetVar*)(dc->super);
+        //iterate through first_pass_nl to find correct DeclClass
+        for (int i = 0; i < first_pass_nl->count; i++) {
+            struct Node* n = first_pass_nl->nodes[i];
+            if (n->type == NODE_CLASS) {
+                DeclClass* super = (DeclClass*)n;
+                if (gv->name.length == super->name.length && memcmp(gv->name.start, super->name.start, gv->name.length) == 0) {
+                    add_struct_by_order(nl, struct_set, super, first_pass_nl);
+                    break;
+                }
+            }
+        }
     }
     //make string from dc->name
     struct ObjString* klass_name = make_string(dc->name.start, dc->name.length);
-    push_root(to_string(klass_name));
+    push_root(to_string(klass_name)); //calling pop_root() to clear strings in parse() after root call on add_struct_by_order
     Value val;
     if (!get_from_table(struct_set, klass_name, &val)) {
         add_node(nl, (struct Node*)dc);
         set_table(struct_set, klass_name, to_nil());
+    } else {
+        pop_root();
     }
-    pop_root();
     return RESULT_SUCCESS;
 }
 
@@ -1018,11 +1030,13 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     if (result != RESULT_FAILED) {
         struct Table struct_set;
         init_table(&struct_set);
+        int class_count = 0;
         for (int i = 0; i < parser.first_pass_nl->count; i++) {
             struct Node* n = parser.first_pass_nl->nodes[i];
             switch(n->type) {
                 case NODE_CLASS:
-                    add_struct_by_order(ordered_nl, &struct_set, (DeclClass*)n);
+                    class_count++;
+                    add_struct_by_order(ordered_nl, &struct_set, (DeclClass*)n, parser.first_pass_nl);
                     break;
                 case NODE_ENUM:
                 case NODE_FUN:
@@ -1032,6 +1046,9 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
             }
         }
         free_table(&struct_set);
+        for (int i = 0; i < class_count; i++) {
+            pop_root();
+        }
     }
 
     for (int i = 0; i < script_nl->count; i++) {
