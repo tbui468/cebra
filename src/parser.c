@@ -920,7 +920,9 @@ static ResultCode copy_down_props(struct TypeClass* klass) {
             if (pair->key != NULL) {
                 Value val;
                 if (get_from_table(&klass->props, pair->key, &val)) {
-                    if (!same_type(val.as.type_type, pair->value.as.type_type)) {
+                    if (val.as.type_type->type != TYPE_DECL && 
+                        pair->value.as.type_type->type != TYPE_DECL && 
+                        !same_type(val.as.type_type, pair->value.as.type_type)) {
                         ERROR(make_dummy_token(), "Overwritten properties must share same type.");
                     }
                 } else {

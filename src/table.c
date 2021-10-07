@@ -67,15 +67,17 @@ static bool same_keys(struct ObjString* key1, struct ObjString* key2) {
 }
 
 void set_table(struct Table* table, struct ObjString* key, Value value) {
+    Value v;
+    if (!get_from_table(table, key, &v) && table->capacity * MAX_LOAD < table->count + 1) {
+        grow_table(table);
+    }
+
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;
         struct Pair* pair = &table->pairs[mod_i];
 
         if (pair->key == NULL) {
-            if (table->capacity * MAX_LOAD < table->count + 1) {
-                grow_table(table);
-            }
             struct Pair new_pair;
             new_pair.key = key;
             new_pair.value = value;

@@ -580,6 +580,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* right_type;
                 COMPILE_NODE(node, (struct TypeArray*)class_ret_types, &right_type);
 
+                //update types in TypeClass if property type is inferred
+                Value v;
+                get_from_table(&klass_type->props, prop_name, &v);
+                if (v.as.type_type->type == TYPE_DECL) {
+                    set_table(&klass_type->props, prop_name, to_type(right_type));
+                }
+
                 //check types here
                 if (right_type->type != TYPE_NIL) {
                     Value left_val_type;
@@ -944,8 +951,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
             pop_root();
-
-            add_error(compiler, gv->name, "Attempting to access undeclared variable.");
+            add_error(compiler, gv->name, "[GetVar] Attempting to access undeclared variable.");
             return RESULT_FAILED;
         }
         case NODE_SET_VAR: {

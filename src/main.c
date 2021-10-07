@@ -120,6 +120,56 @@ int main(int argc, char** argv) {
     init_vm(&vm);
     mm.vm_globals_initialized = true;
     ////////////////
+    
+
+    //TODO: testin hash table
+    /*
+    Value v;
+    struct ObjString* canine = make_string("Canine", 7);
+    push_root(to_string(canine));
+    struct ObjString* bird = make_string("Bird", 7);
+    push_root(to_string(bird));
+    struct ObjString* token = make_string("Token", 7);
+    push_root(to_string(token));
+    struct ObjString* cat = make_string("Cat", 7);
+    push_root(to_string(cat));
+    struct ObjString* dog = make_string("Dog", 7);
+    push_root(to_string(dog));
+    struct ObjString* animal = make_string("Animal", 7);
+    push_root(to_string(animal));
+    struct ObjString* zebra = make_string("Zebra", 7);
+    push_root(to_string(zebra));
+
+    struct Table test;
+    init_table(&test);
+
+    set_table(&test, zebra, to_nil());
+    set_table(&test, canine, to_nil());
+    set_table(&test, bird, to_nil());
+    set_table(&test, token, to_nil());
+    set_table(&test, cat, to_nil());
+    set_table(&test, dog, to_nil());
+    print_table(&test);
+    set_table(&test, animal, to_nil());
+    if (get_from_table(&test, canine, &v)) printf("found canine!\n");
+    if (get_from_table(&test, bird, &v)) printf("found bird!\n");
+    if (get_from_table(&test, token, &v)) printf("found token!\n");
+    if (get_from_table(&test, cat, &v)) printf("found cat!\n");
+    if (get_from_table(&test, dog, &v)) printf("found dog!\n");
+    if (get_from_table(&test, animal, &v)) printf("found animal!\n");
+    if (get_from_table(&test, zebra, &v)) printf("found zebra!\n");
+
+    print_table(&test);
+
+    printf("**************************************\n");
+
+    pop_root();
+    pop_root();
+    pop_root();
+    pop_root();
+    pop_root();
+    pop_root();
+    pop_root();*/
 
     ResultCode result = RESULT_SUCCESS;
     if (argc == 1) {

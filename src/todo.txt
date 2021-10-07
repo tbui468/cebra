@@ -17,6 +17,18 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Issue with hash tables!!!!  When the count == 6 and capacity is 8, it's fine.
+        When we add one more to make count == 7 and capacity 16, it breaks. Keys are still
+        inside the table, but it seems like the we can't find them
+
+    Problem: overwriting properties causes error if one type is inferred and the other type is not.
+
+    Problem: TypeClass* can't be completed in parser - if types are inferred then the right
+            side needs to be compiled before type can be updated.  Need to do this inside
+            NODE_CLASS after
+
+    Change TypeDecl to TypeInferred for clarity
+
     Put tests removed from correctness.cbr back in and run tests again
         test code in invalid_tests.cbr
         if working, put back in correctness.cbr

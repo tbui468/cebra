@@ -45,9 +45,29 @@ add_passed :: (msg: string) -> {
     passed[passed.size] = msg
 }
 
-//currently all fields are set to 'nil' on instantiation (ignoring the defaults)
-//so Dog.name ignores "Mittens" and is in fact defaulted to 'nil'
-//and requires a function ('make_dog') to initialize fields.
+Animal :: struct {
+    class: string = "Mammal"
+}
+
+Bird :: struct < Animal {
+    class: string = "Avian"
+    name: string = "Flappy"
+}
+
+Zebra :: struct < Animal {
+    name: string = "adfs"
+}
+
+Lizard :: struct < Animal {
+    class: string = "Reptile"
+    name: string = "Lizzy"
+    scale_color: string = "Green"
+}
+
+Canine :: struct < Animal {
+    class: string = "Canine"
+}
+
 Dog :: struct {
     name: string = "Mittens"
     age: int = 3
@@ -76,6 +96,7 @@ if basic {
         add_failed("If / Else - Failed!")
     }
 }
+
 
 if equality {
     print("-Equality")
@@ -891,7 +912,58 @@ if nils_for_instances {
     }
 }
 
+if struct_inheritance{
+    
+    print("-Struct Inheritance")
 
+    bird: Bird = Bird()
+    zebra: Zebra = Zebra()
+
+    if bird.class == "Avian" {
+        add_passed("Overwrite property: Passed!")
+    } else {
+        add_failed("Overwrite property: Failed!")
+    }
+
+    if zebra.class == "Mammal" {
+        add_passed("Inherit property: Passed!")
+    } else {
+        add_failed("Inherit property: Failed!")
+    }
+
+}
+
+if struct_typing {
+    
+    print("-Struct Typing")
+
+    fun :: (a: Animal) -> {
+        a.class = "Reptile"
+    }
+
+    make_bird :: () -> Animal {
+        b: Bird = Bird()
+        -> b as Animal
+    }
+
+
+    a: Animal = Bird() as Animal
+    fun(a)
+    b := a as Bird
+
+    if b.name == "Flappy" and b.class == "Reptile" {
+        add_passed("Function Modify Struct Instance: Passed!")
+    } else {
+        add_failed("Function Modify Struct Instance: Failed!")
+    }
+
+    if make_bird().class == "Avian" {
+        add_passed("Return Substruct: Passed!")
+    } else {
+        add_failed("Return Substruct: Failed!")
+    }
+
+}
 
 if for_each_loop {
     print("-For Each Loop")
@@ -1010,7 +1082,6 @@ if lists_maps_in_structs {
         add_failed("Lists Are Unique in Struct Instances: Failed!")
     }
 }
-
 
 if enums {
     print("-Enums")
@@ -1149,6 +1220,33 @@ if cast_to_bool {
     } else {
         add_failed("Cast Float to Bool: Failed!")
     }
+}
+
+if cast_struct_instances {
+    print("-Cast Struct Instances")
+
+    canine := Canine()
+    if (canine as Animal) as Canine != nil {
+        add_passed("Cast Structure Instance Down - Valid: Passed!")
+    } else {
+        add_failed("Cast Structure Instance Down - Valid: Failed!")
+    }
+
+    animal := Animal()
+    if canine as Dog == nil and animal as Canine == nil and animal as Dog == nil {
+        add_passed("Cast Structure Down - Nil: Passed!")
+    } else {
+        add_failed("Cast Structure Down - Nil: Failed!")
+    }
+
+    dog := Dog()
+    liz := Lizard()
+    if dog as Animal != nil and dog as Canine != nil and liz as Animal != nil {
+        add_passed("Cast Structure Instance Up: Passed!") 
+    } else {
+        add_failed("Cast Structure Instance Up: Failed!") 
+    }
+
 }
 
 
