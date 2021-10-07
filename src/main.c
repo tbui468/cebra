@@ -16,9 +16,8 @@ ResultCode run_source(VM* vm, const char* source) {
     init_compiler(&script_compiler, "script", 6, 0);
 
     printf("Before parser\n");
-    struct Node* nl = make_node_list();
-    struct Node* first_pass_nl = make_node_list();
-    ResultCode parse_result = parse(source, (struct NodeList*)first_pass_nl, (struct NodeList*)nl, &script_compiler.globals);
+    struct NodeList* nl;
+    ResultCode parse_result = parse(source, &nl, &script_compiler.globals);
     printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
@@ -31,7 +30,7 @@ ResultCode run_source(VM* vm, const char* source) {
 #endif
 
     printf("Before compiler\n");
-    ResultCode compile_result = compile_script(&script_compiler, (struct NodeList*)first_pass_nl, (struct NodeList*)nl);
+    ResultCode compile_result = compile_script(&script_compiler, nl);
     printf("After compiler\n");
 
     if (compile_result == RESULT_FAILED) {

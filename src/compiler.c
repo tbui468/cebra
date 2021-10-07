@@ -1398,7 +1398,7 @@ static void define_print(struct Compiler* compiler) {
 }
 
 
-ResultCode compile_script(struct Compiler* compiler, struct NodeList* first_pass_nl, struct NodeList* nl) {
+ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     //TODO:script_compiler is currently used to get access to top compiler globals table
     //  this is kind of messy
     script_compiler = compiler;
@@ -1406,11 +1406,7 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* first_pass
     define_print(compiler);
 
     struct TypeArray* ret_types;
-    //TODO: Appending nl to end of first pass list (should do this in parser to avoid passing two node lists everywhere)
-    for (int i = 0; i < nl->count; i++) {
-        add_node(first_pass_nl, nl->nodes[i]);
-    }
-    ResultCode result = compile_function(compiler, first_pass_nl, &ret_types);
+    ResultCode result = compile_function(compiler, nl, &ret_types);
 
     if (compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {

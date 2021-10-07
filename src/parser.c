@@ -818,14 +818,14 @@ static ResultCode declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static void init_parser(const char* source, struct Table* globals, struct NodeList* first_pass_nl) {
+static void init_parser(const char* source, struct Table* globals) {
     init_lexer(source);
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
     parser.error_count = 0;
     parser.globals = globals;
-    parser.first_pass_nl = first_pass_nl;
+    parser.first_pass_nl = (struct NodeList*)make_node_list();
 }
 
 static void free_parser() {
@@ -918,15 +918,16 @@ static ResultCode copy_down_props(struct TypeClass* klass) {
     return RESULT_SUCCESS;
 }
 
-ResultCode parse(const char* source, struct NodeList* first_pass_nl, struct NodeList* nl, struct Table* globals) {
-    init_parser(source, globals, first_pass_nl);
+ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals) {
+    init_parser(source, globals);
+    struct NodeList* script_nl = (struct NodeList*)make_node_list();
 
     ResultCode result = RESULT_SUCCESS;
 
     while(parser.current.type != TOKEN_EOF) {
         struct Node* decl;
         if (declaration(&decl) == RESULT_SUCCESS) {
-            add_to_compile_pass(decl, parser.first_pass_nl, nl);
+            add_to_compile_pass(decl, parser.first_pass_nl, script_nl);
         } else {
             synchronize();
             result = RESULT_FAILED;
@@ -952,17 +953,15 @@ ResultCode parse(const char* source, struct NodeList* first_pass_nl, struct Node
             if (copy_down_props(klass) == RESULT_FAILED) break;
         }
     }
-    //TODO: resolve identifiers in globals
-    //  May need two steps for structs
-    //      1. resolve all identifiers into Enum/Struct/Function types
-    //            (including types in TypeClass->props)
-    //      2. Update TypeClass props table by going up the struct heirarchy
-    //          and copying all props that don't already exist
-    //          BUT, will need to do some checking here to make sure that overwritten
-    //          prop types are the same.  Currently doing this check in compiler but
-    //          will need to move it all here if we want all global types to be complete
-    //          when we get to the compiler.
-    print_table(parser.globals);
+
+
+    //Appending script AST nodes to end of first pass AST nodes
+    for (int i = 0; i < script_nl->count; i++) {
+        add_node(parser.first_pass_nl, script_nl->nodes[i]);
+    }
+    *nl = parser.first_pass_nl;
+
+    //print_table(parser.globals);
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);

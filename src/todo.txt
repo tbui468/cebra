@@ -16,8 +16,12 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    Move the first/second pass concatenation to end of parser so that compiler only gets final node list
+
     Switch enums back to compiling to a global inside of vm (rather than setting global in compiler)
         this will allow more flexible assignment of values to each element
+
+        Still reuse OP_ADD_GLOBAL, etc
 
     Swtich structs back to compiling in vm so that default values can be used
         if a field is a instance, should copy that instance type rather than using
@@ -43,21 +47,6 @@ IMPLEMENTATION:
             name := "Lizzy"
         }
 
-    Overwritting properties in substructs is crashing
-        Turned off CHECK_TYPE in NODE_CLASS so that it runs - a compilation error should be shown
-            when substruct overrides superstruct property with a different type
-
-            Best way - Update TypeClass->props so that each supstruct type includes the base struct
-               property types.  This is the simpliest way - just copy them over while
-               in the parser.  Can also check that overwritten types are of correct type at this time.
-
-               In the compiler, can just copy properties over...?
-
-    Implement struct inheritance 
-        how was inheritance in parser/compiler done again?
-        test on failed tests in invalid_tests.cbr
-        look at code in NODE_CLASS to see what needs to be included in new version
-
     Put tests removed from correctness.cbr back in and run tests again
         note: all structs instantiate to 'nil' now
         need to make a wrapper to instantiate structs for now
@@ -68,6 +57,15 @@ IMPLEMENTATION:
             declaring functions anywhere.
         Could what Golang does: only anonymous functions can capture - they are declared and invoked at the same time so
             that prevents the above runtime error!  I like this technique - it's very elegant.
+
+            One other option is to somehow figure out if a function is capturing state - if so, don't compile it before hand
+                but this could get tricky.  Could create different syntax for closure declaration - but is that too confusing?
+
+                fun :: () -> {}  //compiled before and can be used out of order, but cannot capture state
+                    trying to do so should result in compiler error
+                () -> {} //anonymous functions can capture state (anonymous function = closure)
+                fun := () -> {} //To reuse a closure, assign an anonymous function to a variable (functions are first class in cebra)
+                    and resuse as needed
 
     
     Could try this:
