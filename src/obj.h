@@ -36,7 +36,7 @@ struct ObjClass {
     struct Obj base;
     struct ObjString* name;
     struct Table props;
-    struct Table types;
+    struct Table castable_types;
 };
 
 struct ObjInstance {
@@ -92,7 +92,7 @@ void print_object(struct Obj* obj);
 struct ObjString* make_string(const char* start, int length);
 struct ObjString* take_string(char* start, int length);
 struct ObjInstance* make_instance(struct Table table, struct ObjClass* klass);
-struct ObjClass* make_class(struct ObjString* name, struct Table types);
+struct ObjClass* make_class(struct ObjString* name, struct Table castable_types);
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 struct ObjNative* make_native(Value (*function)(int, Value*));

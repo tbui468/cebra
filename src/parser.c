@@ -61,9 +61,9 @@ static void print_all_tokens() {
 void add_to_compile_pass(struct Node* decl, struct NodeList* first, struct NodeList* second) {
     switch(decl->type) {
         case NODE_ENUM:
+        case NODE_CLASS: //include in first pass
             add_node(first, decl);
             break;
-        case NODE_CLASS: //include in first pass
         case NODE_FUN: //include in first pass
         default:
             add_node(second, decl);
@@ -933,6 +933,22 @@ static ResultCode copy_down_props(struct TypeClass* klass) {
     return RESULT_SUCCESS;
 }
 
+static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, DeclClass* dc) {
+    if (dc->super != NULL) {
+        add_struct_by_order(nl, struct_set, (DeclClass*)(dc->super));
+    }
+    //make string from dc->name
+    struct ObjString* klass_name = make_string(dc->name.start, dc->name.length);
+    push_root(to_string(klass_name));
+    Value val;
+    if (!get_from_table(struct_set, klass_name, &val)) {
+        add_node(nl, (struct Node*)dc);
+        set_table(struct_set, klass_name, to_nil());
+    }
+    pop_root();
+    return RESULT_SUCCESS;
+}
+
 ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals) {
     init_parser(source, globals);
     struct NodeList* script_nl = (struct NodeList*)make_node_list();
@@ -949,7 +965,6 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         }
     }
 
-    
 
     //resolve identifiers in structs
     if (result != RESULT_FAILED) {
@@ -966,6 +981,7 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         }
     }
 
+
     //check for circular inheritance
     if (result != RESULT_FAILED) {
         for (int i = 0; i < parser.globals->capacity; i++) {
@@ -980,6 +996,7 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
             }
         }
     }
+
 
     //for each TypeClass*, copy down props and check that overwritten props are of same type
     if (result != RESULT_FAILED) {
@@ -996,24 +1013,33 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         }
     }
 
-    //reorder stucts in parser.first_pass_nl so that base structs come first
-    //so that compiler knows that all superstructs are already compiled
-    //make a new final_nl
-    //make a working_nl
-    //copy all struct Node* from parser.first_pass_nl into final_nl if an Enum, Function or Struct with no inheritance
-    //if struct has inheritance, check if super already in final_nl
-    //  if so, put in final_nl
-    //  if super not yet in final_nl, put struct in working_nl
-    //loop through working list multiple times, adding structs with superstructs already in final_nl
-    //append script_nl Nodes to final_nl, and then assign *nl to the result
-
-    //Appending script AST nodes to end of first pass AST nodes
-    for (int i = 0; i < script_nl->count; i++) {
-        add_node(parser.first_pass_nl, script_nl->nodes[i]);
+    //change order of structs to make sure base structs are compiled before any substructs
+    struct NodeList* ordered_nl = (struct NodeList*)make_node_list();
+    if (result != RESULT_FAILED) {
+        struct Table struct_set;
+        init_table(&struct_set);
+        for (int i = 0; i < parser.first_pass_nl->count; i++) {
+            struct Node* n = parser.first_pass_nl->nodes[i];
+            switch(n->type) {
+                case NODE_CLASS:
+                    add_struct_by_order(ordered_nl, &struct_set, (DeclClass*)n);
+                    break;
+                case NODE_ENUM:
+                case NODE_FUN:
+                default:
+                    add_node(ordered_nl, n);
+                    break;
+            }
+        }
+        free_table(&struct_set);
     }
-    *nl = parser.first_pass_nl;
 
-    //print_table(parser.globals);
+    for (int i = 0; i < script_nl->count; i++) {
+        add_node(ordered_nl, script_nl->nodes[i]);
+    }
+    *nl = ordered_nl;
+
+    print_table(parser.globals);
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);

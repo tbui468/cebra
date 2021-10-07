@@ -17,37 +17,16 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Switch structs to use compiler again - here's a problem: We allow structs to compile in any order
-        but this will also allow supers to compiler AFTER the subs
-        - so how do we deal with default properties?
-            - if the super is compiled already
-        - types are fine since that is all resolved in parser
+    We want ADD_GLOBAL to grab the object from the stack and add it to the globals table.
+        Need to redo OP_ENUM to push enum onto st
 
-        If any TypeIdentifiers in TypeClass* cannot be resolved, the programmer must have missed
-            a struct declaration - add error
+    Switch structs to use ADD_GLOBAL for compilation
+        check that basics tests (where superstructs are compiled first) work
+        write test where superstruct is declared second - this test should fail
+            to find global identifier
 
-        After resolving struct TypeIdentifiers, check for circular inheritance
-            Follow the inheritance chain to make sure end is NULL
-            If any any point the super is the same as the struct we're checking, 
-                then it's a circular inheritance and needs to be an error
-                Dog :: struct < Animal {}
-                Animal :: struct < Dog {} //illegal circular inheritance
-            Also need to check that inheritance is NOT same as struct
-                Dog :: struct < Dog {} //illegal self inheritance
-
-        Could reorder the structs in parser before appending script_nl.
-        First time:
-            If no super, add to nl
-            If super already in nl, add to nl
-            If super NOT in nl, add to working list
-        Working List:
-            Iterate through and if super in nl, add to nl
-                otherwise skip
-                since we check for circular inheritance already,
-                all structs should be added to nl
-
-        At this point we know that when a struct is compiled, any super structs will
-            already be defined in vm.globals
+        Write code to reorder struct compilation based on inheritance
+            then check if the above test passes
 
     Swtich structs back to compiling in vm so that default values can be used
         if a field is a instance, should copy that instance type rather than using

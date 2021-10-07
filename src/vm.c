@@ -170,18 +170,18 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //immediately after OP_CLASS + constant idx
             break;
         }
-                       /*
         case OP_ENUM: {
             Value val_enum = read_constant(frame, READ_TYPE(frame, uint16_t));
             push(vm, val_enum);
+            /*
             struct ObjEnum* obj_enum = val_enum.as.enum_type;
             int count = READ_TYPE(frame, uint8_t);
             for (int i = 0; i < count; i++) {
                 struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                 set_table(&obj_enum->props, prop_name, to_integer(i));
-            }
+            }*/
             break;
-        }*/
+        }
         case OP_ADD_PROP: {
             //current stack: [script]...[class][value]
             push_root(read_constant(frame, READ_TYPE(frame, uint16_t)));
@@ -579,7 +579,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 struct ObjInstance* inst = value.as.instance_type;
                 struct ObjString* type = read_constant(frame, to_type).as.string_type;
                 Value val;
-                if (get_from_table(&inst->klass->types, type, &val)) {
+                if (get_from_table(&inst->klass->castable_types, type, &val)) {
                     //leave instance as is if valid cast
                     break;
                 }
@@ -593,7 +593,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_ADD_GLOBAL: {
-            Value val = read_constant(frame, READ_TYPE(frame, uint16_t));
+            Value val = peek(vm, 0);
             struct ObjString* name;
             switch(val.type) {
                 case VAL_ENUM:
@@ -610,6 +610,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                     return RESULT_FAILED;
             }
             set_table(&vm->globals, name, val);
+            pop(vm);
             break;
         }
         case OP_GET_GLOBAL: {

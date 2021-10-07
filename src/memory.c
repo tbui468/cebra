@@ -175,7 +175,7 @@ static void trace_references() {
                 struct ObjClass* oc = (struct ObjClass*)obj;
                 //table of props and types
                 mark_table(&oc->props);
-                mark_table(&oc->types);
+                mark_table(&oc->castable_types);
                 //class name
                 mark_object((struct Obj*)(oc->name));
                 push_gray((struct Obj*)(oc->name));

@@ -528,12 +528,89 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //set up objects
             struct ObjString* struct_string = make_string(dc->name.start, dc->name.length);
             push_root(to_string(struct_string));
-            struct Table struct_types; //for inheritance
-            init_table(&struct_types);
-            set_table(&struct_types, struct_string, to_nil());
-            struct ObjClass* struct_obj = make_class(struct_string, struct_types);
+            struct Table castable_types;
+            init_table(&castable_types);
+            set_table(&castable_types, struct_string, to_nil());
+            struct ObjClass* struct_obj = make_class(struct_string, castable_types);
             push_root(to_class(struct_obj));
 
+            //fill in castable_types for runtime cast checks
+            if (dc->super != NULL) {
+                GetVar* gv = (GetVar*)(dc->super);
+                struct Type* current = resolve_type(compiler, gv->name);
+                while (current != NULL) {
+                    struct TypeClass* tc = (struct TypeClass*)current;
+                    struct ObjString* class_name = make_string(tc->klass.start, tc->klass.length);
+                    push_root(to_string(class_name));
+                    set_table(&struct_obj->castable_types, class_name, to_nil());
+                    current = tc->super;
+                    pop_root();
+                }
+            }
+
+            //compile super so that it's on the stack
+            struct Type* super_type = NULL;
+            if (dc->super != NULL) {
+                COMPILE_NODE(dc->super, ret_types, &super_type);
+            } else {
+                emit_byte(compiler, OP_NIL);
+            }
+
+            //OP_CLASS will grab super(or nil) and fill in table with inherited properties
+            //ObjClass will remain on stack for compilation of struct props
+            emit_byte(compiler, OP_CLASS);
+            emit_short(compiler, add_constant(compiler, to_class(struct_obj)));
+
+            pop_root(); //struct_obj
+            pop_root(); //struct_string
+
+            ////////NEW STUFF//////////////
+            //Get type already completely defined in parser
+            Value v;
+            get_from_table(&compiler->globals, struct_string, &v);
+            struct TypeClass* klass_type = (struct TypeClass*)(v.as.type_type);
+            //add struct properties
+            for (int i = 0; i < dc->decls->count; i++) {
+                struct Node* node = dc->decls->nodes[i];
+                DeclVar* dv = (DeclVar*)node;
+                struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
+
+                push_root(to_string(prop_name));
+
+                struct Type* class_ret_types = make_array_type();
+
+                start_scope(compiler);
+                struct Type* right_type;
+                COMPILE_NODE(node, (struct TypeArray*)class_ret_types, &right_type);
+
+                /*
+                if (type->type == TYPE_NIL) {
+                    struct Type* dv_type = dv->type;
+                    if (dv_type->type == TYPE_IDENTIFIER) {
+                        dv_type = resolve_type(compiler, ((struct TypeIdentifier*)dv_type)->identifier);
+                    }
+                    set_table(&sc->props, prop_name, to_type(dv_type));
+                } else {
+                    set_table(&sc->props, prop_name, to_type(type));
+                }*/
+
+                //check types here
+                if (right_type->type != TYPE_NIL) {
+                    Value left_val_type;
+                    get_from_table(&klass_type->props, prop_name, &left_val_type);
+                    CHECK_TYPE(!same_type(left_val_type.as.type_type, right_type), dv->name, "Property type must match right hand side.");
+                }
+
+
+                emit_byte(compiler, OP_ADD_PROP);
+                emit_short(compiler, add_constant(compiler, to_string(prop_name)));
+                end_scope(compiler);
+
+                pop_root();
+            }
+            //////////////////////
+
+            /*
             struct Type* current = resolve_type(compiler, dc->name);
             while (current != NULL) {
                 //add struct + supers to types table for runtime cast checks
@@ -557,29 +634,15 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 pop_root();
                 current = tc->super;
-            }
-
-            /*
-            //fill up other fields in &struct_obj->props
-            int count = dc->decls->count;
-            for (int i = 0; i < count; i++) {
-                DeclVar* dv = (DeclVar*)(dc->decls->nodes[i]);
-                struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
-                push_root(to_string(prop_name));
-                set_table(&struct_obj->props, prop_name, to_nil()); //setting to 'nil' for now
-                pop_root();
             }*/
 
             //set globals in vm
-            set_table(&mm.vm->globals, struct_string, to_class(struct_obj));
+            emit_byte(compiler, OP_ADD_GLOBAL);
+            //emit_short(compiler, add_constant(compiler, to_class(struct_obj)));            
 
             //Get type already completely defined in parser
-            Value v;
-            get_from_table(&compiler->globals, struct_string, &v);
-            *node_type = v.as.type_type;
+            *node_type = (struct Type*)klass_type;
 
-            pop_root(); //struct ObjStruct* 'obj_enum'
-            pop_root(); //struct ObjString* 'name'
             return RESULT_SUCCESS;
 
             /*
@@ -706,9 +769,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 pop_root();
             }
 
+            emit_byte(compiler, OP_ENUM);
+            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
+
             //set globals in vm
             emit_byte(compiler, OP_ADD_GLOBAL);
-            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
 
             //Get type already completely defined in parser
             Value v;
