@@ -556,15 +556,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_NIL);
             }
 
-            //OP_CLASS will grab super(or nil) and fill in table with inherited properties
-            //ObjClass will remain on stack for compilation of struct props
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(struct_obj)));
 
             pop_root(); //struct_obj
             pop_root(); //struct_string
 
-            ////////NEW STUFF//////////////
             //Get type already completely defined in parser
             Value v;
             get_from_table(&compiler->globals, struct_string, &v);
@@ -583,17 +580,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* right_type;
                 COMPILE_NODE(node, (struct TypeArray*)class_ret_types, &right_type);
 
-                /*
-                if (type->type == TYPE_NIL) {
-                    struct Type* dv_type = dv->type;
-                    if (dv_type->type == TYPE_IDENTIFIER) {
-                        dv_type = resolve_type(compiler, ((struct TypeIdentifier*)dv_type)->identifier);
-                    }
-                    set_table(&sc->props, prop_name, to_type(dv_type));
-                } else {
-                    set_table(&sc->props, prop_name, to_type(type));
-                }*/
-
                 //check types here
                 if (right_type->type != TYPE_NIL) {
                     Value left_val_type;
@@ -608,147 +594,15 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 pop_root();
             }
-            //////////////////////
 
-            /*
-            struct Type* current = resolve_type(compiler, dc->name);
-            while (current != NULL) {
-                //add struct + supers to types table for runtime cast checks
-                struct TypeClass* tc = (struct TypeClass*)current;
-                struct ObjString* class_name = make_string(tc->klass.start, tc->klass.length);
-                push_root(to_string(class_name));
-                set_table(&struct_obj->types, class_name, to_nil());
-
-                //add super properties to &struct_obj->props - only names; the values defautl to 'nil'
-                //to make sure that lower hierarchy struct properties overwrite,
-                //only set to table if it doesn't exit yet.  For repeated properties,
-                //need to check that they are of the same type
-                int count = tc->props.capacity; 
-                for (int i = 0; i < count; i++) {
-                    struct Pair* pair = &tc->props.pairs[i];
-                    Value val;
-                    if (pair->key != NULL && !get_from_table(&struct_obj->props, pair->key, &val)) {
-                        set_table(&struct_obj->props, pair->key, to_nil());
-                    } 
-                }
-
-                pop_root();
-                current = tc->super;
-            }*/
 
             //set globals in vm
             emit_byte(compiler, OP_ADD_GLOBAL);
-            //emit_short(compiler, add_constant(compiler, to_class(struct_obj)));            
 
             //Get type already completely defined in parser
             *node_type = (struct Type*)klass_type;
 
             return RESULT_SUCCESS;
-
-            /*
-            if (declared_in_scope(compiler, dc->name)) {
-                add_error(compiler, dc->name, "Identifier already defined.");
-                return RESULT_FAILED;
-            }
-
-            int set_idx = add_local(compiler, dc->name, make_decl_type());
-
-            struct ObjString* name = make_string(dc->name.start, dc->name.length);
-            push_root(to_string(name));
-
-            struct Table types;
-            init_table(&types);
-            set_table(&types, name, to_nil());
-            struct ObjClass* klass = make_class(name, types);
-            push_root(to_class(klass));
-            if (dc->super != NULL) {
-                GetVar* gv = (GetVar*)(dc->super);
-                struct Type* current = resolve_type(compiler, gv->name);
-                while (current != NULL) {
-                    struct TypeClass* tc = (struct TypeClass*)current;
-                    struct ObjString* class_name = make_string(tc->klass.start, tc->klass.length);
-                    push_root(to_string(class_name));
-                    set_table(&klass->types, class_name, to_nil());
-                    current = tc->super;
-                    pop_root();
-                }
-            }
-
-            //push superstruct onto stack if it exists, otherwise push 'nil'
-            struct TypeClass* super_type = NULL;
-            if (dc->super != NULL) {
-                struct Type* s;
-                COMPILE_NODE(dc->super, ret_types, &s);
-                super_type = (struct TypeClass*)s;
-            } else {
-                emit_byte(compiler, OP_NIL);
-            }
-
-            emit_byte(compiler, OP_CLASS);
-            emit_short(compiler, add_constant(compiler, to_class(klass)));
-
-            pop_root();
-            pop_root();
-
-            struct TypeClass* sc = (struct TypeClass*)make_class_type(dc->name, (struct Type*)super_type);
-
-            //add struct properties
-            for (int i = 0; i < dc->decls->count; i++) {
-                struct Node* node = dc->decls->nodes[i];
-                DeclVar* dv = (DeclVar*)node;
-                struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
-
-                push_root(to_string(prop_name));
-
-                struct Type* class_ret_types = make_array_type();
-
-                start_scope(compiler);
-                struct Type* type;
-                COMPILE_NODE(node, (struct TypeArray*)class_ret_types, &type);
-
-                if (type->type == TYPE_NIL) {
-                    struct Type* dv_type = dv->type;
-                    if (dv_type->type == TYPE_IDENTIFIER) {
-                        dv_type = resolve_type(compiler, ((struct TypeIdentifier*)dv_type)->identifier);
-                    }
-                    set_table(&sc->props, prop_name, to_type(dv_type));
-                } else {
-                    set_table(&sc->props, prop_name, to_type(type));
-                }
-
-
-                emit_byte(compiler, OP_ADD_PROP);
-                emit_short(compiler, add_constant(compiler, to_string(prop_name)));
-                end_scope(compiler);
-
-                pop_root();
-            }
-
-            if (dc->super != NULL) {
-                //type checking overwritten properties
-                for (int i = 0; i < sc->props.capacity; i++) {
-                    struct Pair* pair = &sc->props.pairs[i];
-                    if (pair->key != NULL) {
-                        Value value;
-                        bool overwritting = get_from_table(&super_type->props, pair->key, &value);
-                        CHECK_TYPE(overwritting && !same_type(value.as.type_type, pair->value.as.type_type), dc->name, 
-                                   "Overwritten property must of same type.");
-                    }
-                }
-                //inheriting properties in type
-                for (int i = 0; i < super_type->props.capacity; i++) {
-                    struct Pair* pair = &super_type->props.pairs[i];
-                    if (pair->key != NULL) {
-                        set_table(&sc->props, pair->key, pair->value);
-                    }
-                }
-            }
-
-            resolve_self_ref_type(sc);
-            set_local(compiler, dc->name, (struct Type*)sc, set_idx);
-
-            *node_type = (struct Type*)sc;
-            return RESULT_SUCCESS;*/
         }
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;

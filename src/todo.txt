@@ -18,8 +18,8 @@ ADDING FEATURES:
 IMPLEMENTATION:
 
     Put tests removed from correctness.cbr back in and run tests again
-        note: all structs instantiate to 'nil' now
-        need to make a wrapper to instantiate structs for now
+        test code in invalid_tests.cbr
+        if working, put back in correctness.cbr
 
     Change functions to global:
         Problem with all functions being able to capture state (closures)
