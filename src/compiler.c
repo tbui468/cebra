@@ -707,7 +707,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             //set globals in vm
-            set_table(&mm.vm->globals, name, to_enum(obj_enum));
+            emit_byte(compiler, OP_ADD_GLOBAL);
+            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
 
             //Get type already completely defined in parser
             Value v;

@@ -593,9 +593,23 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_ADD_GLOBAL: {
-            Value name = read_constant(frame, READ_TYPE(frame, uint16_t));
             Value val = read_constant(frame, READ_TYPE(frame, uint16_t));
-            set_table(&vm->globals, name.as.string_type, val);
+            struct ObjString* name;
+            switch(val.type) {
+                case VAL_ENUM:
+                    name = val.as.enum_type->name;
+                    break;
+                case VAL_CLASS:
+                    name = val.as.class_type->name;
+                    break;
+                case VAL_FUNCTION:
+                    name = val.as.function_type->name;
+                    break;
+                default:
+                    add_error(vm, "Invalid type - cannot add global.");
+                    return RESULT_FAILED;
+            }
+            set_table(&vm->globals, name, val);
             break;
         }
         case OP_GET_GLOBAL: {
