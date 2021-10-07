@@ -875,7 +875,7 @@ static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
                 pop_root();
             } else {
                 pop_root();
-                ERROR(make_dummy_token(), "Identifier not declared.");
+                ERROR(make_dummy_token(), "Property type identifier not declared.");
             }
         }
     }
@@ -890,9 +890,24 @@ static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
             pop_root();
         } else {
             pop_root();
-            ERROR(make_dummy_token(), "Identifier not declared.");
+            ERROR(make_dummy_token(), "Super struct identifier not declared.");
         }
     }
+    return RESULT_SUCCESS;
+}
+
+static ResultCode check_circular_inheritance(struct TypeClass* klass) {
+    Token klass_name = klass->klass;
+    struct Type* current = klass->super;
+    while (current != NULL) {
+        struct TypeClass* super = (struct TypeClass*)current;
+        Token super_name = super->klass;
+        if (klass_name.length == super_name.length && memcmp(klass_name.start, super_name.start, klass_name.length) == 0) {
+            ERROR(make_dummy_token(), "A struct cannot have a circular inheritance.");
+        }
+        current = super->super;
+    }
+
     return RESULT_SUCCESS;
 }
 
@@ -934,26 +949,63 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         }
     }
 
+    
+
     //resolve identifiers in structs
-    for (int i = 0; i < parser.globals->capacity; i++) {
-        struct Pair* pair = &parser.globals->pairs[i];
-        if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
-            struct Type* type = pair->value.as.type_type;
-            struct TypeClass* tc = (struct TypeClass*)type;
-            if (resolve_struct_identifiers(tc) == RESULT_FAILED) break;
+    if (result != RESULT_FAILED) {
+        for (int i = 0; i < parser.globals->capacity; i++) {
+            struct Pair* pair = &parser.globals->pairs[i];
+            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
+                struct Type* type = pair->value.as.type_type;
+                struct TypeClass* tc = (struct TypeClass*)type;
+                if (resolve_struct_identifiers(tc) == RESULT_FAILED) {
+                    result = RESULT_FAILED;
+                    break;
+                }
+            }
+        }
+    }
+
+    //check for circular inheritance
+    if (result != RESULT_FAILED) {
+        for (int i = 0; i < parser.globals->capacity; i++) {
+            struct Pair* pair = &parser.globals->pairs[i];
+            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
+                struct Type* type = pair->value.as.type_type;
+                struct TypeClass* klass = (struct TypeClass*)type;
+                if (check_circular_inheritance(klass) == RESULT_FAILED) {
+                    result = RESULT_FAILED;
+                    break;
+                }
+            }
         }
     }
 
     //for each TypeClass*, copy down props and check that overwritten props are of same type
-    for (int i = 0; i < parser.globals->capacity; i++) {
-        struct Pair* pair = &parser.globals->pairs[i];
-        if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
-            struct Type* type = pair->value.as.type_type;
-            struct TypeClass* klass = (struct TypeClass*)type; //this is the substruct we want to copy all props into
-            if (copy_down_props(klass) == RESULT_FAILED) break;
+    if (result != RESULT_FAILED) {
+        for (int i = 0; i < parser.globals->capacity; i++) {
+            struct Pair* pair = &parser.globals->pairs[i];
+            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
+                struct Type* type = pair->value.as.type_type;
+                struct TypeClass* klass = (struct TypeClass*)type; //this is the substruct we want to copy all props into
+                if (copy_down_props(klass) == RESULT_FAILED) {
+                    result = RESULT_FAILED;
+                    break;
+                }
+            }
         }
     }
 
+    //reorder stucts in parser.first_pass_nl so that base structs come first
+    //so that compiler knows that all superstructs are already compiled
+    //make a new final_nl
+    //make a working_nl
+    //copy all struct Node* from parser.first_pass_nl into final_nl if an Enum, Function or Struct with no inheritance
+    //if struct has inheritance, check if super already in final_nl
+    //  if so, put in final_nl
+    //  if super not yet in final_nl, put struct in working_nl
+    //loop through working list multiple times, adding structs with superstructs already in final_nl
+    //append script_nl Nodes to final_nl, and then assign *nl to the result
 
     //Appending script AST nodes to end of first pass AST nodes
     for (int i = 0; i < script_nl->count; i++) {
