@@ -59,7 +59,7 @@ struct TypeNil {
 
 struct TypeFun {
     struct Type base;
-    struct Type* params;
+    struct Type* params; //TODO: should be a TypeArray since that's more specific
     struct Type* ret;
 };
 

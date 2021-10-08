@@ -143,21 +143,22 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
     struct Type* ret_type;
     PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
 
-    /////////////////////////////////
     struct Type* fun_type = make_fun_type(param_type, ret_type);
-    struct ObjString* fun_string = make_string(var_name.start, var_name.length);
-    push_root(to_string(fun_string));
-    //check for global name collision
-    Value v;
-    if (get_from_table(parser.globals, fun_string, &v)) {
-        pop_root();
-        ERROR(var_name, "The identifier for this function is already used.");
-    }
 
-    //set globals in parser (which compiler uses)
-    set_table(parser.globals, fun_string, to_type((struct Type*)fun_type));
-    pop_root();
-    //////////////////////////
+    //create type and add to global types for regular functions (not anonymous)
+    if (!anonymous) {
+        struct ObjString* fun_string = make_string(var_name.start, var_name.length);
+        push_root(to_string(fun_string));
+        Value v;
+        if (get_from_table(parser.globals, fun_string, &v)) {
+            pop_root();
+            ERROR(var_name, "The identifier for this function is already used.");
+        }
+
+        //set globals in parser (which compiler uses)
+        set_table(parser.globals, fun_string, to_type((struct Type*)fun_type));
+        pop_root();
+    }
 
     CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
 
@@ -167,7 +168,8 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
         ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
     }
 
-    *node = make_decl_fun(var_name, params, fun_type, body, anonymous); //TODO: why do we need fun_type in decl_fun?  It should be in compiler.globals already...
+    //fun_type is only necessary for anonymous functions 
+    *node = make_decl_fun(var_name, params, fun_type, body, anonymous);
     return RESULT_SUCCESS;
 }
 
@@ -957,6 +959,47 @@ static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_
     return RESULT_SUCCESS;
 }
 
+static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals) {
+    //check parameters
+    struct TypeArray* params = (struct TypeArray*)(ft->params);
+    for (int i = 0; i < params->count; i++) {
+        struct Type* param_type = params->types[i];
+        if (param_type->type == TYPE_IDENTIFIER) {
+            struct TypeIdentifier* ti = (struct TypeIdentifier*)param_type;
+            struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
+            push_root(to_string(identifier));
+            Value val;
+            if (!get_from_table(globals, identifier, &val)) {
+                pop_root();
+                ERROR(ti->identifier, "Identifier for type not declared.");
+            }
+            params->types[i] = val.as.type_type;
+            pop_root();
+        } else if (param_type->type == TYPE_FUN) {
+            resolve_function_identifiers((struct TypeFun*)param_type, globals);
+        }
+    }
+
+    //check return
+    struct Type* ret = ft->ret;
+    if (ret->type == TYPE_IDENTIFIER) {
+        struct TypeIdentifier* ti = (struct TypeIdentifier*)ret;
+        struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
+        push_root(to_string(identifier));
+        Value val;
+        if (!get_from_table(globals, identifier, &val)) {
+            pop_root();
+            ERROR(ti->identifier, "Identifier for type not declared.");
+        }
+        ft->ret = val.as.type_type;
+        pop_root();
+    } else if (ret->type == TYPE_FUN) {
+        resolve_function_identifiers((struct TypeFun*)ret, globals);
+    }
+
+    return RESULT_SUCCESS;
+}
+
 ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals) {
     init_parser(source, globals);
     struct NodeList* script_nl = (struct NodeList*)make_node_list();
@@ -1014,6 +1057,20 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
                 struct Type* type = pair->value.as.type_type;
                 struct TypeClass* klass = (struct TypeClass*)type; //this is the substruct we want to copy all props into
                 if (copy_down_props(klass) == RESULT_FAILED) {
+                    result = RESULT_FAILED;
+                    break;
+                }
+            }
+        }
+    }
+
+    //resolve enum and struct identifiers in functions
+    if (result != RESULT_FAILED) {
+        for (int i = 0; i < parser.globals->capacity; i++) {
+            struct Pair* pair = &parser.globals->pairs[i];
+            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_FUN) {
+                struct TypeFun* fun_type = (struct TypeFun*)(pair->value.as.type_type);
+                if (resolve_function_identifiers(fun_type, parser.globals) == RESULT_FAILED) { //recursively called if a parameter/return is also a function
                     result = RESULT_FAILED;
                     break;
                 }

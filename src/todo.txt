@@ -97,6 +97,11 @@ IMPLEMENTATION:
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')
 
+    This should create error since nothing is returned
+        bottom :: (d: Dog) -> Token {
+            print("bottom")
+        }
+
     This should create error:
         Animal :: struct {
             class: string = "Mammal"

@@ -439,6 +439,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //doing the same thing in SET_PROP - need to find a systematic way of
             //resolving identifiers instead of doing in randomly throughout code
             //This should be in done in parser after all globals - similar to how struct identifiers are resolved
+            
+            //TODO: Only anonymous functions should have df->type - for 'regular' functions, the type can be found 
+            //  in script_compiler.globals
             struct TypeFun* fun_type = (struct TypeFun*)(df->type);
             if (fun_type->ret->type == TYPE_IDENTIFIER) {
                 fun_type->ret = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
