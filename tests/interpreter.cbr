@@ -25,7 +25,7 @@ Token :: struct {
 index := 0
 current_char := ""
 
-is_digit := (char: string) -> bool {
+is_digit :: (char: string) -> bool {
     -> char == "0" or
        char == "1" or
        char == "2" or
@@ -38,18 +38,18 @@ is_digit := (char: string) -> bool {
        char == "9"
 }
 
-is_whitespace := (char: string) -> bool {
+is_whitespace :: (char: string) -> bool {
     -> char == " "
 }
 
-peek := (fun: (string) -> bool) -> bool {
+peek :: (fun: (string) -> bool) -> bool {
     if index >= src.size {
         -> false
     } 
     -> fun(src[index])
 }
 
-next_char := () -> bool {
+next_char :: () -> bool {
     if index >= src.size {
         -> false
     }
@@ -58,7 +58,7 @@ next_char := () -> bool {
     -> true
 }
 
-next_token := () -> Token {
+next_token :: () -> Token {
 
     while peek(is_whitespace) {
         next_char()
@@ -122,13 +122,13 @@ BinaryExpr :: struct < Expr {
     right: Expr = nil
 }
 
-make_primary_expr := (token: Token) -> Expr {
+make_primary_expr :: (token: Token) -> Expr {
     primary := PrimaryExpr()
     primary.token = token
     -> primary as Expr
 }
 
-make_binary_expr := (token: Token, left: Expr, right: Expr) -> Expr {
+make_binary_expr :: (token: Token, left: Expr, right: Expr) -> Expr {
     binary := BinaryExpr()
     binary.token = token
     binary.left = left
@@ -140,7 +140,7 @@ make_binary_expr := (token: Token, left: Expr, right: Expr) -> Expr {
 previous_token: Token = nil
 current_token := next_token()
 
-match := (type: TokenType) -> bool {
+match :: (type: TokenType) -> bool {
     if type == current_token.type {
         previous_token = current_token
         current_token = next_token()
@@ -149,7 +149,7 @@ match := (type: TokenType) -> bool {
     -> false
 }
 
-parse_primary := () -> Expr {
+parse_primary :: () -> Expr {
     if match(TokenType.number) {
         -> make_primary_expr(previous_token)
     }
@@ -161,7 +161,7 @@ parse_primary := () -> Expr {
     }
 }
 
-parse_factor := () -> Expr {
+parse_factor :: () -> Expr {
     left := parse_primary()
 
     while match(TokenType.star) or match(TokenType.slash) {
@@ -171,7 +171,7 @@ parse_factor := () -> Expr {
     -> left
 }
 
-parse_term := () -> Expr {
+parse_term :: () -> Expr {
     left := parse_factor()
 
     while match(TokenType.plus) or match(TokenType.minus) {
@@ -181,11 +181,11 @@ parse_term := () -> Expr {
     -> left
 }
 
-parse_expression := () -> Expr {
+parse_expression :: () -> Expr {
     -> parse_term()
 }
 
-string_expr := (expr: Expr) -> string {
+string_expr :: (expr: Expr) -> string {
     if expr as PrimaryExpr != nil {
         -> " " + expr.token.literal + " "
     }
