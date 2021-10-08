@@ -119,6 +119,7 @@ static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, 
             return RESULT_SUCCESS;
         }
     }
+    add_error(compiler, literal->name, "Literal type undefined.");
     return RESULT_FAILED;
 }
 
@@ -447,6 +448,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 add_node(df->parameters, df->body);
                 struct TypeArray* inner_ret_types;
                 ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_types); 
+                if (result == RESULT_FAILED) return result;
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
@@ -505,6 +507,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 add_node(df->parameters, df->body);
                 struct TypeArray* inner_ret_types;
                 ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_types); 
+                if (result == RESULT_FAILED) return result;
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
@@ -1359,13 +1362,13 @@ void free_compiler(struct Compiler* compiler) {
 
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array) {
     struct Type* ret_types = make_array_type();
-    ResultCode ret_result = RESULT_SUCCESS;
     for (int i = 0; i < nl->count; i++) {
         struct Type* type;
         ResultCode result = compile_node(compiler, nl->nodes[i], (struct TypeArray*)ret_types, &type);
         if (result == RESULT_FAILED) {
+            add_error(compiler, make_dummy_token(), "Failed to compile function.");
+            print_object((struct Obj*)(compiler->function->name));
             return RESULT_FAILED;
-            //ret_result = result;
         }
     }
 
@@ -1376,7 +1379,7 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
 
     *type_array = (struct TypeArray*)ret_types;
 
-    return ret_result;
+    return RESULT_SUCCESS;
 }
 
 
@@ -1404,7 +1407,7 @@ static Value print_native(int arg_count, Value* args) {
     return to_nil();
 }
 
-static void define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Type* type) {
+static ResultCode define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Type* type) {
     //set globals in compiler for checks
     struct ObjString* native_string = make_string(name, strlen(name));
     push_root(to_string(native_string));
@@ -1412,6 +1415,7 @@ static void define_native(struct Compiler* compiler, const char* name, Value (*f
     if (get_from_table(&script_compiler->globals, native_string, &v)) {
         pop_root();
         add_error(compiler, make_dummy_token(), "The identifier for this function is already used.");
+        return RESULT_FAILED;
     }
     set_table(&script_compiler->globals, native_string, to_type(type));
     pop_root();
@@ -1422,13 +1426,15 @@ static void define_native(struct Compiler* compiler, const char* name, Value (*f
     emit_short(compiler, add_constant(compiler, native));
     pop_root();
     emit_byte(compiler, OP_ADD_GLOBAL);
+
+    return RESULT_SUCCESS;
 }
 
-static void define_clock(struct Compiler* compiler) {
-    define_native(compiler, "clock", clock_native, make_fun_type(make_array_type(), make_float_type()));
+static ResultCode define_clock(struct Compiler* compiler) {
+    return define_native(compiler, "clock", clock_native, make_fun_type(make_array_type(), make_float_type()));
 }
 
-static void define_print(struct Compiler* compiler) {
+static ResultCode define_print(struct Compiler* compiler) {
     struct Type* str_type = make_string_type();
     struct Type* int_type = make_int_type();
     struct Type* float_type = make_float_type();
@@ -1442,7 +1448,7 @@ static void define_print(struct Compiler* compiler) {
     nil_type->opt = enum_type;
     struct Type* sl = make_array_type();
     add_type((struct TypeArray*)sl, str_type);
-    define_native(compiler, "print", print_native, make_fun_type((struct Type*)sl, make_nil_type()));
+    return define_native(compiler, "print", print_native, make_fun_type((struct Type*)sl, make_nil_type()));
 }
 
 
@@ -1456,7 +1462,7 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     struct TypeArray* ret_types;
     ResultCode result = compile_function(compiler, nl, &ret_types);
 
-    if (compiler->error_count > 0) {
+    if (result == RESULT_FAILED || compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {
             printf("[line %d] %s\n", compiler->errors[i].token.line, compiler->errors[i].message);
         }

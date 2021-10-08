@@ -38,10 +38,10 @@ cast_struct_instances := true
 passed := List<string>()
 failed := List<string>()
 
-add_failed :: (msg: string) -> {
+add_failed := (msg: string) -> {
     failed[failed.size] = msg
 }
-add_passed :: (msg: string) -> {
+add_passed := (msg: string) -> {
     passed[passed.size] = msg
 }
 
@@ -295,7 +295,7 @@ if loops {
 if functions_returning_primitives {
     
     print("-Functions Returning Primitives")
-    a1 :: () -> {
+    a1 := () -> {
         add_passed("Zero Parameters / No Return: Passed!")
     }
     a1()
@@ -303,13 +303,13 @@ if functions_returning_primitives {
     b1 :: () -> int {
         -> -1
     }
-    if b() == -1 {
+    if b1() == -1 {
         add_passed("Zero Parameters / Integer Return: Passed!")
     } else {
         add_failed("Zero Parameters / Integer Return: Failed!")
     }
 
-    c1 :: (i: int) -> {
+    c1 := (i: int) -> {
         if i == 2 {
             add_passed("Integer Parameter: Passed!")
         } else {
@@ -334,14 +334,14 @@ if functions_returning_primitives {
 if functions_returning_functions{
     
     print("-Functions Returning Functions")
-    a :: () -> () -> {
-        b :: () -> {
+    a := () -> () -> {
+        b := () -> {
             add_passed("No Parameters / Nil Return: Passed!")
         }
         -> b
     }
-    ai :: () -> () -> {
-        bi :: () -> {
+    ai := () -> () -> {
+        bi := () -> {
             add_passed("No Parameters / Nil Return (Inferred): Passed!")
         }
         -> bi
@@ -458,14 +458,13 @@ if closures_depth_1 {
     print("-Closures Depth 1")
 
     a: int = 0
-    ai := 0
-    b3 :: () -> {
+    b3 := () -> {
         a = a + 1
     }
 
     b3()
 
-    if a == 1 and ai == 1 {
+    if a == 1 {
         add_passed("Open Upvalue 0: Passed!")
     } else {
         add_failed("Open Upvalue 0: Failed!")
@@ -473,7 +472,7 @@ if closures_depth_1 {
 
     b3()
 
-    if a == 2 and ai == 2 {
+    if a == 2 {
         add_passed("Open Upvalue 1: Passed!")
     } else {
         add_failed("Open Upvalue 1: Failed!")
@@ -481,7 +480,7 @@ if closures_depth_1 {
 
     var: string = "hello world"
     vari := "hello world"
-    c3 :: () -> string {
+    c3 := () -> string {
         -> var + "!"
     }
 
@@ -505,8 +504,8 @@ if closures_depth_2 {
 
     str1: string = "hello "
     str2: string = "world"
-    a4 :: () -> () -> string {
-        b4 :: () -> string {
+    a4 := () -> () -> string {
+        b4 := () -> string {
             -> str1 + str2
         }
         -> b4
@@ -522,9 +521,9 @@ if closures_depth_2 {
         add_failed("Open upvalues, Depth 2: Failed!")
     }
 
-    x :: () -> () -> () -> string {
-        y :: () -> () -> string {
-            z :: () -> string {
+    x := () -> () -> () -> string {
+        y := () -> () -> string {
+            z := () -> string {
                 -> str1 + str2
             }
             -> z
@@ -552,7 +551,7 @@ if closed_upvalues {
     print("-Closed Upvalues")
     outer1 :: () -> () -> string {
         x: string = "outside"
-        inner1 :: () -> string{
+        inner1 := () -> string{
             -> x
         }
         -> inner1
@@ -589,7 +588,7 @@ if structs {
         add_failed("Set Property: Failed!")
     }
 
-    increment :: () -> {
+    increment := () -> {
         dog.age = dog.age + 1
     }
 
@@ -601,7 +600,7 @@ if structs {
         add_failed("Instance Upvalue: Failed!")
     }
 
-    outer :: () -> () -> {
+    outer := () -> () -> {
         Cat :: struct {
             name: string = "Whiskey"
             age: int = 2
@@ -612,7 +611,7 @@ if structs {
             c.age = 2
             -> c
         }
-        inner :: () -> {
+        inner := () -> {
             c: Cat = make_cat()
             if c.name == "Whiskey" and c.age == 2 {
                 add_passed("Class upvalue: Passed!")
