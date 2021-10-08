@@ -503,16 +503,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
 
-            //set up objects
-            struct ObjString* struct_string = make_string(dc->name.start, dc->name.length);
-            push_root(to_string(struct_string));
-            //TODO: this is dangerous - should have table created inside of make_class()
-            //  to prevent sweeping.  
-            struct Table castable_types;
-            init_table(&castable_types);
-            set_table(&castable_types, struct_string, to_nil());
-            struct ObjClass* struct_obj = make_class(struct_string, castable_types);
+            //set up object
+            struct ObjClass* struct_obj = make_class(dc->name);
             push_root(to_class(struct_obj));
+            set_table(&struct_obj->castable_types, struct_obj->name, to_nil());
 
             //fill in castable_types for runtime cast checks
             if (dc->super != NULL) {
@@ -541,7 +535,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             //Get type already completely defined in parser
             Value v;
-            get_from_table(&compiler->globals, struct_string, &v);
+            get_from_table(&compiler->globals, struct_obj->name, &v);
             struct TypeClass* klass_type = (struct TypeClass*)(v.as.type_type);
             //add struct properties
             for (int i = 0; i < dc->decls->count; i++) {
@@ -580,8 +574,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             pop_root(); //struct_obj
-            pop_root(); //struct_string
-
 
             //set globals in vm
             emit_byte(compiler, OP_ADD_GLOBAL);
@@ -595,9 +587,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct DeclEnum* de = (struct DeclEnum*)node;
 
             //set up objects
-            struct ObjString* name = make_string(de->name.start, de->name.length);
-            push_root(to_string(name));
-            struct ObjEnum* obj_enum = make_enum(name);
+            struct ObjEnum* obj_enum = make_enum(de->name);
             push_root(to_enum(obj_enum));
 
             //fill up &obj_enum->props
@@ -618,11 +608,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             //Get type already completely defined in parser
             Value v;
-            get_from_table(&compiler->globals, name, &v);
+            get_from_table(&compiler->globals, obj_enum->name, &v);
             *node_type = v.as.type_type;
 
             pop_root(); //struct ObjEnum* 'obj_enum'
-            pop_root(); //struct ObjString* 'name'
             return RESULT_SUCCESS;
         }
         //statements

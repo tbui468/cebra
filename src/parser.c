@@ -1030,9 +1030,7 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     struct NodeList* ordered_nl = (struct NodeList*)make_node_list();
     if (result != RESULT_FAILED) {
         //make temp table inside ObjEnum so that GC doesn't sweep it
-        struct ObjString* s = make_string("", 0);
-        push_root(to_string(s));
-        struct ObjEnum* struct_set_wrapper = make_enum(s);
+        struct ObjEnum* struct_set_wrapper = make_enum(make_dummy_token());
         push_root(to_enum(struct_set_wrapper));
 
         for (int i = 0; i < parser.first_pass_nl->count; i++) {
@@ -1048,7 +1046,6 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
                     break;
             }
         }
-        pop_root();
         pop_root();
     }
 
