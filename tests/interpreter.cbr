@@ -231,6 +231,6 @@ current_char = ""
 previous_token = nil
 current_token = next_token()
 
-root := parse_expression(match, () -> token { -> previous_token })
+root := parse_expression(match, () -> Token { -> previous_token })
 print(string_expr(root))
 print(evaluate_node(root))

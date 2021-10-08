@@ -417,7 +417,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             DeclFun* df = (DeclFun*)node;
 
             if (df->anonymous) {
-                print_type(df->type);
                 int set_idx = 0;
                 if (df->name.length != 0) {
                     if (declared_in_scope(compiler, df->name)) {
@@ -440,9 +439,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct TypeArray* params = (struct TypeArray*)(fun_type->params);
                 for (int i = 0; i < params->count; i++) {
                     if (params->types[i]->type == TYPE_IDENTIFIER) {
-                        params->types[i] = resolve_type(compiler, ((struct TypeIdentifier*)(params->types[i]))->identifier);
+                        struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)(params->types[i]))->identifier);
+                        if (result == NULL) return RESULT_FAILED;
+                        params->types[i] = result;
                     }
-                    CHECK_TYPE(params->types[i]->type == TYPE_NIL, df->name, "Parameter identifier type invalid.");
+                    if (params->types[i]->type == TYPE_NIL) {
+                        add_error(compiler, df->name, "Parameter identifier type invalid.");
+                        return RESULT_FAILED;
+                    }
                 }
 
                 struct Compiler func_comp;
@@ -468,31 +472,42 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
 
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
-                //resolve parameter/return types TODO: should do this in parser after parsing all globals
-                //I know!! It's being resolved to a null
 
-                print_type(df->type); printf("\n");
-
-                CHECK_TYPE(inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL, df->name, 
-                           "Return type must match type in function declaration.");
+                if (inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL) {
+                    add_error(compiler, df->name, "Return type must match type in function declaration.");
+                    free_compiler(&func_comp);
+                    return RESULT_FAILED;
+                }
 
                 struct Type* ret_type = typefun->ret;
                 if (ret_type->type == TYPE_IDENTIFIER) {
-                    ret_type = resolve_type(compiler, ((struct TypeIdentifier*)ret_type)->identifier);
+                    struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)ret_type)->identifier);
+                    if (result == NULL) {
+                        free_compiler(&func_comp);
+                        return RESULT_FAILED;
+                    }
+                    ret_type = result;
                 }
                 
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
                     if (inner_type->type == TYPE_IDENTIFIER) {
-                        inner_type = resolve_type(compiler, ((struct TypeIdentifier*)inner_type)->identifier);
+                        struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)inner_type)->identifier);
+                        if (result == NULL) {
+                            free_compiler(&func_comp);
+                            return RESULT_FAILED;
+                        }
+                        inner_type = result;
                     }
-                    CHECK_TYPE(!same_type(ret_type, inner_type), df->name, 
-                               "Return type must match type in function declaration.");
+                    if(!same_type(ret_type, inner_type)) {
+                        add_error(compiler, df->name, "Return type must match type in function declaration.");
+                        free_compiler(&func_comp);
+                        return RESULT_FAILED;
+                    }
                 }
 
-                int f_idx = add_constant(compiler, to_function(func_comp.function));
                 emit_byte(compiler, OP_FUN);
-                emit_short(compiler, f_idx);
+                emit_short(compiler, add_constant(compiler, to_function(func_comp.function)));
                 emit_byte(compiler, func_comp.upvalue_count);
                 for (int i = 0; i < func_comp.upvalue_count; i++) {
                     emit_byte(compiler, func_comp.upvalues[i].is_local);
@@ -500,11 +515,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 free_compiler(&func_comp);
-
-                //TODO: what's up with this again?
-                if (df->name.length != 0) {
-                    set_local(compiler, df->name, (struct Type*)(df->type), set_idx);
-                }
 
                 *node_type = df->type;
                 return RESULT_SUCCESS;
@@ -533,25 +543,31 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 //TODO: this should really be from script_compiler.globals, but it's the same regardless
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
 
-                CHECK_TYPE(inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL, df->name, 
-                           "Return type must match type in function declaration.");
+                if (inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL) {
+                    add_error(compiler, df->name, "Return type must match type in function declaration.");
+                    free_compiler(&func_comp);
+                    return RESULT_FAILED;
+                }
 
                 struct Type* ret_type = typefun->ret;
                 
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    CHECK_TYPE(!same_type(ret_type, inner_type), df->name, 
-                               "Return type must match type in function declaration.");
+                    if (!same_type(ret_type, inner_type)) {
+                        add_error(compiler, df->name, "Return type must match type in function declaration.");
+                        free_compiler(&func_comp);
+                        return RESULT_FAILED;
+                    }
                 }
 
                 if (func_comp.upvalue_count > 0) {
                     add_error(compiler, df->name, "Functions cannot capture values.  To create closures, create and anonymous function.");
+                    free_compiler(&func_comp);
                     return RESULT_FAILED;
                 }
 
-                int f_idx = add_constant(compiler, to_function(func_comp.function));
                 emit_byte(compiler, OP_FUN);
-                emit_short(compiler, f_idx);
+                emit_short(compiler, add_constant(compiler, to_function(func_comp.function)));
                 emit_byte(compiler, func_comp.upvalue_count);
 
                 free_compiler(&func_comp);

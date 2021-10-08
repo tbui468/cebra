@@ -1117,11 +1117,12 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     *nl = ordered_nl;
 
     //TODO: for debug
+    /*
     for (int i = 0; i < ordered_nl->count; i++) {
         print_node(ordered_nl->nodes[i]); printf("\n");
     }
 
-    print_table(parser.globals);
+    print_table(parser.globals);*/
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);
