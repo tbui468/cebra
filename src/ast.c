@@ -309,6 +309,8 @@ void print_node(struct Node* node) {
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
             printf("( DeclClass ");
+            print_token(dc->name);
+            printf(" )");
             break;
         }
         case NODE_ENUM: {

@@ -68,7 +68,7 @@ Canine :: struct < Animal {
     class: string = "Canine"
 }
 
-Dog :: struct {
+Dog :: struct < Canine {
     name: string = "Mittens"
     age: int = 3
     length: float = 100.2

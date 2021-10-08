@@ -957,9 +957,8 @@ static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_
     if (!get_from_table(struct_set, klass_name, &val)) {
         add_node(nl, (struct Node*)dc);
         set_table(struct_set, klass_name, to_nil());
-    } else {
-        pop_root();
     }
+    pop_root();
     return RESULT_SUCCESS;
 }
 
@@ -1030,15 +1029,17 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     //change order of structs to make sure base structs are compiled before any substructs
     struct NodeList* ordered_nl = (struct NodeList*)make_node_list();
     if (result != RESULT_FAILED) {
-        struct Table struct_set;
-        init_table(&struct_set);
-        int class_count = 0;
+        //make temp table inside ObjEnum so that GC doesn't sweep it
+        struct ObjString* s = make_string("", 0);
+        push_root(to_string(s));
+        struct ObjEnum* struct_set_wrapper = make_enum(s);
+        push_root(to_enum(struct_set_wrapper));
+
         for (int i = 0; i < parser.first_pass_nl->count; i++) {
             struct Node* n = parser.first_pass_nl->nodes[i];
             switch(n->type) {
                 case NODE_CLASS:
-                    class_count++;
-                    add_struct_by_order(ordered_nl, &struct_set, (DeclClass*)n, parser.first_pass_nl);
+                    add_struct_by_order(ordered_nl, &struct_set_wrapper->props, (DeclClass*)n, parser.first_pass_nl);
                     break;
                 case NODE_ENUM:
                 case NODE_FUN:
@@ -1047,10 +1048,12 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
                     break;
             }
         }
-        free_table(&struct_set);
-        for (int i = 0; i < class_count; i++) {
-            pop_root();
-        }
+        pop_root();
+        pop_root();
+    }
+
+    for (int i = 0; i < ordered_nl->count; i++) {
+        print_node(ordered_nl->nodes[i]);
     }
 
     for (int i = 0; i < script_nl->count; i++) {

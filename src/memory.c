@@ -107,7 +107,7 @@ static void mark_vm_roots() {
         current = current->next;
     }
 
-    if (mm.vm_globals_initialized) { //This doesn't work - need to init table before marking
+    if (mm.vm_globals_initialized) {
         mark_table(&mm.vm->globals);
     }
 }
@@ -185,6 +185,9 @@ static void trace_references() {
                 struct ObjInstance* oi = (struct ObjInstance*)obj;
                 //table of props
                 mark_table(&oi->props);
+                //class
+                mark_object((struct Obj*)(oi->klass));
+                push_gray((struct Obj*)(oi->klass));
                 break;
             }
             case OBJ_ENUM: {

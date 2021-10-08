@@ -305,7 +305,9 @@ void print_value(Value a) {
             printf(">");
             break;
         case VAL_CLASS:
-            printf("%s", "<struct>");
+            printf("%s", "<struct: ");
+            print_object((struct Obj*)(a.as.class_type->name));
+            printf(">");
             break;
         case VAL_INSTANCE:
             printf("%s", "<instance>");
@@ -419,7 +421,9 @@ Value copy_value(Value* value) {
             return to_list(list);
         case VAL_STRING:
             struct ObjString* orig_str = value->as.string_type;
+            push_root(to_string(orig_str));
             struct ObjString* str = make_string(orig_str->chars, orig_str->length);
+            pop_root();
             return to_string(str);
         default:
             return *value;

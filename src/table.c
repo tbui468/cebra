@@ -31,33 +31,41 @@ int free_table(struct Table* table) {
 
 void copy_table(struct Table* dest, struct Table* src) {
     reset_table_capacity(dest, src->capacity); 
-
     for (int i = 0; i < src->capacity; i++) {
         struct Pair* pair = &src->pairs[i];
         if (pair->key != NULL) {
+            push_root(pair->value);
             Value copy = copy_value(&pair->value);
             push_root(copy);
             set_table(dest, pair->key, copy);
+            pop_root();
             pop_root();
         }
     }
 }
 
 static void grow_table(struct Table* table) {
+
+    //make an ObjEnum and pushing onto stack so that
+    //GC doesn't sweep temporary table used to grow table
+    struct ObjString* n = make_string("", 0);
+    push_root(to_string(n));
+    struct ObjEnum* temp_table = make_enum(n);
+    push_root(to_enum(temp_table));
+    copy_table(&temp_table->props, table);
+
     int new_capacity = table->capacity * 2;
-    struct Table original;
-    init_table(&original);
-    copy_table(&original, table);
     reset_table_capacity(table, new_capacity);
 
-    for (int i = 0; i < original.capacity; i++) {
-        struct Pair* pair = &original.pairs[i];
+    for (int i = 0; i < temp_table->props.capacity; i++) {
+        struct Pair* pair = &temp_table->props.pairs[i];
         if (pair->key != NULL) {
             set_table(table, pair->key, pair->value);
         }
     }
 
-    free_table(&original);
+    pop_root();
+    pop_root();
 }
 
 static bool same_keys(struct ObjString* key1, struct ObjString* key2) {

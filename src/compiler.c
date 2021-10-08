@@ -559,9 +559,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             emit_byte(compiler, OP_CLASS);
             emit_short(compiler, add_constant(compiler, to_class(struct_obj)));
 
-            pop_root(); //struct_obj
-            pop_root(); //struct_string
-
             //Get type already completely defined in parser
             Value v;
             get_from_table(&compiler->globals, struct_string, &v);
@@ -601,6 +598,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 pop_root();
             }
+
+            pop_root(); //struct_obj
+            pop_root(); //struct_string
 
 
             //set globals in vm

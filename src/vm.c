@@ -173,13 +173,6 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_ENUM: {
             Value val_enum = read_constant(frame, READ_TYPE(frame, uint16_t));
             push(vm, val_enum);
-            /*
-            struct ObjEnum* obj_enum = val_enum.as.enum_type;
-            int count = READ_TYPE(frame, uint8_t);
-            for (int i = 0; i < count; i++) {
-                struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
-                set_table(&obj_enum->props, prop_name, to_integer(i));
-            }*/
             break;
         }
         case OP_ADD_PROP: {
@@ -616,7 +609,10 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_GET_GLOBAL: {
             Value name = read_constant(frame, READ_TYPE(frame, uint16_t));
             Value val;
-            get_from_table(&vm->globals, name.as.string_type, &val);
+            if (!get_from_table(&vm->globals, name.as.string_type, &val)) {
+                add_error(vm, "Global variable not found.");
+                return RESULT_FAILED;
+            }
             push(vm, val);
             break;
         }
