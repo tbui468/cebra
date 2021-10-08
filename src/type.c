@@ -22,10 +22,10 @@ void add_type(struct TypeArray* sl, struct Type* type) {
 }
 
 
-struct Type* make_decl_type() {
-    struct TypeDecl* sd = ALLOCATE(struct TypeDecl);
+struct Type* make_infer_type() {
+    struct TypeInfer* sd = ALLOCATE(struct TypeInfer);
 
-    sd->base.type = TYPE_DECL;
+    sd->base.type = TYPE_INFER;
 
     insert_type((struct Type*)sd);
     return (struct Type*)sd;
@@ -213,7 +213,7 @@ bool same_type(struct Type* type1, struct Type* type2) {
         case TYPE_FLOAT:
         case TYPE_BOOL:
         case TYPE_STRING:
-        case TYPE_DECL:
+        case TYPE_INFER:
         default:
             struct Type* left = type1;
             while (left != NULL) {
@@ -230,8 +230,8 @@ bool same_type(struct Type* type1, struct Type* type2) {
 
 void print_type(struct Type* type) {
     switch(type->type) {
-        case TYPE_DECL:
-            printf("TypeDecl");
+        case TYPE_INFER:
+            printf("TypeInfer");
             break;
         case TYPE_ARRAY:
             struct TypeArray* sl = (struct TypeArray*)type;
@@ -293,9 +293,9 @@ void print_type(struct Type* type) {
 
 void free_type(struct Type* type) {
     switch(type->type) {
-        case TYPE_DECL:
-            struct TypeDecl* sd = (struct TypeDecl*)type;
-            FREE(sd, struct TypeDecl);
+        case TYPE_INFER:
+            struct TypeInfer* sd = (struct TypeInfer*)type;
+            FREE(sd, struct TypeInfer);
             break;
         case TYPE_ARRAY:
             struct TypeArray* sa = (struct TypeArray*)type;

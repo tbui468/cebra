@@ -16,7 +16,7 @@ typedef enum {
     TYPE_IDENTIFIER,
     TYPE_LIST,
     TYPE_MAP,
-    TYPE_DECL, //TODO: should change to TYPE_INFER (and struct to TypeInfer)
+    TYPE_INFER,
     TYPE_ENUM
 } TypeType;
 
@@ -26,7 +26,7 @@ struct Type {
     struct Type* opt;
 };
 
-struct TypeDecl {
+struct TypeInfer {
     struct Type base;
 };
 
@@ -106,7 +106,7 @@ struct Type* make_class_type(Token klass, struct Type* super);
 struct Type* make_identifier_type(Token identifier);
 struct Type* make_list_type(struct Type* type);
 struct Type* make_map_type(struct Type* type);
-struct Type* make_decl_type();
+struct Type* make_infer_type();
 struct Type* make_enum_type(Token name);
 
 bool is_substruct(struct TypeClass* substruct, struct TypeClass* superstruct);

@@ -17,40 +17,9 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    I think the problem is grow_table().  We copy the old table into a new temp and then grow/clear
-        the original table, BUT the new temp table is never marked, so the GC could collect all
-        of the keys/values.  
-
-        Need to mark temp table somehow... could wrap table in Value, and then push it onto the stack
-        or just push all keys/values onto stack then pop them off afterwards
-
-        this same method should also be used to mark table in parser holding a hash set of structs to be
-        compiled (called struct_set)
-
-    Problem with Dog and Canine.  Casting test fails now bc Dog doesn't inherit from Canine, BUT
-        when we inherit Canine into Dog, the program crashes at 'Structs' tests
-
-        Isolate this problem - seems to be a problem with hash tables again
-        when structs inherit/have 7 properties it breaks
-        when structs inherit/have 6 properties its fine
-
-        FOUND IT!  It's a GC problem - everything works fine when GC is turned off!
-
-        Issue with adding 'map' in Dog.  When adding a new prop (this is the 7th prop), so
-        the properties table from superstructs need to be copied down to Dog.  Adding the 
-        property 'name' fails - "Mittens" gets lost for some reason
-
-        I think grow_table() is the issue - we copy everything over to a different table, but that 
-        table isn't marked, so it's GC'd.
-
-    Problem: overwriting properties causes error if one type is inferred and the other type is not.
-        Is this problem fixed???
-
-    Problem: TypeClass* can't be completed in parser - if types are inferred then the right
-            side needs to be compiled before type can be updated.  Need to do this inside
-            NODE_CLASS after
-
     Change TypeDecl to TypeInferred for clarity
+
+    Comment out/then remove resolving identifiers in structs - it should all be done in parser now
 
     Put tests removed from correctness.cbr back in and run tests again
         test code in invalid_tests.cbr

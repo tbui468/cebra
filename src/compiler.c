@@ -356,21 +356,6 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
-static void resolve_self_ref_type(struct TypeClass* sc) {
-    for (int i = 0; i < sc->props.capacity; i++) {
-        struct Pair* pair = &sc->props.pairs[i];
-        if (pair->key != NULL && pair->value.as.type_type->type == TYPE_CLASS) {
-            struct TypeClass* sc2 = (struct TypeClass*)(pair->value.as.type_type);
-            if (sc->klass.length == sc2->klass.length && 
-                memcmp(sc->klass.start, sc2->klass.start, sc->klass.length) == 0) {
-                set_table(&sc->props, pair->key, to_type((struct Type*)sc)); 
-            }
-        } else if(pair->key != NULL && pair->value.as.type_type->type == TYPE_DECL) {
-            set_table(&sc->props, pair->key, to_type((struct Type*)sc));
-        }
-    }
-}
-
 
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
     if (node == NULL) {
@@ -390,7 +375,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             //inferred type, defined
-            if (dv->type->type == TYPE_DECL) {
+            if (dv->type->type == TYPE_INFER) {
                 int idx = add_local(compiler, dv->name, dv->type);
 
                 COMPILE_NODE(dv->right, NULL, &type);
@@ -401,7 +386,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
             
             //explicit type, defined and parameters
-            if (dv->type->type != TYPE_DECL) {
+            if (dv->type->type != TYPE_INFER) {
                 int idx = add_local(compiler, dv->name, dv->type);
                 COMPILE_NODE(dv->right, NULL, &type);
 
@@ -444,7 +429,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     return RESULT_FAILED;
                 }
 
-                set_idx = add_local(compiler, df->name, make_decl_type());
+                set_idx = add_local(compiler, df->name, make_infer_type());
             }
 
             //TODO: resolve any identifiers in function type 
@@ -580,7 +565,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 //update types in TypeClass if property type is inferred
                 Value v;
                 get_from_table(&klass_type->props, prop_name, &v);
-                if (v.as.type_type->type == TYPE_DECL) {
+                if (v.as.type_type->type == TYPE_INFER) {
                     set_table(&klass_type->props, prop_name, to_type(right_type));
                 }
 

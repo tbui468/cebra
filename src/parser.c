@@ -423,7 +423,7 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
 
 static ResultCode parse_type(Token var_name, struct Type** type) {
     if (parser.previous.type == TOKEN_COLON && peek_one(TOKEN_EQUAL)) {
-        *type = make_decl_type(); //inferred type typenature TODO: should change name to TypeInferred
+        *type = make_infer_type(); //inferred type typenature TODO: should change name to TypeInferred
         return RESULT_SUCCESS;
     }
 
@@ -920,8 +920,8 @@ static ResultCode copy_down_props(struct TypeClass* klass) {
             if (pair->key != NULL) {
                 Value val;
                 if (get_from_table(&klass->props, pair->key, &val)) {
-                    if (val.as.type_type->type != TYPE_DECL && 
-                        pair->value.as.type_type->type != TYPE_DECL && 
+                    if (val.as.type_type->type != TYPE_INFER && 
+                        pair->value.as.type_type->type != TYPE_INFER && 
                         !same_type(val.as.type_type, pair->value.as.type_type)) {
                         ERROR(make_dummy_token(), "Overwritten properties must share same type.");
                     }
