@@ -16,46 +16,15 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    Error messages in compiler are all messed up in compiler.c.  In NODE_FUN, when returning after error sometimes
+        the errors in func_comp aren't copied over to the enclosing compiler before func_comp is freed.
+        ALSO, on errors func_comp is NOT freed, so the compiler chain isn't reset back to the enclosing compiler
+        losing error messages...
 
-f :: () -> Token {
-    print("f")
-    -> Token.one
-}
+    Test regular vs anonymous functions.  Make sure that failure states give off errors messages
+        Add tests by compiling enums/structs/functions/closures in different orders
 
-top :: () -> Dog {
-    print("top")
-//    bottom(Dog())
-    -> Dog()
-}
-
-bottom :: (d: Dog) -> Token {
-    print("bottom")
-    //middle() is invalid code (since regular functions can't capture state)
-    -> Token.one
-}
-
-a := 23
-
-middle := () -> {
-    a = a + 1
-}
-
-
-Dog :: struct {
-    name := "Mittens"
-}
-
-Token :: enum {
-    one
-    two
-    three
-}
-
-    Need to add native functions to globals instead of locals - making them
-        locals means that the function is an upvalue, which causes the function/closure
-        separation to break.
-
-    setting globals in compiler/parser is using the same code 4 times (for enum/struct/fun declaration in
+    Setting globals in compiler/parser is using the same code 4 times (for enum/struct/fun declaration in
         parser and in define_native() in compiler).  Combine into a single function in compiler called
         add_global(struct Table* globals, struct ObjString*, struct Type* type) and do any checks in there
             will need to make parser/compiler errors compatible if we want to use the same function for both
@@ -67,50 +36,6 @@ Token :: enum {
         compilers, etc don't get freed, causing the compiler to go into an invalid state.  This then
         triggers problems with GC, etc.
 
-    Problem with GC again...
-        why is mark_compiler_roots looping?  current->next is never NULL....
-        Is it because
-
-    Need to split 'regular' functions from anonymous functions (closures).  
-        resolve any identifiers in parameters/return
-        need to fix compiler NODE_FUN - function type?, OP_ADD_GLOBAL
-        order of compilation shouldn't matter since we only need any called functions in body
-            to be resolved at runtime
-        during compilation, need to split into two parts (with a lot of shared code):
-            for 'regular' functions, add to globals and check for invalid access of state
-            for anonymous functions, add to locals
-
-    fun :: () -> {
-        //cannot capture state, BUT can be declared anywhere
-    }
-
-    clo := () -> {
-        //can capture state, but must be declared before usage
-        //clo is a closure that can be passed into/returned from functions
-    }
-
-    ano := () -> int {
-        //anonymous function can be declared and called immediately.  'ano' is assigned to int '3'
-        -> 3
-    }()
-
-    Change functions to global:
-        Problem with all functions being able to capture state (closures)
-            Closure need to be declared before usage so that the current state can be captured - this prevents us from 
-            declaring functions anywhere.
-        Could what Golang does: only anonymous functions can capture - they are declared and invoked at the same time so
-            that prevents the above runtime error!  I like this technique - it's very elegant.
-
-            One other option is to somehow figure out if a function is capturing state - if so, don't compile it before hand
-                but this could get tricky.  Could create different syntax for closure declaration - but is that too confusing?
-
-                fun :: () -> {}  //compiled before and can be used out of order, but cannot capture state
-                    trying to do so should result in compiler error
-                () -> {} //anonymous functions can capture state (anonymous function = closure)
-                fun := () -> {} //To reuse a closure, assign an anonymous function to a variable (functions are first class in cebra)
-                    and resuse as needed
-
-    Move native functions from stack to globals table in vm.
 
     Add when (switch) statements
     Will 'is' conflict with current usage?  Is it currently used?

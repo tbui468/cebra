@@ -417,6 +417,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             DeclFun* df = (DeclFun*)node;
 
             if (df->anonymous) {
+                print_type(df->type);
                 int set_idx = 0;
                 if (df->name.length != 0) {
                     if (declared_in_scope(compiler, df->name)) {
@@ -431,7 +432,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 //TODO: should combine this code and identifier resolution in parser into same function
                 struct TypeFun* fun_type = (struct TypeFun*)(df->type);
                 if (fun_type->ret->type == TYPE_IDENTIFIER) {
-                    fun_type->ret = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
+                    struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
+                    if (result == NULL) return RESULT_FAILED;
+                    fun_type->ret = result;
                 }
 
                 struct TypeArray* params = (struct TypeArray*)(fun_type->params);
@@ -448,7 +451,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 add_node(df->parameters, df->body);
                 struct TypeArray* inner_ret_types;
                 ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_types); 
-                if (result == RESULT_FAILED) return result;
+                if (result == RESULT_FAILED) {
+                    free_compiler(&func_comp);
+                    return result;
+                }
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
@@ -460,11 +466,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
     }
 #endif
 
-                copy_errors(compiler, &func_comp);
 
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
                 //resolve parameter/return types TODO: should do this in parser after parsing all globals
                 //I know!! It's being resolved to a null
+
+                print_type(df->type); printf("\n");
 
                 CHECK_TYPE(inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL, df->name, 
                            "Return type must match type in function declaration.");
@@ -507,7 +514,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 add_node(df->parameters, df->body);
                 struct TypeArray* inner_ret_types;
                 ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_types); 
-                if (result == RESULT_FAILED) return result;
+                if (result == RESULT_FAILED) {
+                    free_compiler(&func_comp);
+                    return result;
+                }
 
 #ifdef DEBUG_DISASSEMBLE
     disassemble_chunk(func_comp.function);
@@ -519,7 +529,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
     }
 #endif
 
-                copy_errors(compiler, &func_comp);
 
                 //TODO: this should really be from script_compiler.globals, but it's the same regardless
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
@@ -528,17 +537,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                            "Return type must match type in function declaration.");
 
                 struct Type* ret_type = typefun->ret;
-                /*
-                if (ret_type->type == TYPE_IDENTIFIER) {
-                    ret_type = resolve_type(compiler, ((struct TypeIdentifier*)ret_type)->identifier);
-                }*/
                 
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    /*
-                    if (inner_type->type == TYPE_IDENTIFIER) {
-                        inner_type = resolve_type(compiler, ((struct TypeIdentifier*)inner_type)->identifier);
-                    }*/
                     CHECK_TYPE(!same_type(ret_type, inner_type), df->name, 
                                "Return type must match type in function declaration.");
                 }
@@ -555,116 +556,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 free_compiler(&func_comp);
 
-                //TODO: What's up with this again?
-                /*
-                if (df->name.length != 0) {
-                    set_local(compiler, df->name, (struct Type*)(df->type), set_idx);
-                }*/
-
                 emit_byte(compiler, OP_ADD_GLOBAL);
 
                 *node_type = df->type;
                 return RESULT_SUCCESS;
             }
-
-            //set up object
-            //compile onto into ObjFunction
-            //  if NOT anonymous, check that upvalue count is 0, otherwise emit error
-            //update types and typecheck
-            //if not anonymous
-            //  emit OP_ADD_GLOBAL, etc
-            //else
-            //  add local
-            //set *node_type to function type
-            /*
-
-            int set_idx = 0;
-            if (df->name.length != 0) {
-                if (declared_in_scope(compiler, df->name)) {
-                    add_error(compiler, df->name, "Identifier already defined.");
-                    return RESULT_FAILED;
-                }
-
-                set_idx = add_local(compiler, df->name, make_infer_type());
-            }
-
-            //TODO: resolve any identifiers in function type 
-            //doing the same thing in SET_PROP - need to find a systematic way of
-            //resolving identifiers instead of doing in randomly throughout code
-            //This should be in done in parser after all globals - similar to how struct identifiers are resolved
-            
-            //TODO: Only anonymous functions should have df->type - for 'regular' functions, the type can be found 
-            //  in script_compiler.globals
-            struct TypeFun* fun_type = (struct TypeFun*)(df->type);
-            if (fun_type->ret->type == TYPE_IDENTIFIER) {
-                fun_type->ret = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
-            }
-
-            struct TypeArray* params = (struct TypeArray*)(fun_type->params);
-            for (int i = 0; i < params->count; i++) {
-                if (params->types[i]->type == TYPE_IDENTIFIER) {
-                    params->types[i] = resolve_type(compiler, ((struct TypeIdentifier*)(params->types[i]))->identifier);
-                }
-                CHECK_TYPE(params->types[i]->type == TYPE_NIL, df->name, "Parameter identifier type invalid.");
-            }
-
-            struct Compiler func_comp;
-            init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count);
-            set_local(&func_comp, df->name, df->type, 0);
-            add_node(df->parameters, df->body);
-            struct TypeArray* inner_ret_types;
-            ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_types); 
-
-#ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(func_comp.function);
-    int i = 0;
-    printf("-------------------\n");
-    while (i < func_comp.function->chunk.count) {
-       OpCode op = func_comp.function->chunk.codes[i++];
-       printf("[ %s ]\n", op_to_string(op));
-    }
-#endif
-
-            copy_errors(compiler, &func_comp);
-
-            struct TypeFun* typefun = (struct TypeFun*)df->type;
-            //resolve parameter/return types TODO: should do this in parser after parsing all globals
-            //I know!! It's being resolved to a null
-
-            CHECK_TYPE(inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL, df->name, 
-                       "Return type must match type in function declaration.");
-
-            struct Type* ret_type = typefun->ret;
-            if (ret_type->type == TYPE_IDENTIFIER) {
-                ret_type = resolve_type(compiler, ((struct TypeIdentifier*)ret_type)->identifier);
-            }
-            
-            for (int i = 0; i < inner_ret_types->count; i++) {
-                struct Type* inner_type = inner_ret_types->types[i];
-                if (inner_type->type == TYPE_IDENTIFIER) {
-                    inner_type = resolve_type(compiler, ((struct TypeIdentifier*)inner_type)->identifier);
-                }
-                CHECK_TYPE(!same_type(ret_type, inner_type), df->name, 
-                           "Return type must match type in function declaration.");
-            }
-
-            int f_idx = add_constant(compiler, to_function(func_comp.function));
-            emit_byte(compiler, OP_FUN);
-            emit_short(compiler, f_idx);
-            emit_byte(compiler, func_comp.upvalue_count);
-            for (int i = 0; i < func_comp.upvalue_count; i++) {
-                emit_byte(compiler, func_comp.upvalues[i].is_local);
-                emit_byte(compiler, func_comp.upvalues[i].index);
-            }
-
-            free_compiler(&func_comp);
-
-            if (df->name.length != 0) {
-                set_local(compiler, df->name, (struct Type*)(df->type), set_idx);
-            }
-
-            *node_type = df->type;
-            return RESULT_SUCCESS;*/
         }
         case NODE_CLASS: {
             DeclClass* dc = (DeclClass*)node;
@@ -1343,6 +1239,9 @@ void init_compiler(struct Compiler* compiler, const char* start, int length, int
 }
 
 void free_compiler(struct Compiler* compiler) {
+    if (compiler->enclosing != NULL) {
+        copy_errors(compiler->enclosing, compiler);
+    }
     while (compiler->types != NULL) {
         struct Type* previous = compiler->types;
         compiler->types = compiler->types->next;
