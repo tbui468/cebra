@@ -64,7 +64,10 @@ void add_to_compile_pass(struct Node* decl, struct NodeList* first, struct NodeL
         case NODE_CLASS: //include in first pass
             add_node(first, decl);
             break;
-        case NODE_FUN: //include in first pass
+        case NODE_FUN:
+            if (((DeclFun*)decl)->anonymous) add_node(second, decl);
+            else add_node(first, decl);
+            break;
         default:
             add_node(second, decl);
             break;
@@ -113,9 +116,10 @@ static void synchronize() {
 
 
 static ResultCode parse_function(Token var_name, struct Node** node, bool anonymous) {
-    struct NodeList* params = (struct NodeList*)make_node_list();
 
+    struct NodeList* params = (struct NodeList*)make_node_list();
     struct Type* param_type = make_array_type();
+
     if (!match(TOKEN_RIGHT_PAREN)) {
         do {
             struct Node* var_decl;
@@ -123,7 +127,7 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
 
             if (match(TOKEN_EQUAL)) {
                 Token param_token = ((DeclVar*)var_decl)->name;
-                ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be astypened.", 
+                ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be assigned.", 
                         param_token.length, param_token.start);
             }
 
@@ -139,6 +143,22 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
     struct Type* ret_type;
     PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
 
+    /////////////////////////////////
+    struct Type* fun_type = make_fun_type(param_type, ret_type);
+    struct ObjString* fun_string = make_string(var_name.start, var_name.length);
+    push_root(to_string(fun_string));
+    //check for global name collision
+    Value v;
+    if (get_from_table(parser.globals, fun_string, &v)) {
+        pop_root();
+        ERROR(var_name, "The identifier for this function is already used.");
+    }
+
+    //set globals in parser (which compiler uses)
+    set_table(parser.globals, fun_string, to_type((struct Type*)fun_type));
+    pop_root();
+    //////////////////////////
+
     CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
 
     Token body_start = parser.previous;
@@ -147,9 +167,7 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
         ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
     }
 
-    struct Type* fun_type = make_fun_type(param_type, ret_type); 
-
-    *node = make_decl_fun(var_name, params, fun_type, body, anonymous);
+    *node = make_decl_fun(var_name, params, fun_type, body, anonymous); //TODO: why do we need fun_type in decl_fun?  It should be in compiler.globals already...
     return RESULT_SUCCESS;
 }
 
@@ -652,33 +670,6 @@ static ResultCode declaration(struct Node** node) {
 
         *node = make_decl_class(struct_name, super, nl);
         return RESULT_SUCCESS;
-        /*
-        //TODO: PARSE_TYPE should really be the result we used for make_decl_var
-        //  instead of making a struct Node* super... (why did we do this?)
-        //  and it's using a make_get_var() ?  Why not make_identifier() instead?
-        struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
-            make_get_var(parser.previous, NULL) : 
-            NULL;
-
-        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before class body.");
-
-        struct NodeList* nl = (struct NodeList*)make_node_list();
-        while (!match(TOKEN_RIGHT_BRACE)) {
-            struct Node* decl;
-            if (var_declaration(&decl) == RESULT_FAILED) {
-                ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
-            }
-
-            //TODO: need to get decl and add to struct type
-            //  need struct properties for type checking
-
-            add_node(nl, decl);
-        }
-
-        //TODO: need to add final struct type to parser.globals
-
-        *node = make_decl_class(struct_name, super, nl);
-        return RESULT_SUCCESS;*/
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
         match(TOKEN_IDENTIFIER);
         Token var_name = parser.previous;
@@ -1053,8 +1044,9 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         pop_root();
     }
 
+    //TODO: for debug purposes
     for (int i = 0; i < ordered_nl->count; i++) {
-        print_node(ordered_nl->nodes[i]);
+        print_node(ordered_nl->nodes[i]); printf("\n");
     }
 
     for (int i = 0; i < script_nl->count; i++) {

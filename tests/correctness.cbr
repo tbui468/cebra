@@ -295,43 +295,28 @@ if loops {
 if functions_returning_primitives {
     
     print("-Functions Returning Primitives")
-    a :: () -> {
+    a1 :: () -> {
         add_passed("Zero Parameters / No Return: Passed!")
     }
-    ai :: () -> {
-        add_passed("Zero Parameters / No Return (Inferred): Passed!")
-    }
-    a()
-    ai()
+    a1()
 
-    b :: () -> int {
+    b1 :: () -> int {
         -> -1
     }
-    bi :: () -> int {
-        -> -1
-    }
-    if b() == -1 and bi() == -1 {
+    if b() == -1 {
         add_passed("Zero Parameters / Integer Return: Passed!")
     } else {
         add_failed("Zero Parameters / Integer Return: Failed!")
     }
 
-    c :: (i: int) -> {
+    c1 :: (i: int) -> {
         if i == 2 {
             add_passed("Integer Parameter: Passed!")
         } else {
             add_failed("Integer Parameter: Failed!")
         }
     }
-    ci :: (i: int) -> {
-        if i == 2 {
-            add_passed("Integer Parameter (Inferred): Passed!")
-        } else {
-            add_failed("Integer Parameter (Inferred): Failed!")
-        }
-    }
-    c(2)
-    ci(2)
+    c1(2)
 
     fib :: (i: int) -> int {
         if i < 2 {
@@ -339,13 +324,7 @@ if functions_returning_primitives {
         }
         -> fib(i - 1) + fib(i - 2)
     }
-    fibi :: (i: int) -> int {
-        if i < 2 {
-            -> i
-        }
-        -> fibi(i - 1) + fibi(i - 2)
-    }
-    if fib(10) == 55 and fibi(10) == 55 {
+    if fib(10) == 55 {
         add_passed("Recursion: Passed!")
     } else {
         add_failed("Recursion: Failed!")
@@ -429,45 +408,30 @@ if cascading_calls {
     
     print("-Cascading Calls")
 
-    a :: () -> () -> () -> int {
-        b :: () -> () -> int {
-            c :: () -> int {
+    a2 :: () -> () -> () -> int {
+        b2 :: () -> () -> int {
+            c2 :: () -> int {
                 -> 1
             }
-            -> c
+            -> c2
         }
-        -> b
-    }
-    ai :: () -> () -> () -> int {
-        bi :: () -> () -> int {
-            ci :: () -> int {
-                -> 1
-            }
-            -> ci
-        }
-        -> bi
+        -> b2
     }
 
-    if a()()() == 1 and ai()()() == 1 {
+    if a2()()() == 1 {
         add_passed("Triple calls: Passed!")
     } else {
         add_failed("Triple calls: Failed!")
     }
 
-    d :: () -> (int) -> int {
-        e :: (n: int) -> int {
+    d2 :: () -> (int) -> int {
+        e2 :: (n: int) -> int {
             -> 2 * n
         }
-        -> e
-    }
-    di :: () -> (int) -> int {
-        ei :: (n: int) -> int {
-            -> 2 * n
-        }
-        -> ei
+        -> e2
     }
 
-    if d()(2) == 4 and di()(2) == 4 {
+    if d2()(2) == 4 {
         add_passed("Double calls: Passed!")
     } else {
         add_failed("Double calls: Failed!")
@@ -481,13 +445,8 @@ if anonymous_functions {
     op :: (a: int, b: int, c: (int, int) -> int) -> int {
         -> c(a, b)
     }
-    opi :: (a: int, b: int, c: (int, int) -> int) -> int {
-        -> c(a, b)
-    }
 
-    if op(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 
-       and opi(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 
-    {
+    if op(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 {
         add_passed("Anonymous Function: Passed!")
     } else {
         add_failed("Anonymous Function: Failed!")
@@ -500,15 +459,11 @@ if closures_depth_1 {
 
     a: int = 0
     ai := 0
-    b :: () -> {
+    b3 :: () -> {
         a = a + 1
     }
-    bi :: () -> {
-        ai = ai + 1
-    }
 
-    b()
-    bi()
+    b3()
 
     if a == 1 and ai == 1 {
         add_passed("Open Upvalue 0: Passed!")
@@ -516,8 +471,7 @@ if closures_depth_1 {
         add_failed("Open Upvalue 0: Failed!")
     }
 
-    b()
-    bi()
+    b3()
 
     if a == 2 and ai == 2 {
         add_passed("Open Upvalue 1: Passed!")
@@ -527,14 +481,11 @@ if closures_depth_1 {
 
     var: string = "hello world"
     vari := "hello world"
-    c :: () -> string {
+    c3 :: () -> string {
         -> var + "!"
     }
-    ci :: () -> string {
-        -> vari + "!"
-    }
 
-    if c() == "hello world!" and ci() == "hello world!" {
+    if c3() == "hello world!" {
         add_passed("Open upvalue 2: Passed!")
     } else {
         add_failed("Open upvalue 2: Failed!")
@@ -554,26 +505,18 @@ if closures_depth_2 {
 
     str1: string = "hello "
     str2: string = "world"
-    a :: () -> () -> string {
-        b :: () -> string {
+    a4 :: () -> () -> string {
+        b4 :: () -> string {
             -> str1 + str2
         }
-        -> b
+        -> b4
     }
-    c: () -> string = a()
+    c4: () -> string = a4()
 
     str1i := "hello "
     str2i := "world"
-    ai :: () -> () -> string {
-        bi :: () -> string {
-            -> str1i + str2i
-        }
-        -> bi
-    }
-    ci := ai()
 
-    if c() == "hello world" and a()() == "hello world" 
-        and ci() == "hello world" and ai()() == "hello world" {
+    if c4() == "hello world" and a4()() == "hello world" {
         add_passed("Open upvalues, Depth 2: Passed!")
     } else {
         add_failed("Open upvalues, Depth 2: Failed!")
@@ -591,25 +534,13 @@ if closures_depth_2 {
     xx: () -> () -> string = x()
     yy: () -> string = xx()
 
-    xi :: () -> () -> () -> string {
-        yi :: () -> () -> string {
-            zi :: () -> string {
-                -> str1i + str2i
-            }
-            -> zi
-        }
-        -> yi
-    }
-    xxi := x()
-    yyi := xx()
-
-    if yy() == "hello world" and yyi() == "hello world" {
+    if yy() == "hello world" {
         add_passed("Open upvalues, Depth 3: Passed!")
     } else {
         add_failed("Open upvalues, Depth 3: Failed!")
     }
 
-    if x()()() == "hello world" and xi()()() == "hello world" {
+    if x()()() == "hello world" {
         add_passed("Open upvalues, Depth 3, Cascade: Passed!")
     } else {
         add_failed("Open upvalues, Depth 3, Cascade: Failed!")
@@ -619,31 +550,22 @@ if closures_depth_2 {
 if closed_upvalues {
     
     print("-Closed Upvalues")
-    outer :: () -> () -> string {
+    outer1 :: () -> () -> string {
         x: string = "outside"
-        inner :: () -> string{
+        inner1 :: () -> string{
             -> x
         }
-        -> inner
+        -> inner1
     }
-    closure: () -> string = outer()
+    closure: () -> string = outer1()
 
-    outeri :: () -> () -> string {
-        x := "outside"
-        inneri :: () -> string{
-            -> x
-        }
-        -> inneri
-    }
-    closurei := outeri()
-
-    if closure() == "outside" and closurei() == "outside" {
+    if closure() == "outside" {
         add_passed("Closed Upvalues: Passed!")
     } else {
         add_failed("Closed Upvalues: Failed!")
     }
 
-    if outer()() == "outside" and outeri()() == "outside" {
+    if outer1()() == "outside" {
         add_passed("Closed Upvalues, Cascade: Passed!")
     } else {
         add_failed("Closed Upvalues, Cascade: Failed!")
@@ -937,7 +859,7 @@ if struct_typing {
     
     print("-Struct Typing")
 
-    fun :: (a: Animal) -> {
+    fun2 :: (a: Animal) -> {
         a.class = "Reptile"
     }
 
@@ -948,7 +870,7 @@ if struct_typing {
 
 
     a: Animal = Bird() as Animal
-    fun(a)
+    fun2(a)
     b := a as Bird
 
     if b.name == "Flappy" and b.class == "Reptile" {

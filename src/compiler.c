@@ -415,6 +415,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
 
+            //set up object
+            //compile onto into ObjFunction
+            //  if NOT anonymous, check that upvalue count is 0, otherwise emit error
+            //update types and typecheck
+            //if not anonymous
+            //  emit OP_ADD_GLOBAL, etc
+            //else
+            //  add local
+            //set *node_type to function type
+
             int set_idx = 0;
             if (df->name.length != 0) {
                 if (declared_in_scope(compiler, df->name)) {

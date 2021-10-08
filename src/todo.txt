@@ -18,9 +18,8 @@ ADDING FEATURES:
 IMPLEMENTATION:
 
     Need to split 'regular' functions from anonymous functions (closures).  
-        when creating NODE_FUN, add an extra field for anonymous or not
-        if NOT anonymous, add to parser.first_pass_nl like structs and enums
         resolve any identifiers in parameters/return
+        need to fix compiler NODE_FUN - function type?, OP_ADD_GLOBAL
         order of compilation shouldn't matter since we only need any called functions in body
             to be resolved at runtime
         during compilation, need to split into two parts (with a lot of shared code):
