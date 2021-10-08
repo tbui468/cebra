@@ -17,9 +17,12 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Change TypeDecl to TypeInferred for clarity
-
     Comment out/then remove resolving identifiers in structs - it should all be done in parser now
+
+    make_enum() should just take in a string literal for the name
+        create/root/pop string inside the constructor
+
+    make_class() should create the table inside itself (similar to how make_enum does it)
 
     Put tests removed from correctness.cbr back in and run tests again
         test code in invalid_tests.cbr
@@ -103,6 +106,8 @@ IMPLEMENTATION:
 
         Update vm OP_GET_GLOBAL to get globals - no OP_SET_GLOBAL for now since they
             should be immutable
+
+    Move native functions from stack to globals table in vm.
 
     Add functions, structs, enums to a globals table when they are compiled the first time - 
         skip the body, and only compile the prototype of each.  The globals need to be passed

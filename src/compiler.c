@@ -393,10 +393,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 if (type->type != TYPE_NIL) {
                     set_local(compiler, dv->name, type, idx);
 
-                    if (dv->type->type == TYPE_IDENTIFIER) {
-                        dv->type = resolve_type(compiler, dv->name);
-                    }
-
                     if (dv->type->type == TYPE_LIST) {
                         struct TypeList* tl = (struct TypeList*)(dv->type);
                         CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
@@ -411,9 +407,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                                "Declaration type and right hand side type must match.");
                 }
 
-                if (dv->type->type == TYPE_IDENTIFIER) {
-                    dv->type = resolve_type(compiler, dv->name);
-                }
             }
 
             *node_type = type;
@@ -435,7 +428,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //TODO: resolve any identifiers in function type 
             //doing the same thing in SET_PROP - need to find a systematic way of
             //resolving identifiers instead of doing in randomly throughout code
-            //This should be in done in parser after all globals
+            //This should be in done in parser after all globals - similar to how struct identifiers are resolved
             struct TypeFun* fun_type = (struct TypeFun*)(df->type);
             if (fun_type->ret->type == TYPE_IDENTIFIER) {
                 fun_type->ret = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
@@ -513,6 +506,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //set up objects
             struct ObjString* struct_string = make_string(dc->name.start, dc->name.length);
             push_root(to_string(struct_string));
+            //TODO: this is dangerous - should have table created inside of make_class()
+            //  to prevent sweeping.  
             struct Table castable_types;
             init_table(&castable_types);
             set_table(&castable_types, struct_string, to_nil());
@@ -811,6 +806,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
 
+            //TODO: this one is needed
             if (type_inst->type == TYPE_IDENTIFIER) {
                 type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
             }
@@ -883,11 +879,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     return RESULT_FAILED;
                 }
 
-                //TODO: should find a way to resolve identifiers immediately when possible instead of right before checking
-                if (right_type->type == TYPE_IDENTIFIER) {
-                    right_type = resolve_type(compiler, ((struct TypeIdentifier*)right_type)->identifier);
-                }
-
                 CHECK_TYPE(!same_type(type_val.as.type_type, right_type), prop, "Property and assignment types must match.");
 
                 *node_type = right_type;
@@ -943,18 +934,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             SetVar* sv = (SetVar*)node;
             struct Type* right_type;
             COMPILE_NODE(sv->right, ret_types, &right_type);
-            if (right_type->type == TYPE_IDENTIFIER) {
-                right_type = resolve_type(compiler, ((struct TypeIdentifier*)right_type)->identifier);
-            }
-
 
             Token var = ((GetVar*)(sv->left))->name;
             struct Type* var_type = resolve_type(compiler, var);
             *node_type = var_type;
-
-            if (var_type->type == TYPE_IDENTIFIER) {
-                var_type = resolve_type(compiler, ((struct TypeIdentifier*)var_type)->identifier);
-            }
 
             int idx = resolve_local(compiler, var);
             if (idx != -1) {
@@ -1026,10 +1009,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 CHECK_TYPE(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
 
                 struct Type* template = ((struct TypeList*)left_type)->type;
-                if (template->type == TYPE_IDENTIFIER) {
-                    template = resolve_type(compiler, ((struct TypeIdentifier*)template)->identifier);
-                }
-
                 CHECK_TYPE(!same_type(template, right_type), get_idx->name, "List type and right side type must match.");
 
                 emit_byte(compiler, OP_SET_ELEMENT);
@@ -1041,9 +1020,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 CHECK_TYPE(idx_type->type != TYPE_STRING, get_idx->name, "Key must be string type.");
 
                 struct Type* template = ((struct TypeList*)left_type)->type;
-                if (template->type == TYPE_IDENTIFIER) {
-                    template = resolve_type(compiler, ((struct TypeIdentifier*)template)->identifier);
-                }
                 CHECK_TYPE(!same_type(template, right_type), get_idx->name, "Map type and right side type must match.");
 
                 emit_byte(compiler, OP_SET_ELEMENT);
@@ -1068,10 +1044,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 struct Type* list_template = type_list->type;
-                if (list_template->type == TYPE_IDENTIFIER) {
-                    list_template = resolve_type(compiler, ((struct TypeIdentifier*)list_template)->identifier);
-                }
-
                 CHECK_TYPE(list_template->type == TYPE_NIL, call->name, "List must be initialized with valid type: List<[type]>().");
 
                 emit_byte(compiler, OP_LIST);
@@ -1087,10 +1059,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 struct Type* map_template = type_map->type;
-                if (map_template->type == TYPE_IDENTIFIER) {
-                    map_template = resolve_type(compiler, ((struct TypeIdentifier*)map_template)->identifier);
-                }
-
                 CHECK_TYPE(map_template->type == TYPE_NIL, call->name, "Map must be initialized with valid type: Map<[type]>().");
 
                 emit_byte(compiler, OP_MAP);
@@ -1122,14 +1090,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* arg_type;
                 COMPILE_NODE(call->arguments->nodes[i], ret_types, &arg_type);
 
+                /*
                 if (arg_type->type == TYPE_IDENTIFIER) {
                     arg_type = resolve_type(compiler, ((struct TypeIdentifier*)arg_type)->identifier);
-                }
+                }*/
 
                 struct Type* param_type = params->types[i];
+                /*
                 if (param_type->type == TYPE_IDENTIFIER) {
                     param_type = resolve_type(compiler, ((struct TypeIdentifier*)param_type)->identifier);
-                }
+                }*/
 
                 CHECK_TYPE(!same_type(param_type, arg_type), call->name, "Argument type must match parameter type.");
             }
@@ -1161,6 +1131,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
 
+            
             if (left->type == TYPE_IDENTIFIER) {
                 left = resolve_type(compiler, ((struct TypeIdentifier*)left)->identifier);
             }
