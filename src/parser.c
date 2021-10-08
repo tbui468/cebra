@@ -112,7 +112,7 @@ static void synchronize() {
 }
 
 
-static ResultCode parse_function(Token var_name, struct Node** node) {
+static ResultCode parse_function(Token var_name, struct Node** node, bool anonymous) {
     struct NodeList* params = (struct NodeList*)make_node_list();
 
     struct Type* param_type = make_array_type();
@@ -149,7 +149,7 @@ static ResultCode parse_function(Token var_name, struct Node** node) {
 
     struct Type* fun_type = make_fun_type(param_type, ret_type); 
 
-    *node = make_decl_fun(var_name, params, fun_type, body);
+    *node = make_decl_fun(var_name, params, fun_type, body, anonymous);
     return RESULT_SUCCESS;
 }
 
@@ -187,7 +187,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token name = parser.previous;
 
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
-            PARSE(parse_function, make_dummy_token(), node, name, "Invalid function declaration.");
+            if (parse_function(make_dummy_token(), node, true) == RESULT_FAILED) { 
+                ERROR(var_name, "Invalid anonymous function declaration."); 
+            }
             return RESULT_SUCCESS;
         }
 
@@ -683,7 +685,9 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_COLON_COLON);
         match(TOKEN_LEFT_PAREN);
 
-        PARSE(parse_function, var_name, node, var_name, "Invalid function declaration.");
+        if (parse_function(var_name, node, false) == RESULT_FAILED) { 
+            ERROR(var_name, "Invalid function declaration."); 
+        }
 
         //TODO: need to get node function final type and add to parser.globals
         

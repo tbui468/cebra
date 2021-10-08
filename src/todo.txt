@@ -17,10 +17,29 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    make_enum() should just take in a string literal for the name
-        create/root/pop string inside the constructor
+    Need to split 'regular' functions from anonymous functions (closures).  
+        when creating NODE_FUN, add an extra field for anonymous or not
+        if NOT anonymous, add to parser.first_pass_nl like structs and enums
+        resolve any identifiers in parameters/return
+        order of compilation shouldn't matter since we only need any called functions in body
+            to be resolved at runtime
+        during compilation, need to split into two parts (with a lot of shared code):
+            for 'regular' functions, add to globals and check for invalid access of state
+            for anonymous functions, add to locals
 
-    make_class() should create the table inside itself (similar to how make_enum does it)
+    fun :: () -> {
+        //cannot capture state, BUT can be declared anywhere
+    }
+
+    clo := () -> {
+        //can capture state, but must be declared before usage
+        //clo is a closure that can be passed into/returned from functions
+    }
+
+    ano := () -> int {
+        //anonymous function can be declared and called immediately.  'ano' is assigned to int '3'
+        -> 3
+    }()
 
     Change functions to global:
         Problem with all functions being able to capture state (closures)
@@ -38,80 +57,18 @@ IMPLEMENTATION:
                 fun := () -> {} //To reuse a closure, assign an anonymous function to a variable (functions are first class in cebra)
                     and resuse as needed
 
-    
-    Could try this:
-        Add all names of globals to vm.globals with a temp value place holder BEFORE compiling globals
-        compile all globals (will need to assume any captured variables in functions are valid...)
-            this causes other problems though... with upvalues not working the way they should (I think)
-            since capturing values normally depends on order of declaration
-        compile everything else
-
-    It's crashing at runtime.  This doesn't work because the 
-    globals still haven't been added to the vm (it's only in the compiler globals table
-    so that there isn't a compiler error).  We need to make sure that ALL globals are compiled before
-    anything else in this order: enum -> structs -> functions
-
-    But won't this be problematic for functions calling themselves?
-
-        print("hi")
-        a := Token.cat
-        b := Token.dog
-        print(a)
-        print(b)
-
-        Token :: enum {
-            cat
-            dog
-            bird
-        }
-
-    Since we don't allow function names to overlap anymore, this will break some tests
-        is this okay?  Or is function scopes something we want to keep?
-
-    Follow the steps taken to implement Enums in globals:
-        Change structs to globals - need to make sure that
-            a second step is taken after parsing where we resolve any identifiers
-
-        Change functions to globals - resolve identifiers 
-
-        Finally check that this allows use 
-
-    Make all functions/structs/enums global - no repeating identifiers
-        if necessary, add namespaces later.  Globals become really tricky
-        if we try to scope them in functions - they still need to exist, so
-        then need to be upvalues...
-
-        Just make ALL enums, structs and functions global - no repeat names allowed
-        unless we add namespaces later
-
-        Add them to globals table when parsing - will need to figure out the final type
-        (with identifiers allowed for non-declared types).  Then resolved identifiers
-        after all globals are defined.  Pass this table to compiler.
-
-        On second pass, compile everything.  If global, need to add new op, OP_GLOBAL, to
-        add to globals table in vm
-
-        Resolving identifiers (which I called vars) needs to check locals->upvalues->globals
-            add GET_GLOBAL op
-        
-        Add globals table to vm for runtime Value
-           
-        Update vm OP_GLOBAL to add to globals table
-
-        Update vm OP_GET_GLOBAL to get globals - no OP_SET_GLOBAL for now since they
-            should be immutable
-
     Move native functions from stack to globals table in vm.
 
-    Add functions, structs, enums to a globals table when they are compiled the first time - 
-        skip the body, and only compile the prototype of each.  The globals need to be passed
-        to the vm too, right?
-
-        on the second pass, look up identifiers in locals/upvalues first, and then globals
-
-        in compile_script, check if each node is a NODE_ENUM, NODE_CLASS or NODE_FUN and add
-            their prototypes to globals.  Skip everything else.  On the second pass compile
-            everything.
+    Add when (switch) statements
+    Will 'is' conflict with current usage?  Is it currently used?
+        when a {
+            is 7:
+                //do this - breaks are automatic
+            is 12:
+                //do this
+            else:
+                //do this
+        }
 
     Continue writing basic interpreter - add any errors below and fix them afterwards
         big problem: we need to access parse_expression() in parse_primary(), but

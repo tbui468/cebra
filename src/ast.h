@@ -64,6 +64,7 @@ typedef struct {
     struct NodeList* parameters;
     struct Type* type;
     struct Node* body;
+    bool anonymous;
 } DeclFun;
 
 typedef struct {
@@ -236,7 +237,7 @@ struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
 struct Node* make_for_each(Token name, struct Node* element, struct Node* var_list, struct Node* then_block);
-struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Type* type, struct Node* body);
+struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Type* type, struct Node* body, bool anonymous);
 struct Node* make_return(Token name, struct Node* right);
 struct Node* make_call(Token name, struct Node* left, struct NodeList* arguments);
 struct Node* make_decl_class(Token name, struct Node* super, struct NodeList* decls);

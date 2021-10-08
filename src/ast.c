@@ -44,12 +44,13 @@ struct Node* make_decl_var(Token name, struct Type* type, struct Node* right) {
     return insert_node((struct Node*)decl_var);
 }
 
-struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Type* type, struct Node* body) {
+struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Type* type, struct Node* body, bool anonymous) {
     DeclFun* df = ALLOCATE(DeclFun);
     df->name = name;
     df->parameters = parameters;
     df->type = type;
     df->body = body;
+    df->anonymous = anonymous;
     df->base.type = NODE_FUN;
 
     return insert_node((struct Node*)df);
