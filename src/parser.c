@@ -1081,35 +1081,45 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     //change order of structs to make sure base structs are compiled before any substructs
     struct NodeList* ordered_nl = (struct NodeList*)make_node_list();
     if (result != RESULT_FAILED) {
+        //add enums first in compilation order
+        for (int i = 0; i < parser.first_pass_nl->count; i++) {
+            struct Node* n = parser.first_pass_nl->nodes[i];
+            if (n->type == NODE_ENUM) {
+                add_node(ordered_nl, n);
+            }
+        }
+
+        //add structs next
         //make temp table inside ObjEnum so that GC doesn't sweep it
         struct ObjEnum* struct_set_wrapper = make_enum(make_dummy_token());
         push_root(to_enum(struct_set_wrapper));
-
         for (int i = 0; i < parser.first_pass_nl->count; i++) {
             struct Node* n = parser.first_pass_nl->nodes[i];
-            switch(n->type) {
-                case NODE_CLASS:
-                    add_struct_by_order(ordered_nl, &struct_set_wrapper->props, (DeclClass*)n, parser.first_pass_nl);
-                    break;
-                case NODE_ENUM:
-                case NODE_FUN:
-                default:
-                    add_node(ordered_nl, n);
-                    break;
+            if (n->type == NODE_CLASS) {
+                add_struct_by_order(ordered_nl, &struct_set_wrapper->props, (DeclClass*)n, parser.first_pass_nl);
             }
         }
         pop_root();
-    }
 
-    //TODO: for debug purposes
-    for (int i = 0; i < ordered_nl->count; i++) {
-        print_node(ordered_nl->nodes[i]); printf("\n");
+        //add functions last
+        for (int i = 0; i < parser.first_pass_nl->count; i++) {
+            struct Node* n = parser.first_pass_nl->nodes[i];
+            if (n->type == NODE_FUN) {
+                add_node(ordered_nl, n);
+            }
+        }
+
     }
 
     for (int i = 0; i < script_nl->count; i++) {
         add_node(ordered_nl, script_nl->nodes[i]);
     }
     *nl = ordered_nl;
+
+    //TODO: for debug
+    for (int i = 0; i < ordered_nl->count; i++) {
+        print_node(ordered_nl->nodes[i]); printf("\n");
+    }
 
     print_table(parser.globals);
 

@@ -293,7 +293,7 @@ static void print_objects() {
     printf("Object count: %d\n", count);
 }
 
-void collect_garbage() {
+void collect_garbage() { 
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
     printf("Bytes allocated: %d\n", mm.allocated);

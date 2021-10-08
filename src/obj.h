@@ -69,6 +69,7 @@ struct ObjFunction {
 
 struct ObjNative {
     struct Obj base;
+    struct ObjString* name;
     Value (*function)(int, Value*);
 };
 
@@ -95,7 +96,7 @@ struct ObjInstance* make_instance(struct Table table, struct ObjClass* klass);
 struct ObjClass* make_class(Token name);
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
-struct ObjNative* make_native(Value (*function)(int, Value*));
+struct ObjNative* make_native(struct ObjString* name, Value (*function)(int, Value*));
 struct ObjList* make_list();
 struct ObjMap* make_map();
 struct ObjEnum* make_enum(Token name);

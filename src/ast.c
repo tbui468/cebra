@@ -304,6 +304,7 @@ void print_node(struct Node* node) {
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
             printf("( DeclFun ");
+            print_token(df->name);
      //       print_node(df->body);
             printf(" )");
             break;

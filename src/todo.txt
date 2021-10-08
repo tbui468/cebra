@@ -17,6 +17,60 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+f :: () -> Token {
+    print("f")
+    -> Token.one
+}
+
+top :: () -> Dog {
+    print("top")
+//    bottom(Dog())
+    -> Dog()
+}
+
+bottom :: (d: Dog) -> Token {
+    print("bottom")
+    //middle() is invalid code (since regular functions can't capture state)
+    -> Token.one
+}
+
+a := 23
+
+middle := () -> {
+    a = a + 1
+}
+
+
+Dog :: struct {
+    name := "Mittens"
+}
+
+Token :: enum {
+    one
+    two
+    three
+}
+
+    Need to add native functions to globals instead of locals - making them
+        locals means that the function is an upvalue, which causes the function/closure
+        separation to break.
+
+    setting globals in compiler/parser is using the same code 4 times (for enum/struct/fun declaration in
+        parser and in define_native() in compiler).  Combine into a single function in compiler called
+        add_global(struct Table* globals, struct ObjString*, struct Type* type) and do any checks in there
+            will need to make parser/compiler errors compatible if we want to use the same function for both
+
+    Real Problem: Errors didn't stop compilation, which triggered more errors and breaking everything.
+        right now we are returning immediately if there is a compilation error of
+        one of the nodes.  This cuts things short but at least it works.  Need to figure out a way
+        to handle errors - when an error occurs and compile_node returns, any pushed roots or new
+        compilers, etc don't get freed, causing the compiler to go into an invalid state.  This then
+        triggers problems with GC, etc.
+
+    Problem with GC again...
+        why is mark_compiler_roots looping?  current->next is never NULL....
+        Is it because
+
     Need to split 'regular' functions from anonymous functions (closures).  
         resolve any identifiers in parameters/return
         need to fix compiler NODE_FUN - function type?, OP_ADD_GLOBAL

@@ -598,6 +598,9 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 case VAL_FUNCTION:
                     name = val.as.function_type->name;
                     break;
+                case VAL_NATIVE:
+                    name = val.as.native_type->name;
+                    break;
                 default:
                     add_error(vm, "Invalid type - cannot add global.");
                     return RESULT_FAILED;
