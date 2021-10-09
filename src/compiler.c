@@ -1305,10 +1305,11 @@ static Value clock_native(int arg_count, Value* args) {
 static Value print_native(int arg_count, Value* args) {
     Value value = args[0];
     switch(value.type) {
-        case VAL_STRING:
+        case VAL_STRING: {
             struct ObjString* str = value.as.string_type;
             printf("%.*s\n", str->length, str->chars);
             break;
+        }
         case VAL_INT:
             printf("%d\n", value.as.integer_type);
             break;
