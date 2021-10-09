@@ -143,6 +143,10 @@ struct ObjClass* make_class(Token name) {
     insert_object((struct Obj*)obj);
 
     obj->name = struct_string;
+    obj->props.count = 0;
+    obj->props.capacity = 0;
+    obj->castable_types.count = 0;
+    obj->castable_types.capacity = 0;
     init_table(&obj->props);
     init_table(&obj->castable_types);
 

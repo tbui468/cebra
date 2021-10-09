@@ -17,6 +17,30 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Trying to solve Linux cc error with both correctness.cbr and interpreter.cbr
+        seems to be an issue with declaring structs.
+        tables in particular - make this change in Windows version to see if it still works:
+            set init_table() to have a capacity of 0 - this prevents wasting memory on instances/structs with no fields
+                do this BEFORE calling ALLOCATE_ARRAY in init_table() since allocation will trigger the GC, and if
+                capacity/count aren't initialized, shit breaks.  We also need to do this bc tables are initialized by 
+                structs/enums/etc and the GC will try to collect/mark them, and marking an unitialized table is bad!!!!
+                don't reset_table_capacity() to 8 in init_table() anymore
+            set grow_table() to init capacity to 8 if 0, otherwise double capacity
+            get_from_table() now needs to return immediately if table->capacity == 0 (modulo by 0 is undefined)
+            set_table() to also grow_table IF capacity is 0 (along with check if item not found + too small capacity)
+
+            reset_table_capacity(), instead of making copy of Pair, just directly set 
+                table->pairs[i].key = NULL and table->pairs[i].value = to_nil().  Just to avoid making copy of struct Pair
+
+            FOUND IT!!! During make_class(), we are trying to init_table twice (once for props and once for castable_types)
+                BUT the GC is called before allocation when the ObjClass is ALREADY rooted.  This means the uninitialized
+                tables are being marked, BUT since they are uninitialized, the nonense capacities and counts causes segmentation faults.
+                Best solution: before ALLOCATE_ARRAY() is called in init_table, initialize capacity and count to 0
+
+    Clone updated code to Ubuntu vm, build and try interpreting interpreter.cbr again.  (It should at least work on a .cbr file with a single struct declared)
+
+
+
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')
 

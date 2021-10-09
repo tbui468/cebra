@@ -11,18 +11,15 @@ static void reset_table_capacity(struct Table* table, int capacity) {
     table->capacity = capacity;
     table->count = 0;
     for (int i = 0; i < table->capacity; i++) {
-        struct Pair pair;
-        pair.key = NULL;
-        pair.value = to_nil();
-        table->pairs[i] = pair;
+        table->pairs[i].key = NULL;
+        table->pairs[i].value = to_nil();
     }
 }
 
 void init_table(struct Table* table) {
-    table->pairs = ALLOCATE_ARRAY(struct Pair);
     table->count = 0;
     table->capacity = 0;
-    reset_table_capacity(table, 8);
+    table->pairs = ALLOCATE_ARRAY(struct Pair);
 }
 
 int free_table(struct Table* table) {
@@ -52,7 +49,7 @@ static void grow_table(struct Table* table) {
     push_root(to_enum(temp_table));
     copy_table(&temp_table->props, table);
 
-    int new_capacity = table->capacity * 2;
+    int new_capacity = table->capacity == 0 ? 8 : table->capacity * 2;
     reset_table_capacity(table, new_capacity);
 
     for (int i = 0; i < temp_table->props.capacity; i++) {
@@ -83,10 +80,8 @@ void set_table(struct Table* table, struct ObjString* key, Value value) {
         struct Pair* pair = &table->pairs[mod_i];
 
         if (pair->key == NULL) {
-            struct Pair new_pair;
-            new_pair.key = key;
-            new_pair.value = value;
-            table->pairs[mod_i] = new_pair;
+            table->pairs[mod_i].key = key;
+            table->pairs[mod_i].value = value;
             table->count++;
             return;
         }
@@ -100,6 +95,8 @@ void set_table(struct Table* table, struct ObjString* key, Value value) {
 
 
 bool get_from_table(struct Table* table, struct ObjString* key, Value* value) {
+    if (table->capacity == 0) return false;
+
     int idx = key->hash % table->capacity;
     for (int i = idx; i < table->capacity + idx; i++) {
         int mod_i = i % table->capacity;

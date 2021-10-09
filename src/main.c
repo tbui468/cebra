@@ -11,8 +11,9 @@
 
 ResultCode run_source(VM* vm, const char* source) {
 
-    printf("Before init script compiler\n");
+    printf("Before creating script compiler\n");
     struct Compiler script_compiler;
+    printf("Before initializing script compiler\n");
     init_compiler(&script_compiler, "script", 6, 0);
 
     printf("Before parser\n");

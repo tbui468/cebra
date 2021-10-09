@@ -173,6 +173,12 @@ static void trace_references() {
                 push_gray((struct Obj*)(fun->name));
                 break;
             }
+            case OBJ_NATIVE: {
+                struct ObjNative* on = (struct ObjNative*)obj;
+                mark_object((struct Obj*)(on->name));
+                push_gray((struct Obj*)(on->name));
+                break;
+            }
             case OBJ_CLASS: {
                 struct ObjClass* oc = (struct ObjClass*)obj;
                 //table of props and types
