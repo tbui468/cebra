@@ -238,10 +238,11 @@ bool same_type(struct Type* type1, struct Type* type2) {
 
 void print_type(struct Type* type) {
     switch(type->type) {
-        case TYPE_INFER:
+        case TYPE_INFER: {
             printf("TypeInfer");
             break;
-        case TYPE_ARRAY:
+        }
+        case TYPE_ARRAY: {
             struct TypeArray* sl = (struct TypeArray*)type;
             printf("(");
             for (int i = 0; i < sl->count; i++) {
@@ -249,7 +250,8 @@ void print_type(struct Type* type) {
             }
             printf(")");
             break;
-        case TYPE_FUN:
+        }
+        case TYPE_FUN: {
             struct TypeFun* sf = (struct TypeFun*)type;
             struct TypeArray* params = (struct TypeArray*)(sf->params);
             printf("(");
@@ -259,102 +261,127 @@ void print_type(struct Type* type) {
             printf(") -> ");
             print_type(sf->ret);
             break;
-        case TYPE_CLASS:
+        }
+        case TYPE_CLASS: {
             struct TypeClass* sc = (struct TypeClass*)type;
             printf("( TypeClass Stub");
             print_token(sc->klass);
             printf(" )");
             break;
-        case TYPE_ENUM:
+        }
+        case TYPE_ENUM: {
             printf("TypeEnum Stub");
             break;
-        case TYPE_IDENTIFIER:
+        }
+        case TYPE_IDENTIFIER: {
             struct TypeIdentifier* ti = (struct TypeIdentifier*)type;
             printf("TypeIdentifier [%.*s]", ti->identifier.length, ti->identifier.start);
             break;
-        case TYPE_LIST:
+        }
+        case TYPE_LIST: {
             printf("TypeList Stub");
             break;
-        case TYPE_MAP:
+        }
+        case TYPE_MAP: {
             printf("TypeMap Stub");
             break;
-        case TYPE_INT:
+        }
+        case TYPE_INT: {
             printf("TypeInt stub");
             break;
-        case TYPE_FLOAT:
+        }
+        case TYPE_FLOAT: {
             printf("TypeFloat stub");
             break;
-        case TYPE_BOOL:
+        }
+        case TYPE_BOOL: {
             printf("TypeBool stub");
             break;
-        case TYPE_STRING:
+        }
+        case TYPE_STRING: {
             printf("TypeString stub");
             break;
-        case TYPE_NIL:
+        }
+        case TYPE_NIL: {
             printf("TypeNil stub");
             break;
-        default:
+        }
+        default: {
             printf("Invalid type.");
             break;
+        }
     }
 }
 
 void free_type(struct Type* type) {
     switch(type->type) {
-        case TYPE_INFER:
+        case TYPE_INFER: {
             struct TypeInfer* sd = (struct TypeInfer*)type;
             FREE(sd, struct TypeInfer);
             break;
-        case TYPE_ARRAY:
+        }
+        case TYPE_ARRAY: {
             struct TypeArray* sa = (struct TypeArray*)type;
             FREE_ARRAY(sa->types, struct Type*, sa->capacity);
             FREE(sa, struct TypeArray);
             break;
-        case TYPE_FUN:
+        }
+        case TYPE_FUN: {
             struct TypeFun* type_fun = (struct TypeFun*)type;
             FREE(type_fun, struct TypeFun);
             break;
-        case TYPE_CLASS:
+        }
+        case TYPE_CLASS: {
             struct TypeClass* sc = (struct TypeClass*)type;
             free_table(&sc->props);
             FREE(sc, struct TypeClass);
             break;
-        case TYPE_ENUM:
+        }
+        case TYPE_ENUM: {
             struct TypeEnum* te = (struct TypeEnum*)type;
             free_table(&te->props);
             FREE(te, struct TypeEnum);
             break;
-        case TYPE_IDENTIFIER:
+        }
+        case TYPE_IDENTIFIER: {
             struct TypeIdentifier* si = (struct TypeIdentifier*)type;
             FREE(si, struct TypeIdentifier);
             break;
-        case TYPE_LIST:
+        }
+        case TYPE_LIST: {
             struct TypeList* sl = (struct TypeList*)type;
             FREE(sl, struct TypeList);
             break;
-        case TYPE_MAP:
+        }
+        case TYPE_MAP: {
             struct TypeMap* sm = (struct TypeMap*)type;
             FREE(sm, struct TypeMap);
             break;
-        case TYPE_INT:
+        }
+        case TYPE_INT: {
             struct TypeInt* type_int = (struct TypeInt*)type;
             FREE(type_int, struct TypeInt);
             break;
-        case TYPE_FLOAT:
+        }
+        case TYPE_FLOAT: {
             struct TypeFloat* type_float = (struct TypeFloat*)type;
             FREE(type_float, struct TypeFloat);
             break;
-        case TYPE_BOOL:
+        }
+        case TYPE_BOOL: {
             struct TypeBool* type_bool = (struct TypeBool*)type;
             FREE(type_bool, struct TypeBool);
             break;
-        case TYPE_STRING:
+        }
+        case TYPE_STRING: {
             struct TypeString* type_string = (struct TypeString*)type;
             FREE(type_string, struct TypeString);
             break;
-        case TYPE_NIL:
+        }
+        case TYPE_NIL: {
             struct TypeNil* type_nil = (struct TypeNil*)type;
             FREE(type_nil, struct TypeNil);
             break;
+        }
     }
 }
