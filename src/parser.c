@@ -3,10 +3,10 @@
 #include "lexer.h"
 #include "memory.h"
 
-#define PARSE(fun, var_name, node_ptr, token, msg, ...) \
+#define PARSE(fun, var_name, node_ptr, token, ...) \
     if (fun(var_name, node_ptr) == RESULT_FAILED) { \
         if (token.type != TOKEN_DUMMY) { \
-            ERROR(token, msg, __VA_ARGS__); \
+            ERROR(token, __VA_ARGS__); \
         } \
         return RESULT_FAILED; \
     }
@@ -14,22 +14,22 @@
 #define PARSE_WITHOUT_MSG(fun, var_name, node_ptr) \
     PARSE(fun, var_name, node_ptr, make_dummy_token(), "")
 
-#define PARSE_TYPE(var_name, type_ptr, token, msg, ...) \
+#define PARSE_TYPE(var_name, type_ptr, token, ...) \
     if (parse_type(var_name, type_ptr) == RESULT_FAILED) { \
-        ERROR(token, msg, __VA_ARGS__); \
+        ERROR(token, __VA_ARGS__); \
     }
 
-#define CONSUME(token_type, token, msg, ...) \
+#define CONSUME(token_type, token, ...) \
     if (!match(token_type)) { \
-        ERROR(token, msg, __VA_ARGS__); \
+        ERROR(token, __VA_ARGS__); \
     }
 
-#define ERROR(tkn, msg, ...) \
+#define ERROR(tkn, ...) \
 { \
     if (parser.error_count < 256) { \
         char* buf = ALLOCATE_ARRAY(char); \
         buf = GROW_ARRAY(buf, char, 100, 0); \
-        snprintf(buf, 99, msg, __VA_ARGS__); \
+        snprintf(buf, 99, __VA_ARGS__); \
         struct Error error; \
         error.message = buf; \
         error.token = tkn; \
