@@ -178,7 +178,7 @@ bool same_type(struct Type* type1, struct Type* type2) {
     if (type1->type == TYPE_NIL || type2->type == TYPE_NIL) return true;
 
     switch(type1->type) {
-        case TYPE_ARRAY:
+        case TYPE_ARRAY: {
             struct TypeArray* sl1 = (struct TypeArray*)type1;
             struct TypeArray* sl2 = (struct TypeArray*)type2;
             if (sl1->count != sl2->count) return false;
@@ -186,35 +186,42 @@ bool same_type(struct Type* type1, struct Type* type2) {
                 if (!same_type(sl1->types[i], sl2->types[i])) return false;
             }
             return true;
-        case TYPE_FUN:
+        }
+        case TYPE_FUN: {
             struct TypeFun* sf1 = (struct TypeFun*)type1;
             struct TypeFun* sf2 = (struct TypeFun*)type2;
             return same_type(sf1->ret, sf2->ret) && same_type(sf1->params, sf2->params);
-        case TYPE_CLASS:
+        }
+        case TYPE_CLASS: {
             struct TypeClass* sc1 = (struct TypeClass*)type1;
             struct TypeClass* sc2 = (struct TypeClass*)type2;
             return sc1->klass.length == sc2->klass.length && memcmp(sc1->klass.start, sc2->klass.start, sc1->klass.length) == 0;
-        case TYPE_IDENTIFIER:
+        }
+        case TYPE_IDENTIFIER: {
             struct TypeIdentifier* si1 = (struct TypeIdentifier*)type1; 
             struct TypeIdentifier* si2 = (struct TypeIdentifier*)type2; 
             if (si1->identifier.length != si2->identifier.length) return false;
             return memcmp(si1->identifier.start, si2->identifier.start, si1->identifier.length) == 0;
-        case TYPE_LIST:
+        }
+        case TYPE_LIST: {
             return same_type(((struct TypeList*)type1)->type, ((struct TypeList*)type2)->type);
-        case TYPE_MAP:
+        }
+        case TYPE_MAP: {
             return same_type(((struct TypeMap*)type1)->type, ((struct TypeMap*)type2)->type);
-        case TYPE_ENUM:
+        }
+        case TYPE_ENUM: {
             struct TypeEnum* te1 = (struct TypeEnum*)type1;
             struct TypeEnum* te2 = (struct TypeEnum*)type2;
             if (te1->name.length != te2->name.length) return false;
             if (memcmp(te1->name.start, te2->name.start, te1->name.length) != 0) return false;
             return true;
+        }
         case TYPE_INT:
         case TYPE_FLOAT:
         case TYPE_BOOL:
         case TYPE_STRING:
         case TYPE_INFER:
-        default:
+        default: {
             struct Type* left = type1;
             while (left != NULL) {
                 struct Type* right = type2;
@@ -225,6 +232,7 @@ bool same_type(struct Type* type1, struct Type* type2) {
                 left = left->opt;
             }
             return false;
+        }
     }
 }
 
