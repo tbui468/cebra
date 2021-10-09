@@ -23,12 +23,13 @@ int free_object(struct Obj* obj) {
             bytes_freed += FREE(obj_string, struct ObjString);
             break;
         }
-        case OBJ_FUNCTION:
+        case OBJ_FUNCTION: {
             struct ObjFunction* obj_fun = (struct ObjFunction*)obj;
             bytes_freed += free_chunk(&obj_fun->chunk);
             bytes_freed += FREE(obj_fun, struct ObjFunction);
             break;
-        case OBJ_CLASS:
+        }
+        case OBJ_CLASS: {
             struct ObjClass* oc = (struct ObjClass*)obj;
             //NOTE: this only frees the table entries - the key and any heap allocated values will
             //be freed by the GC
@@ -36,34 +37,41 @@ int free_object(struct Obj* obj) {
             bytes_freed += free_table(&oc->castable_types);
             bytes_freed += FREE(oc, struct ObjClass);
             break;
-        case OBJ_INSTANCE:
+        }
+        case OBJ_INSTANCE: {
             struct ObjInstance* oi = (struct ObjInstance*)obj;
             bytes_freed += free_table(&oi->props);
             bytes_freed += FREE(oi, struct ObjInstance);
             break;
-        case OBJ_ENUM:
+        }
+        case OBJ_ENUM: {
             struct ObjEnum* oe = (struct ObjEnum*)obj;
             bytes_freed += free_table(&oe->props);
             bytes_freed += FREE(oe, struct ObjEnum);
             break;
-        case OBJ_UPVALUE:
+        }
+        case OBJ_UPVALUE: {
             struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
             bytes_freed += FREE(uv, struct ObjUpvalue);
             break;
-        case OBJ_NATIVE:
+        }
+        case OBJ_NATIVE: {
             struct ObjNative* nat = (struct ObjNative*)obj;
             bytes_freed += FREE(nat, struct ObjNative);
             break;
-        case OBJ_LIST:
+        }
+        case OBJ_LIST: {
             struct ObjList* list = (struct ObjList*)obj;
             bytes_freed += free_value_array(&list->values);
             bytes_freed += FREE(list, struct ObjList);
             break;
-        case OBJ_MAP:
+        }
+        case OBJ_MAP: {
             struct ObjMap* map = (struct ObjMap*)obj;
             bytes_freed += free_table(&map->table);
             bytes_freed += FREE(map, struct ObjMap);
             break;
+        }
     }
     return bytes_freed;
 }
