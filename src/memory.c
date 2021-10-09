@@ -123,14 +123,16 @@ static void mark_compiler_roots() {
         struct Type* type = current->types;
         while (type != NULL) {
             switch(type->type) {
-                case TYPE_ENUM:
+                case TYPE_ENUM: {
                     struct TypeEnum* te = (struct TypeEnum*)type;
                     mark_table(&te->props);
                     break;
-                case TYPE_CLASS:
+                }
+                case TYPE_CLASS: {
                     struct TypeClass* sc = (struct TypeClass*)type;
                     mark_table(&sc->props);
                     break;
+                }
                 default:
                     break;
             }
