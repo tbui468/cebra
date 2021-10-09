@@ -177,11 +177,12 @@ Value equal_values(Value a, Value b) {
             return to_boolean(a.as.integer_type == b.as.integer_type);
         case VAL_FLOAT:
             return to_boolean(a.as.float_type == b.as.float_type);
-        case VAL_STRING:
+        case VAL_STRING: {
             struct ObjString* s1 = a.as.string_type;
             struct ObjString* s2 = b.as.string_type;
             if (s1->length != s2->length) return to_boolean(false);
             return to_boolean(memcmp(s1->chars, s2->chars, s1->length) == 0);
+        }
         case VAL_BOOL:
             return to_boolean(a.as.boolean_type == b.as.boolean_type);
         case VAL_NIL:
@@ -225,10 +226,11 @@ static Value cast_to_string(Value* value) {
 
 static Value cast_to_int(Value* value) {
     switch(value->type) {
-        case VAL_STRING:
+        case VAL_STRING: {
             char* end;
             long i = strtol(value->as.string_type->chars, &end, 10);
             return to_integer(i);
+        }
         case VAL_FLOAT:
             return to_integer((int)(value->as.float_type));
         case VAL_BOOL:
@@ -240,10 +242,11 @@ static Value cast_to_int(Value* value) {
 }
 static Value cast_to_float(Value* value) {
     switch(value->type) {
-        case VAL_STRING:
+        case VAL_STRING: {
             char* end;
             double d = strtod(value->as.string_type->chars, &end);
             return to_float(d);
+        }
         case VAL_INT:
             return to_float((double)(value->as.integer_type));
         case VAL_BOOL:
@@ -255,10 +258,11 @@ static Value cast_to_float(Value* value) {
 }
 static Value cast_to_bool(Value* value) {
     switch(value->type) {
-        case VAL_STRING:
+        case VAL_STRING: {
             struct ObjString* str = value->as.string_type;
             if (str->length == 0) return to_boolean(false);
             return to_boolean(true);
+        }
         case VAL_INT:
             if (value->as.integer_type <= 0) return to_boolean(false);
             return to_boolean(true);
@@ -405,7 +409,7 @@ struct Obj* get_object(Value* value) {
 
 Value copy_value(Value* value) {
     switch (value->type) {
-        case VAL_MAP:
+        case VAL_MAP: {
             struct ObjMap* orig_map = value->as.map_type;
             struct ObjMap* map = make_map();
             push_root(to_map(map));
@@ -413,7 +417,8 @@ Value copy_value(Value* value) {
             copy_table(&map->table, &orig_map->table);
             pop_root();
             return to_map(map);
-        case VAL_LIST:
+        }
+        case VAL_LIST: {
             struct ObjList* orig_list = value->as.list_type;
             struct ObjList* list = make_list();
             push_root(to_list(list));
@@ -421,12 +426,14 @@ Value copy_value(Value* value) {
             copy_value_array(&list->values, &orig_list->values);
             pop_root();
             return to_list(list);
-        case VAL_STRING:
+        }
+        case VAL_STRING: {
             struct ObjString* orig_str = value->as.string_type;
             push_root(to_string(orig_str));
             struct ObjString* str = make_string(orig_str->chars, orig_str->length);
             pop_root();
             return to_string(str);
+        }
         default:
             return *value;
     }
