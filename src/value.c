@@ -182,6 +182,8 @@ Value equal_values(Value a, Value b) {
             struct ObjString* s2 = b.as.string_type;
             if (s1->length != s2->length) return to_boolean(false);
             return to_boolean(memcmp(s1->chars, s2->chars, s1->length) == 0);
+        case VAL_BOOL:
+            return to_boolean(a.as.boolean_type == b.as.boolean_type);
         case VAL_NIL:
             return to_boolean(true);
     }

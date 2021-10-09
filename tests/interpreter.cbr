@@ -1,9 +1,57 @@
-//mini-interpreter to test cebra capabilities
+//Mini interpreter to test cebra capabilities
+//integer numbers
+//four operations: +-*/
+//can use parentheses to indicate higher precedence
+//output is a double precision floating point
 
-//***********source************
-src := "2 + 4 * 2 - 4"
+//************Driver***************
+DEBUG := false
 
-//************lexer************
+tokens := scan_source("17 / (4 - 23) + 4 * 1")
+
+if DEBUG == true {
+    print("Tokens:")
+    for i: int = 0, i < tokens.size, i = i + 1 {
+        print(tokens[i].literal)
+    }
+}
+
+root := parse_tokens(tokens)
+
+if DEBUG == true {
+    print("AST:")
+    print(string_expr(root))
+}
+
+print(evaluate_expr(root))
+
+scan_source :: (src: string) -> List<Token> {
+    lexer := Lexer()
+    lexer.src = src
+    t: Token = nil
+    tokens := List<Token>()
+    while (t = next_token(lexer)).type != TokenType.eof {
+        tokens[tokens.size] = t
+    }
+    tokens[tokens.size] = t
+    -> tokens
+}
+
+parse_tokens :: (tokens: List<Token>) -> Expr {
+    parser := Parser()
+    parser.tokens = tokens
+    parser.current_token = parser.tokens[parser.index]
+    -> parse_expression(parser)
+}
+
+//************Lexer************
+
+Lexer :: struct {
+    src := ""
+    index := 0
+    current_char := ""
+}
+
 TokenType :: enum {
     default
     number
@@ -20,9 +68,6 @@ Token :: struct {
     type := TokenType.default
     literal := ""
 }
-
-index := 0
-current_char := ""
 
 is_digit :: (char: string) -> bool {
     -> char == "0" or
@@ -41,61 +86,61 @@ is_whitespace :: (char: string) -> bool {
     -> char == " "
 }
 
-peek :: (src: string, index: int, fun: (string) -> bool) -> bool {
-    if index >= src.size {
+peek :: (lexer: Lexer, fun: (string) -> bool) -> bool {
+    if lexer.index >= lexer.src.size {
         -> false
     } 
-    -> fun(src[index])
+    -> fun(lexer.src[lexer.index])
 }
 
-next_char := () -> bool {
-    if index >= src.size {
+next_char :: (lexer: Lexer) -> bool {
+    if lexer.index >= lexer.src.size {
         -> false
     }
-    current_char = src[index]
-    index = index + 1
+    lexer.current_char = lexer.src[lexer.index]
+    lexer.index = lexer.index + 1
     -> true
 }
 
-next_token := () -> Token {
+next_token :: (lexer: Lexer) -> Token {
 
-    while peek(src, index, is_whitespace) {
-        next_char()
+    while peek(lexer, is_whitespace) {
+        next_char(lexer)
     }
 
-    if next_char() {
+    if next_char(lexer) {
         token := Token()
-        token.literal = current_char
-        if current_char == "+" {
+        token.literal = lexer.current_char
+        if lexer.current_char == "+" {
             token.type = TokenType.plus
             -> token
             //-> Token(TokenType.plus, "+") //would like to be able to do this
         } 
-        if current_char == "-" {
+        if lexer.current_char == "-" {
             token.type = TokenType.minus
             -> token
         }
-        if current_char == "*" {
+        if lexer.current_char == "*" {
             token.type = TokenType.star
             -> token
         }
-        if current_char == "*" {
+        if lexer.current_char == "/" {
             token.type = TokenType.slash
             -> token
         }
-        if current_char == "(" {
+        if lexer.current_char == "(" {
             token.type = TokenType.left_paren
             -> token
         }
-        if current_char == ")" {
+        if lexer.current_char == ")" {
             token.type = TokenType.right_paren
             -> token
         }
         //if number
-        num_string := current_char
-        while peek(src, index, is_digit) {
-            next_char()
-            num_string = num_string + current_char 
+        num_string := lexer.current_char
+        while peek(lexer, is_digit) {
+            next_char(lexer)
+            num_string = num_string + lexer.current_char 
         }
         token.type = TokenType.number
         token.literal = num_string
@@ -107,7 +152,27 @@ next_token := () -> Token {
     }
 }
 
-//***********AST************
+//**********Parser***************
+Parser :: struct {
+    tokens: List<Token> = nil
+    index := 0
+    previous_token: Token = nil
+    current_token: Token = nil 
+}
+
+advance :: (parser: Parser) -> {
+    parser.previous_token = parser.current_token
+    parser.index = parser.index + 1
+    parser.current_token = parser.tokens[parser.index]
+}
+
+match :: (parser: Parser, type: TokenType) -> bool {
+    if type == parser.current_token.type {
+        advance(parser)
+        -> true
+    }
+    -> false
+}
 
 Expr :: struct {
     token: Token = nil
@@ -136,53 +201,40 @@ make_binary_expr :: (token: Token, left: Expr, right: Expr) -> Expr {
     -> binary as Expr
 }
 
-//*********parser***********
-previous_token: Token = nil
-current_token := next_token()
-
-match := (type: TokenType) -> bool {
-    if type == current_token.type {
-        previous_token = current_token
-        current_token = next_token()
-        -> true
-    } 
-    -> false
-}
-
-parse_primary :: (match: (TokenType) -> bool, prev: () -> Token) -> Expr {
-    if match(TokenType.number) {
-        -> make_primary_expr(prev())
+parse_primary :: (parser: Parser) -> Expr {
+    if match(parser, TokenType.number) {
+        -> make_primary_expr(parser.previous_token)
     }
 
-    if match(TokenType.left_paren) {
-        expr := parse_expression(match, prev)
-        match(TokenType.right_paren)
+    if match(parser, TokenType.left_paren) {
+        expr := parse_expression(parser)
+        match(parser, TokenType.right_paren)
         -> expr
     }
 }
 
-parse_factor :: (match: (TokenType) -> bool, prev: () -> Token) -> Expr {
-    left := parse_primary(match, prev)
+parse_factor :: (parser: Parser) -> Expr {
+    left := parse_primary(parser)
 
-    while match(TokenType.star) or match(TokenType.slash) {
-        left = make_binary_expr(prev(), left, parse_primary(match, prev))
+    while match(parser, TokenType.star) or match(parser, TokenType.slash) {
+        left = make_binary_expr(parser.previous_token, left, parse_primary(parser))
     }
 
     -> left
 }
 
-parse_term :: (match: (TokenType) -> bool, prev: () -> Token) -> Expr {
-    left := parse_factor(match, prev)
+parse_term :: (parser: Parser) -> Expr {
+    left := parse_factor(parser)
 
-    while match(TokenType.plus) or match(TokenType.minus) {
-        left = make_binary_expr(prev(), left, parse_factor(match, prev))
+    while match(parser, TokenType.plus) or match(parser, TokenType.minus) {
+        left = make_binary_expr(parser.previous_token, left, parse_factor(parser))
     }
 
     -> left
 }
 
-parse_expression :: (match: (TokenType) -> bool, prev: () -> Token) -> Expr {
-    -> parse_term(match, prev)
+parse_expression :: (parser: Parser) -> Expr {
+    -> parse_term(parser)
 }
 
 string_expr :: (expr: Expr) -> string {
@@ -196,16 +248,16 @@ string_expr :: (expr: Expr) -> string {
     }
 }
 
-//**********evaluator*******
-evaluate_node :: (expr: Expr) -> int {
+//**********Evaluator***********
+evaluate_expr :: (expr: Expr) -> float {
     if expr as PrimaryExpr != nil {
-        -> (expr as PrimaryExpr).token.literal as int
+        -> (expr as PrimaryExpr).token.literal as float
     }
 
     if expr as BinaryExpr != nil {
         b := expr as BinaryExpr
-        left := evaluate_node(b.left)
-        right := evaluate_node(b.right)
+        left := evaluate_expr(b.left)
+        right := evaluate_expr(b.right)
         if b.token.literal == "+" {
             -> left + right
         }
@@ -220,17 +272,3 @@ evaluate_node :: (expr: Expr) -> int {
         }
     }
 }
-
-//*********driver***********
-//root := parse_expression(match, () -> Token { -> previous_token })
-//print(evaluate_node(root))
-
-src = "3 - 5 * 10 + 50 * 1"
-index = 0
-current_char = ""
-previous_token = nil
-current_token = next_token()
-
-root := parse_expression(match, () -> Token { -> previous_token })
-print(string_expr(root))
-print(evaluate_node(root))

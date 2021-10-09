@@ -16,6 +16,11 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    Write tests for regular/anonymous functions
+        how could this work???  Might be easier to make them error messages
+
+    Rewrite interpreter.cbr to use fewer closures, and to make use of the Lexer, Parser and AST
+
     Error messages in compiler are all messed up in compiler.c.  In NODE_FUN, when returning after error sometimes
         the errors in func_comp aren't copied over to the enclosing compiler before func_comp is freed.
         ALSO, on errors func_comp is NOT freed, so the compiler chain isn't reset back to the enclosing compiler
