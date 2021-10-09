@@ -240,11 +240,12 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
 
     while ((match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
         switch(parser.previous.type) {
-            case TOKEN_DOT:
+            case TOKEN_DOT: {
                 CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect identifier after '.'.");
                 left = make_get_prop(left, parser.previous);
                 break;
-            case TOKEN_LEFT_PAREN:
+            }
+            case TOKEN_LEFT_PAREN: {
                 struct NodeList* args = (struct NodeList*)make_node_list();
                 if (!match(TOKEN_RIGHT_PAREN)) {
                     do {
@@ -257,13 +258,15 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
 
                 left = make_call(parser.previous, left, args);
                 break;
-            case TOKEN_LEFT_BRACKET:
+            }
+            case TOKEN_LEFT_BRACKET: {
                 Token left_bracket = parser.previous;
                 struct Node* idx;
                 PARSE(expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
                 left = make_get_element(parser.previous, left, idx);
                 CONSUME(TOKEN_RIGHT_BRACKET, left_bracket, "Expect ']' after index.");
                 break;
+            }
             default:
                 break;
         }
