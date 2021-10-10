@@ -6,9 +6,11 @@
 #include "memory.h"
 
 void init_chunk(Chunk* chunk) {
-    chunk->codes = ALLOCATE_ARRAY(OpCode);
     chunk->count = 0;
     chunk->capacity = 0;
+    chunk->constants.count = 0;
+    chunk->constants.capacity = 0;
+    chunk->codes = ALLOCATE_ARRAY(OpCode);
     init_value_array(&chunk->constants);
 }
 
