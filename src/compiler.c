@@ -1372,6 +1372,7 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     //TODO:script_compiler is currently used to get access to top compiler globals table
     //  this is kind of messy
     script_compiler = compiler;
+    set_local(compiler, make_dummy_token(), make_int_type(), 0);
     define_clock(compiler);
     define_print(compiler);
 

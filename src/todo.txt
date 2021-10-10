@@ -17,7 +17,7 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Fix error using MSVC compiler
+    Found major problem with defined_in_scope
 
     Update website for Cebra with new syntax/sections.
         How to download/build src is the most important
@@ -27,8 +27,13 @@ IMPLEMENTATION:
     Read:
         The Slightly Disgruntled Scientist tutorial on debugguers - Valgrind and GBD: Tame the Wild C
             https://heeris.id.au/2016/valgrind-gdb/
-            consider looking at shorter tutorial on Cliffs of Insanity website (link in link above) for a
-                quick look first at valgrind/gdb
+            
+            Example 1: Uninitialized variabls
+                Valgrind runs program on synthetic processer. GDB is debugger with breakpoints, single stepping, etc
+                run program in Valgrind with any arguments using --vgdb-error=0 flag to allow using GDB
+                    use command output by valgrind to run GDB with the currently running program
+                can then step through program using GDB, and also send commands to valgrind using 'monitor'
+            Chapter 2: Memory leaks
 
     Test compiling on Windows FOR Linux, and on Linux FOR Windows to see how that works.
 

@@ -16,6 +16,7 @@ static bool is_whitespace(char c) {
 }
 
 static unsigned char peek_char() {
+    if ((unsigned int)(lexer.current) >= strlen(lexer.source)) return '\0';
     return lexer.source[lexer.current]; 
 }
 
@@ -28,19 +29,12 @@ static void consume_whitespace() {
 }
 
 unsigned char next_char() {
+    if ((unsigned int)(lexer.current) >= strlen(lexer.source)) return '\0';
     return lexer.source[lexer.current++];
 }
 
 static Token new_token(TokenType type) {
-    Token token;
-    token.type = type;
-    token.line = lexer.line;
-    token.start = &lexer.source[lexer.start];
-    token.length = lexer.current - lexer.start;
-
-    lexer.start = lexer.current;
-
-    return token;
+    return make_token(type, lexer.line, &lexer.source[lexer.start], lexer.current - lexer.start);
 }
 
 static void read_numbers() {
