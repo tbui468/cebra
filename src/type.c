@@ -107,6 +107,15 @@ struct Type* make_struct_type(Token name, struct Type* super) {
     return (struct Type*)sc;
 }
 
+struct Type* make_struct_instance_type(struct TypeStruct* struct_ref) {
+    struct TypeStructInstance* si = ALLOCATE(struct TypeStructInstance);
+    si->base.type = TYPE_STRUCT_INSTANCE;
+    si->struct_ref = struct_ref;
+
+    insert_type((struct Type*)si);
+    return (struct Type*)si;
+}
+
 struct Type* make_identifier_type(Token identifier) {
     struct TypeIdentifier* si = ALLOCATE(struct TypeIdentifier);
 
@@ -146,6 +155,15 @@ struct Type* make_enum_type(Token name) {
 
     insert_type((struct Type*)te);
     return (struct Type*)te;
+}
+
+struct Type* make_enum_element_type(struct TypeEnum* enum_ref) {
+    struct TypeEnumElement* ee = ALLOCATE(struct TypeEnumElement);
+    ee->base.type = TYPE_ENUM_ELEMENT;
+    ee->enum_ref = enum_ref;
+
+    insert_type((struct Type*)ee);
+    return (struct Type*)ee;
 }
 
 
@@ -197,6 +215,11 @@ bool same_type(struct Type* type1, struct Type* type2) {
             struct TypeStruct* sc2 = (struct TypeStruct*)type2;
             return sc1->name.length == sc2->name.length && memcmp(sc1->name.start, sc2->name.start, sc1->name.length) == 0;
         }
+        case TYPE_STRUCT_INSTANCE: {
+            struct TypeStructInstance* si1 = (struct TypeStructInstance*)type1;
+            struct TypeStructInstance* si2 = (struct TypeStructInstance*)type2;
+            return same_type((struct Type*)(si1->struct_ref), (struct Type*)(si2->struct_ref));
+        }
         case TYPE_IDENTIFIER: {
             struct TypeIdentifier* si1 = (struct TypeIdentifier*)type1; 
             struct TypeIdentifier* si2 = (struct TypeIdentifier*)type2; 
@@ -215,6 +238,11 @@ bool same_type(struct Type* type1, struct Type* type2) {
             if (te1->name.length != te2->name.length) return false;
             if (memcmp(te1->name.start, te2->name.start, te1->name.length) != 0) return false;
             return true;
+        }
+        case TYPE_ENUM_ELEMENT: {
+            struct TypeEnumElement* ee1 = (struct TypeEnumElement*)type1;
+            struct TypeEnumElement* ee2 = (struct TypeEnumElement*)type2;
+            return same_type((struct Type*)(ee1->enum_ref), (struct Type*)(ee2->enum_ref));
         }
         case TYPE_INT:
         case TYPE_FLOAT:
@@ -269,8 +297,16 @@ void print_type(struct Type* type) {
             printf(" )");
             break;
         }
+        case TYPE_STRUCT_INSTANCE: {
+            printf("TypeStructInstance stub");
+            break;
+        }
         case TYPE_ENUM: {
             printf("TypeEnum Stub");
+            break;
+        }
+        case TYPE_ENUM_ELEMENT: {
+            printf("TypeEnumElement Stub");
             break;
         }
         case TYPE_IDENTIFIER: {
@@ -337,10 +373,20 @@ void free_type(struct Type* type) {
             FREE(sc, struct TypeStruct);
             break;
         }
+        case TYPE_STRUCT_INSTANCE: {
+            struct TypeStructInstance* si = (struct TypeStructInstance*)type;
+            FREE(si, struct TypeStructInstance);
+            break;
+        }
         case TYPE_ENUM: {
             struct TypeEnum* te = (struct TypeEnum*)type;
             free_table(&te->props);
             FREE(te, struct TypeEnum);
+            break;
+        }
+        case TYPE_ENUM_ELEMENT: {
+            struct TypeEnumElement* ee = (struct TypeEnumElement*)type;
+            FREE(ee, struct TypeEnumElement);
             break;
         }
         case TYPE_IDENTIFIER: {

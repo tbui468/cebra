@@ -24,10 +24,8 @@ IMPLEMENTATION:
         the compiler can detect error when user tries to set variable to a Struct/Enum - 
         only setting to a struct instance or enum element is allowed.
 
-        Change TypeClass to TypeStruct
-
         Create:
-            TypeInstance is just holds a reference to TypeClass.
+            TypeStructInstance is just holds a reference to TypeClass.
             TypeEnumElement also just holds a reference to TypeEnum.
 
         When instantiating a new instance, should wrap TypeStruct in TypeStructInstance
