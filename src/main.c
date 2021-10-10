@@ -8,21 +8,22 @@
 #include "obj.h"
 
 
+#define MAX_CHARS 256
 
 ResultCode run_source(VM* vm, const char* source) {
 
     printf("Before creating script compiler\n");
-    struct Compiler script_compiler;
+    struct Compiler script_comp;
     printf("Before initializing script compiler\n");
-    init_compiler(&script_compiler, "script", 6, 0);
+    init_compiler(&script_comp, "script", 6, 0);
 
     printf("Before parser\n");
     struct NodeList* nl;
-    ResultCode parse_result = parse(source, &nl, &script_compiler.globals);
+    ResultCode parse_result = parse(source, &nl, &script_comp.globals);
     printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
-        free_compiler(&script_compiler);
+        free_compiler(&script_comp);
         return RESULT_FAILED;
     }
 
@@ -31,35 +32,35 @@ ResultCode run_source(VM* vm, const char* source) {
 #endif
 
     printf("Before compiler\n");
-    ResultCode compile_result = compile_script(&script_compiler, nl);
+    ResultCode compile_result = compile_script(&script_comp, nl);
     printf("After compiler\n");
 
     if (compile_result == RESULT_FAILED) {
         printf("Compilation Failed\n");
-        free_compiler(&script_compiler);
+        free_compiler(&script_comp);
         return RESULT_FAILED; 
     }
 
 #ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(script_compiler.function);
+    disassemble_chunk(script_comp.function);
     int i = 0;
     printf("-------------------\n");
-    while (i < script_compiler.function->chunk.count) {
-       OpCode op = script_compiler.function->chunk.codes[i++];
+    while (i < script_comp.function->chunk.count) {
+       OpCode op = script_comp.function->chunk.codes[i++];
        printf("[ %s ]\n", op_to_string(op));
     }
 #endif
 
     //need to free script compiler, since need to pop two temporaries from root_stack
-    free_compiler(&script_compiler);
+    free_compiler(&script_comp);
 
     printf("Before run\n");
     //pop_roots here - no longer need to pop_roots
-    ResultCode run_result = run(vm, script_compiler.function);
+    ResultCode run_result = run(vm, script_comp.function);
     printf("After run\n");
 
     if (run_result == RESULT_FAILED) {
-        free_compiler(&script_compiler);
+        free_compiler(&script_comp);
         return RESULT_FAILED; 
     }
 
@@ -70,7 +71,6 @@ ResultCode run_source(VM* vm, const char* source) {
 
 
 ResultCode repl(VM* vm) {
-    int MAX_CHARS = 256;
     char input_line[MAX_CHARS];
     while(true) {
         printf("> ");

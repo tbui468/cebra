@@ -15,32 +15,22 @@ ADDING FEATURES:
     Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
-Read:
-    The Slightly Disgruntled Scientist tutorial on debugguers - Valgrind and GBD: Tame the Wild C
-        https://heeris.id.au/2016/valgrind-gdb/
-        consider looking at shorter tutorial on Cliffs of Insanity website (link in link above) for a
-            quick look first at valgrind/gdb
-
 IMPLEMENTATION:
-    Function Obj upvalue_count needs to be intialized to 0 BEFORE chunk is initialized, otherwise GC fails while tracing function references
-        since upvalue_count is uninitialized, and trace_reference() (which is called by GC) requires upvalue_count to be in a valid state
 
-    If a variable is post-incremented (and pre-incremented too, probably) as an array index, AND it's used in the expression that the array
-        element is being set to, the right-hand-side value of the variable is undefined.
-        The gcc compiler ends up using the incremented value, which crashes interpreter
-        at runtime, whereas the clang compiler uses the original value which works fine (but is still undefined, so it needs to be fixed)
-        problem is in OP_FUN when capturing upvalues - need to replace both post increments with a second var++ statement afterwards.
+    Fix error using MSVC compiler
 
-        search all files in probject (VScode) and search for post/pre increments/decrements with assignment - replace with the post/pre increment/decrements
-            on a second line. SEARCH FOR '++' and '--'
-    
-    Clone on Linux Machine and try this code again:
-        list := List<int>()
+    Update website for Cebra with new syntax/sections.
+        How to download/build src is the most important
+            include which compilers + versions tested on and cmake versions
+        Don't worry about syntax highlighting for now - can add prism.js later (or other)
 
-        add := (a: int) -> {
-            list[list.size] = a
-        }
+    Read:
+        The Slightly Disgruntled Scientist tutorial on debugguers - Valgrind and GBD: Tame the Wild C
+            https://heeris.id.au/2016/valgrind-gdb/
+            consider looking at shorter tutorial on Cliffs of Insanity website (link in link above) for a
+                quick look first at valgrind/gdb
 
+    Test compiling on Windows FOR Linux, and on Linux FOR Windows to see how that works.
 
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')
