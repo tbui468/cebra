@@ -195,8 +195,8 @@ struct ObjFunction* make_function(struct ObjString* name, int arity) {
 
     obj->name = name;
     obj->arity = arity;
-    init_chunk(&obj->chunk);
     obj->upvalue_count = 0;
+    init_chunk(&obj->chunk);
 
     pop_root();
     return obj;

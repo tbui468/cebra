@@ -1,3 +1,4 @@
-/build
+/build_msvc
 *.swp
-/wasm_build
+/build_wasm
+/build_clang

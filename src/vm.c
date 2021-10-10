@@ -143,9 +143,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 int idx = READ_TYPE(frame, uint8_t);
                 if (is_local) {
                     Value* location = &frame->locals[idx];
-                    func->upvalues[func->upvalue_count++] = capture_upvalue(vm, location);
+                    func->upvalues[func->upvalue_count] = capture_upvalue(vm, location);
+                    func->upvalue_count++;
                 } else {
-                    func->upvalues[func->upvalue_count++] = frame->function->upvalues[idx];
+                    func->upvalues[func->upvalue_count] = frame->function->upvalues[idx];
+                    func->upvalue_count++;
                 }
             }
             break;

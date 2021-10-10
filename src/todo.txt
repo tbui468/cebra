@@ -15,12 +15,32 @@ ADDING FEATURES:
     Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
+Read:
+    The Slightly Disgruntled Scientist tutorial on debugguers - Valgrind and GBD: Tame the Wild C
+        https://heeris.id.au/2016/valgrind-gdb/
+        consider looking at shorter tutorial on Cliffs of Insanity website (link in link above) for a
+            quick look first at valgrind/gdb
+
 IMPLEMENTATION:
-    Clone updated code to Ubuntu vm, build and try interpreting interpreter.cbr again.  (It should at least work on a .cbr file with a single struct declared)
-        problem with trace_references() in linux vm version
-            find a way to run gdb with a program and input file....
-        trying to pinpoint using smaller interpreter in test.cbr
-            note: it works fine in windows for now
+    Function Obj upvalue_count needs to be intialized to 0 BEFORE chunk is initialized, otherwise GC fails while tracing function references
+        since upvalue_count is uninitialized, and trace_reference() (which is called by GC) requires upvalue_count to be in a valid state
+
+    If a variable is post-incremented (and pre-incremented too, probably) as an array index, AND it's used in the expression that the array
+        element is being set to, the right-hand-side value of the variable is undefined.
+        The gcc compiler ends up using the incremented value, which crashes interpreter
+        at runtime, whereas the clang compiler uses the original value which works fine (but is still undefined, so it needs to be fixed)
+        problem is in OP_FUN when capturing upvalues - need to replace both post increments with a second var++ statement afterwards.
+
+        search all files in probject (VScode) and search for post/pre increments/decrements with assignment - replace with the post/pre increment/decrements
+            on a second line. SEARCH FOR '++' and '--'
+    
+    Clone on Linux Machine and try this code again:
+        list := List<int>()
+
+        add := (a: int) -> {
+            list[list.size] = a
+        }
+
 
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')
