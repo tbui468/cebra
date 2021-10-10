@@ -450,8 +450,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 struct Compiler func_comp;
-                init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count);
-                set_local(&func_comp, df->name, df->type, 0);
+                init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count, df->name, df->type);
                 add_node(df->parameters, df->body);
                 struct TypeArray* inner_ret_types;
                 ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_types); 
@@ -520,7 +519,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             } else {
                 struct Compiler func_comp;
-                init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count);
+                init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count, df->name, df->type);
                 add_node(df->parameters, df->body);
                 struct TypeArray* inner_ret_types;
                 ResultCode result = compile_function(&func_comp, df->parameters, &inner_ret_types); 
@@ -1236,13 +1235,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 }
 
 
-void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count) {
-    struct ObjString* name = make_string(start, length);
-    push_root(to_string(name));
+void init_compiler(struct Compiler* compiler, const char* start, int length, int parameter_count, Token name, struct Type* type) {
+    struct ObjString* fun_name = make_string(start, length);
+    push_root(to_string(fun_name));
     compiler->scope_depth = 0;
-    compiler->locals_count = 1; //first slot is for function def
+    compiler->locals_count = 0;
+    add_local(compiler, name, type); //first slot is for function
     compiler->error_count = 0;
-    compiler->function = make_function(name, parameter_count);
+    compiler->function = make_function(fun_name, parameter_count);
     push_root(to_function(compiler->function));
     compiler->enclosing = NULL;
     compiler->upvalue_count = 0;
@@ -1372,7 +1372,6 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     //TODO:script_compiler is currently used to get access to top compiler globals table
     //  this is kind of messy
     script_compiler = compiler;
-    set_local(compiler, make_dummy_token(), make_int_type(), 0);
     define_clock(compiler);
     define_print(compiler);
 

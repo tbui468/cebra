@@ -15,7 +15,9 @@ ResultCode run_source(VM* vm, const char* source) {
     printf("Before creating script compiler\n");
     struct Compiler script_comp;
     printf("Before initializing script compiler\n");
-    init_compiler(&script_comp, "script", 6, 0);
+    //passing in NULL for struct Type* bc compiler needs to be initialized
+    //before Types can be created
+    init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
 
     printf("Before parser\n");
     struct NodeList* nl;
