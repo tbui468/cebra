@@ -590,10 +590,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 GetVar* gv = (GetVar*)(dc->super);
                 struct Type* current = resolve_type(compiler, gv->name);
                 while (current != NULL) {
-                    struct TypeClass* tc = (struct TypeClass*)current;
-                    struct ObjString* class_name = make_string(tc->klass.start, tc->klass.length);
-                    push_root(to_string(class_name));
-                    set_table(&struct_obj->castable_types, class_name, to_nil());
+                    struct TypeStruct* tc = (struct TypeStruct*)current;
+                    struct ObjString* struct_name = make_string(tc->name.start, tc->name.length);
+                    push_root(to_string(struct_name));
+                    set_table(&struct_obj->castable_types, struct_name, to_nil());
                     current = tc->super;
                     pop_root();
                 }
@@ -613,7 +613,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //Get type already completely defined in parser
             Value v;
             get_from_table(&compiler->globals, struct_obj->name, &v);
-            struct TypeClass* klass_type = (struct TypeClass*)(v.as.type_type);
+            struct TypeStruct* klass_type = (struct TypeStruct*)(v.as.type_type);
             //add struct properties
             for (int i = 0; i < dc->decls->count; i++) {
                 struct Node* node = dc->decls->nodes[i];
@@ -628,7 +628,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* right_type;
                 COMPILE_NODE(node, (struct TypeArray*)class_ret_types, &right_type);
 
-                //update types in TypeClass if property type is inferred
+                //update types in TypeStruct if property type is inferred
                 Value v;
                 get_from_table(&klass_type->props, prop_name, &v);
                 if (v.as.type_type->type == TYPE_INFER) {
@@ -886,7 +886,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             Value type_val = to_nil();
             struct Type* current = type_inst;
             while (current != NULL) {
-                struct TypeClass* tc = (struct TypeClass*)current;
+                struct TypeStruct* tc = (struct TypeStruct*)current;
                 if (get_from_table(&tc->props, name, &type_val)) {
                     break;
                 }
@@ -923,7 +923,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
             }
 
-            if (type_inst->type == TYPE_CLASS) {
+            if (type_inst->type == TYPE_STRUCT) {
                 struct ObjString* name = make_string(prop.start, prop.length);
                 push_root(to_string(name));
                 emit_byte(compiler, OP_SET_PROP);
@@ -933,7 +933,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 Value type_val = to_nil();
                 struct Type* current = type_inst;
                 while (current != NULL) {
-                    struct TypeClass* tc = (struct TypeClass*)current;
+                    struct TypeStruct* tc = (struct TypeStruct*)current;
                     if (get_from_table(&tc->props, name, &type_val)) {
                         break;
                     }
@@ -1132,8 +1132,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
 
-            if (type->type == TYPE_CLASS) {
-                struct TypeClass* type_class = (struct TypeClass*)type;
+            if (type->type == TYPE_STRUCT) {
+                struct TypeStruct* type_class = (struct TypeStruct*)type;
                 emit_byte(compiler, OP_INSTANCE);
                 *node_type = type;
                 return RESULT_SUCCESS;
@@ -1206,14 +1206,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 cast->type = resolve_type(compiler, ((struct TypeIdentifier*)(cast->type))->identifier);
             }
 
-            CHECK_TYPE(left->type != TYPE_CLASS || cast->type->type != TYPE_CLASS, 
+            CHECK_TYPE(left->type != TYPE_STRUCT || cast->type->type != TYPE_STRUCT, 
                     cast->name, "Type casts with 'as' must be applied to structure types or primitive types.");
 
-            struct TypeClass* from = (struct TypeClass*)(left);
-            struct TypeClass* to = (struct TypeClass*)(cast->type);
+            struct TypeStruct* from = (struct TypeStruct*)(left);
+            struct TypeStruct* to = (struct TypeStruct*)(cast->type);
 
-            CHECK_TYPE(from->klass.length == to->klass.length && 
-                       memcmp(from->klass.start, to->klass.start, from->klass.length) == 0, 
+            CHECK_TYPE(from->name.length == to->name.length && 
+                       memcmp(from->name.start, to->name.start, from->name.length) == 0, 
                        cast->name, "Attempting to cast to own type.");
 
             bool cast_up = is_substruct(from, to);
@@ -1223,7 +1223,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             CHECK_TYPE(!(cast_up || cast_down), cast->name, "Struct instances must be cast only to superstructs or substructs.");
 
             emit_byte(compiler, OP_CAST);
-            struct ObjString* to_struct = make_string(to->klass.start, to->klass.length);
+            struct ObjString* to_struct = make_string(to->name.start, to->name.length);
             push_root(to_string(to_struct));
             emit_short(compiler, add_constant(compiler, to_string(to_struct)));
             pop_root();

@@ -128,8 +128,8 @@ static void mark_compiler_roots() {
                     mark_table(&te->props);
                     break;
                 }
-                case TYPE_CLASS: {
-                    struct TypeClass* sc = (struct TypeClass*)type;
+                case TYPE_STRUCT: {
+                    struct TypeStruct* sc = (struct TypeStruct*)type;
                     mark_table(&sc->props);
                     break;
                 }

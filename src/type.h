@@ -12,7 +12,7 @@ typedef enum {
     TYPE_NIL,
     TYPE_ARRAY,
     TYPE_FUN,
-    TYPE_CLASS,
+    TYPE_STRUCT,
     TYPE_IDENTIFIER,
     TYPE_LIST,
     TYPE_MAP,
@@ -63,9 +63,9 @@ struct TypeFun {
     struct Type* ret;
 };
 
-struct TypeClass {
+struct TypeStruct {
     struct Type base;
-    Token klass;
+    Token name;
     struct Type* super;
     struct Table props;
 };
@@ -102,14 +102,14 @@ struct Type* make_bool_type();
 struct Type* make_string_type();
 struct Type* make_nil_type();
 struct Type* make_fun_type(struct Type* params, struct Type* ret);
-struct Type* make_class_type(Token klass, struct Type* super);
+struct Type* make_struct_type(Token name, struct Type* super);
 struct Type* make_identifier_type(Token identifier);
 struct Type* make_list_type(struct Type* type);
 struct Type* make_map_type(struct Type* type);
 struct Type* make_infer_type();
 struct Type* make_enum_type(Token name);
 
-bool is_substruct(struct TypeClass* substruct, struct TypeClass* superstruct);
+bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct);
 bool same_type(struct Type* type1, struct Type* type2);
 bool is_primitive(struct Type* type);
 void print_type(struct Type* type);

@@ -493,11 +493,11 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     if (match(TOKEN_CLASS)) {
         if (match(TOKEN_LESS)) {
             CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect superclass identifier after '<'.");
-            *type = make_class_type(var_name, make_identifier_type(parser.previous));
+            *type = make_struct_type(var_name, make_identifier_type(parser.previous));
             return RESULT_SUCCESS;
         }
 
-        *type = make_class_type(var_name, NULL);
+        *type = make_struct_type(var_name, NULL);
         return RESULT_SUCCESS;
     }
 
@@ -659,7 +659,7 @@ static ResultCode declaration(struct Node** node) {
             struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
             push_root(to_string(prop_string));
 
-            struct TypeClass* tc = (struct TypeClass*)struct_type;
+            struct TypeStruct* tc = (struct TypeStruct*)struct_type;
 
             Value v;
             if (get_from_table(&tc->props, prop_string, &v)) {
@@ -860,7 +860,7 @@ static void quick_sort(struct Error* errors, int lo, int hi) {
     quick_sort(errors, p + 1, hi);
 }
 
-static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
+static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
     //resolve properties
     for (int j = 0; j < tc->props.capacity; j++) {
         struct Pair* inner_pair = &tc->props.pairs[j];
@@ -896,13 +896,13 @@ static ResultCode resolve_struct_identifiers(struct TypeClass* tc) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode check_circular_inheritance(struct TypeClass* klass) {
-    Token klass_name = klass->klass;
+static ResultCode check_circular_inheritance(struct TypeStruct* klass) {
+    Token struct_name = klass->name;
     struct Type* current = klass->super;
     while (current != NULL) {
-        struct TypeClass* super = (struct TypeClass*)current;
-        Token super_name = super->klass;
-        if (klass_name.length == super_name.length && memcmp(klass_name.start, super_name.start, klass_name.length) == 0) {
+        struct TypeStruct* super = (struct TypeStruct*)current;
+        Token super_name = super->name;
+        if (struct_name.length == super_name.length && memcmp(struct_name.start, super_name.start, struct_name.length) == 0) {
             ERROR(make_dummy_token(), "A struct cannot have a circular inheritance.");
         }
         current = super->super;
@@ -911,10 +911,10 @@ static ResultCode check_circular_inheritance(struct TypeClass* klass) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode copy_down_props(struct TypeClass* klass) {
+static ResultCode copy_down_props(struct TypeStruct* klass) {
     struct Type* super_type = klass->super;
     while (super_type != NULL) {
-        struct TypeClass* super = (struct TypeClass*)super_type;
+        struct TypeStruct* super = (struct TypeStruct*)super_type;
         for (int j = 0; j < super->props.capacity; j++) {
             struct Pair* pair = &super->props.pairs[j];
             if (pair->key != NULL) {
@@ -1024,9 +1024,9 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     if (result != RESULT_FAILED) {
         for (int i = 0; i < parser.globals->capacity; i++) {
             struct Pair* pair = &parser.globals->pairs[i];
-            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
+            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
                 struct Type* type = pair->value.as.type_type;
-                struct TypeClass* tc = (struct TypeClass*)type;
+                struct TypeStruct* tc = (struct TypeStruct*)type;
                 if (resolve_struct_identifiers(tc) == RESULT_FAILED) {
                     result = RESULT_FAILED;
                     break;
@@ -1040,9 +1040,9 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     if (result != RESULT_FAILED) {
         for (int i = 0; i < parser.globals->capacity; i++) {
             struct Pair* pair = &parser.globals->pairs[i];
-            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
+            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
                 struct Type* type = pair->value.as.type_type;
-                struct TypeClass* klass = (struct TypeClass*)type;
+                struct TypeStruct* klass = (struct TypeStruct*)type;
                 if (check_circular_inheritance(klass) == RESULT_FAILED) {
                     result = RESULT_FAILED;
                     break;
@@ -1052,13 +1052,13 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     }
 
 
-    //for each TypeClass*, copy down props and check that overwritten props are of same type
+    //for each TypeStruct*, copy down props and check that overwritten props are of same type
     if (result != RESULT_FAILED) {
         for (int i = 0; i < parser.globals->capacity; i++) {
             struct Pair* pair = &parser.globals->pairs[i];
-            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_CLASS) {
+            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
                 struct Type* type = pair->value.as.type_type;
-                struct TypeClass* klass = (struct TypeClass*)type; //this is the substruct we want to copy all props into
+                struct TypeStruct* klass = (struct TypeStruct*)type; //this is the substruct we want to copy all props into
                 if (copy_down_props(klass) == RESULT_FAILED) {
                     result = RESULT_FAILED;
                     break;

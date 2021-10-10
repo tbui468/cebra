@@ -17,26 +17,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Found major problem with defined_in_scope
-
-    Update website for Cebra with new syntax/sections.
-        How to download/build src is the most important
-            include which compilers + versions tested on and cmake versions
-        Don't worry about syntax highlighting for now - can add prism.js later (or other)
-
-    Read:
-        The Slightly Disgruntled Scientist tutorial on debugguers - Valgrind and GBD: Tame the Wild C
-            https://heeris.id.au/2016/valgrind-gdb/
-            
-            Example 1: Uninitialized variabls
-                Valgrind runs program on synthetic processer. GDB is debugger with breakpoints, single stepping, etc
-                run program in Valgrind with any arguments using --vgdb-error=0 flag to allow using GDB
-                    use command output by valgrind to run GDB with the currently running program
-                can then step through program using GDB, and also send commands to valgrind using 'monitor'
-            Chapter 2: Memory leaks
-
-    Test compiling on Windows FOR Linux, and on Linux FOR Windows to see how that works.
-
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')
 
@@ -58,6 +38,29 @@ IMPLEMENTATION:
 
         Update NODE_DECL_VAR to disallow declaring variables assigned to TypeStruct or TypeEnum
             -only the instances or elements can be assigned
+
+
+    Write script to build using both Clang and MSVC, and then run correctness.cbr and interpreter.cbr
+    for both executables all in one go.
+
+    Update website for Cebra with new syntax/sections.
+        How to download/build src is the most important
+            include which compilers + versions tested on and cmake versions
+        Don't worry about syntax highlighting for now - can add prism.js later (or other)
+
+    Read:
+        The Slightly Disgruntled Scientist tutorial on debugguers - Valgrind and GBD: Tame the Wild C
+            https://heeris.id.au/2016/valgrind-gdb/
+            
+            Example 1: Uninitialized variabls
+                Valgrind runs program on synthetic processer. GDB is debugger with breakpoints, single stepping, etc
+                run program in Valgrind with any arguments using --vgdb-error=0 flag to allow using GDB
+                    use command output by valgrind to run GDB with the currently running program
+                can then step through program using GDB, and also send commands to valgrind using 'monitor'
+                consider making a 'wat' command to combine address, size, + valgrind command get_vbits into one command
+            Chapter 2: Memory leaks
+
+    Test compiling on Windows FOR Linux, and on Linux FOR Windows to see how that works.
 
     This should create error since nothing is returned
         bottom :: (d: Dog) -> Token {

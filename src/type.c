@@ -95,11 +95,11 @@ struct Type* make_fun_type(struct Type* params, struct Type* ret) {
     return (struct Type*)type_fun;
 }
 
-struct Type* make_class_type(Token klass, struct Type* super) {
-    struct TypeClass* sc = ALLOCATE(struct TypeClass);
+struct Type* make_struct_type(Token name, struct Type* super) {
+    struct TypeStruct* sc = ALLOCATE(struct TypeStruct);
 
-    sc->base.type = TYPE_CLASS;
-    sc->klass = klass;
+    sc->base.type = TYPE_STRUCT;
+    sc->name = name;
     sc->super = super;
     init_table(&sc->props);
 
@@ -157,17 +157,17 @@ bool is_primitive(struct Type* type) {
            type->type == TYPE_NIL;
 }
 
-bool is_substruct(struct TypeClass* substruct, struct TypeClass* superstruct) {
+bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct) {
     if (substruct->super == NULL) return false;
 
     struct Type* t = substruct->super;
     while (t != NULL) {
-        Token super_tok = ((struct TypeClass*)t)->klass;
-        Token class_tok = superstruct->klass;
+        Token super_tok = ((struct TypeStruct*)t)->name;
+        Token class_tok = superstruct->name;
         if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
             return true;
         }
-        t = ((struct TypeClass*)t)->super;
+        t = ((struct TypeStruct*)t)->super;
     }
 
     return false;
@@ -192,10 +192,10 @@ bool same_type(struct Type* type1, struct Type* type2) {
             struct TypeFun* sf2 = (struct TypeFun*)type2;
             return same_type(sf1->ret, sf2->ret) && same_type(sf1->params, sf2->params);
         }
-        case TYPE_CLASS: {
-            struct TypeClass* sc1 = (struct TypeClass*)type1;
-            struct TypeClass* sc2 = (struct TypeClass*)type2;
-            return sc1->klass.length == sc2->klass.length && memcmp(sc1->klass.start, sc2->klass.start, sc1->klass.length) == 0;
+        case TYPE_STRUCT: {
+            struct TypeStruct* sc1 = (struct TypeStruct*)type1;
+            struct TypeStruct* sc2 = (struct TypeStruct*)type2;
+            return sc1->name.length == sc2->name.length && memcmp(sc1->name.start, sc2->name.start, sc1->name.length) == 0;
         }
         case TYPE_IDENTIFIER: {
             struct TypeIdentifier* si1 = (struct TypeIdentifier*)type1; 
@@ -262,10 +262,10 @@ void print_type(struct Type* type) {
             print_type(sf->ret);
             break;
         }
-        case TYPE_CLASS: {
-            struct TypeClass* sc = (struct TypeClass*)type;
-            printf("( TypeClass Stub");
-            print_token(sc->klass);
+        case TYPE_STRUCT: {
+            struct TypeStruct* sc = (struct TypeStruct*)type;
+            printf("( TypeStruct Stub");
+            print_token(sc->name);
             printf(" )");
             break;
         }
@@ -331,10 +331,10 @@ void free_type(struct Type* type) {
             FREE(type_fun, struct TypeFun);
             break;
         }
-        case TYPE_CLASS: {
-            struct TypeClass* sc = (struct TypeClass*)type;
+        case TYPE_STRUCT: {
+            struct TypeStruct* sc = (struct TypeStruct*)type;
             free_table(&sc->props);
-            FREE(sc, struct TypeClass);
+            FREE(sc, struct TypeStruct);
             break;
         }
         case TYPE_ENUM: {
