@@ -1,4 +1,7 @@
+Token :: enum {
+    one
+    two
+}
 
-fp := List<float>()
-
-        print(fp[2]) //this crashes HARD (c program actually crashes since we are out of bounds)
+    //This breaks compiler without showing error:
+token: Token = Token()

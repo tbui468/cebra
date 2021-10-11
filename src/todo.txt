@@ -105,7 +105,6 @@ IMPLEMENTATION:
             -> left
         }
 
-
     This crashes - enum name is misspelled (should be ASTType.primary)
         PrimaryExpr := struct < Expr {
             type := ASype.primary
@@ -125,9 +124,6 @@ IMPLEMENTATION:
             TokenType := TokenType.number //Var identifier is expected, but using enum identifer... (but what if user tries to declara new enum???)
             identifier := ""
         }
-
-    This breaks compiler without showing error:
-        Token token = Token() //may be related to error above too
 
     This breaks compiler since 'char_remaing' is not defined, but shows no error
         if char_remaing {
