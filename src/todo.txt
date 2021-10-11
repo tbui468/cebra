@@ -17,22 +17,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Creating Lists and Maps is VERY confusing in parser - Why on earth is the AST node to create Lists and Maps
-        GetVar????  This should be changed to DeclList and DeclMap with a struct Type* type for the list element data type
-        template_type is only used for Maps and List too, so once we have DeclList and DeclMap with their own
-        struct Type* type, should remove struct Type* template_type from DeclVar.
-
-        Rename template_type to container_type?
-
-        Or add 'List' and 'Map' to globals table, and keep Get
-
-        Why does GetVar have a template_type?  Couldn't the type be in the locals table like everything else?
-
-        Could we call it GetContainer?  Then a call on 
-
-    Make a TypeContainer, which holds a Token name ("List", "Map" etc) and a struct Type* type (element type)
-        replace TypeList and TypeMap
-
     Move ALL TypeIdentifier resolution to either end of parser or beginning of compiler
         let's do end of parser - the compiler will always get a mostly complete globals type table and AST nodes
         (with inferred struct fields types being filled in at compilation time)
@@ -40,10 +24,14 @@ IMPLEMENTATION:
     Now that all TypeIdentifiers are resolved, can be make use of the new TypeStructInstance
         and TypeEnumElement types???
 
-    Still no easy way to fix problem below.  Added TypeStructInstance and TypeEnumElement
-        but no trivial way to integrate.  Tried simply to do type checks in GET_VAR and
-        manually pushing super structs onto stack in OP_CLASS, but that doesn't work
-        for enums.
+        When calling resolve_identifier in parser, wrap the resulting type in TypeStructInstance or TypeEnumElement
+        Then in compiler, wrap types when creating new struct instance in CALL, and new enum element in GET_PROP.
+
+        Alternatively, create a TypeDecl type which holds a reference to either a TypeStruct or TypeEnum.  
+            TypeDecl->type is then either a TypeStruct or TypeEnum.  Only need to wrap this one when adding
+            to parser.global, and then unwrap when calling resolve_identifier AND unwrap when instantiating struct/enum element.
+
+            This method makes more sense - a general Type to signify a new data type.
 
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')
@@ -65,6 +53,16 @@ IMPLEMENTATION:
         Update NODE_DECL_VAR to disallow declaring variables assigned to TypeStruct or TypeEnum
             -only the instances or elements can be assigned
 
+    Checking struct types for casting is really messy - creating an entire table just for castable_types
+        is overkill, and filling it in is also error prone.  Could we just have each TypeStruct / ObjStruct have a
+        reference to it's super (in both compile and runtime).  Then when casting just check for both
+        sub -> super and super -> sub casts by traversing from struct up the the inheritance heirarchy
+
+    Allowing struct instantiation in fields, BUT check if there are circular instantiations and show error
+        if so.
+
+    How about functions/closures defined in default fields?  Function pointers could be nil by default,
+        and the compiler could enforce that.
 
     Write script to build using both Clang and MSVC, and then run correctness.cbr and interpreter.cbr
     for both executables all in one go.

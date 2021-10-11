@@ -1051,16 +1051,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         }
         case NODE_CONTAINER: {
             struct DeclContainer* dc = (struct DeclContainer*)node;
-            const char* list_str = "List";
-            if (dc->name.length == 4 && memcmp(list_str, dc->name.start, 4) == 0) {
+            if (dc->type->type == TYPE_LIST) {
                 emit_byte(compiler, OP_LIST);
-                *node_type = make_list_type(dc->type); 
+                *node_type = dc->type;
                 return RESULT_SUCCESS;
             }
-            const char* map_str = "Map";
-            if (dc->name.length == 3 && memcmp(map_str, dc->name.start, 3) == 0) {
+            if (dc->type->type == TYPE_MAP) {
                 emit_byte(compiler, OP_MAP);
-                *node_type = make_map_type(dc->type); 
+                *node_type = dc->type;
                 return RESULT_SUCCESS;
             }
             add_error(compiler, dc->name, "Invalid identifier for container.");
@@ -1345,15 +1343,31 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
             }
             case NODE_CONTAINER: {
                 struct DeclContainer* dc = (struct DeclContainer*)node;
-                if (dc->type->type == TYPE_IDENTIFIER) {
-                        struct TypeIdentifier* id = (struct TypeIdentifier*)(dc->type);
+                if (dc->type->type == TYPE_LIST) {
+                    struct TypeList* tl = (struct TypeList*)(dc->type);
+                    if (tl->type->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
                         struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
                         push_root(to_string(id_string));
                         Value v;
                         if (get_from_table(&compiler->globals, id_string, &v)) {
-                            dc->type = v.as.type_type;
+                            tl->type = v.as.type_type;
                         }
                         pop_root();
+                    }
+                }
+                if (dc->type->type == TYPE_MAP) {
+                    struct TypeMap* tm = (struct TypeMap*)(dc->type);
+                    if (tm->type->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(&compiler->globals, id_string, &v)) {
+                            tm->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
                 }
                 break;
             }
