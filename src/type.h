@@ -19,7 +19,8 @@ typedef enum {
     TYPE_MAP,
     TYPE_INFER,
     TYPE_ENUM,
-    TYPE_ENUM_ELEMENT
+    TYPE_ENUM_ELEMENT,
+    TYPE_DECL
 } TypeType;
 
 struct Type {
@@ -30,6 +31,11 @@ struct Type {
 
 struct TypeInfer {
     struct Type base;
+};
+
+struct TypeDecl {
+    struct Type base;
+    struct Type* custom_type;
 };
 
 struct TypeArray {
@@ -122,6 +128,7 @@ struct Type* make_map_type(struct Type* type);
 struct Type* make_infer_type();
 struct Type* make_enum_type(Token name);
 struct Type* make_enum_element_type(struct TypeEnum* enum_ref);
+struct Type* make_decl_type(struct Type* custom_type);
 
 bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct);
 bool same_type(struct Type* type1, struct Type* type2);

@@ -21,6 +21,14 @@ void add_type(struct TypeArray* sl, struct Type* type) {
     sl->count++;
 }
 
+struct Type* make_decl_type(struct Type* custom_type) {
+    struct TypeDecl* td = ALLOCATE(struct TypeDecl);
+    td->custom_type = custom_type;
+    td->base.type = TYPE_DECL;
+
+    insert_type((struct Type*)td);
+    return (struct Type*)td;
+}
 
 struct Type* make_infer_type() {
     struct TypeInfer* sd = ALLOCATE(struct TypeInfer);
@@ -270,6 +278,10 @@ void print_type(struct Type* type) {
             printf("TypeInfer");
             break;
         }
+        case TYPE_DECL: {
+            printf("TypeDecl");
+            break;
+        }
         case TYPE_ARRAY: {
             struct TypeArray* sl = (struct TypeArray*)type;
             printf("(");
@@ -355,6 +367,11 @@ void free_type(struct Type* type) {
         case TYPE_INFER: {
             struct TypeInfer* sd = (struct TypeInfer*)type;
             FREE(sd, struct TypeInfer);
+            break;
+        }
+        case TYPE_DECL: {
+            struct TypeDecl* sd = (struct TypeDecl*)type;
+            FREE(sd, struct TypeDecl);
             break;
         }
         case TYPE_ARRAY: {
