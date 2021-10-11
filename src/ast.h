@@ -33,7 +33,8 @@ typedef enum {
     NODE_LIST,
     NODE_ENUM,
     NODE_CAST,
-    NODE_CONTAINER
+    NODE_CONTAINER,
+    NODE_WHEN
 } NodeType;
 
 struct Node {
@@ -111,6 +112,12 @@ typedef struct {
     struct Node* then_block;
     struct Node* else_block;
 } IfElse;
+
+struct When {
+    struct Node base;
+    Token name;
+    struct NodeList* cases;
+};
 
 typedef struct {
     struct Node base;
@@ -241,6 +248,7 @@ struct Node* make_get_element(Token name, struct Node* left, struct Node* idx);
 struct Node* make_set_element(struct Node* left, struct Node* right);
 struct Node* make_block(Token name, struct NodeList* dl);
 struct Node* make_if_else(Token name, struct Node* condition, struct Node* then_block, struct Node* else_block);
+struct Node* make_when(Token name, struct NodeList* cases);
 struct Node* make_while(Token name, struct Node* condition, struct Node* then_block);
 struct Node* make_for(Token name, struct Node* initializer, struct Node* condition, struct Node* update, struct Node* then_block);
 struct Node* make_for_each(Token name, struct Node* element, struct Node* var_list, struct Node* then_block);

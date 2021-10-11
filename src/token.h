@@ -52,6 +52,8 @@ typedef enum {
     TOKEN_FOR_EACH,
     TOKEN_ENUM,
     TOKEN_AS,
+    TOKEN_WHEN,
+    TOKEN_IS,
     TOKEN_EOF,
 } TokenType;
 

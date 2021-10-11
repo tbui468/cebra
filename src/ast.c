@@ -118,6 +118,15 @@ struct Node* make_if_else(Token name, struct Node* condition,
     return insert_node((struct Node*)ie);
 }
 
+struct Node* make_when(Token name, struct NodeList* cases) {
+    struct When* when = ALLOCATE(struct When);
+    when->name = name;
+    when->cases = cases;
+    when->base.type = NODE_WHEN;
+
+    return insert_node((struct Node*)when);
+}
+
 struct Node* make_while(Token name, struct Node* condition, 
                         struct Node* then_block) {
     While* wh = ALLOCATE(While);
@@ -362,6 +371,10 @@ void print_node(struct Node* node) {
             printf(" )");
             break;
         }
+        case NODE_WHEN: {
+            printf("( When )");
+            break;
+        }
         case NODE_WHILE: {
             //TODO: fill this in
             printf("While");
@@ -508,6 +521,11 @@ void free_node(struct Node* node) {
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
             FREE(ie, IfElse);
+            break;
+        }
+        case NODE_WHEN: {
+            struct When* when = (struct When*)node;
+            FREE(when, struct When);
             break;
         }
         case NODE_WHILE: {

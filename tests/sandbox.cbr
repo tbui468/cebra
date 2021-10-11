@@ -1,20 +1,18 @@
-Dog :: struct {
-    name := "Mittens"
-    bark: (Dog) -> = nil
+a := 3
+when a {
+    is 1 {
+
+    }
+    is 2 {
+
+    }
+    is 3 {
+
+    }
+    is 2 {
+
+    }
+    else {
+
+    }
 }
-
-d := Dog()
-d.bark = bark
-
-bark :: (d: Dog) -> {
-    print(d.name)
-}
-
-d.bark(d)
-
-d2 := Dog()
-d2.name = "Bubbles"
-d2.bark = bark
-
-d2.bark(d2)
-d2.bark(d)

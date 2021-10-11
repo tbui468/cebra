@@ -18,28 +18,24 @@ ADDING FEATURES:
 IMPLEMENTATION:
 
     Add when (switch) statements
-    Will 'is' conflict with current usage?  Is it currently used?
         when a {
-            is 7:
+            is 7 {
                 //do this - breaks are automatic
-            is 12:
+            }
+            is 12 {
                 //do this
-            else:
+            }
+            else {
                 //do this
+            }
         }
+
+    String interning!!!
 
     Change DeclClass node to DeclStruct
 
     Allowing struct instantiation in fields, BUT check if there are circular instantiations and show error
         if so.
-
-    How about functions/closures defined in default fields?  Function pointers could be nil by default,
-        and the compiler could enforce that.
-
-        Dog :: struct {
-            name := "Mittens"
-            bark: () -> = () -> { print("hi"} }
-        }
 
     Write script to build using both Clang and MSVC, and then run correctness.cbr and interpreter.cbr
     for both executables all in one go.

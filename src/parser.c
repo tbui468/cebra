@@ -724,6 +724,47 @@ static ResultCode declaration(struct Node** node) {
 
         *node = make_if_else(name, condition, then_block, else_block);
         return RESULT_SUCCESS;
+    } else if (match(TOKEN_WHEN)) {
+        Token name = parser.previous;
+        struct Node* left;
+        PARSE(expression, name, &left, name, "Expected a valid expression after 'when'.");
+        CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after 'when' and variable.");
+        struct NodeList* cases = (struct NodeList*)make_node_list();
+
+        while (match(TOKEN_IS)) {
+            Token is = parser.previous;
+
+            struct Node* right;
+            PARSE(expression, is, &right, is, "Expected expression to test equality with variable after 'when'.");
+            Token make_token(TokenType type, int line, const char* start, int length);
+            Token equal = make_token(TOKEN_EQUAL_EQUAL, is.line, "==", 2);
+            struct Node* condition = make_logical(equal, left, right);
+
+            CONSUME(TOKEN_LEFT_BRACE, name, "Expected '{' after 'is' and expression.");
+            struct Node* body = NULL;
+            if (block(NULL, &body) == RESULT_FAILED) {
+                ERROR(name, "Expect close '}' after 'is' block body.");
+            }
+            struct Node* if_stmt = make_if_else(is, condition, body, NULL);
+            add_node(cases, if_stmt);
+        }
+
+        //make_if_else(else token, true, block, NULL)
+        if (match(TOKEN_ELSE)) {
+            Token else_token = parser.previous;
+            CONSUME(TOKEN_LEFT_BRACE, name, "Expected '{' after 'else'.");
+            Token true_token = make_token(TOKEN_TRUE, else_token.line, "true", 4);
+            struct Node* condition = make_literal(true_token);
+            struct Node* body = NULL;
+            if (block(NULL, &body) == RESULT_FAILED) {
+                ERROR(name, "Expect close '}' after 'else' block body.");
+            }
+            add_node(cases, make_if_else(else_token, condition, body, NULL));
+        }
+        CONSUME(TOKEN_RIGHT_BRACE, name, "Expected '}' to close 'when' body.");
+
+        *node = make_when(name, cases);
+        return RESULT_SUCCESS;
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
         struct Node* condition;
