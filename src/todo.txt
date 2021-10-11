@@ -17,12 +17,6 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Move ALL TypeIdentifier resolution to either end of parser or beginning of compiler
-        let's do end of parser - the compiler will always get a mostly complete globals type table and AST nodes
-        (with inferred struct fields types being filled in at compilation time)
-
-        will need access to all nodes
-
     Now that all TypeIdentifiers are resolved, can be make use of the new TypeStructInstance
         and TypeEnumElement types???
 
@@ -34,6 +28,8 @@ IMPLEMENTATION:
             to parser.global, and then unwrap when calling resolve_identifier AND unwrap when instantiating struct/enum element.
 
             This method makes more sense - a general Type to signify a new data type.
+
+    If new TypeDecl works out, remove TypeStructInstance and TypeEnumElement
 
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')

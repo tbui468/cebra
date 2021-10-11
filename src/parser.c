@@ -914,17 +914,7 @@ static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
                     }
                     set_table(&tc->props, inner_pair->key, to_type(result));
                     break;
-                }/*
-                case TYPE_LIST: {
-                    struct TypeList* tl = (struct TypeList*)(inner_pair->value.as.type_type);
-                    if (resolve_list_identifiers(tl, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
-                    break;
                 }
-                case TYPE_MAP: {
-                    struct TypeMap* tm = (struct TypeMap*)(inner_pair->value.as.type_type);
-                    if (resolve_map_identifiers(tm, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
-                    break;
-                }*/
             }
         }
     }
@@ -1018,11 +1008,7 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
             params->types[i] = result;
         } else if (param_type->type == TYPE_FUN) {
             resolve_function_identifiers((struct TypeFun*)param_type, globals);
-        } /*else if (param_type->type == TYPE_LIST) {
-            if (resolve_list_identifiers((struct TypeList*)param_type, globals) == RESULT_FAILED) return RESULT_FAILED;
-        } else if (param_type->type == TYPE_MAP) {
-            if (resolve_map_identifiers((struct TypeMap*)param_type, globals) == RESULT_FAILED) return RESULT_FAILED;
-        }*/
+        } 
     }
 
     //check return
@@ -1128,39 +1114,20 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
                 DeclVar* dv = (DeclVar*)node;
                 if (dv->type == NULL) break;
                 if (dv->type->type == TYPE_IDENTIFIER) {
-                    struct TypeIdentifier* id = (struct TypeIdentifier*)(dv->type);
-                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                    push_root(to_string(id_string));
-                    Value v;
-                    if (get_from_table(parser.globals, id_string, &v)) {
-                        dv->type = v.as.type_type;
-                    }
-                    pop_root();
+                    struct Type* result;
+                    if (resolve_identifier((struct TypeIdentifier*)(dv->type), parser.globals, &result) == RESULT_FAILED) {
+                        return RESULT_FAILED;
+                    } 
+                    dv->type = result;
                 }
                 if (dv->type->type == TYPE_LIST) {
-                    struct TypeList* tl = (struct TypeList*)(dv->type);                    
-                    if (tl->type->type == TYPE_IDENTIFIER) {
-                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
-                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                        push_root(to_string(id_string));
-                        Value v;
-                        if (get_from_table(parser.globals, id_string, &v)) {
-                            tl->type = v.as.type_type;
-                        }
-                        pop_root();
+                    if (resolve_list_identifiers((struct TypeList*)(dv->type), parser.globals) == RESULT_FAILED) {
+                        return RESULT_FAILED;
                     }
                 }
                 if (dv->type->type == TYPE_MAP) {
-                    struct TypeMap* tm = (struct TypeMap*)(dv->type);                    
-                    if (tm->type->type == TYPE_IDENTIFIER) {
-                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
-                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                        push_root(to_string(id_string));
-                        Value v;
-                        if (get_from_table(parser.globals, id_string, &v)) {
-                            tm->type = v.as.type_type;
-                        }
-                        pop_root();
+                    if (resolve_map_identifiers((struct TypeMap*)(dv->type), parser.globals) == RESULT_FAILED) {
+                        return RESULT_FAILED;
                     }
                 }
                 break;
@@ -1168,29 +1135,13 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
             case NODE_CONTAINER: {
                 struct DeclContainer* dc = (struct DeclContainer*)node;
                 if (dc->type->type == TYPE_LIST) {
-                    struct TypeList* tl = (struct TypeList*)(dc->type);
-                    if (tl->type->type == TYPE_IDENTIFIER) {
-                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
-                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                        push_root(to_string(id_string));
-                        Value v;
-                        if (get_from_table(parser.globals, id_string, &v)) {
-                            tl->type = v.as.type_type;
-                        }
-                        pop_root();
+                    if (resolve_list_identifiers((struct TypeList*)(dc->type), parser.globals) == RESULT_FAILED) {
+                        return RESULT_FAILED;
                     }
                 }
                 if (dc->type->type == TYPE_MAP) {
-                    struct TypeMap* tm = (struct TypeMap*)(dc->type);
-                    if (tm->type->type == TYPE_IDENTIFIER) {
-                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
-                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                        push_root(to_string(id_string));
-                        Value v;
-                        if (get_from_table(parser.globals, id_string, &v)) {
-                            tm->type = v.as.type_type;
-                        }
-                        pop_root();
+                    if (resolve_map_identifiers((struct TypeMap*)(dc->type), parser.globals) == RESULT_FAILED) {
+                        return RESULT_FAILED;
                     }
                 }
                 break;
@@ -1199,14 +1150,11 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
                 Cast* c = (Cast*)node;
                 if (c->type == NULL) break;
                 if (c->type->type == TYPE_IDENTIFIER) {
-                    struct TypeIdentifier* id = (struct TypeIdentifier*)(c->type);
-                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                    push_root(to_string(id_string));
-                    Value v;
-                    if (get_from_table(parser.globals, id_string, &v)) {
-                        c->type = v.as.type_type;
+                    struct Type* result;
+                    if (resolve_identifier((struct TypeIdentifier*)(c->type), parser.globals, &result) == RESULT_FAILED) {
+                        return RESULT_FAILED; 
                     }
-                    pop_root();
+                    c->type = result;
                 }
                 break;
             }
