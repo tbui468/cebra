@@ -418,14 +418,14 @@ void print_node(struct Node* node) {
         }
         case NODE_GET_ELEMENT: {
             GetElement* gi = (GetElement*)node;
-            printf("( GetIdx ");
+            printf("( GetElement ");
             if (gi->left != NULL) print_node(gi->left);
             if (gi->idx != NULL) print_node(gi->idx);
             printf(" )");
             break;
         }
         case NODE_SET_ELEMENT: {
-            printf("SetIdx stub");
+            printf("SetElement stub");
             break;
         }
         case NODE_CALL: {

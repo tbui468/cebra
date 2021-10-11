@@ -843,11 +843,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
 
-            //NOTE: This identifier is a local, NOT a struct/enum identifier
-            if (type_inst->type == TYPE_IDENTIFIER) {
-                type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
-            }
-
             emit_byte(compiler, OP_GET_PROP);
             struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
             push_root(to_string(name));
@@ -1384,7 +1379,7 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
                 } 
                 if (gv->template_type->type == TYPE_LIST) {
                     struct TypeList* tl = (struct TypeList*)(gv->template_type);                    
-                    if (tl->type == TYPE_IDENTIFIER) {
+                    if (tl->type->type == TYPE_IDENTIFIER) {
                         struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
                         struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
                         push_root(to_string(id_string));
@@ -1397,7 +1392,7 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
                 }
                 if (gv->template_type->type == TYPE_MAP) {
                     struct TypeMap* tm = (struct TypeMap*)(gv->template_type);                    
-                    if (tm->type == TYPE_IDENTIFIER) {
+                    if (tm->type->type == TYPE_IDENTIFIER) {
                         struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
                         struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
                         push_root(to_string(id_string));

@@ -1,15 +1,15 @@
+
 Dog :: struct {
     name := "Mittens"
-    friend: Dog = nil
-    list: List<Token> = nil
-}
-
-Token :: enum {
-    one
-    two
 }
 
 l: List<Dog> = List<Dog>()
 
 l[0] = Dog()
+l[0].name
+
+l[0].name = "Bubbles" //this is causing error, which is a bug
+
 print(l[0].name)
+
+

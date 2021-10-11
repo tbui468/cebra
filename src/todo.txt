@@ -16,6 +16,12 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    Two problems:  (use sandbox.cbr to debug and fix)
+        Dog TypeIdentifier is still not resolved (see sandbox.cbr)
+            seems like the resolve_map/list inside parser do nothing.... (they are commented out)
+            what are the nodes???
+        Cannot set name of dog when using list[0].name (list of type Dog)
+
     Currently trying to resolve all TypeIdentifiers at beginning of Compiler (before compiling nodes)
         but it crashes when we comment out the TypeIdentifier resolution in GET_PROP.
         comment it out to see it all crash

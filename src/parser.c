@@ -910,7 +910,7 @@ static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
                     }
                     set_table(&tc->props, inner_pair->key, to_type(result));
                     break;
-                }
+                }/*
                 case TYPE_LIST: {
                     struct TypeList* tl = (struct TypeList*)(inner_pair->value.as.type_type);
                     if (resolve_list_identifiers(tl, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
@@ -920,7 +920,7 @@ static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
                     struct TypeMap* tm = (struct TypeMap*)(inner_pair->value.as.type_type);
                     if (resolve_map_identifiers(tm, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
                     break;
-                }
+                }*/
             }
         }
     }
@@ -1014,11 +1014,11 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
             params->types[i] = result;
         } else if (param_type->type == TYPE_FUN) {
             resolve_function_identifiers((struct TypeFun*)param_type, globals);
-        } else if (param_type->type == TYPE_LIST) {
+        } /*else if (param_type->type == TYPE_LIST) {
             if (resolve_list_identifiers((struct TypeList*)param_type, globals) == RESULT_FAILED) return RESULT_FAILED;
         } else if (param_type->type == TYPE_MAP) {
             if (resolve_map_identifiers((struct TypeMap*)param_type, globals) == RESULT_FAILED) return RESULT_FAILED;
-        }
+        }*/
     }
 
     //check return
