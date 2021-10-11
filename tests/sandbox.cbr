@@ -3,22 +3,14 @@ Dog :: struct < Animal {
     name := "Mittens"
 }
 
-Cat :: struct < Animal {
-    name := "Bubbles"
-}
 
 Animal :: struct {
     class := "Mammal"
 }
 
-
-d := Dog()
-c := Cat()
-a := Animal()
-
-
-if a as Cat != nil {
-    print("This should work")
+Token :: enum {
+    one
+    two
 }
 
-
+a: Animal = Dog()

@@ -75,35 +75,35 @@ void print_memory() {
     printf("bytes allocated: %d\n", mm.allocated);
 }
 
+static void mark_and_push(struct Obj* obj) {
+    if (obj != NULL && !obj->is_marked) {
+        mark_object(obj);
+        push_gray(obj);
+    }
+}
+
 static void mark_table(struct Table* table) {
     for (int i = 0; i < table->capacity; i++) {
         struct Pair* pair = &table->pairs[i];
         if (pair->key != NULL) {
-            mark_object((struct Obj*)(pair->key));
-            push_gray((struct Obj*)(pair->key));
+            mark_and_push((struct Obj*)(pair->key));
             struct Obj* obj = get_object(&pair->value);
-            mark_object(obj);
-            push_gray(obj);
+            mark_and_push(obj);
         }
     }
 }
 
-
 static void mark_vm_roots() {
     for (Value* slot = mm.vm->stack; slot < mm.vm->stack_top; slot++) {
         struct Obj* obj = get_object(slot);
-        if (obj != NULL) {
-            mark_object(obj);
-            push_gray(obj);
-        }
+        mark_and_push(obj);
     }
 
     struct ObjUpvalue* current = mm.vm->open_upvalues;
     int count = 0;
     while (current != NULL) {
         count++;
-        mark_object((struct Obj*)current);
-        push_gray((struct Obj*)current);
+        mark_and_push((struct Obj*)current);
         current = current->next;
     }
 
@@ -116,9 +116,7 @@ static void mark_compiler_roots() {
     struct Compiler* current = current_compiler;
     while (current != NULL) {
         mark_table(&current->globals);
-
-        mark_object((struct Obj*)(current->function));
-        push_gray((struct Obj*)(current->function));
+        mark_and_push((struct Obj*)(current->function));
 
         struct Type* type = current->types;
         while (type != NULL) {
@@ -154,29 +152,23 @@ static void trace_references() {
                 for (int i = 0; i < fun->upvalue_count; i++) {
                     struct ObjUpvalue* uv = fun->upvalues[i];
                     struct Obj* uv_obj = (struct Obj*)uv;
-                    if (!uv_obj->is_marked) {
-                        mark_object(uv_obj);
-                        push_gray(uv_obj);
-                    } 
+                    mark_and_push(uv_obj);
                 }
                 //constants in chunk
                 for (int i = 0; i < fun->chunk.constants.count; i++) {
                     Value* value = &fun->chunk.constants.values[i];
                     struct Obj* val_obj = get_object(value);
-                    if (val_obj != NULL && !val_obj->is_marked) {
-                        mark_object(val_obj);
-                        push_gray(val_obj);
+                    if (val_obj != NULL) {
+                        mark_and_push(val_obj);
                     }
                 }
                 //ObjString* name
-                mark_object((struct Obj*)(fun->name));
-                push_gray((struct Obj*)(fun->name));
+                mark_and_push((struct Obj*)(fun->name));
                 break;
             }
             case OBJ_NATIVE: {
                 struct ObjNative* on = (struct ObjNative*)obj;
-                mark_object((struct Obj*)(on->name));
-                push_gray((struct Obj*)(on->name));
+                mark_and_push((struct Obj*)(on->name));
                 break;
             }
             case OBJ_CLASS: {
@@ -184,11 +176,9 @@ static void trace_references() {
                 //table of props and types
                 mark_table(&oc->props);
                 //class name
-                mark_object((struct Obj*)(oc->name));
-                push_gray((struct Obj*)(oc->name));
+                mark_and_push((struct Obj*)(oc->name));
                 //super
-                mark_object((struct Obj*)(oc->super));
-                push_gray((struct Obj*)(oc->super));
+                mark_and_push((struct Obj*)(oc->super));
                 break;
             }
             case OBJ_INSTANCE: {
@@ -196,14 +186,12 @@ static void trace_references() {
                 //table of props
                 mark_table(&oi->props);
                 //class
-                mark_object((struct Obj*)(oi->klass));
-                push_gray((struct Obj*)(oi->klass));
+                mark_and_push((struct Obj*)(oi->klass));
                 break;
             }
             case OBJ_ENUM: {
                 struct ObjEnum* oe = (struct ObjEnum*)obj;
-                mark_object((struct Obj*)oe->name);
-                push_gray((struct Obj*)(oe->name));
+                mark_and_push((struct Obj*)(oe->name));
 
                 mark_table(&oe->props);
                 break;
@@ -212,10 +200,7 @@ static void trace_references() {
                 struct ObjUpvalue* uv = (struct ObjUpvalue*)obj;
                 //closed value
                 struct Obj* closed_obj = get_object(&uv->closed);
-                if (closed_obj != NULL && !closed_obj->is_marked) {
-                    mark_object(closed_obj);
-                    push_gray(closed_obj);
-                }
+                mark_and_push(closed_obj);
                 break;
             }
             case OBJ_STRING: {
@@ -227,17 +212,11 @@ static void trace_references() {
                 for (int i = 0; i < list->values.count; i++) {
                     Value* value = &list->values.values[i];
                     struct Obj* val_obj = get_object(value);
-                    if (val_obj != NULL && !val_obj->is_marked) {
-                        mark_object(val_obj);
-                        push_gray(val_obj);
-                    }
+                    mark_and_push(val_obj);
                 }
                 //mark default_value
                 struct Obj* val_obj = get_object(&list->default_value);
-                if (val_obj != NULL && !val_obj->is_marked) {
-                    mark_object(val_obj);
-                    push_gray(val_obj);
-                }
+                mark_and_push(val_obj);
                 break;
             }
             case OBJ_MAP: {
@@ -246,10 +225,7 @@ static void trace_references() {
                 mark_table(&om->table);
                 //default value
                 struct Obj* val_obj = get_object(&om->default_value);
-                if (val_obj != NULL && !val_obj->is_marked) {
-                    mark_object(val_obj);
-                    push_gray(val_obj);
-                }
+                mark_and_push(val_obj);
                 break;
             }
             default: {

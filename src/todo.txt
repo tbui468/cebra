@@ -17,14 +17,18 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Add when (switch) statements
+    Will 'is' conflict with current usage?  Is it currently used?
+        when a {
+            is 7:
+                //do this - breaks are automatic
+            is 12:
+                //do this
+            else:
+                //do this
+        }
+
     Change DeclClass node to DeclStruct
-
-    Checking struct types for casting is really messy - creating an entire table just for castable_types
-        is overkill, and filling it in is also error prone.  Could we just have each TypeStruct / ObjStruct have a
-        reference to it's super (in both compile and runtime).  Then when casting just check for both
-        sub -> super and super -> sub casts by traversing from struct up the the inheritance heirarchy
-
-    Should really just create class in VM - pass the struct ObjString* as a constant
 
     GC should check if object is already marked, and only mark/push if white
         currently just marking and pushing everything
@@ -57,24 +61,6 @@ IMPLEMENTATION:
 
     Test compiling on Windows FOR Linux, and on Linux FOR Windows to see how that works.
 
-    This should create error since nothing is returned
-        bottom :: (d: Dog) -> Token {
-            print("bottom")
-        }
-
-    This should create error:
-        Animal :: struct {
-            class: string = "Mammal"
-        }
-
-        Bird :: struct < Animal {
-            class: string = "Avian"
-            name: string = "Flappy"
-        }
-
-        a: Animal = Bird() //this should give error since Bird() returns Bird type, not Animal
-        //user must explicitly cast to Animal type
-
     Error messages in compiler are all messed up in compiler.c.  In NODE_FUN, when returning after error sometimes
         the errors in func_comp aren't copied over to the enclosing compiler before func_comp is freed.
         ALSO, on errors func_comp is NOT freed, so the compiler chain isn't reset back to the enclosing compiler
@@ -95,17 +81,6 @@ IMPLEMENTATION:
         compilers, etc don't get freed, causing the compiler to go into an invalid state.  This then
         triggers problems with GC, etc.
 
-
-    Add when (switch) statements
-    Will 'is' conflict with current usage?  Is it currently used?
-        when a {
-            is 7:
-                //do this - breaks are automatic
-            is 12:
-                //do this
-            else:
-                //do this
-        }
 
     Continue writing basic interpreter - add any errors below and fix them afterwards
         big problem: we need to access parse_expression() in parse_primary(), but
