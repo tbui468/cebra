@@ -826,6 +826,7 @@ static void init_parser(const char* source, struct Table* globals) {
     parser.error_count = 0;
     parser.globals = globals;
     parser.first_pass_nl = (struct NodeList*)make_node_list();
+    parser.resolve_id_list = (struct NodeList*)make_node_list();
 }
 
 static void free_parser() {
@@ -860,38 +861,76 @@ static void quick_sort(struct Error* errors, int lo, int hi) {
     quick_sort(errors, p + 1, hi);
 }
 
+
+static ResultCode resolve_identifier(struct TypeIdentifier* ti, struct Table* globals, struct Type** type) {
+    struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
+    push_root(to_string(identifier));
+    Value val;
+    if (!get_from_table(globals, identifier, &val)) {
+        pop_root();
+        ERROR(ti->identifier, "Identifier for type not declared.");
+    }
+    pop_root();
+    *type = val.as.type_type;
+    return RESULT_SUCCESS;
+}
+
+static ResultCode resolve_list_identifiers(struct TypeList* tl, struct Table* globals) {
+    if (tl->type->type == TYPE_IDENTIFIER) {
+        struct Type* result;
+        if (resolve_identifier((struct TypeIdentifier*)(tl->type), globals, &result) == RESULT_FAILED) {
+            return RESULT_FAILED;
+        }
+        tl->type = result;
+    }
+    return RESULT_SUCCESS;
+}
+
+static ResultCode resolve_map_identifiers(struct TypeMap* tm, struct Table* globals) {
+    if (tm->type->type == TYPE_IDENTIFIER) {
+        struct Type* result;
+        if (resolve_identifier((struct TypeIdentifier*)(tm->type), globals, &result) == RESULT_FAILED) {
+            return RESULT_FAILED;
+        }
+        tm->type = result;
+    }
+    return RESULT_SUCCESS;
+}
+
 static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
     //resolve properties
     for (int j = 0; j < tc->props.capacity; j++) {
         struct Pair* inner_pair = &tc->props.pairs[j];
-        if (inner_pair->value.type == VAL_TYPE && inner_pair->value.as.type_type->type == TYPE_IDENTIFIER) {
-            struct Type* type = inner_pair->value.as.type_type;
-            struct TypeIdentifier* id = (struct TypeIdentifier*)type;
-            struct ObjString* identifier = make_string(id->identifier.start, id->identifier.length);
-            push_root(to_string(identifier));
-            Value resolved_id;
-            if (get_from_table(parser.globals, identifier, &resolved_id)) {
-                set_table(&tc->props, inner_pair->key, resolved_id);
-                pop_root();
-            } else {
-                pop_root();
-                ERROR(make_dummy_token(), "Property type identifier not declared.");
+        if (inner_pair->value.type == VAL_TYPE) {
+            switch(inner_pair->value.as.type_type->type) {
+                case TYPE_IDENTIFIER: {
+                    struct Type* result;
+                    if (resolve_identifier((struct TypeIdentifier*)(inner_pair->value.as.type_type), parser.globals, &result) == RESULT_FAILED) {
+                        return RESULT_FAILED;
+                    }
+                    set_table(&tc->props, inner_pair->key, to_type(result));
+                    break;
+                }
+                case TYPE_LIST: {
+                    struct TypeList* tl = (struct TypeList*)(inner_pair->value.as.type_type);
+                    if (resolve_list_identifiers(tl, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
+                    break;
+                }
+                case TYPE_MAP: {
+                    struct TypeMap* tm = (struct TypeMap*)(inner_pair->value.as.type_type);
+                    if (resolve_map_identifiers(tm, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
+                    break;
+                }
             }
         }
     }
     //resolve structs inherited from
     if (tc->super != NULL && tc->super->type == TYPE_IDENTIFIER)  {
-        struct TypeIdentifier* id = (struct TypeIdentifier*)(tc->super);
-        struct ObjString* super_string = make_string(id->identifier.start, id->identifier.length);
-        push_root(to_string(super_string));
-        Value resolved_id;
-        if (get_from_table(parser.globals, super_string, &resolved_id)) {
-            tc->super = resolved_id.as.type_type;
-            pop_root();
-        } else {
-            pop_root();
-            ERROR(make_dummy_token(), "Super struct identifier not declared.");
+        struct Type* result;
+        if (resolve_identifier((struct TypeIdentifier*)(tc->super), parser.globals, &result) == RESULT_FAILED) {
+            return RESULT_FAILED;
         }
+        tc->super = result;
     }
     return RESULT_SUCCESS;
 }
@@ -968,36 +1007,34 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
     for (int i = 0; i < params->count; i++) {
         struct Type* param_type = params->types[i];
         if (param_type->type == TYPE_IDENTIFIER) {
-            struct TypeIdentifier* ti = (struct TypeIdentifier*)param_type;
-            struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
-            push_root(to_string(identifier));
-            Value val;
-            if (!get_from_table(globals, identifier, &val)) {
-                pop_root();
-                ERROR(ti->identifier, "Identifier for type not declared.");
-            }
-            params->types[i] = val.as.type_type;
-            pop_root();
+            struct Type* result;
+            if (resolve_identifier((struct TypeIdentifier*)param_type, globals, &result) == RESULT_FAILED) {
+                return RESULT_FAILED;
+            } 
+            params->types[i] = result;
         } else if (param_type->type == TYPE_FUN) {
             resolve_function_identifiers((struct TypeFun*)param_type, globals);
+        } else if (param_type->type == TYPE_LIST) {
+            if (resolve_list_identifiers((struct TypeList*)param_type, globals) == RESULT_FAILED) return RESULT_FAILED;
+        } else if (param_type->type == TYPE_MAP) {
+            if (resolve_map_identifiers((struct TypeMap*)param_type, globals) == RESULT_FAILED) return RESULT_FAILED;
         }
     }
 
     //check return
     struct Type* ret = ft->ret;
     if (ret->type == TYPE_IDENTIFIER) {
-        struct TypeIdentifier* ti = (struct TypeIdentifier*)ret;
-        struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
-        push_root(to_string(identifier));
-        Value val;
-        if (!get_from_table(globals, identifier, &val)) {
-            pop_root();
-            ERROR(ti->identifier, "Identifier for type not declared.");
-        }
-        ft->ret = val.as.type_type;
-        pop_root();
+        struct Type* result;
+        if (resolve_identifier((struct TypeIdentifier*)ret, parser.globals, &result) == RESULT_FAILED) {
+            return RESULT_FAILED;
+        } 
+        ft->ret = result;
     } else if (ret->type == TYPE_FUN) {
         resolve_function_identifiers((struct TypeFun*)ret, globals);
+    } else if (ret->type == TYPE_LIST) {
+        if (resolve_list_identifiers((struct TypeList*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
+    } else if (ret->type == TYPE_MAP) {
+        if (resolve_map_identifiers((struct TypeMap*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
     }
 
     return RESULT_SUCCESS;
@@ -1119,13 +1156,31 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     }
     *nl = ordered_nl;
 
-    //TODO: for debug
-    /*
+    //TODO: for debug/////////////////
+   /* 
     for (int i = 0; i < ordered_nl->count; i++) {
-        print_node(ordered_nl->nodes[i]); printf("\n");
+        struct Node* n = ordered_nl->nodes[i];
+        print_node(n); printf("\n");
     }
 
-    print_table(parser.globals);*/
+    for (int i = 0; i < parser.globals->capacity; i++) {
+        struct Pair* pair = &parser.globals->pairs[i];
+        if (pair->key != NULL && pair->value.as.type_type->type == TYPE_STRUCT) {
+            struct TypeStruct * ts = (struct TypeStruct*)(pair->value.as.type_type);
+            printf("inside struct\n");
+            for (int j = 0; j < ts->props.capacity; j++) {
+                struct Pair* inner_pair = &ts->props.pairs[j];
+                if (inner_pair->key != NULL && inner_pair->value.as.type_type->type == TYPE_LIST) {
+                printf("j: %d - ", j);
+                    struct TypeList * tl = (struct TypeList*)(inner_pair->value.as.type_type);
+                    print_type(tl->type); printf("\n");
+                }
+            }
+        }
+    }*/
+    /////////////////////////
+
+    //print_table(parser.globals);
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);

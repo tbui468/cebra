@@ -22,6 +22,7 @@ typedef struct {
     int error_count;
     struct Table* globals;
     struct NodeList* first_pass_nl;
+    struct NodeList* resolve_id_list;
 } Parser;
 
 ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals);

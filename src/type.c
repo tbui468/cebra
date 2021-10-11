@@ -312,6 +312,7 @@ void print_type(struct Type* type) {
         case TYPE_IDENTIFIER: {
             struct TypeIdentifier* ti = (struct TypeIdentifier*)type;
             printf("TypeIdentifier [%.*s]", ti->identifier.length, ti->identifier.start);
+            printf(" [%d]", ti->identifier.line);
             break;
         }
         case TYPE_LIST: {

@@ -16,6 +16,45 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    Currently trying to resolve all TypeIdentifiers at beginning of Compiler (before compiling nodes)
+        but it crashes when we comment out the TypeIdentifier resolution in GET_PROP.
+        comment it out to see it all crash
+
+        Found the problem: When resolving TypeIdentifiers, need to search for both Identifiers AND Maps/Lists
+
+        Once everything works without any Identifier resolutions inside compiler node, should move ALL identifier resolution
+        together into beginning of compiler or end of parser
+
+            Could also combine all into a function called resolve_ast_identifiers that is recursively called to resolve 
+            everything.  Just have a switch statement inside to dispatch to correct algorithm
+
+        Change DeclClass to DeclStruct
+
+    Why do we need to resolve IDENTIFIER in GET PROP?
+        this is the only TYPE_IDENTIFIER that can't be removed...
+        is it related to the tables inside TypeStruct?
+
+    One option: while parsing, if any nodes have identifiers in them, add them to a working
+        parser list.  At the end of the parser, at the same time when Structs and Functions TypeIdentifiers
+        are resolved, resolved these nodes Identifiers too.  This may make it easier to integrate
+        the two new types too, if we choose to go that route.
+
+        Enum 
+        Struct
+        Function
+        GetVar, DeclVar, Cast
+
+    Creating Lists and Maps is VERY confusing in parser - Why on earth is the AST node to create Lists and Maps
+        GetVar????  This should be changed to DeclList and DeclMap with a struct Type* type for the list element data type
+        template_type is only used for Maps and List too, so once we have DeclList and DeclMap with their own
+        struct Type* type, should remove struct Type* template_type from DeclVar.
+
+        Or add 'List' and 'Map' to globals table....
+
+    Still no easy way to fix problem below.  Added TypeStructInstance and TypeEnumElement
+        but no trivial way to integrate.  Tried simply to do type checks in GET_VAR and
+        manually pushing super structs onto stack in OP_CLASS, but that doesn't work
+        for enums.
 
     This should create an error: 
     z := Zebra //wrong syntax for instantiating struct (missing '()')

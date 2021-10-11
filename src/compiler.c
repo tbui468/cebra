@@ -427,22 +427,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     set_idx = add_local(compiler, df->name, make_infer_type());
                 }
 
-                //resolve identifiers - note that for globals, this is resolved at end of parsing
-                //TODO: should combine this code and identifier resolution in parser into same function
                 struct TypeFun* fun_type = (struct TypeFun*)(df->type);
-                if (fun_type->ret->type == TYPE_IDENTIFIER) {
-                    struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)(fun_type->ret))->identifier);
-                    if (result == NULL) return RESULT_FAILED;
-                    fun_type->ret = result;
-                }
-
                 struct TypeArray* params = (struct TypeArray*)(fun_type->params);
                 for (int i = 0; i < params->count; i++) {
-                    if (params->types[i]->type == TYPE_IDENTIFIER) {
-                        struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)(params->types[i]))->identifier);
-                        if (result == NULL) return RESULT_FAILED;
-                        params->types[i] = result;
-                    }
                     if (params->types[i]->type == TYPE_NIL) {
                         add_error(compiler, df->name, "Parameter identifier type invalid.");
                         return RESULT_FAILED;
@@ -479,25 +466,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 struct Type* ret_type = typefun->ret;
-                if (ret_type->type == TYPE_IDENTIFIER) {
-                    struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)ret_type)->identifier);
-                    if (result == NULL) {
-                        free_compiler(&func_comp);
-                        return RESULT_FAILED;
-                    }
-                    ret_type = result;
-                }
                 
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    if (inner_type->type == TYPE_IDENTIFIER) {
-                        struct Type* result = resolve_type(compiler, ((struct TypeIdentifier*)inner_type)->identifier);
-                        if (result == NULL) {
-                            free_compiler(&func_comp);
-                            return RESULT_FAILED;
-                        }
-                        inner_type = result;
-                    }
                     if(!same_type(ret_type, inner_type)) {
                         add_error(compiler, df->name, "Return type must match type in function declaration.");
                         free_compiler(&func_comp);
@@ -872,7 +843,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
 
-            //TODO: this one is needed
+            //NOTE: This identifier is a local, NOT a struct/enum identifier
             if (type_inst->type == TYPE_IDENTIFIER) {
                 type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
             }
@@ -917,10 +888,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
                 add_error(compiler, prop, "Property doesn't exist on Lists.");
                 return RESULT_FAILED;
-            }
-
-            if (type_inst->type == TYPE_IDENTIFIER) {
-                type_inst = resolve_type(compiler, ((struct TypeIdentifier*)type_inst)->identifier);
             }
 
             if (type_inst->type == TYPE_STRUCT) {
@@ -1156,16 +1123,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* arg_type;
                 COMPILE_NODE(call->arguments->nodes[i], ret_types, &arg_type);
 
-                /*
-                if (arg_type->type == TYPE_IDENTIFIER) {
-                    arg_type = resolve_type(compiler, ((struct TypeIdentifier*)arg_type)->identifier);
-                }*/
-
                 struct Type* param_type = params->types[i];
-                /*
-                if (param_type->type == TYPE_IDENTIFIER) {
-                    param_type = resolve_type(compiler, ((struct TypeIdentifier*)param_type)->identifier);
-                }*/
 
                 CHECK_TYPE(!same_type(param_type, arg_type), call->name, "Argument type must match parameter type.");
             }
@@ -1195,15 +1153,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_short(compiler, cast->type->type);
                 *node_type = cast->type;
                 return RESULT_SUCCESS;
-            }
-
-            
-            if (left->type == TYPE_IDENTIFIER) {
-                left = resolve_type(compiler, ((struct TypeIdentifier*)left)->identifier);
-            }
-
-            if (cast->type->type == TYPE_IDENTIFIER) {
-                cast->type = resolve_type(compiler, ((struct TypeIdentifier*)(cast->type))->identifier);
             }
 
             CHECK_TYPE(left->type != TYPE_STRUCT || cast->type->type != TYPE_STRUCT, 
@@ -1374,6 +1323,111 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     script_compiler = compiler;
     define_clock(compiler);
     define_print(compiler);
+
+    //resolve identifiers in other nodes (DeclVar, GetVar and Cast only for now)
+    struct Node* node = compiler->nodes;
+    while (node != NULL) {
+        switch(node->type) {
+            case NODE_DECL_VAR: {
+                DeclVar* dv = (DeclVar*)node;
+                if (dv->type == NULL) break;
+                if (dv->type->type == TYPE_IDENTIFIER) {
+                    struct TypeIdentifier* id = (struct TypeIdentifier*)(dv->type);
+                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                    push_root(to_string(id_string));
+                    Value v;
+                    if (get_from_table(&compiler->globals, id_string, &v)) {
+                        dv->type = v.as.type_type;
+                    }
+                    pop_root();
+                }
+                if (dv->type->type == TYPE_LIST) {
+                    struct TypeList* tl = (struct TypeList*)(dv->type);                    
+                    if (tl->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(&compiler->globals, id_string, &v)) {
+                            tl->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                if (dv->type->type == TYPE_MAP) {
+                    struct TypeMap* tm = (struct TypeMap*)(dv->type);                    
+                    if (tm->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(&compiler->globals, id_string, &v)) {
+                            tm->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                break;
+            }
+            case NODE_GET_VAR: {
+                GetVar* gv = (GetVar*)node;
+                if (gv->template_type == NULL) break;
+                if (gv->template_type->type == TYPE_IDENTIFIER) {
+                    struct TypeIdentifier* id = (struct TypeIdentifier*)(gv->template_type);
+                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                    push_root(to_string(id_string));
+                    Value v;
+                    if (get_from_table(&compiler->globals, id_string, &v)) {
+                        gv->template_type = v.as.type_type;
+                    }
+                    pop_root();
+                } 
+                if (gv->template_type->type == TYPE_LIST) {
+                    struct TypeList* tl = (struct TypeList*)(gv->template_type);                    
+                    if (tl->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(&compiler->globals, id_string, &v)) {
+                            tl->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                if (gv->template_type->type == TYPE_MAP) {
+                    struct TypeMap* tm = (struct TypeMap*)(gv->template_type);                    
+                    if (tm->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(&compiler->globals, id_string, &v)) {
+                            tm->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                break;
+            }
+            case NODE_CAST: {
+                Cast* c = (Cast*)node;
+                if (c->type == NULL) break;
+                if (c->type->type == TYPE_IDENTIFIER) {
+                    struct TypeIdentifier* id = (struct TypeIdentifier*)(c->type);
+                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                    push_root(to_string(id_string));
+                    Value v;
+                    if (get_from_table(&compiler->globals, id_string, &v)) {
+                        c->type = v.as.type_type;
+                    }
+                    pop_root();
+                }
+                break;
+            }
+        }
+        node = node->next;
+    }
 
     struct TypeArray* ret_types;
     ResultCode result = compile_function(compiler, nl, &ret_types);

@@ -1,0 +1,15 @@
+Dog :: struct {
+    name := "Mittens"
+    friend: Dog = nil
+    list: List<Token> = nil
+}
+
+Token :: enum {
+    one
+    two
+}
+
+l: List<Dog> = List<Dog>()
+
+l[0] = Dog()
+print(l[0].name)
