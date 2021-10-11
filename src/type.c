@@ -183,6 +183,18 @@ bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct) 
 bool same_type(struct Type* type1, struct Type* type2) {
     if (type1 == NULL || type2 == NULL) return false;
     if (type1->type == TYPE_NIL || type2->type == TYPE_NIL) return true;
+    if (type1->type != type2->type) {
+        struct Type* left = type1;
+        while (left != NULL) {
+            struct Type* right = type2;
+            while (right != NULL) {
+                if (left->type == right->type) return true;
+                right = right->opt;
+            }
+            left = left->opt;
+        }
+        return false;
+    }
 
     switch(type1->type) {
         case TYPE_ARRAY: {
@@ -228,18 +240,8 @@ bool same_type(struct Type* type1, struct Type* type2) {
         case TYPE_BOOL:
         case TYPE_STRING:
         case TYPE_INFER:
-        default: {
-            struct Type* left = type1;
-            while (left != NULL) {
-                struct Type* right = type2;
-                while (right != NULL) {
-                    if (left->type == right->type) return true;
-                    right = right->opt;
-                }
-                left = left->opt;
-            }
-            return false;
-        }
+        default:
+            return true;
     }
 }
 

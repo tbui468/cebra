@@ -1,16 +1,4 @@
-//Correctness test
-Dog :: struct < Animal {
-    name := "Mittens"
-}
 
+fp := List<float>()
 
-Animal :: struct {
-    class := "Mammal"
-}
-
-Token :: enum {
-    one
-    two
-}
-
-a: Animal = Dog()
+//        print(fp[2]) //this crashes HARD (c program actually crashes since we are out of bounds)

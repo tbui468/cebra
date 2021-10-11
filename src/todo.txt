@@ -30,9 +30,6 @@ IMPLEMENTATION:
 
     Change DeclClass node to DeclStruct
 
-    GC should check if object is already marked, and only mark/push if white
-        currently just marking and pushing everything
-
     Allowing struct instantiation in fields, BUT check if there are circular instantiations and show error
         if so.
 
@@ -97,17 +94,6 @@ IMPLEMENTATION:
         Add lines to runtime errors... could we emit line numbers along with Ops?
         maybe add compilation errors before doing the runtime ones
 
-    parse_type() should be a switch, and not a bunch of 'if' statements
-        change name to parse_type, and make PARSE_TYPE macro
-
-        make a peek(0) return the next token
-
-        primary() in parser should also use a switch
-
-    see if Token var_name propagated through the descent parser is being used
-        Recall that how variables/structs/functions/enums are declared was changed
-
-
     This crashes since parse_factor() is not defined
         parse_term := () -> Expr {
             left := parse_factor()
@@ -119,13 +105,6 @@ IMPLEMENTATION:
             -> left
         }
 
-    This crashes since 'animal' is not defined (typo since we called it 'a')
-        a := dog as Animal
-        d := animal as Dog
-
-    This crashes since fp was not declared
-        fp = -2.3 as string
-        print(fp[2])
 
     This crashes - enum name is misspelled (should be ASTType.primary)
         PrimaryExpr := struct < Expr {

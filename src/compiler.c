@@ -947,6 +947,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             return RESULT_FAILED;
         }
         case NODE_SET_VAR: {
+                               printf("0\n");
             SetVar* sv = (SetVar*)node;
             struct Type* right_type;
             COMPILE_NODE(sv->right, ret_types, &right_type);
@@ -957,6 +958,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             int idx = resolve_local(compiler, var);
             if (idx != -1) {
+                               printf("1\n");
+                               print_type(var_type);
+                               print_type(right_type);
                 CHECK_TYPE(!same_type(var_type, right_type), var, "Right side type must match variable type.");
 
                 emit_byte(compiler, OP_SET_LOCAL);
@@ -966,12 +970,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             int upvalue_idx = resolve_upvalue(compiler, var);
             if (upvalue_idx != -1) {
+                               printf("2\n");
                 CHECK_TYPE(!same_type(var_type, right_type), var, "Right side type must match variable type.");
 
                 emit_byte(compiler, OP_SET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
                 return RESULT_SUCCESS;
             }
+                               printf("3\n");
 
             add_error(compiler, var, "Local variable not declared.");
             return RESULT_FAILED;
