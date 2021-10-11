@@ -17,16 +17,25 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Add when (switch) statements
-        when a {
-            is 7 {
-                //do this - breaks are automatic
-            }
-            is 12 {
-                //do this
-            }
-            else {
-                //do this
+    Write tests for 'when' statements
+
+    Get this pattern working
+        evaluate_expr :: (expr: Expr) -> float {
+            when true {
+                is expr as PrimaryExpr as bool {
+                    -> (expr as PrimaryExpr).token.literal as float
+                }
+                is expr as BinaryExpr as bool {
+                    b := expr as BinaryExpr
+                    left := evaluate_expr(b.left)
+                    right := evaluate_expr(b.right)
+                    when b.token.literal {
+                        is "+" { -> left + right }
+                        is "-" { -> left - right }
+                        is "*" { -> left * right }
+                        is "/" { -> left / right }
+                    }
+                }
             }
         }
 

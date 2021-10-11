@@ -1,18 +1,16 @@
-a := 3
+a := 1
+b := 3
+
 when a {
     is 1 {
-
+        print("one")
     }
     is 2 {
-
-    }
-    is 3 {
-
-    }
-    is 2 {
-
+        print("two")
     }
     else {
-
+        print("else")
     }
 }
+
+print("All done")

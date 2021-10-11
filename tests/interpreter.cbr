@@ -1,5 +1,5 @@
 //Mini interpreter to test cebra capabilities
-//integer numbers
+//integer as input numbers
 //four operations: +-*/
 //can use parentheses to indicate higher precedence
 //output is a double precision floating point
@@ -111,40 +111,28 @@ next_token :: (lexer: Lexer) -> Token {
     if next_char(lexer) {
         token := Token()
         token.literal = lexer.current_char
-        if lexer.current_char == "+" {
-            token.type = TokenType.plus
-            -> token
-            //-> Token(TokenType.plus, "+") //would like to be able to do this
-        } 
-        if lexer.current_char == "-" {
-            token.type = TokenType.minus
-            -> token
+
+        when lexer.current_char {
+            is "+" { token.type = TokenType.plus }
+            is "-" { token.type = TokenType.minus }
+            is "*" { token.type = TokenType.star }
+            is "/" { token.type = TokenType.slash }
+            is "(" { token.type = TokenType.left_paren }
+            is ")" { token.type = TokenType.right_paren }
+            else {
+                //scanning a number
+                num_string := lexer.current_char
+                while peek(lexer, is_digit) {
+                    next_char(lexer)
+                    num_string = num_string + lexer.current_char 
+                }
+
+                token.type = TokenType.number
+                token.literal = num_string
+            }
         }
-        if lexer.current_char == "*" {
-            token.type = TokenType.star
-            -> token
-        }
-        if lexer.current_char == "/" {
-            token.type = TokenType.slash
-            -> token
-        }
-        if lexer.current_char == "(" {
-            token.type = TokenType.left_paren
-            -> token
-        }
-        if lexer.current_char == ")" {
-            token.type = TokenType.right_paren
-            -> token
-        }
-        //if number
-        num_string := lexer.current_char
-        while peek(lexer, is_digit) {
-            next_char(lexer)
-            num_string = num_string + lexer.current_char 
-        }
-        token.type = TokenType.number
-        token.literal = num_string
-        -> token 
+
+        -> token
     } else {
         token := Token()
         token.type = TokenType.eof
@@ -258,17 +246,11 @@ evaluate_expr :: (expr: Expr) -> float {
         b := expr as BinaryExpr
         left := evaluate_expr(b.left)
         right := evaluate_expr(b.right)
-        if b.token.literal == "+" {
-            -> left + right
-        }
-        if b.token.literal == "-" {
-            -> left - right
-        }
-        if b.token.literal == "*" {
-            -> left * right
-        }
-        if b.token.literal == "/" {
-            -> left / right
+        when b.token.literal {
+            is "+" { -> left + right }
+            is "-" { -> left - right }
+            is "*" { -> left * right }
+            is "/" { -> left / right }
         }
     }
 }

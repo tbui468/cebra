@@ -691,9 +691,45 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             patch_jump(compiler, jump_then);
             emit_byte(compiler, OP_POP);
+
             struct Type* else_type;
             COMPILE_NODE(ie->else_block, ret_types, &else_type);
             patch_jump(compiler, jump_else);
+
+            *node_type = make_nil_type();
+            return RESULT_SUCCESS;
+        }
+        case NODE_WHEN: {
+            struct When* when = (struct When*)node;
+            int jump_ends[256];
+            int je_count = 0;
+            for (int i = 0; i < when->cases->count; i++) {
+                IfElse* kase = (IfElse*)(when->cases->nodes[i]);
+                struct Type* cond_type;
+                COMPILE_NODE(kase->condition, ret_types, &cond_type);
+                CHECK_TYPE(cond_type->type != TYPE_BOOL, kase->name, 
+                        "The expressions after 'when' and 'is' must be comparable using a '==' operator.");
+
+                int jump_then = emit_jump(compiler, OP_JUMP_IF_FALSE);
+                emit_byte(compiler, OP_POP);
+                struct Type* then_type;
+                COMPILE_NODE(kase->then_block, ret_types, &then_type);
+                int jump_end = emit_jump(compiler, OP_JUMP);
+                if (je_count >= 255) {
+                    add_error(compiler, when->name, "Limit of 256 'is' and 'else' cases in a 'when' statement.");
+                    return RESULT_FAILED;
+                }
+                jump_ends[je_count] = jump_end; 
+                je_count++;
+
+                patch_jump(compiler, jump_then);
+                emit_byte(compiler, OP_POP);
+            }
+
+            for (int i = 0; i < je_count; i++) {
+                patch_jump(compiler, jump_ends[i]);
+            }
+
             *node_type = make_nil_type();
             return RESULT_SUCCESS;
         }
