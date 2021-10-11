@@ -3,5 +3,14 @@ Dog :: struct {
     name := "Mittens"
 }
 
-d := Dog
 
+Token :: enum {
+    one
+    two
+}
+
+a := Token
+b: Token = Token.two
+
+print(a)
+print(b)

@@ -384,7 +384,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                            "Inferred type cannot be assigned to 'nil.");
 
                 CHECK_TYPE(type->type == TYPE_DECL, dv->name, 
-                           "Variable cannot be assigned to struct type.");
+                           "Variable cannot be assigned to a user declared type.");
 
                 set_local(compiler, dv->name, type, idx);
             }
@@ -803,22 +803,27 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
 
-            if (type_inst->type == TYPE_ENUM) {
-                //should be Token enum on the stack...
-                emit_byte(compiler, OP_GET_PROP);
-                struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
-                push_root(to_string(name));
-                emit_short(compiler, add_constant(compiler, to_string(name))); 
-                pop_root();
+            if (type_inst->type == TYPE_DECL) {
+                struct TypeDecl* td = (struct TypeDecl*)type_inst;
+                if (td->custom_type->type == TYPE_ENUM) {
+                    //should be Token enum on the stack...
+                    struct TypeEnum* te = (struct TypeEnum*)(td->custom_type);
+                    emit_byte(compiler, OP_GET_PROP);
+                    struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
+                    push_root(to_string(name));
+                    emit_short(compiler, add_constant(compiler, to_string(name))); 
+                    pop_root();
 
-                Value type_val;
-                if (!get_from_table(&((struct TypeEnum*)type_inst)->props, name, &type_val)) {
-                    add_error(compiler, gp->prop, "Constant doesn't exist in enum.");
-                    return RESULT_FAILED;
+                    Value type_val;
+                    if (!get_from_table(&te->props, name, &type_val)) {
+                        add_error(compiler, gp->prop, "Constant doesn't exist in enum.");
+                        return RESULT_FAILED;
+                    }
+
+                    *node_type = (struct Type*)te;
+                    return RESULT_SUCCESS;
                 }
-
-                *node_type = type_inst;
-                return RESULT_SUCCESS;
+                return RESULT_FAILED;
             }
 
             if (type_inst->type == TYPE_STRING) {
@@ -945,7 +950,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_GET_GLOBAL);
                 emit_short(compiler, add_constant(compiler, to_string(name)));
                 pop_root();
-                if (v.as.type_type->type == TYPE_STRUCT) {
+                if (v.as.type_type->type == TYPE_STRUCT || v.as.type_type->type == TYPE_ENUM) {
                     *node_type = make_decl_type(v.as.type_type);
                 } else {
                     *node_type = v.as.type_type;
@@ -1081,7 +1086,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct TypeDecl* td = (struct TypeDecl*)type;
                 struct TypeStruct* type_struct = (struct TypeStruct*)(td->custom_type);
                 emit_byte(compiler, OP_INSTANCE);
-                *node_type = type_struct;
+                *node_type = (struct Type*)type_struct;
                 return RESULT_SUCCESS;
             }
 
