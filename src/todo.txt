@@ -16,46 +16,26 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-    Two problems:  (use sandbox.cbr to debug and fix)
-        Dog TypeIdentifier is still not resolved (see sandbox.cbr)
-            seems like the resolve_map/list inside parser do nothing.... (they are commented out)
-            what are the nodes???
-        Cannot set name of dog when using list[0].name (list of type Dog)
-
-    Currently trying to resolve all TypeIdentifiers at beginning of Compiler (before compiling nodes)
-        but it crashes when we comment out the TypeIdentifier resolution in GET_PROP.
-        comment it out to see it all crash
-
-        Found the problem: When resolving TypeIdentifiers, need to search for both Identifiers AND Maps/Lists
-
-        Once everything works without any Identifier resolutions inside compiler node, should move ALL identifier resolution
-        together into beginning of compiler or end of parser
-
-            Could also combine all into a function called resolve_ast_identifiers that is recursively called to resolve 
-            everything.  Just have a switch statement inside to dispatch to correct algorithm
-
-        Change DeclClass to DeclStruct
-
-    Why do we need to resolve IDENTIFIER in GET PROP?
-        this is the only TYPE_IDENTIFIER that can't be removed...
-        is it related to the tables inside TypeStruct?
-
-    One option: while parsing, if any nodes have identifiers in them, add them to a working
-        parser list.  At the end of the parser, at the same time when Structs and Functions TypeIdentifiers
-        are resolved, resolved these nodes Identifiers too.  This may make it easier to integrate
-        the two new types too, if we choose to go that route.
-
-        Enum 
-        Struct
-        Function
-        GetVar, DeclVar, Cast
 
     Creating Lists and Maps is VERY confusing in parser - Why on earth is the AST node to create Lists and Maps
         GetVar????  This should be changed to DeclList and DeclMap with a struct Type* type for the list element data type
         template_type is only used for Maps and List too, so once we have DeclList and DeclMap with their own
         struct Type* type, should remove struct Type* template_type from DeclVar.
 
-        Or add 'List' and 'Map' to globals table....
+        Rename template_type to container_type?
+
+        Or add 'List' and 'Map' to globals table, and keep Get
+
+        Why does GetVar have a template_type?  Couldn't the type be in the locals table like everything else?
+
+        Could we call it GetContainer?  Then a call on 
+
+    Move ALL TypeIdentifier resolution to either end of parser or beginning of compiler
+        let's do end of parser - the compiler will always get a mostly complete globals type table and AST nodes
+        (with inferred struct fields types being filled in at compilation time)
+
+    Now that all TypeIdentifiers are resolved, can be make use of the new TypeStructInstance
+        and TypeEnumElement types???
 
     Still no easy way to fix problem below.  Added TypeStructInstance and TypeEnumElement
         but no trivial way to integrate.  Tried simply to do type checks in GET_VAR and

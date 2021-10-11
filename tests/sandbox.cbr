@@ -12,4 +12,8 @@ l[0].name = "Bubbles" //this is causing error, which is a bug
 
 print(l[0].name)
 
+fun :: (a: List<Dog>) -> Map<Dog> {
+    -> Map<Dog>()
+}
 
+map := fun(l)

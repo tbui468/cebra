@@ -921,7 +921,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //List/Map creation
             //TODO: this is completely out of place
             //  should move this elsewhere or create a new type of AST node
-            //  instead of tacking on 'template_type' field to GetVar
+            //  instead of tacking on 'template_type' field to GetVar.
+            //  Also 'container_type' makes more sense.  
             if (gv->template_type != NULL) {
                 *node_type = gv->template_type;
                 return RESULT_SUCCESS;
@@ -1067,7 +1068,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (type->type == TYPE_LIST) {
                 struct TypeList* type_list = (struct TypeList*)type;
                 if (call->arguments->count != 0) {
-                    add_error(compiler, call->name, "List constructor must have 1 argument for default value.");
+                    add_error(compiler, call->name, "List constructor must have 0 arguments.");
                     return RESULT_FAILED;
                 }
 
@@ -1082,7 +1083,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (type->type == TYPE_MAP) {
                 struct TypeMap* type_map = (struct TypeMap*)type;
                 if (call->arguments->count != 0) {
-                    add_error(compiler, call->name, "Map constructor must have 1 argument for default value.");
+                    add_error(compiler, call->name, "Map constructor must have 0 arguments.");
                     return RESULT_FAILED;
                 }
 
@@ -1101,33 +1102,34 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
 
-            CHECK_TYPE(type->type != TYPE_FUN, call->name, "Calls must be used on a function type.");
+            if (type->type == TYPE_FUN) {
+                struct TypeFun* type_fun = (struct TypeFun*)type;
+                struct TypeArray* params = (struct TypeArray*)(type_fun->params);
 
-            //otherwise it's TYPE_FUN
+                if (call->arguments->count != params->count) {
+                    add_error(compiler, call->name, "Argument count must match function parameter count.");
+                    return RESULT_FAILED;
+                }
 
-            struct TypeFun* type_fun = (struct TypeFun*)type;
-            struct TypeArray* params = (struct TypeArray*)(type_fun->params);
+                int min = call->arguments->count < params->count ? call->arguments->count : params->count; //Why is this needed?
+                for (int i = 0; i < min; i++) {
+                    struct Type* arg_type;
+                    COMPILE_NODE(call->arguments->nodes[i], ret_types, &arg_type);
 
-            if (call->arguments->count != params->count) {
-                add_error(compiler, call->name, "Argument count must match function parameter count.");
-                return RESULT_FAILED;
+                    struct Type* param_type = params->types[i];
+
+                    CHECK_TYPE(!same_type(param_type, arg_type), call->name, "Argument type must match parameter type.");
+                }
+
+                emit_byte(compiler, OP_CALL);
+                emit_byte(compiler, (uint8_t)(call->arguments->count));
+
+                *node_type = type_fun->ret;
+                return RESULT_SUCCESS;
             }
 
-            int min = call->arguments->count < params->count ? call->arguments->count : params->count; //Why is this needed?
-            for (int i = 0; i < min; i++) {
-                struct Type* arg_type;
-                COMPILE_NODE(call->arguments->nodes[i], ret_types, &arg_type);
-
-                struct Type* param_type = params->types[i];
-
-                CHECK_TYPE(!same_type(param_type, arg_type), call->name, "Argument type must match parameter type.");
-            }
-
-            emit_byte(compiler, OP_CALL);
-            emit_byte(compiler, (uint8_t)(call->arguments->count));
-
-            *node_type = type_fun->ret;
-            return RESULT_SUCCESS;
+            add_error(compiler, call->name, "Calls can only be made on functions, structs, List and Map.");
+            return RESULT_FAILED;
         }
         case NODE_NIL: {
             Nil* nil = (Nil*)node;
@@ -1367,16 +1369,6 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
             case NODE_GET_VAR: {
                 GetVar* gv = (GetVar*)node;
                 if (gv->template_type == NULL) break;
-                if (gv->template_type->type == TYPE_IDENTIFIER) {
-                    struct TypeIdentifier* id = (struct TypeIdentifier*)(gv->template_type);
-                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                    push_root(to_string(id_string));
-                    Value v;
-                    if (get_from_table(&compiler->globals, id_string, &v)) {
-                        gv->template_type = v.as.type_type;
-                    }
-                    pop_root();
-                } 
                 if (gv->template_type->type == TYPE_LIST) {
                     struct TypeList* tl = (struct TypeList*)(gv->template_type);                    
                     if (tl->type->type == TYPE_IDENTIFIER) {
