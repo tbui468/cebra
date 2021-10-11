@@ -83,6 +83,9 @@ static Token read_keyword(char c) {
             if (match_string("nt")) return new_token(TOKEN_INT_TYPE);
             if (match_string("f")) return new_token(TOKEN_IF);
             break;
+        case 'L':
+            if (match_string("ist")) return new_token(TOKEN_LIST);
+            break;
         case 'M':
             if (match_string("ap")) return new_token(TOKEN_MAP);
             break;
@@ -101,9 +104,6 @@ static Token read_keyword(char c) {
             break;
         case 'w':
             if (match_string("hile")) return new_token(TOKEN_WHILE);
-            break;
-        case 'L':
-            if (match_string("ist")) return new_token(TOKEN_LIST);
             break;
     }
     return new_token(TOKEN_IDENTIFIER);

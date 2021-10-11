@@ -918,16 +918,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
 
-            //List/Map creation
-            //TODO: this is completely out of place
-            //  should move this elsewhere or create a new type of AST node
-            //  instead of tacking on 'template_type' field to GetVar.
-            //  Also 'container_type' makes more sense.  
-            if (gv->template_type != NULL) {
-                *node_type = gv->template_type;
-                return RESULT_SUCCESS;
-            }
-
             int idx = resolve_local(compiler, gv->name);
             if (idx != -1) {
                 emit_byte(compiler, OP_GET_LOCAL);
@@ -1059,41 +1049,28 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
             return RESULT_FAILED;
         }
+        case NODE_CONTAINER: {
+            struct DeclContainer* dc = (struct DeclContainer*)node;
+            const char* list_str = "List";
+            if (dc->name.length == 4 && memcmp(list_str, dc->name.start, 4) == 0) {
+                emit_byte(compiler, OP_LIST);
+                *node_type = make_list_type(dc->type); 
+                return RESULT_SUCCESS;
+            }
+            const char* map_str = "Map";
+            if (dc->name.length == 3 && memcmp(map_str, dc->name.start, 3) == 0) {
+                emit_byte(compiler, OP_MAP);
+                *node_type = make_map_type(dc->type); 
+                return RESULT_SUCCESS;
+            }
+            add_error(compiler, dc->name, "Invalid identifier for container.");
+            return RESULT_FAILED;
+        }
         case NODE_CALL: {
             Call* call = (Call*)node;
 
             struct Type* type;
             COMPILE_NODE(call->left, ret_types, &type);
-
-            if (type->type == TYPE_LIST) {
-                struct TypeList* type_list = (struct TypeList*)type;
-                if (call->arguments->count != 0) {
-                    add_error(compiler, call->name, "List constructor must have 0 arguments.");
-                    return RESULT_FAILED;
-                }
-
-                struct Type* list_template = type_list->type;
-                CHECK_TYPE(list_template->type == TYPE_NIL, call->name, "List must be initialized with valid type: List<[type]>().");
-
-                emit_byte(compiler, OP_LIST);
-                *node_type = type;
-                return RESULT_SUCCESS;
-            }
-
-            if (type->type == TYPE_MAP) {
-                struct TypeMap* type_map = (struct TypeMap*)type;
-                if (call->arguments->count != 0) {
-                    add_error(compiler, call->name, "Map constructor must have 0 arguments.");
-                    return RESULT_FAILED;
-                }
-
-                struct Type* map_template = type_map->type;
-                CHECK_TYPE(map_template->type == TYPE_NIL, call->name, "Map must be initialized with valid type: Map<[type]>().");
-
-                emit_byte(compiler, OP_MAP);
-                *node_type = type;
-                return RESULT_SUCCESS;
-            }
 
             if (type->type == TYPE_STRUCT) {
                 struct TypeStruct* type_class = (struct TypeStruct*)type;
@@ -1366,34 +1343,17 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
                 }
                 break;
             }
-            case NODE_GET_VAR: {
-                GetVar* gv = (GetVar*)node;
-                if (gv->template_type == NULL) break;
-                if (gv->template_type->type == TYPE_LIST) {
-                    struct TypeList* tl = (struct TypeList*)(gv->template_type);                    
-                    if (tl->type->type == TYPE_IDENTIFIER) {
-                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
+            case NODE_CONTAINER: {
+                struct DeclContainer* dc = (struct DeclContainer*)node;
+                if (dc->type->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(dc->type);
                         struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
                         push_root(to_string(id_string));
                         Value v;
                         if (get_from_table(&compiler->globals, id_string, &v)) {
-                            tl->type = v.as.type_type;
+                            dc->type = v.as.type_type;
                         }
                         pop_root();
-                    }
-                }
-                if (gv->template_type->type == TYPE_MAP) {
-                    struct TypeMap* tm = (struct TypeMap*)(gv->template_type);                    
-                    if (tm->type->type == TYPE_IDENTIFIER) {
-                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
-                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
-                        push_root(to_string(id_string));
-                        Value v;
-                        if (get_from_table(&compiler->globals, id_string, &v)) {
-                            tm->type = v.as.type_type;
-                        }
-                        pop_root();
-                    }
                 }
                 break;
             }

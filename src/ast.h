@@ -32,7 +32,8 @@ typedef enum {
     NODE_NIL,
     NODE_LIST,
     NODE_ENUM,
-    NODE_CAST
+    NODE_CAST,
+    NODE_CONTAINER
 } NodeType;
 
 struct Node {
@@ -79,6 +80,12 @@ struct DeclEnum {
     Token name;
     struct Node* identifier;
     struct NodeList* decls;
+};
+
+struct DeclContainer {
+    struct Node base;
+    Token name;
+    struct Type* type;
 };
 
 /*
@@ -247,6 +254,7 @@ struct Node* make_set_prop(struct Node* inst, struct Node* right);
 struct Node* make_nil(Token name);
 struct Node* make_decl_enum(Token name, struct NodeList* decls);
 struct Node* make_cast(Token name, struct Node* left, struct Type* type);
+struct Node* make_decl_container(Token name, struct Type* type);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

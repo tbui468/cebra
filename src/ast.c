@@ -76,6 +76,15 @@ struct Node* make_decl_enum(Token name, struct NodeList* decls) {
     return insert_node((struct Node*)de);
 }
 
+struct Node* make_decl_container(Token name, struct Type* type) {
+    struct DeclContainer* dc = ALLOCATE(struct DeclContainer);
+    dc->name = name;
+    dc->type = type;
+    dc->base.type = NODE_CONTAINER;
+
+    return insert_node((struct Node*)dc);
+}
+
 /*
  * Statements
  */
@@ -321,6 +330,11 @@ void print_node(struct Node* node) {
             printf("( DeclEnum ");
             break;
         }
+        case NODE_CONTAINER: {
+            struct DeclContainer* de = (struct DeclContainer*)node;
+            printf("( DeclContainer ");
+            break;
+        }
         //Statements
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
@@ -337,13 +351,14 @@ void print_node(struct Node* node) {
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
             printf("( If ");
+            /*
             print_node(ie->condition);
             printf(" then ");
             print_node(ie->then_block);
             if (ie->else_block != NULL) {
                 printf(" else ");
                 print_node(ie->else_block);
-            }
+            }*/
             printf(" )");
             break;
         }
@@ -472,6 +487,11 @@ void free_node(struct Node* node) {
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;
             FREE(de, struct DeclEnum);
+            break;
+        }
+        case NODE_CONTAINER: {
+            struct DeclContainer* de = (struct DeclContainer*)node;
+            FREE(de, struct DeclContainer);
             break;
         }
         //Statements

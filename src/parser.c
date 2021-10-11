@@ -185,7 +185,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
         struct Type* template_type;
         PARSE_TYPE(var_name, &template_type, var_name, "List must be initialized with valid type: List<[type]>().");
         CONSUME(TOKEN_GREATER, identifier, "Expect '>' after type.");
-        *node = make_get_var(identifier, make_list_type(template_type)); 
+        CONSUME(TOKEN_LEFT_PAREN, identifier, "Create container using '()'.");
+        CONSUME(TOKEN_RIGHT_PAREN, identifier, "Create container using '()'.");
+        *node = make_decl_container(identifier, template_type); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_MAP)) {
         Token identifier = parser.previous;
@@ -193,7 +195,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
         struct Type* template_type;
         PARSE_TYPE(var_name, &template_type, var_name, "Map must be initialized with valid type: Map<[type]>().");
         CONSUME(TOKEN_GREATER, identifier, "Expect '>' after type.");
-        *node = make_get_var(identifier, make_map_type(template_type)); 
+        CONSUME(TOKEN_LEFT_PAREN, identifier, "Create container using '()'.");
+        CONSUME(TOKEN_RIGHT_PAREN, identifier, "Create container using '()'.");
+        *node = make_decl_container(identifier, template_type); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IDENTIFIER)) {
         *node = make_get_var(parser.previous, NULL);

@@ -30,6 +30,9 @@ IMPLEMENTATION:
 
         Could we call it GetContainer?  Then a call on 
 
+    Make a TypeContainer, which holds a Token name ("List", "Map" etc) and a struct Type* type (element type)
+        replace TypeList and TypeMap
+
     Move ALL TypeIdentifier resolution to either end of parser or beginning of compiler
         let's do end of parser - the compiler will always get a mostly complete globals type table and AST nodes
         (with inferred struct fields types being filled in at compilation time)

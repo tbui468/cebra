@@ -1,19 +1,31 @@
+//Correctness test
 
-Dog :: struct {
-    name := "Mittens"
+
+Animal :: struct {
+    class: string = "Mammal"
 }
 
-l: List<Dog> = List<Dog>()
 
-l[0] = Dog()
-l[0].name
-
-l[0].name = "Bubbles" //this is causing error, which is a bug
-
-print(l[0].name)
-
-fun :: (a: List<Dog>) -> Map<Dog> {
-    -> Map<Dog>()
+Canine :: struct < Animal {
+    class: string = "Canine"
 }
 
-map := fun(l)
+Dog :: struct < Canine {
+    name: string = "Mittens"
+    age: int = 3
+    length: float = 100.2
+    friend: Dog = nil
+    list: List<int> = nil
+    map: Map<int> = nil 
+}
+
+
+b: List<Dog> = List<Dog>()
+d: Dog = Dog()
+d.name = "Bubbles"
+b[0] = d
+b.size = 2
+
+print(b[0].name)
+
+
