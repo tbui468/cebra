@@ -13,13 +13,13 @@ typedef enum {
     TYPE_ARRAY,
     TYPE_FUN,
     TYPE_STRUCT,
-    TYPE_STRUCT_INSTANCE,
+//    TYPE_STRUCT_INSTANCE,
     TYPE_IDENTIFIER,
     TYPE_LIST,
     TYPE_MAP,
     TYPE_INFER,
     TYPE_ENUM,
-    TYPE_ENUM_ELEMENT,
+//    TYPE_ENUM_ELEMENT,
     TYPE_DECL
 } TypeType;
 
@@ -77,11 +77,11 @@ struct TypeStruct {
     struct Type* super;
     struct Table props;
 };
-
+/*
 struct TypeStructInstance {
     struct Type base;
     struct TypeStruct* struct_ref;
-};
+};*/
 
 struct TypeEnum {
     struct Type base;
@@ -89,10 +89,11 @@ struct TypeEnum {
     struct Table props;
 };
 
+/*
 struct TypeEnumElement {
     struct Type base;
     struct TypeEnum* enum_ref;
-};
+};*/
 
 struct TypeIdentifier {
     struct Type base;
@@ -121,13 +122,13 @@ struct Type* make_string_type();
 struct Type* make_nil_type();
 struct Type* make_fun_type(struct Type* params, struct Type* ret);
 struct Type* make_struct_type(Token name, struct Type* super);
-struct Type* make_struct_instance_type(struct TypeStruct* struct_ref);
+//struct Type* make_struct_instance_type(struct TypeStruct* struct_ref);
 struct Type* make_identifier_type(Token identifier);
 struct Type* make_list_type(struct Type* type);
 struct Type* make_map_type(struct Type* type);
 struct Type* make_infer_type();
 struct Type* make_enum_type(Token name);
-struct Type* make_enum_element_type(struct TypeEnum* enum_ref);
+//struct Type* make_enum_element_type(struct TypeEnum* enum_ref);
 struct Type* make_decl_type(struct Type* custom_type);
 
 bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct);

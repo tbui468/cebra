@@ -1,31 +1,7 @@
 //Correctness test
-
-
-Animal :: struct {
-    class: string = "Mammal"
+Dog :: struct {
+    name := "Mittens"
 }
 
-
-Canine :: struct < Animal {
-    class: string = "Canine"
-}
-
-Dog :: struct < Canine {
-    name: string = "Mittens"
-    age: int = 3
-    length: float = 100.2
-    friend: Dog = nil
-    list: List<int> = nil
-    map: Map<int> = nil 
-}
-
-
-b: List<Dog> = List<Dog>()
-d: Dog = Dog()
-d.name = "Bubbles"
-b[0] = d
-b.size = 2
-
-print(b[0].name)
-
+d := Dog
 

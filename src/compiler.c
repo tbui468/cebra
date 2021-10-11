@@ -380,8 +380,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 int idx = add_local(compiler, dv->name, dv->type);
 
                 COMPILE_NODE(dv->right, NULL, &type);
-                CHECK_TYPE(type->type == TYPE_NIL, dv->name,
+                CHECK_TYPE(type->type == TYPE_NIL , dv->name,
                            "Inferred type cannot be assigned to 'nil.");
+
+                CHECK_TYPE(type->type == TYPE_DECL, dv->name, 
+                           "Variable cannot be assigned to struct type.");
 
                 set_local(compiler, dv->name, type, idx);
             }
@@ -942,7 +945,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_GET_GLOBAL);
                 emit_short(compiler, add_constant(compiler, to_string(name)));
                 pop_root();
-                *node_type = v.as.type_type;
+                if (v.as.type_type->type == TYPE_STRUCT) {
+                    *node_type = make_decl_type(v.as.type_type);
+                } else {
+                    *node_type = v.as.type_type;
+                }
                 return RESULT_SUCCESS;
             }
             pop_root();
@@ -1070,10 +1077,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* type;
             COMPILE_NODE(call->left, ret_types, &type);
 
-            if (type->type == TYPE_STRUCT) {
-                struct TypeStruct* type_class = (struct TypeStruct*)type;
+            if (type->type == TYPE_DECL) {
+                struct TypeDecl* td = (struct TypeDecl*)type;
+                struct TypeStruct* type_struct = (struct TypeStruct*)(td->custom_type);
                 emit_byte(compiler, OP_INSTANCE);
-                *node_type = type;
+                *node_type = type_struct;
                 return RESULT_SUCCESS;
             }
 
@@ -1127,7 +1135,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
 
-            CHECK_TYPE(left->type != TYPE_STRUCT || cast->type->type != TYPE_STRUCT, 
+            CHECK_TYPE(left->type != TYPE_STRUCT || cast->type->type != TYPE_STRUCT,
                     cast->name, "Type casts with 'as' must be applied to structure types or primitive types.");
 
             struct TypeStruct* from = (struct TypeStruct*)(left);
