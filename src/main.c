@@ -64,7 +64,6 @@ ResultCode run_source(VM* vm, const char* source) {
     printf("After run\n");
 
     if (run_result == RESULT_FAILED) {
-        free_compiler(&script_comp);
         return RESULT_FAILED; 
     }
 

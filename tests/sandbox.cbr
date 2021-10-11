@@ -1,4 +1,4 @@
 
 fp := List<float>()
 
-//        print(fp[2]) //this crashes HARD (c program actually crashes since we are out of bounds)
+        print(fp[2]) //this crashes HARD (c program actually crashes since we are out of bounds)
