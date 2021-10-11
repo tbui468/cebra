@@ -901,6 +901,8 @@ static ResultCode resolve_map_identifiers(struct TypeMap* tm, struct Table* glob
     return RESULT_SUCCESS;
 }
 
+static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals);
+
 static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
     //resolve properties
     for (int j = 0; j < tc->props.capacity; j++) {
@@ -913,6 +915,12 @@ static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
                         return RESULT_FAILED;
                     }
                     set_table(&tc->props, inner_pair->key, to_type(result));
+                    break;
+                }
+                case TYPE_FUN: {
+                    if (resolve_function_identifiers((struct TypeFun*)(inner_pair->value.as.type_type), parser.globals) == RESULT_FAILED) {
+                        return RESULT_FAILED;
+                    }
                     break;
                 }
             }

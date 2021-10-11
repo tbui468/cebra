@@ -36,6 +36,11 @@ IMPLEMENTATION:
     How about functions/closures defined in default fields?  Function pointers could be nil by default,
         and the compiler could enforce that.
 
+        Dog :: struct {
+            name := "Mittens"
+            bark: () -> = () -> { print("hi"} }
+        }
+
     Write script to build using both Clang and MSVC, and then run correctness.cbr and interpreter.cbr
     for both executables all in one go.
 
@@ -94,41 +99,6 @@ IMPLEMENTATION:
         Add lines to runtime errors... could we emit line numbers along with Ops?
         maybe add compilation errors before doing the runtime ones
 
-    This crashes since parse_factor() is not defined
-        parse_term := () -> Expr {
-            left := parse_factor()
-
-            while match(TokenType.plus) or match(TokenType.minus) {
-                left = make_binary_expr(previous_token, left, parse_primary())
-            }
-
-            -> left
-        }
-
-    This crashes - enum name is misspelled (should be ASTType.primary)
-        PrimaryExpr := struct < Expr {
-            type := ASype.primary
-            token: Token = nil
-        }
-
-    This breaks compiler but doesn't show error:
-        src := "212 + 42"
-
-        TokenType := enum {
-            number
-            plus
-            minus
-        }
-
-        Token := struct {
-            TokenType := TokenType.number //Var identifier is expected, but using enum identifer... (but what if user tries to declara new enum???)
-            identifier := ""
-        }
-
-    This breaks compiler since 'char_remaing' is not defined, but shows no error
-        if char_remaing {
-
-        }
 
     Struct constructors - would like to be able to do this to simplify code further:
         p := PrimaryExpr(ASTType.primary, token)
@@ -151,28 +121,16 @@ IMPLEMENTATION:
     'consume' in parser is too general and doesn't allow specific error messages - replacing it with match() + ADD_ERROR will be better
         but it's a lot more verbose
 
-    Change SigDecl to SigInferred for clarity
-        since SigDecl is only used with :=
-
     Need to deal with c-errors too (snprintf, reading from file, etc)
     
     put in 'if' into correctness.cbr to turn on/off tests - this will make it easier to
         pinpoint failing tests/crashing tests
         this doesn't work!!! Need a preprocesser to remove/add/replace code
 
-    int casting (string, float)
-        if string cannot be converted, ??
-
-    float casting (string, int)
-        if string cannot be converted, ??
-
     type() function that returns 'int', 'string', 'bool', 'float', 'Dog', '(int) -> string' in string format
 
     change name of TOKEN_STRING_TYPE to TOKEN_STRING_IDENTIFIER so that it can
         be used for both type AND casting to strings
-
-    Write a tree-walk interpreter in cebra to flaws in code
-        print(nil) should this work?
 
     write code to catch compiler errors: pretty much type checking
         compiling error - if the condition evaulates to non-boolean take care of
@@ -191,23 +149,6 @@ IMPLEMENTATION:
             and returns info about that text
         integrate final code
 
-    Whenever a SigIdentifier is used, it should be resolved at
-        that time - is there a way to automate this rather
-        than checking if type == SIG_IDENTIFIER and resolving
-        the signature each time?  It's prone to mistakes.
-
-        whenever an ast node sig is used, pass it through an identifier filter function
-            to automatically resolve thes signature if it's SIG_IDENTIFIER
-
-    this code should give error since declaring same variable twice
-    but it currently crashes program
-        //expecting 'and' between
-        if yy() == "hello world" yyi() == "hello world" {
-
-        //Look at List tests, setting same variable to different list templates
-        a: List<int> = List<int>(-1)
-        a: List<Dog> = List<Dog>(Dog()) //this should report and error
-
     Update documentation to include new syntax + List/Map
         and include small box to write /run test scripts
 
@@ -215,12 +156,6 @@ IMPLEMENTATION:
         errors are caught.  Make 3 new files: parsing.cbr, compiling.cbr, 
         runtime.cbr with bad code.  Make sure that all mistakes sychronize
         and run to the very end, emitting errors WITHOUT crashing.
-
-    have Maps and Lists return nil for invalid values
-        make this an option (if argument is nothing)
-        get rid of default values
-        in vm, fill invalid values with nil
-        change tests to match 
 
     Add string manipulation
         access char by index using [idx]
@@ -240,21 +175,6 @@ IMPLEMENTATION:
         return nil as the type (which didn't get popped)
         changed code so that variable signature was returned
 
-    Implement for each loop
-        foreach i: int in list {
-            print(i)
-        }
-
-        foreach i: string in map.keys {
-            print(map[i])
-        }
-
-        for i: int in 1..19 {
-
-        }
-
-    copy() to make copies of instances, maps and lists
-
     Need to add parse error if quote is not closed (rather than quietly failing)
         and program crashing
 
@@ -263,69 +183,13 @@ IMPLEMENTATION:
         parse/compiler/runtime errors - including syncing so that multiple
         errors can be shown
 
-    When compile_node() is called, should check if return value is NULL
-        make all errors return NULL, rather than a signature of type NIL
-        NIL type signatures are valid, whereas NULL will signal an error
-
-    Allow struct instantiation to have arguments that set fields
-        by order of declaration.  Use must include all arguments, but
-        may leave them empty if the default value is desired
-
-        Dog: struct = struct {
-            name: string = "Mittens"
-            age: int = 3
-            length: float = 12.3
-        }
-
-        Dog("Bubbles", 23, 1.32)
-        Dog(, 23, 1.32)
-        Dog(,,) is the same as Dog()
-
-    property names are being added as constants for both OP_GET_PROP
-    and OP_SET_PROP, but they aren't really constants.  What other
-    way could this be done more clearly.  Interning!!!
-        this will also make value comparisons of strings faster
-        (right now need to compare lengths + memcmp)
-
-    Does NODE_DECl_VAR only for primitive types, or is it for functions/classes too?
-        add ability to assign variables to classes, function, instances
-
-        How about assigning functions to other functions?
-            I don't think we support this right now:
-            my_fun: () -> = other_fun
-
-    Clear up the warnings (especially with switch statements)
-
-    String Interning
-
-    When a function returns, it closes any upvalues, but we don't
-        see the call to OP_CLOSE_UPVALUE - need to add more instructions to
-        disassemble chunk OR somehow make returning from a function call
-        OP_CLOSE_UPVALUE for clarity.  Is there any situation where
-        OP_CLOSE_UPVALUE actually gets called (rather than OP_RETURN 
-        just doing all the work?)
-
-    in compiler, CALL and CASCADE CALL share a lot of code - pull that into a function
-
-    Native functions - start with clock() for measuring time
-        should have an OP_CALL_NATIVE code
-
-    Having to call free_sig on almost all signatures in compile_node is a bit much
-      and super prone to errors.  How about putting all Sig* into a list upon
-      creation, and then just free that list when the compilation process is over?
-        this is similar to how we deal with freeing Objects with the GC
-
     Implement deleting from hash table - need to use tombstones
 
     Intern strings - create a "strings" table in vm
 
-    Test Edge cases by writing toy programs - save these programs as correctness tests
-
-    Stress test by writing script to load nyc_subway data - compare runtime to python pandas
-
     Write benchmarking code to use with chrome://tracing to find hotspots
 
-    Why are if /else so much slower than just if (think of the fibonacci example
+    Why are if /else so much slower than just if (think of the fibonacci example)
 
 
 StatementList should be DeclList - all programs are a list of declarations

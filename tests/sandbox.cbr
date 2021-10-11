@@ -1,7 +1,20 @@
-Token :: enum {
-    one
-    two
+Dog :: struct {
+    name := "Mittens"
+    bark: (Dog) -> = nil
 }
 
-    //This breaks compiler without showing error:
-token: Token = Token()
+d := Dog()
+d.bark = bark
+
+bark :: (d: Dog) -> {
+    print(d.name)
+}
+
+d.bark(d)
+
+d2 := Dog()
+d2.name = "Bubbles"
+d2.bark = bark
+
+d2.bark(d2)
+d2.bark(d)
