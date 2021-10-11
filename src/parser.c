@@ -1044,7 +1044,7 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
     return RESULT_SUCCESS;
 }
 
-ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals) {
+ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes) {
     init_parser(source, globals);
     struct NodeList* script_nl = (struct NodeList*)make_node_list();
 
@@ -1060,7 +1060,6 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         }
     }
 
-
     //resolve identifiers in structs
     if (result != RESULT_FAILED) {
         for (int i = 0; i < parser.globals->capacity; i++) {
@@ -1075,7 +1074,6 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
             }
         }
     }
-
 
     //check for circular inheritance
     if (result != RESULT_FAILED) {
@@ -1120,6 +1118,100 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
                 }
             }
         }
+    }
+
+    //resolve remaining identifiers
+    struct Node* node = *nodes;
+    while (node != NULL) {
+        switch(node->type) {
+            case NODE_DECL_VAR: {
+                DeclVar* dv = (DeclVar*)node;
+                if (dv->type == NULL) break;
+                if (dv->type->type == TYPE_IDENTIFIER) {
+                    struct TypeIdentifier* id = (struct TypeIdentifier*)(dv->type);
+                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                    push_root(to_string(id_string));
+                    Value v;
+                    if (get_from_table(parser.globals, id_string, &v)) {
+                        dv->type = v.as.type_type;
+                    }
+                    pop_root();
+                }
+                if (dv->type->type == TYPE_LIST) {
+                    struct TypeList* tl = (struct TypeList*)(dv->type);                    
+                    if (tl->type->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(parser.globals, id_string, &v)) {
+                            tl->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                if (dv->type->type == TYPE_MAP) {
+                    struct TypeMap* tm = (struct TypeMap*)(dv->type);                    
+                    if (tm->type->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(parser.globals, id_string, &v)) {
+                            tm->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                break;
+            }
+            case NODE_CONTAINER: {
+                struct DeclContainer* dc = (struct DeclContainer*)node;
+                if (dc->type->type == TYPE_LIST) {
+                    struct TypeList* tl = (struct TypeList*)(dc->type);
+                    if (tl->type->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tl->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(parser.globals, id_string, &v)) {
+                            tl->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                if (dc->type->type == TYPE_MAP) {
+                    struct TypeMap* tm = (struct TypeMap*)(dc->type);
+                    if (tm->type->type == TYPE_IDENTIFIER) {
+                        struct TypeIdentifier* id = (struct TypeIdentifier*)(tm->type);
+                        struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                        push_root(to_string(id_string));
+                        Value v;
+                        if (get_from_table(parser.globals, id_string, &v)) {
+                            tm->type = v.as.type_type;
+                        }
+                        pop_root();
+                    }
+                }
+                break;
+            }
+            case NODE_CAST: {
+                Cast* c = (Cast*)node;
+                if (c->type == NULL) break;
+                if (c->type->type == TYPE_IDENTIFIER) {
+                    struct TypeIdentifier* id = (struct TypeIdentifier*)(c->type);
+                    struct ObjString* id_string = make_string(id->identifier.start, id->identifier.length);
+                    push_root(to_string(id_string));
+                    Value v;
+                    if (get_from_table(parser.globals, id_string, &v)) {
+                        c->type = v.as.type_type;
+                    }
+                    pop_root();
+                }
+                break;
+            }
+        }
+        node = node->next;
     }
 
     //change order of structs to make sure base structs are compiled before any substructs

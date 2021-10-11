@@ -21,6 +21,8 @@ IMPLEMENTATION:
         let's do end of parser - the compiler will always get a mostly complete globals type table and AST nodes
         (with inferred struct fields types being filled in at compilation time)
 
+        will need access to all nodes
+
     Now that all TypeIdentifiers are resolved, can be make use of the new TypeStructInstance
         and TypeEnumElement types???
 

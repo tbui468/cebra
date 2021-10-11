@@ -25,7 +25,7 @@ typedef struct {
     struct NodeList* resolve_id_list;
 } Parser;
 
-ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals);
+ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H

@@ -21,7 +21,9 @@ ResultCode run_source(VM* vm, const char* source) {
 
     printf("Before parser\n");
     struct NodeList* nl;
-    ResultCode parse_result = parse(source, &nl, &script_comp.globals);
+    //passing globals and nodes in here feels messy - couldn't we have parse CREATE them?
+    //Note: script_comp.nodes are ALL nodes, whereas nl only contains top statement nodes
+    ResultCode parse_result = parse(source, &nl, &script_comp.globals, &script_comp.nodes);
     printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
