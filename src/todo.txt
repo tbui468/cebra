@@ -17,44 +17,17 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Now that all TypeIdentifiers are resolved, can be make use of the new TypeStructInstance
-        and TypeEnumElement types???
-
-        When calling resolve_identifier in parser, wrap the resulting type in TypeStructInstance or TypeEnumElement
-        Then in compiler, wrap types when creating new struct instance in CALL, and new enum element in GET_PROP.
-
-        Alternatively, create a TypeDecl type which holds a reference to either a TypeStruct or TypeEnum.  
-            TypeDecl->type is then either a TypeStruct or TypeEnum.  Only need to wrap this one when adding
-            to parser.global, and then unwrap when calling resolve_identifier AND unwrap when instantiating struct/enum element.
-
-            This method makes more sense - a general Type to signify a new data type.
-
-    If new TypeDecl works out, remove TypeStructInstance and TypeEnumElement
-
-    This should create an error: 
-    z := Zebra //wrong syntax for instantiating struct (missing '()')
-
-        Two changes: need to make two new types: TypeStructInstance and TypeEnumElement so that
-        the compiler can detect error when user tries to set variable to a Struct/Enum - 
-        only setting to a struct instance or enum element is allowed.
-
-        Create:
-            TypeStructInstance is just holds a reference to TypeClass.
-            TypeEnumElement also just holds a reference to TypeEnum.
-
-        When instantiating a new instance, should wrap TypeStruct in TypeStructInstance
-            and return that type
-        When creating new enum element, wrap TypeEnum in TypeEnumElement and return that type
-
-        Update NODE_CALL to return TypeInstanceStruct
-
-        Update NODE_DECL_VAR to disallow declaring variables assigned to TypeStruct or TypeEnum
-            -only the instances or elements can be assigned
+    Change DeclClass node to DeclStruct
 
     Checking struct types for casting is really messy - creating an entire table just for castable_types
         is overkill, and filling it in is also error prone.  Could we just have each TypeStruct / ObjStruct have a
         reference to it's super (in both compile and runtime).  Then when casting just check for both
         sub -> super and super -> sub casts by traversing from struct up the the inheritance heirarchy
+
+    Should really just create class in VM - pass the struct ObjString* as a constant
+
+    GC should check if object is already marked, and only mark/push if white
+        currently just marking and pushing everything
 
     Allowing struct instantiation in fields, BUT check if there are circular instantiations and show error
         if so.

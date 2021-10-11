@@ -161,6 +161,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //copy all inherited fields
             if (super_val.type != VAL_NIL) {
                 struct ObjClass* super = super_val.as.class_type;
+                klass->super = super;
                 for (int i = 0; i < super->props.capacity; i++) {
                     struct Pair* pair = &super->props.pairs[i];
                     if (pair->key != NULL) {
@@ -574,18 +575,39 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 struct ObjInstance* inst = value.as.instance_type;
                 struct ObjString* type = read_constant(frame, to_type).as.string_type;
                 Value val;
-                if (get_from_table(&inst->klass->castable_types, type, &val)) {
-                    //leave instance as is if valid cast
-                    break;
+                if (!get_from_table(&vm->globals, type, &val)) {
+                    add_error(vm, "Attempting to cast to undeclared type.");
+                    return RESULT_FAILED;
                 }
+                if (val.type != VAL_CLASS) {
+                    add_error(vm, "Attempting to cast to non-struct type.");
+                    return RESULT_FAILED;
+                }
+                struct ObjClass* sub = inst->klass; //This is the actual instance
+                struct ObjClass* to = val.as.class_type;
+
+                //check cast down - check to see if target type cast is at or 
+                //higher than actual runtime instance type
+                bool cast_down = false;
+                struct ObjClass* current = sub;
+                while (current != NULL) {
+                    if (same_string(to->name, current->name)) {
+                        cast_down = true;
+                        break;
+                    }
+                    current = current->super;
+                }
+                if (cast_down) break;
+
                 pop(vm);
                 push(vm, to_nil());
                 break;
+            } else {
+                Value result = cast_primitive(to_type, &value);
+                pop(vm);
+                push(vm, result);
+                break;
             }
-            Value result = cast_primitive(to_type, &value);
-            pop(vm);
-            push(vm, result);
-            break;
         }
         case OP_ADD_GLOBAL: {
             Value val = peek(vm, 0);

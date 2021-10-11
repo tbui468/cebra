@@ -557,21 +557,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //set up object
             struct ObjClass* struct_obj = make_class(dc->name);
             push_root(to_class(struct_obj));
-            set_table(&struct_obj->castable_types, struct_obj->name, to_nil());
-
-            //fill in castable_types for runtime cast checks
-            if (dc->super != NULL) {
-                GetVar* gv = (GetVar*)(dc->super);
-                struct Type* current = resolve_type(compiler, gv->name);
-                while (current != NULL) {
-                    struct TypeStruct* tc = (struct TypeStruct*)current;
-                    struct ObjString* struct_name = make_string(tc->name.start, tc->name.length);
-                    push_root(to_string(struct_name));
-                    set_table(&struct_obj->castable_types, struct_name, to_nil());
-                    current = tc->super;
-                    pop_root();
-                }
-            }
 
             //compile super so that it's on the stack
             struct Type* super_type = NULL;

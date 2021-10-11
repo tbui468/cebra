@@ -36,7 +36,7 @@ struct ObjClass {
     struct Obj base;
     struct ObjString* name;
     struct Table props;
-    struct Table castable_types;
+    struct ObjClass* super;
 };
 
 struct ObjInstance {
@@ -89,6 +89,7 @@ void insert_object(struct Obj* ptr);
 int free_object(struct Obj* obj);
 void mark_object(struct Obj* obj);
 void print_object(struct Obj* obj);
+bool same_string(struct ObjString* s1, struct ObjString* s2);
 
 struct ObjString* make_string(const char* start, int length);
 struct ObjString* take_string(char* start, int length);

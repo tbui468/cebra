@@ -34,7 +34,6 @@ int free_object(struct Obj* obj) {
             //NOTE: this only frees the table entries - the key and any heap allocated values will
             //be freed by the GC
             bytes_freed += free_table(&oc->props);
-            bytes_freed += free_table(&oc->castable_types);
             bytes_freed += FREE(oc, struct ObjClass);
             break;
         }
@@ -90,7 +89,9 @@ void print_object(struct Obj* obj) {
             printf("] : ");
             break;
         case OBJ_CLASS:
+            struct ObjClass* c = (struct ObjClass*)obj;
             printf("OBJ_CLASS: ");
+            print_object((struct Obj*)(c->name));
             break;
         case OBJ_INSTANCE:
             printf("OBJ_INSTANCE: ");
@@ -130,6 +131,12 @@ void mark_object(struct Obj* obj) {
     obj->is_marked = true;
 }
 
+bool same_string(struct ObjString* s1, struct ObjString* s2) {
+    if (s1->hash == s2->hash && s1->length == s2->length &&
+        memcmp(s1->chars, s2->chars, s1->length) == 0)
+        return true;
+    return false;
+}
 
 //struct ObjClass* make_class(struct ObjString* name, struct Table castable_types) {
 struct ObjClass* make_class(Token name) {
@@ -137,18 +144,14 @@ struct ObjClass* make_class(Token name) {
     push_root(to_string(struct_string));
     struct ObjClass* obj = ALLOCATE(struct ObjClass);
     push_root(to_class(obj));
+    obj->super = NULL;
     obj->base.type = OBJ_CLASS;
     obj->base.next = NULL;
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
 
     obj->name = struct_string;
-    obj->props.count = 0;
-    obj->props.capacity = 0;
-    obj->castable_types.count = 0;
-    obj->castable_types.capacity = 0;
     init_table(&obj->props);
-    init_table(&obj->castable_types);
 
     pop_root();
     pop_root();

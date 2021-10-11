@@ -1,16 +1,24 @@
 //Correctness test
-Dog :: struct {
+Dog :: struct < Animal {
     name := "Mittens"
 }
 
-
-Token :: enum {
-    one
-    two
+Cat :: struct < Animal {
+    name := "Bubbles"
 }
 
-a := Token
-b: Token = Token.two
+Animal :: struct {
+    class := "Mammal"
+}
 
-print(a)
-print(b)
+
+d := Dog()
+c := Cat()
+a := Animal()
+
+
+if a as Cat != nil {
+    print("This should work")
+}
+
+
