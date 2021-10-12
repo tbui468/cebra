@@ -10,7 +10,7 @@
 #define IS_BOOL(value) (value.type == VAL_BOOL)
 #define IS_STRING(value) (value.type == VAL_STRING)
 #define IS_FUNCTION(value) (value.type == VAL_FUNCTION)
-#define IS_CLASS(value) (value.type == VAL_CLASS)
+#define IS_STRUCT(value) (value.type == VAL_STRUCT)
 #define IS_INSTANCE(value) (value.type == VAL_INSTANCE)
 #define IS_NIL(value) (value.type == VAL_NIL)
 #define IS_TYPE(value) (value.type == VAL_TYPE)
@@ -31,7 +31,7 @@ typedef enum {
     VAL_BOOL,
     VAL_STRING,
     VAL_FUNCTION,
-    VAL_CLASS,
+    VAL_STRUCT,
     VAL_INSTANCE,
     VAL_NIL,
     VAL_TYPE,

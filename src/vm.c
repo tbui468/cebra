@@ -152,7 +152,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             }
             break;
         }
-        case OP_CLASS: {
+        case OP_STRUCT: {
             //[super | nil ]
             Value super_val = pop(vm);
             Value klass_val = read_constant(frame, READ_TYPE(frame, uint16_t));
@@ -170,7 +170,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 } 
             }
             //OP_ADD_PROP is emitted by compiler to add/overwrite properties in klass_val 
-            //immediately after OP_CLASS + constant idx
+            //immediately after OP_STRUCT + constant idx
             break;
         }
         case OP_ENUM: {
@@ -578,7 +578,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                     add_error(vm, "Attempting to cast to undeclared type.");
                     return RESULT_FAILED;
                 }
-                if (val.type != VAL_CLASS) {
+                if (val.type != VAL_STRUCT) {
                     add_error(vm, "Attempting to cast to non-struct type.");
                     return RESULT_FAILED;
                 }
@@ -615,7 +615,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 case VAL_ENUM:
                     name = val.as.enum_type->name;
                     break;
-                case VAL_CLASS:
+                case VAL_STRUCT:
                     name = val.as.class_type->name;
                     break;
                 case VAL_FUNCTION:

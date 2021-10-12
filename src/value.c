@@ -43,7 +43,7 @@ Value to_function(struct ObjFunction* obj) {
 
 Value to_class(struct ObjClass* obj) {
     Value value;
-    value.type = VAL_CLASS;
+    value.type = VAL_STRUCT;
     value.as.class_type = obj;
     return value;
 }
@@ -310,7 +310,7 @@ void print_value(Value a) {
             printf("%s", a.as.function_type->name->chars);
             printf(">");
             break;
-        case VAL_CLASS:
+        case VAL_STRUCT:
             printf("%s", "<struct: ");
             print_object((struct Obj*)(a.as.class_type->name));
             printf(">");
@@ -350,7 +350,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_BOOL: return "VAL_BOOL";
         case VAL_STRING: return "VAL_STRING";
         case VAL_FUNCTION: return "VAL_FUNCTION";
-        case VAL_CLASS: return "VAL_CLASS";
+        case VAL_STRUCT: return "VAL_STRUCT";
         case VAL_INSTANCE: return "VAL_INSTANCE";
         case VAL_NIL: return "VAL_NIL";
         case VAL_TYPE: return "VAL_TYPE";
@@ -372,7 +372,7 @@ struct Obj* get_object(Value* value) {
             struct ObjFunction* obj = value->as.function_type;
             return (struct Obj*)obj;
         }
-        case VAL_CLASS: {
+        case VAL_STRUCT: {
             struct ObjClass* obj = value->as.class_type;
             return (struct Obj*)obj;
         }

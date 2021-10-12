@@ -61,7 +61,7 @@ static void print_all_tokens() {
 void add_to_compile_pass(struct Node* decl, struct NodeList* first, struct NodeList* second) {
     switch(decl->type) {
         case NODE_ENUM:
-        case NODE_CLASS: //include in first pass
+        case NODE_STRUCT: //include in first pass
             add_node(first, decl);
             break;
         case NODE_FUN:
@@ -494,7 +494,7 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
         return RESULT_SUCCESS;
     }
 
-    if (match(TOKEN_CLASS)) {
+    if (match(TOKEN_STRUCT)) {
         if (match(TOKEN_LESS)) {
             CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect superclass identifier after '<'.");
             *type = make_struct_type(var_name, make_identifier_type(parser.previous));
@@ -624,7 +624,7 @@ static ResultCode declaration(struct Node** node) {
         *node = make_decl_enum(enum_name, nl);
 
         return RESULT_SUCCESS;
-    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_CLASS)) {
+    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_STRUCT)) {
         match(TOKEN_IDENTIFIER);
         Token struct_name = parser.previous;
         match(TOKEN_COLON_COLON);
@@ -677,7 +677,7 @@ static ResultCode declaration(struct Node** node) {
             add_node(nl, decl);
         }
 
-        *node = make_decl_class(struct_name, super, nl);
+        *node = make_decl_struct(struct_name, super, nl);
         return RESULT_SUCCESS;
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
         match(TOKEN_IDENTIFIER);
@@ -1017,14 +1017,14 @@ static ResultCode copy_down_props(struct TypeStruct* klass) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, DeclClass* dc, struct NodeList* first_pass_nl) {
+static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, struct DeclStruct* dc, struct NodeList* first_pass_nl) {
     if (dc->super != NULL) {
         GetVar* gv = (GetVar*)(dc->super);
-        //iterate through first_pass_nl to find correct DeclClass
+        //iterate through first_pass_nl to find correct struct DeclStruct
         for (int i = 0; i < first_pass_nl->count; i++) {
             struct Node* n = first_pass_nl->nodes[i];
-            if (n->type == NODE_CLASS) {
-                DeclClass* super = (DeclClass*)n;
+            if (n->type == NODE_STRUCT) {
+                struct DeclStruct* super = (struct DeclStruct*)n;
                 if (same_token_literal(gv->name, super->name)) {
                     add_struct_by_order(nl, struct_set, super, first_pass_nl);
                     break;
@@ -1228,8 +1228,8 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         push_root(to_enum(struct_set_wrapper));
         for (int i = 0; i < parser.first_pass_nl->count; i++) {
             struct Node* n = parser.first_pass_nl->nodes[i];
-            if (n->type == NODE_CLASS) {
-                add_struct_by_order(ordered_nl, &struct_set_wrapper->props, (DeclClass*)n, parser.first_pass_nl);
+            if (n->type == NODE_STRUCT) {
+                add_struct_by_order(ordered_nl, &struct_set_wrapper->props, (struct DeclStruct*)n, parser.first_pass_nl);
             }
         }
         pop_root();

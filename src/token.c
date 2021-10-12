@@ -42,7 +42,7 @@ void print_token(Token token) {
         case TOKEN_WHILE: printf("TOKEN_WHILE"); break;
         case TOKEN_FOR: printf("TOKEN_FOR"); break;
         case TOKEN_COMMA: printf("TOKEN_COMMA"); break;
-        case TOKEN_CLASS: printf("TOKEN_CLASS"); break;
+        case TOKEN_STRUCT: printf("TOKEN_STRUCT"); break;
         case TOKEN_DOT: printf("TOKEN_DOT"); break;
         case TOKEN_DUMMY: printf("TOKEN_DUMMY"); break;
         case TOKEN_LIST: printf("TOKEN_LIST"); break;

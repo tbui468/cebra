@@ -42,7 +42,7 @@ typedef enum {
     TOKEN_WHILE,
     TOKEN_FOR,
     TOKEN_COMMA,
-    TOKEN_CLASS,
+    TOKEN_STRUCT,
     TOKEN_DOT,
     TOKEN_DUMMY,
     TOKEN_LIST,

@@ -98,7 +98,7 @@ static Token read_keyword(char c) {
             break;
         case 's':
             if (match_string("tring")) return new_token(TOKEN_STRING_TYPE);
-            if (match_string("truct")) return new_token(TOKEN_CLASS);
+            if (match_string("truct")) return new_token(TOKEN_STRUCT);
             break;
         case 't':
             if (match_string("rue")) return new_token(TOKEN_TRUE);

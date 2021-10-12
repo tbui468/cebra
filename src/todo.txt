@@ -20,8 +20,6 @@ IMPLEMENTATION:
     
     Change OP_CLASS to OP_STRUCT
 
-    Make an examples directory
-
     String interning!!!
         measure how many ObjStrings we have now for interpreter.cbr and correctness.cbr
         intern strings in vm (don't worry about deleting them now, so don't need to mark_table)

@@ -50,7 +50,7 @@ const char* op_to_string(OpCode op) {
         case OP_JUMP: return "OP_JUMP";
         case OP_JUMP_BACK: return "OP_JUMP_BACK";
         case OP_CALL: return "OP_CALL";
-        case OP_CLASS: return "OP_CLASS";
+        case OP_STRUCT: return "OP_STRUCT";
         case OP_ADD_PROP: return "OP_ADD_PROP";
         case OP_INSTANCE: return "OP_INSTANCE";
         case OP_RETURN: return "OP_RETURN";
@@ -180,7 +180,7 @@ void disassemble_chunk(struct ObjFunction* function) {
                 printf("[%d]", slot);
                 break;
             }
-            case OP_CLASS: {
+            case OP_STRUCT: {
                 int slot = read_short(chunk, i);
                 i += 2;
                 break;

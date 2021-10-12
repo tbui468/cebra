@@ -31,7 +31,7 @@ typedef enum {
     OP_JUMP,
     OP_JUMP_BACK,
     OP_CALL,
-    OP_CLASS,
+    OP_STRUCT,
     OP_ADD_PROP,
     OP_INSTANCE,
     OP_RETURN,

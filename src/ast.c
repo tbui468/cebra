@@ -56,12 +56,12 @@ struct Node* make_decl_fun(Token name, struct NodeList* parameters, struct Type*
     return insert_node((struct Node*)df);
 }
 
-struct Node* make_decl_class(Token name, struct Node* super, struct NodeList* decls) {
-    DeclClass* dc = ALLOCATE(DeclClass);
+struct Node* make_decl_struct(Token name, struct Node* super, struct NodeList* decls) {
+    struct DeclStruct* dc = ALLOCATE(struct DeclStruct);
     dc->name = name;
     dc->super = super;
     dc->decls = decls;
-    dc->base.type = NODE_CLASS;
+    dc->base.type = NODE_STRUCT;
 
     return insert_node((struct Node*)dc);
 }
@@ -327,9 +327,9 @@ void print_node(struct Node* node) {
             printf(" )");
             break;
         }
-        case NODE_CLASS: {
-            DeclClass* dc = (DeclClass*)node;
-            printf("( DeclClass ");
+        case NODE_STRUCT: {
+            struct DeclStruct* dc = (struct DeclStruct*)node;
+            printf("( DeclStruct ");
             print_token(dc->name);
             printf(" )");
             break;
@@ -492,9 +492,9 @@ void free_node(struct Node* node) {
             FREE(df, DeclFun);
             break;
         }
-        case NODE_CLASS: {
-            DeclClass* dc = (DeclClass*)node;
-            FREE(dc, DeclClass);
+        case NODE_STRUCT: {
+            struct DeclStruct* dc = (struct DeclStruct*)node;
+            FREE(dc, struct DeclStruct);
             break;
         }
         case NODE_ENUM: {

@@ -548,8 +548,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
         }
-        case NODE_CLASS: {
-            DeclClass* dc = (DeclClass*)node;
+        case NODE_STRUCT: {
+            struct DeclStruct* dc = (struct DeclStruct*)node;
 
             //set up object
             struct ObjClass* struct_obj = make_class(dc->name);
@@ -563,7 +563,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_NIL);
             }
 
-            emit_byte(compiler, OP_CLASS);
+            emit_byte(compiler, OP_STRUCT);
             emit_short(compiler, add_constant(compiler, to_class(struct_obj)));
 
             //Get type already completely defined in parser

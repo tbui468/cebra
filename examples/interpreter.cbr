@@ -7,7 +7,9 @@
 //************Driver***************
 DEBUG := false
 
-tokens := scan_source("17 / (4 - 23) + 4 * 1")
+src_code := "17 / (4 - 23) + 1 * 4"
+
+tokens := scan_source(src_code)
 
 if DEBUG == true {
     print("Tokens:")
