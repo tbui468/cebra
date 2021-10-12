@@ -812,7 +812,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             COMPILE_NODE(gp->inst, ret_types, &type_inst);
 
             if (type_inst->type == TYPE_LIST) {
-                if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
+                if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
                     emit_byte(compiler, OP_GET_SIZE);
                     *node_type = make_int_type();
                     return RESULT_SUCCESS;
@@ -845,7 +845,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             if (type_inst->type == TYPE_STRING) {
-                if (gp->prop.length == 4 && memcmp(gp->prop.start, "size", gp->prop.length) == 0) {
+                if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
                     emit_byte(compiler, OP_GET_SIZE);
                     *node_type = make_int_type();
                     return RESULT_SUCCESS;
@@ -855,12 +855,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             if (type_inst->type == TYPE_MAP) {
-                if (gp->prop.length == 4 && memcmp(gp->prop.start, "keys", gp->prop.length) == 0) {
+                if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "keys", 4))) {
                     emit_byte(compiler, OP_GET_KEYS);
                     *node_type = make_list_type(make_string_type());
                     return RESULT_SUCCESS;
                 }
-                if (gp->prop.length == 6 && memcmp(gp->prop.start, "values", gp->prop.length) == 0) {
+                if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "values", 6))) {
                     emit_byte(compiler, OP_GET_VALUES);
                     *node_type = make_list_type(((struct TypeMap*)type_inst)->type);
                     return RESULT_SUCCESS;
@@ -902,7 +902,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             Token prop = ((GetProp*)sp->inst)->prop;
 
             if (type_inst->type == TYPE_LIST) {
-                if (prop.length == 4 && memcmp(prop.start, "size", prop.length) == 0) {
+                if (same_token_literal(prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
                     emit_byte(compiler, OP_SET_SIZE);
                     *node_type = make_int_type();
                     return RESULT_SUCCESS;
