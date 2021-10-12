@@ -16,32 +16,17 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+    Change DeclClass node to DeclStruct
+    
+    Change OP_CLASS to OP_STRUCT
 
-    Write tests for 'when' statements
+    Replace three memcmp + length comparisons in same_type() with same_key/same_string in table.c
 
-    Get this pattern working
-        evaluate_expr :: (expr: Expr) -> float {
-            when true {
-                is expr as PrimaryExpr as bool {
-                    -> (expr as PrimaryExpr).token.literal as float
-                }
-                is expr as BinaryExpr as bool {
-                    b := expr as BinaryExpr
-                    left := evaluate_expr(b.left)
-                    right := evaluate_expr(b.right)
-                    when b.token.literal {
-                        is "+" { -> left + right }
-                        is "-" { -> left - right }
-                        is "*" { -> left * right }
-                        is "/" { -> left / right }
-                    }
-                }
-            }
-        }
 
     String interning!!!
-
-    Change DeclClass node to DeclStruct
+        measure how many ObjStrings we have now for interpreter.cbr and correctness.cbr
+        intern strings in vm (don't worry about deleting them now, so don't need to mark_table)
+            but will need to deal with hanging pointers later
 
     Allowing struct instantiation in fields, BUT check if there are circular instantiations and show error
         if so.

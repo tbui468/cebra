@@ -1,6 +1,8 @@
 #ifndef CEBRA_TOKEN_H
 #define CEBRA_TOKEN_H
 
+#include <stdbool.h>
+
 typedef enum {
     TOKEN_INT,
     TOKEN_FLOAT,
@@ -71,5 +73,6 @@ Token make_dummy_token();
 Token make_artificial_token(const char* name);
 Token make_token(TokenType type, int line, const char* start, int length);
 Token copy_token(Token token);
+bool same_token_literal(Token t1, Token t2);
 
 #endif// CEBRA_TOKEN_H

@@ -97,3 +97,7 @@ Token make_token(TokenType type, int line, const char* start, int length) {
 
     return token;
 }
+
+bool same_token_literal(Token t1, Token t2) {
+    return t1.length == t1.length && memcmp(t1.start, t2.start, t1.length) == 0;
+}

@@ -238,19 +238,21 @@ string_expr :: (expr: Expr) -> string {
 
 //**********Evaluator***********
 evaluate_expr :: (expr: Expr) -> float {
-    if expr as PrimaryExpr != nil {
-        -> (expr as PrimaryExpr).token.literal as float
-    }
+    when true {
+        is expr as PrimaryExpr != nil {
+            -> (expr as PrimaryExpr).token.literal as float
+        }
 
-    if expr as BinaryExpr != nil {
-        b := expr as BinaryExpr
-        left := evaluate_expr(b.left)
-        right := evaluate_expr(b.right)
-        when b.token.literal {
-            is "+" { -> left + right }
-            is "-" { -> left - right }
-            is "*" { -> left * right }
-            is "/" { -> left / right }
+        is expr as BinaryExpr != nil {
+            b := expr as BinaryExpr
+            left := evaluate_expr(b.left)
+            right := evaluate_expr(b.right)
+            when b.token.literal {
+                is "+" { -> left + right }
+                is "-" { -> left - right }
+                is "*" { -> left * right }
+                is "/" { -> left / right }
+            }
         }
     }
 }

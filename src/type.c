@@ -171,7 +171,7 @@ bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct) 
     while (t != NULL) {
         Token super_tok = ((struct TypeStruct*)t)->name;
         Token class_tok = superstruct->name;
-        if (super_tok.length == class_tok.length && memcmp(super_tok.start, class_tok.start, super_tok.length) == 0) {
+        if (same_token_literal(super_tok, class_tok)) {
             return true;
         }
         t = ((struct TypeStruct*)t)->super;
@@ -214,13 +214,12 @@ bool same_type(struct Type* type1, struct Type* type2) {
         case TYPE_STRUCT: {
             struct TypeStruct* sc1 = (struct TypeStruct*)type1;
             struct TypeStruct* sc2 = (struct TypeStruct*)type2;
-            return sc1->name.length == sc2->name.length && memcmp(sc1->name.start, sc2->name.start, sc1->name.length) == 0;
+            return same_token_literal(sc1->name, sc2->name);
         }
         case TYPE_IDENTIFIER: {
             struct TypeIdentifier* si1 = (struct TypeIdentifier*)type1; 
             struct TypeIdentifier* si2 = (struct TypeIdentifier*)type2; 
-            if (si1->identifier.length != si2->identifier.length) return false;
-            return memcmp(si1->identifier.start, si2->identifier.start, si1->identifier.length) == 0;
+            return same_token_literal(si1->identifier, si2->identifier);
         }
         case TYPE_LIST: {
             return same_type(((struct TypeList*)type1)->type, ((struct TypeList*)type2)->type);
@@ -231,9 +230,7 @@ bool same_type(struct Type* type1, struct Type* type2) {
         case TYPE_ENUM: {
             struct TypeEnum* te1 = (struct TypeEnum*)type1;
             struct TypeEnum* te2 = (struct TypeEnum*)type2;
-            if (te1->name.length != te2->name.length) return false;
-            if (memcmp(te1->name.start, te2->name.start, te1->name.length) != 0) return false;
-            return true;
+            return same_token_literal(te1->name, te2->name);
         }
         case TYPE_INT:
         case TYPE_FLOAT:
