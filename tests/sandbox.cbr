@@ -2,7 +2,6 @@ Token :: enum {
     one
     two
     three
-    one
 }
 
 one := 23

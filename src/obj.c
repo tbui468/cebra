@@ -132,9 +132,7 @@ void mark_object(struct Obj* obj) {
     obj->is_marked = true;
 }
 
-struct ObjStruct* make_struct(Token name) {
-    struct ObjString* struct_string = make_string(name.start, name.length);
-    push_root(to_string(struct_string));
+struct ObjStruct* make_struct(struct ObjString* name, struct ObjStruct* super) {
     struct ObjStruct* obj = ALLOCATE(struct ObjStruct);
     push_root(to_struct(obj));
     obj->super = NULL;
@@ -143,10 +141,10 @@ struct ObjStruct* make_struct(Token name) {
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
 
-    obj->name = struct_string;
+    obj->name = name;
+    obj->super = super;
     init_table(&obj->props);
 
-    pop_root();
     pop_root();
     return obj;
 }

@@ -551,10 +551,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_STRUCT: {
             struct DeclStruct* dc = (struct DeclStruct*)node;
 
-            //set up object
-            struct ObjStruct* struct_obj = make_struct(dc->name);
-            push_root(to_struct(struct_obj));
-
             //compile super so that it's on the stack
             struct Type* super_type = NULL;
             if (dc->super != NULL) {
@@ -563,13 +559,18 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_NIL);
             }
 
+            //set up object
+            struct ObjString* struct_string = make_string(dc->name.start, dc->name.length);
+            push_root(to_string(struct_string));
             emit_byte(compiler, OP_STRUCT);
-            emit_short(compiler, add_constant(compiler, to_struct(struct_obj)));
+            emit_short(compiler, add_constant(compiler, to_string(struct_string)));
 
             //Get type already completely defined in parser
             Value v;
-            get_from_table(&compiler->globals, struct_obj->name, &v);
+            get_from_table(&compiler->globals, struct_string, &v);
+            pop_root(); //struct_string
             struct TypeStruct* klass_type = (struct TypeStruct*)(v.as.type_type);
+
             //add struct properties
             for (int i = 0; i < dc->decls->count; i++) {
                 struct Node* node = dc->decls->nodes[i];
@@ -605,8 +606,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 pop_root();
             }
-
-            pop_root(); //struct_obj
 
             //set globals in vm
             emit_byte(compiler, OP_ADD_GLOBAL);

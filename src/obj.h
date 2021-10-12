@@ -93,7 +93,7 @@ void print_object(struct Obj* obj);
 struct ObjString* make_string(const char* start, int length);
 struct ObjString* take_string(char* start, int length);
 struct ObjInstance* make_instance(struct Table table, struct ObjStruct* klass);
-struct ObjStruct* make_struct(Token name);
+struct ObjStruct* make_struct(struct ObjString* name, struct ObjStruct* super);
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 struct ObjNative* make_native(struct ObjString* name, Value (*function)(int, Value*));

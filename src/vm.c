@@ -160,22 +160,21 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_STRUCT: {
             //[super | nil ]
             Value super_val = pop(vm);
-            Value klass_val = read_constant(frame, READ_TYPE(frame, uint16_t));
-            struct ObjStruct* klass = klass_val.as.class_type; //how are the fields in here???
-            push(vm, klass_val);
-            //copy all inherited fields
+            struct ObjString* struct_string = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
             if (super_val.type != VAL_NIL) {
+                struct ObjStruct* klass = make_struct(struct_string, super_val.as.class_type);
+                push(vm, to_struct(klass));
                 struct ObjStruct* super = super_val.as.class_type;
-                klass->super = super;
                 for (int i = 0; i < super->props.capacity; i++) {
                     struct Pair* pair = &super->props.pairs[i];
                     if (pair->key != NULL) {
                         set_table(&klass->props, pair->key, pair->value);
                     }
                 } 
+            } else {
+                struct ObjStruct* klass = make_struct(struct_string, NULL);
+                push(vm, to_struct(klass));
             }
-            //OP_ADD_PROP is emitted by compiler to add/overwrite properties in klass_val 
-            //immediately after OP_STRUCT + constant idx
             break;
         }
         case OP_ENUM: {
