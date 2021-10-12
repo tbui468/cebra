@@ -34,6 +34,7 @@ cast_to_int := true
 cast_to_float := true
 cast_to_bool := true
 cast_struct_instances := true
+when_statement := true
 
 passed := List<string>()
 failed := List<string>()
@@ -1168,6 +1169,50 @@ if cast_struct_instances {
         add_failed("Cast Structure Instance Up: Failed!") 
     }
 
+}
+
+if when_statement {
+    print("-When Statements")
+    a := 1
+    b := 2
+    when b {
+        is 1 { a = a + 1}
+        is 2 { a = a + 2 }
+        else { a = a + 3}
+    }
+
+    if a == 3 {
+        add_passed("When Statement - Regular Case : Passed!")
+    } else {
+        add_failed("When Statement - Regular Case : Failed!")
+    }
+
+    c := 1
+    d := 99
+    when d {
+        is 1 { c = c + 1}
+        is 2 { c = c + 2 }
+        else { c = c + 3}
+    }
+
+    if c == 4 {
+        add_passed("When Statement - Else Case : Passed!")
+    } else {
+        add_failed("When Statement - Else Case : Failed!")
+    }
+
+    e := 1
+    f := 99
+    when f {
+        is 1 { e = e + 1}
+        is 2 { e = e + 2 }
+    }
+
+    if e == 1 {
+        add_passed("When Statement - No Case : Passed!")
+    } else {
+        add_failed("When Statement - No Case : Failed!")
+    }
 }
 
 
