@@ -132,13 +132,6 @@ void mark_object(struct Obj* obj) {
     obj->is_marked = true;
 }
 
-bool same_string(struct ObjString* s1, struct ObjString* s2) {
-    if (s1->hash == s2->hash && s1->length == s2->length &&
-        memcmp(s1->chars, s2->chars, s1->length) == 0)
-        return true;
-    return false;
-}
-
 struct ObjStruct* make_struct(Token name) {
     struct ObjString* struct_string = make_string(name.start, name.length);
     push_root(to_string(struct_string));

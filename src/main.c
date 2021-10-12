@@ -133,12 +133,13 @@ int main(int argc, char** argv) {
         result = run_script(&vm, argv[1]);
     }
 
-    //Note: need to free table and set
+    //Note: need to free tables and set
     //vm_globals_initialized to false so
-    //GC doesn't try to mark vm.globals
+    //GC doesn't try to mark vm.globals/vm.strings
     //and reclaims the remaining memory
     //////////////////////////
     free_table(&vm.globals);
+    free_table(&vm.strings);
     mm.vm_globals_initialized = false;
     ////////////////////////////
 

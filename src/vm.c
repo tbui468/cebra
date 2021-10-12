@@ -39,7 +39,12 @@ ResultCode init_vm(VM* vm) {
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
     vm->error_count = 0;
+    //setting strings table capacity
+    //since GC could be called when initing globals
+    vm->strings.count = 0;
+    vm->strings.capacity = 0;
     init_table(&vm->globals);
+    init_table(&vm->strings);
 
     return RESULT_SUCCESS;
 }
@@ -590,7 +595,7 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 bool cast_down = false;
                 struct ObjStruct* current = sub;
                 while (current != NULL) {
-                    if (same_string(to->name, current->name)) {
+                    if (same_keys(to->name, current->name)) {
                         cast_down = true;
                         break;
                     }

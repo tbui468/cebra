@@ -25,6 +25,7 @@ typedef struct {
     RuntimeError errors[256];
     int error_count;
     struct Table globals;
+    struct Table strings;
 } VM;
 
 ResultCode init_vm(VM* vm);

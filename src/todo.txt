@@ -15,11 +15,14 @@ ADDING FEATURES:
     Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
+Before string interning:
+    valgrind correctness.cbr results: 11,281 heaps used. 630,641 bytes allocated.
+    valgrind interpreter.cbr results: 3,340 heaps used. 183,178 bytes allocated.
+
 IMPLEMENTATION:
 
     String interning!!!
-        measure how many ObjStrings we have now for interpreter.cbr and correctness.cbr
-        intern strings in vm (don't worry about deleting them now, so don't need to mark_table)
+        intern strings in vm (don't worry about deleting them now, so will need to mark entire table)
             but will need to deal with hanging pointers later
 
     Allowing struct instantiation in fields, BUT check if there are circular instantiations and show error

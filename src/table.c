@@ -62,7 +62,8 @@ static void grow_table(struct Table* table) {
     pop_root();
 }
 
-static bool same_keys(struct ObjString* key1, struct ObjString* key2) {
+
+bool same_keys(struct ObjString* key1, struct ObjString* key2) {
     return  key1->hash == key2->hash &&
             key1->length == key2->length &&
             memcmp(key1->chars, key2->chars, key2->length) == 0;
