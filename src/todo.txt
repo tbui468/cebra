@@ -16,10 +16,6 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-
-    In VM, ADD_PROP for Structs and Enums is different.
-        
-
     Write tests for 'when' statements
 
     Get this pattern working
