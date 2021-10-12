@@ -263,7 +263,7 @@ static struct Type* resolve_type(struct Compiler* compiler, Token name) {
         //check locals
         for (int i = current->locals_count - 1; i >= 0; i--) {
             Local* local = &current->locals[i];
-            if (local->name.length == name.length && memcmp(local->name.start, name.start, name.length) == 0) {
+            if (same_token_literal(local->name, name)) {
                 return current->locals[i].type;
             }
         }
@@ -285,8 +285,7 @@ static struct Type* resolve_type(struct Compiler* compiler, Token name) {
 static bool declared_in_scope(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
-        if (local->name.length == name.length && 
-            memcmp(local->name.start, name.start, name.length) == 0) {
+        if (same_token_literal(local->name, name)) {
             if (compiler->scope_depth == local->depth) return true; 
             else return false;
         }
@@ -298,9 +297,7 @@ static bool declared_in_scope(struct Compiler* compiler, Token name) {
 static int resolve_local(struct Compiler* compiler, Token name) {
     for (int i = compiler->locals_count - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
-        if (local->name.length == name.length && 
-            memcmp(local->name.start, name.start, name.length) == 0) {
-
+        if (same_token_literal(local->name, name)) {
             return i;
         }
     }
@@ -1171,8 +1168,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct TypeStruct* from = (struct TypeStruct*)(left);
             struct TypeStruct* to = (struct TypeStruct*)(cast->type);
 
-            CHECK_TYPE(from->name.length == to->name.length && 
-                       memcmp(from->name.start, to->name.start, from->name.length) == 0, 
+            CHECK_TYPE(same_token_literal(from->name, to->name), 
                        cast->name, "Attempting to cast to own type.");
 
             bool cast_up = is_substruct(from, to);
