@@ -20,8 +20,7 @@ IMPLEMENTATION:
     
     Change OP_CLASS to OP_STRUCT
 
-    Replace three memcmp + length comparisons in same_type() with same_key/same_string in table.c
-
+    Make an examples directory
 
     String interning!!!
         measure how many ObjStrings we have now for interpreter.cbr and correctness.cbr
