@@ -555,8 +555,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             DeclClass* dc = (DeclClass*)node;
 
             //set up object
-            struct ObjString* struct_string = make_string(dc->name.start, dc->name.length);
-            push_root(to_string(struct_string));
+            struct ObjClass* struct_obj = make_class(dc->name);
+            push_root(to_class(struct_obj));
 
             //compile super so that it's on the stack
             struct Type* super_type = NULL;
@@ -567,11 +567,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             emit_byte(compiler, OP_CLASS);
-            emit_short(compiler, add_constant(compiler, to_string(struct_string)));
+            emit_short(compiler, add_constant(compiler, to_class(struct_obj)));
 
             //Get type already completely defined in parser
             Value v;
-            get_from_table(&compiler->globals, struct_string, &v);
+            get_from_table(&compiler->globals, struct_obj->name, &v);
             struct TypeStruct* klass_type = (struct TypeStruct*)(v.as.type_type);
             //add struct properties
             for (int i = 0; i < dc->decls->count; i++) {
@@ -609,7 +609,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 pop_root();
             }
 
-            pop_root(); //struct_string
+            pop_root(); //struct_obj
 
             //set globals in vm
             emit_byte(compiler, OP_ADD_GLOBAL);
@@ -622,39 +622,32 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;
 
-            //set up objects 
-            struct ObjString* enum_string = make_string(de->name.start, de->name.length);
-            push_root(to_string(enum_string));
-
-            emit_byte(compiler, OP_ENUM);
-            emit_short(compiler, add_constant(compiler, to_string(enum_string)));
+            //set up objects
+            struct ObjEnum* obj_enum = make_enum(de->name);
+            push_root(to_enum(obj_enum));
 
             //fill up &obj_enum->props
             int count = de->decls->count;
             for (int i = 0; i < count; i++) {
-                struct Node* node = de->decls->nodes[i];
-                DeclVar* dv = (DeclVar*)node;
+                DeclVar* dv = (DeclVar*)(de->decls->nodes[i]);
                 struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
                 push_root(to_string(prop_name));
-
-                emit_byte(compiler, OP_CONSTANT);
-                emit_short(compiler, add_constant(compiler, to_integer(i)));
-                emit_byte(compiler, OP_ADD_PROP);
-                emit_short(compiler, add_constant(compiler, to_string(prop_name)));
-                emit_byte(compiler, OP_POP);
-
+                set_table(&obj_enum->props, prop_name, to_integer(i));
                 pop_root();
             }
 
+            emit_byte(compiler, OP_ENUM);
+            emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
 
             //set globals in vm
             emit_byte(compiler, OP_ADD_GLOBAL);
 
             //Get type already completely defined in parser
             Value v;
-            get_from_table(&compiler->globals, enum_string, &v);
-            pop_root(); //enum_string
+            get_from_table(&compiler->globals, obj_enum->name, &v);
             *node_type = v.as.type_type;
+
+            pop_root(); //struct ObjEnum* 'obj_enum'
             return RESULT_SUCCESS;
         }
         //statements

@@ -16,6 +16,7 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
+
     Write tests for 'when' statements
 
     Get this pattern working

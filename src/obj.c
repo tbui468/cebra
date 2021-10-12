@@ -138,7 +138,10 @@ bool same_string(struct ObjString* s1, struct ObjString* s2) {
     return false;
 }
 
-struct ObjClass* make_class(struct ObjString* name) {
+//struct ObjClass* make_class(struct ObjString* name, struct Table castable_types) {
+struct ObjClass* make_class(Token name) {
+    struct ObjString* struct_string = make_string(name.start, name.length);
+    push_root(to_string(struct_string));
     struct ObjClass* obj = ALLOCATE(struct ObjClass);
     push_root(to_class(obj));
     obj->super = NULL;
@@ -147,9 +150,10 @@ struct ObjClass* make_class(struct ObjString* name) {
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
 
-    obj->name = name;
+    obj->name = struct_string;
     init_table(&obj->props);
 
+    pop_root();
     pop_root();
     return obj;
 }
@@ -166,7 +170,9 @@ struct ObjInstance* make_instance(struct Table table, struct ObjClass* klass) {
     return obj;
 }
 
-struct ObjEnum* make_enum(struct ObjString* name) {
+struct ObjEnum* make_enum(Token name) {
+    struct ObjString* enum_string = make_string(name.start, name.length);
+    push_root(to_string(enum_string));
     struct ObjEnum* obj = ALLOCATE(struct ObjEnum);
     push_root(to_enum(obj));
     obj->base.type = OBJ_ENUM;
@@ -174,9 +180,10 @@ struct ObjEnum* make_enum(struct ObjString* name) {
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
     
-    obj->name = name;
+    obj->name = enum_string;
     init_table(&obj->props);
 
+    pop_root();
     pop_root();
     return obj;
 }

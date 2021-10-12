@@ -45,11 +45,8 @@ static void grow_table(struct Table* table) {
 
     //make an ObjEnum and pushing onto stack so that
     //GC doesn't sweep temporary table used to grow table
-    struct ObjString* temp_name = make_string("", 0);
-    push_root(to_string(temp_name));
-    struct ObjEnum* temp_table = make_enum(temp_name);
+    struct ObjEnum* temp_table = make_enum(make_dummy_token());
     push_root(to_enum(temp_table));
-
     copy_table(&temp_table->props, table);
 
     int new_capacity = table->capacity == 0 ? 8 : table->capacity * 2;
@@ -62,7 +59,6 @@ static void grow_table(struct Table* table) {
         }
     }
 
-    pop_root();
     pop_root();
 }
 

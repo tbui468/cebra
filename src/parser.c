@@ -1224,18 +1224,14 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
 
         //add structs next
         //make temp table inside ObjEnum so that GC doesn't sweep it
-        struct ObjString* temp_string = make_string("", 0);
-        push_root(to_string(temp_string));
-        struct ObjEnum* struct_set_wrapper = make_enum(temp_string);
+        struct ObjEnum* struct_set_wrapper = make_enum(make_dummy_token());
         push_root(to_enum(struct_set_wrapper));
-
         for (int i = 0; i < parser.first_pass_nl->count; i++) {
             struct Node* n = parser.first_pass_nl->nodes[i];
             if (n->type == NODE_CLASS) {
                 add_struct_by_order(ordered_nl, &struct_set_wrapper->props, (DeclClass*)n, parser.first_pass_nl);
             }
         }
-        pop_root();
         pop_root();
 
         //add functions last

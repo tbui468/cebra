@@ -1,13 +1,16 @@
-Token :: enum {
-    one
-    two
+a := 1
+b := 3
+
+when a {
+    is 1 {
+        print("one")
+    }
+    is 2 {
+        print("two")
+    }
+    else {
+        print("else")
+    }
 }
 
-one := 23
-
-
-print(one)
-
-Dog :: struct {
-    name := "Mittens"
-}
+print("All done")
