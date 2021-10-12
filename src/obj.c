@@ -265,18 +265,17 @@ static uint32_t hash_string(const char* str, int length) {
 }
 
 struct ObjString* take_string(char* chars, int length) {
-    /*
     struct ObjString* interned = find_interned_string(&mm.vm->strings, chars, length, hash_string(chars, length));
     if (interned != NULL) {
         FREE_ARRAY(chars, char, length + 1);
         return interned;
-    }*/
+    }
 
     struct ObjString* obj = ALLOCATE(struct ObjString);
-/*    
+
     push_root(to_string(obj));
     set_table(&mm.vm->strings, obj, to_nil());
-    pop_root();*/
+    pop_root();
 
     obj->base.type = OBJ_STRING;
     obj->base.next = NULL;
@@ -291,9 +290,8 @@ struct ObjString* take_string(char* chars, int length) {
 }
 
 struct ObjString* make_string(const char* start, int length) {
-/*    
     struct ObjString* interned = find_interned_string(&mm.vm->strings, start, length, hash_string(start, length));
-    if (interned != NULL) return interned;*/
+    if (interned != NULL) return interned;
 
     char* chars = ALLOCATE_ARRAY(char);
     chars = GROW_ARRAY(chars, char, length + 1, 0);
