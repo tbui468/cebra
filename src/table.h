@@ -24,5 +24,6 @@ bool same_keys(struct ObjString* key1, struct ObjString* key2);
 void copy_table(struct Table* dest, struct Table* src);
 int free_table(struct Table* table);
 void print_table(struct Table* table);
+struct ObjString* find_interned_string(struct Table* table, const char* chars, int length, uint32_t hash);
 
 #endif // CEBRA_TABLE_H

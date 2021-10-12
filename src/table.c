@@ -76,13 +76,12 @@ void set_table(struct Table* table, struct ObjString* key, Value value) {
     }
 
     int idx = key->hash % table->capacity;
-    for (int i = idx; i < table->capacity + idx; i++) {
-        int mod_i = i % table->capacity;
-        struct Pair* pair = &table->pairs[mod_i];
+    for (;;) {
+        struct Pair* pair = &table->pairs[idx];
 
         if (pair->key == NULL) {
-            table->pairs[mod_i].key = key;
-            table->pairs[mod_i].value = value;
+            table->pairs[idx].key = key;
+            table->pairs[idx].value = value;
             table->count++;
             return;
         }
@@ -91,6 +90,8 @@ void set_table(struct Table* table, struct ObjString* key, Value value) {
             pair->value = value;
             return;
         }
+
+        idx = (idx + 1) % table->capacity;
     }
 }
 
@@ -99,9 +100,8 @@ bool get_from_table(struct Table* table, struct ObjString* key, Value* value) {
     if (table->capacity == 0) return false;
 
     int idx = key->hash % table->capacity;
-    for (int i = idx; i < table->capacity + idx; i++) {
-        int mod_i = i % table->capacity;
-        struct Pair* pair = &table->pairs[mod_i];
+    for (;;) {
+        struct Pair* pair = &table->pairs[idx];
         if (pair->key == NULL) {
             return false;
         }
@@ -110,11 +110,34 @@ bool get_from_table(struct Table* table, struct ObjString* key, Value* value) {
             *value = pair->value;
             return true;
         }
+
+        idx = (idx + 1) % table->capacity;
     }
 
     return false;
 }
 
+struct ObjString* find_interned_string(struct Table* table, const char* chars, int length, uint32_t hash) {
+    if (table->capacity == 0) return false;
+
+    int idx = hash % table->capacity;
+    for (;;) {
+        struct Pair* pair = &table->pairs[idx];
+        if (pair->key == NULL) {
+            return NULL;
+        }
+
+        if (pair->key->hash == hash &&
+            pair->key->length == length &&
+            memcmp(pair->key->chars, chars, length) == 0) {
+            return pair->key;
+        }
+
+        idx = (idx + 1) % table->capacity;
+    }
+
+    return NULL;
+}
 
 void print_table(struct Table* table) {
     printf("Table count: %d, Table capacity: %d \n", table->count, table->capacity);

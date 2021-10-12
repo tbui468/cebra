@@ -107,6 +107,8 @@ static void mark_vm_roots() {
         current = current->next;
     }
 
+    mark_table(&mm.vm->strings);
+
     if (mm.vm_globals_initialized) {
         mark_table(&mm.vm->globals);
     }
