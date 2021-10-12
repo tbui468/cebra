@@ -984,7 +984,7 @@ static ResultCode check_circular_inheritance(struct TypeStruct* klass) {
     while (current != NULL) {
         struct TypeStruct* super = (struct TypeStruct*)current;
         Token super_name = super->name;
-        if (struct_name.length == super_name.length && memcmp(struct_name.start, super_name.start, struct_name.length) == 0) {
+        if (same_token_literal(struct_name, super_name)) {
             ERROR(make_dummy_token(), "A struct cannot have a circular inheritance.");
         }
         current = super->super;
@@ -1025,7 +1025,7 @@ static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_
             struct Node* n = first_pass_nl->nodes[i];
             if (n->type == NODE_CLASS) {
                 DeclClass* super = (DeclClass*)n;
-                if (gv->name.length == super->name.length && memcmp(gv->name.start, super->name.start, gv->name.length) == 0) {
+                if (same_token_literal(gv->name, super->name)) {
                     add_struct_by_order(nl, struct_set, super, first_pass_nl);
                     break;
                 }
