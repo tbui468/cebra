@@ -273,9 +273,6 @@ struct ObjString* take_string(char* chars, int length) {
 
     struct ObjString* obj = ALLOCATE(struct ObjString);
 
-    push_root(to_string(obj));
-    set_table(&mm.vm->strings, obj, to_nil());
-    pop_root();
 
     obj->base.type = OBJ_STRING;
     obj->base.next = NULL;
@@ -284,6 +281,10 @@ struct ObjString* take_string(char* chars, int length) {
     obj->chars = chars;
     obj->length = length;
     obj->hash = hash_string(chars, length);
+
+    push_root(to_string(obj));
+    set_table(&mm.vm->strings, obj, to_nil());
+    pop_root();
 
     insert_object((struct Obj*)obj);
     return obj;

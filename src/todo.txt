@@ -21,6 +21,21 @@ Before string interning:
 
 IMPLEMENTATION:
 
+    Could try to hash the repeated symbols in main.c, and then also print the hashes out of the program 'interpreter.cbr'
+        compare them to see if it's a problem with the hash algorithm or the mod capacity
+
+        or run valgrind again to see if we can track down problems (maybe try smaller program with repeated strings
+            and "", " ", "*" to see what happens. Make sure to include at least 7 items so we can test growing hash tables)
+
+    Hashes are not working correctly - even though some keys are in the hash table, the hash % capacity
+        is giving us an index far away from the location of the already existing key...
+
+    String interning is not working - some duplicate strings make it in somehow.
+        "", " ", "7", "BinaryExpr", "+", "-", "*", "/", "1", "print"
+
+    Wrap push(vm, value) in a macro that returns /adds error if above stack limit
+        how about when push_root() is over stack limit???
+
     Found problem!  While trying to set strings tables for string interning, we are creating an ObjEnum to 
         hold a temp table, BUT that creates a new string which also runs the interning logic
         so it loops forever...

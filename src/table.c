@@ -137,6 +137,7 @@ struct ObjString* find_interned_string(struct Table* table, const char* chars, i
             return NULL;
         }
 
+
         if (pair->key->hash == hash &&
             pair->key->length == length &&
             memcmp(pair->key->chars, chars, length) == 0) {
@@ -153,7 +154,7 @@ void print_table(struct Table* table) {
     for (int i = 0; i < table->capacity; i++) {
         struct Pair* pair = &table->pairs[i];
         if (pair->key != NULL) {
-            printf("Key: %.*s, Value: ", pair->key->length, pair->key->chars);
+            printf("[%d] Key: %.*s, Value: ", i, pair->key->length, pair->key->chars);
             print_value(pair->value);
             printf("\n");
         } else {

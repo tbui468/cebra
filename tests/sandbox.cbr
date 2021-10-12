@@ -1,7 +1,16 @@
+
 Token :: enum {
     one
     two
     three
+    four
+    five
 }
 
-one := 23
+z := "1"
+
+
+a := "*"
+b := "*"
+f := "end"
+r := "*"
