@@ -88,11 +88,12 @@ void print_object(struct Obj* obj) {
             print_value(to_function((struct ObjFunction*)obj));
             printf("] : ");
             break;
-        case OBJ_STRUCT:
+        case OBJ_STRUCT: {
             struct ObjStruct* c = (struct ObjStruct*)obj;
             printf("OBJ_STRUCT: ");
             print_object((struct Obj*)(c->name));
             break;
+        }
         case OBJ_INSTANCE:
             printf("OBJ_INSTANCE: ");
             break;

@@ -16,9 +16,6 @@ ADDING FEATURES:
     TODO: need a way to test type checking
 
 IMPLEMENTATION:
-    Change DeclClass node to DeclStruct
-    
-    Change OP_CLASS to OP_STRUCT
 
     String interning!!!
         measure how many ObjStrings we have now for interpreter.cbr and correctness.cbr
