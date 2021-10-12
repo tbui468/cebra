@@ -155,17 +155,17 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_CLASS: {
             //[super | nil ]
             Value super_val = pop(vm);
-            Value klass_val = read_constant(frame, READ_TYPE(frame, uint16_t));
-            struct ObjClass* klass = klass_val.as.class_type; //how are the fields in here???
-            push(vm, klass_val);
+            struct ObjString* struct_string = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
+            struct ObjClass* struct_obj = make_class(struct_string);
+            push(vm, to_class(struct_obj));
             //copy all inherited fields
             if (super_val.type != VAL_NIL) {
                 struct ObjClass* super = super_val.as.class_type;
-                klass->super = super;
+                struct_obj->super = super;
                 for (int i = 0; i < super->props.capacity; i++) {
                     struct Pair* pair = &super->props.pairs[i];
                     if (pair->key != NULL) {
-                        set_table(&klass->props, pair->key, pair->value);
+                        set_table(&struct_obj->props, pair->key, pair->value);
                     }
                 } 
             }
@@ -174,16 +174,23 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             break;
         }
         case OP_ENUM: {
-            Value val_enum = read_constant(frame, READ_TYPE(frame, uint16_t));
-            push(vm, val_enum);
+            struct ObjString* enum_string = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
+            struct ObjEnum* enum_obj = make_enum(enum_string);
+            push(vm, to_enum(enum_obj));
             break;
         }
         case OP_ADD_PROP: {
-            //current stack: [script]...[class][value]
-            push_root(read_constant(frame, READ_TYPE(frame, uint16_t)));
-            struct ObjClass* klass = peek(vm, 2).as.class_type;
-            set_table(&klass->props, peek(vm, 0).as.string_type, peek(vm, 1));
-            pop_root();
+            //current stack: [script]...[struct | enum][value]
+            struct ObjString* prop = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
+            Value runtime_obj = peek(vm, 1);
+            if (runtime_obj.type == VAL_CLASS) {
+                struct ObjClass* klass = runtime_obj.as.class_type;
+                set_table(&klass->props, prop, peek(vm, 0));
+            } else if (runtime_obj.type == VAL_ENUM) {
+                struct ObjEnum* klass = runtime_obj.as.enum_type;
+                set_table(&klass->props, prop, peek(vm, 0));
+                pop(vm);
+            }
             break;
         }
         case OP_INSTANCE: {

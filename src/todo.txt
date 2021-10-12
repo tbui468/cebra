@@ -17,6 +17,8 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
+    Stuff in constants table does NOT get deleted, so avoid putting stuff in there
+
     Write tests for 'when' statements
 
     Get this pattern working
