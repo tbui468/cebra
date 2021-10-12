@@ -16,7 +16,8 @@ typedef enum {
     OBJ_NATIVE,
     OBJ_LIST,
     OBJ_MAP,
-    OBJ_ENUM
+    OBJ_ENUM,
+    OBJ_TABLE
 } ObjType;
 
 struct Obj {

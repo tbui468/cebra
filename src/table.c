@@ -42,24 +42,35 @@ void copy_table(struct Table* dest, struct Table* src) {
 }
 
 static void grow_table(struct Table* table) {
+    int pushed_count = 0;
+    for (int i = 0; i < table->capacity; i++) {
+        struct Pair* pair = &table->pairs[i];
+        if (pair->key != NULL) {
+            push_root(to_string(pair->key));
+            push_root(pair->value);
+            pushed_count += 2;
+        }
+    }
 
-    //make an ObjEnum and pushing onto stack so that
-    //GC doesn't sweep temporary table used to grow table
-    struct ObjEnum* temp_table = make_enum(make_dummy_token());
-    push_root(to_enum(temp_table));
-    copy_table(&temp_table->props, table);
+    struct Table temp;
+    init_table(&temp);
+    copy_table(&temp, table);
 
     int new_capacity = table->capacity == 0 ? 8 : table->capacity * 2;
     reset_table_capacity(table, new_capacity);
 
-    for (int i = 0; i < temp_table->props.capacity; i++) {
-        struct Pair* pair = &temp_table->props.pairs[i];
+    for (int i = 0; i < temp.capacity; i++) {
+        struct Pair* pair = &temp.pairs[i];
         if (pair->key != NULL) {
             set_table(table, pair->key, pair->value);
         }
     }
 
-    pop_root();
+    free_table(&temp);
+
+    for (int i = 0; i < pushed_count; i++) {
+        pop_root();
+    }
 }
 
 
@@ -114,7 +125,6 @@ bool get_from_table(struct Table* table, struct ObjString* key, Value* value) {
         idx = (idx + 1) % table->capacity;
     }
 
-    return false;
 }
 
 struct ObjString* find_interned_string(struct Table* table, const char* chars, int length, uint32_t hash) {
@@ -136,7 +146,6 @@ struct ObjString* find_interned_string(struct Table* table, const char* chars, i
         idx = (idx + 1) % table->capacity;
     }
 
-    return NULL;
 }
 
 void print_table(struct Table* table) {

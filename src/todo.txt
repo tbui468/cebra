@@ -21,6 +21,10 @@ Before string interning:
 
 IMPLEMENTATION:
 
+    Found problem!  While trying to set strings tables for string interning, we are creating an ObjEnum to 
+        hold a temp table, BUT that creates a new string which also runs the interning logic
+        so it loops forever...
+
     Problem with GC trying to either:
         trace_references on uninitialized fields
         GC collecting unrooted objects/fields
