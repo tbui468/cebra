@@ -282,11 +282,11 @@ struct ObjString* take_string(char* chars, int length) {
     obj->length = length;
     obj->hash = hash_string(chars, length);
 
+    insert_object((struct Obj*)obj);
+
     push_root(to_string(obj));
     set_table(&mm.vm->strings, obj, to_nil());
     pop_root();
-
-    insert_object((struct Obj*)obj);
     return obj;
 }
 

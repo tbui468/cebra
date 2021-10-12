@@ -284,6 +284,7 @@ void collect_garbage() {
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
     printf("Bytes allocated: %d\n", mm.allocated);
+    print_objects();
     print_stack(mm.vm); printf("\n");
 #endif 
     mark_vm_roots();

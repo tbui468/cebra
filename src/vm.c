@@ -36,12 +36,14 @@ static Value peek(VM* vm, int depth) {
 
 ResultCode init_vm(VM* vm) {
     vm->initialized = false;
+
     vm->stack_top = &vm->stack[0];
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
     vm->error_count = 0;
     init_table(&vm->globals);
     init_table(&vm->strings);
+
     vm->initialized = true;
 
     return RESULT_SUCCESS;

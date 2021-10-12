@@ -1,16 +1,4 @@
 
-Token :: enum {
-    one
-    two
-    three
-    four
-    five
-}
-
-z := "1"
-
-
-a := "*"
-b := "*"
-f := "end"
-r := "*"
+print("testignnnn")
+a := input()
+print(a)

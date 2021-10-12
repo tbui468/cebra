@@ -1277,6 +1277,12 @@ static Value print_native(int arg_count, Value* args) {
     return to_nil();
 }
 
+static Value input_native(int arg_count, Value* args) {
+    char input[100];
+    fgets(input, 100, stdin);
+    return to_string(make_string(input, strlen(input) - 1));
+}
+
 static ResultCode define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Type* type) {
     //set globals in compiler for checks
     struct ObjString* native_string = make_string(name, strlen(name));
@@ -1298,6 +1304,10 @@ static ResultCode define_native(struct Compiler* compiler, const char* name, Val
     emit_byte(compiler, OP_ADD_GLOBAL);
 
     return RESULT_SUCCESS;
+}
+
+static ResultCode define_input(struct Compiler* compiler) {
+    return define_native(compiler, "input", input_native, make_fun_type(make_array_type(), make_string_type()));
 }
 
 static ResultCode define_clock(struct Compiler* compiler) {
@@ -1328,6 +1338,7 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     script_compiler = compiler;
     define_clock(compiler);
     define_print(compiler);
+    define_input(compiler);
 
     struct TypeArray* ret_types;
     ResultCode result = compile_function(compiler, nl, &ret_types);

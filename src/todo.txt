@@ -15,38 +15,21 @@ ADDING FEATURES:
     Add more native functions - add way to import native functions
     TODO: need a way to test type checking
 
-Before string interning:
-    valgrind correctness.cbr results: 11,281 heaps used. 630,641 bytes allocated.
-    valgrind interpreter.cbr results: 3,340 heaps used. 183,178 bytes allocated.
-
 IMPLEMENTATION:
 
-    Could try to hash the repeated symbols in main.c, and then also print the hashes out of the program 'interpreter.cbr'
-        compare them to see if it's a problem with the hash algorithm or the mod capacity
+    Some memory from this is not being freed
+        print("enter some text:")
+        a := input() //why is the input still marked...?
+        print(a)
 
-        or run valgrind again to see if we can track down problems (maybe try smaller program with repeated strings
-            and "", " ", "*" to see what happens. Make sure to include at least 7 items so we can test growing hash tables)
-
-    Hashes are not working correctly - even though some keys are in the hash table, the hash % capacity
-        is giving us an index far away from the location of the already existing key...
-
-    String interning is not working - some duplicate strings make it in somehow.
-        "", " ", "7", "BinaryExpr", "+", "-", "*", "/", "1", "print"
+    Reading in input
+    
+    Strings are interned.  Since interned strings are only used to removed repeated strings, they shouldn't be marked as a root.  Then
+        after all references are traced but before sweeping, we should delete interned string pointers from 
+        the hash table that are not marked.  Will need to implement delete entries in a table for this.
 
     Wrap push(vm, value) in a macro that returns /adds error if above stack limit
         how about when push_root() is over stack limit???
-
-    Found problem!  While trying to set strings tables for string interning, we are creating an ObjEnum to 
-        hold a temp table, BUT that creates a new string which also runs the interning logic
-        so it loops forever...
-
-    Problem with GC trying to either:
-        trace_references on uninitialized fields
-        GC collecting unrooted objects/fields
-
-    String interning!!!
-        intern strings in vm (don't worry about deleting them now, so will need to mark entire table)
-            but will need to deal with hanging pointers later
 
     Allowing struct instantiation in fields, BUT check if there are circular instantiations and show error
         if so.
@@ -78,9 +61,6 @@ IMPLEMENTATION:
         ALSO, on errors func_comp is NOT freed, so the compiler chain isn't reset back to the enclosing compiler
         losing error messages...
 
-    Test regular vs anonymous functions.  Make sure that failure states give off errors messages
-        Add tests by compiling enums/structs/functions/closures in different orders
-
     Setting globals in compiler/parser is using the same code 4 times (for enum/struct/fun declaration in
         parser and in define_native() in compiler).  Combine into a single function in compiler called
         add_global(struct Table* globals, struct ObjString*, struct Type* type) and do any checks in there
@@ -92,7 +72,6 @@ IMPLEMENTATION:
         to handle errors - when an error occurs and compile_node returns, any pushed roots or new
         compilers, etc don't get freed, causing the compiler to go into an invalid state.  This then
         triggers problems with GC, etc.
-
 
     Continue writing basic interpreter - add any errors below and fix them afterwards
         big problem: we need to access parse_expression() in parse_primary(), but
@@ -108,15 +87,6 @@ IMPLEMENTATION:
         more errors can be found during runtime (currently only done for OP_GET_PROP and OP_SET_PROP)
         Add lines to runtime errors... could we emit line numbers along with Ops?
         maybe add compilation errors before doing the runtime ones
-
-
-    Struct constructors - would like to be able to do this to simplify code further:
-        p := PrimaryExpr(ASTType.primary, token)
-        b := BinaryExpr(ASTType.binary, token, left, right)
-
-        No arguments to use all default values.
-        Or leave argument empty to use default, eg:
-            c := BinaryExpr(, token,, right) //use default for type and left
 
     Set memory limit by using system call setrlimit() so that I can put in guards for when memory
         runs out.
