@@ -17,12 +17,16 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Some memory from this is not being freed
-        print("enter some text:")
-        a := input() //why is the input still marked...?
-        print(a)
+    Reading/Writing to files.  How does python do this?  (or look at other languages)
+        consider adding in \n for print() for more flexible ways to output data.
 
-    Reading in input
+        Maybe generalize reading/writing?
+       
+        f: file = open("test.txt") 
+        a := read(stdin)
+        b := read(file)
+        write("Hello world", stdout)
+        write("Hello world", f)
     
     Strings are interned.  Since interned strings are only used to removed repeated strings, they shouldn't be marked as a root.  Then
         after all references are traced but before sweeping, we should delete interned string pointers from 

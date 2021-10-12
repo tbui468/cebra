@@ -7,25 +7,36 @@
 //************Driver***************
 DEBUG := false
 
-src_code := "17 / (4 - 23) + 1 * 4"
+continue := true
 
-tokens := scan_source(src_code)
+while (continue) {
+    print("Enter expression to evaluate:")
+    src_code := input()
 
-if DEBUG == true {
-    print("Tokens:")
-    for i: int = 0, i < tokens.size, i = i + 1 {
-        print(tokens[i].literal)
+    if src_code != "quit" {
+        tokens := scan_source(src_code)
+
+        if DEBUG == true {
+            print("Tokens:")
+            for i: int = 0, i < tokens.size, i = i + 1 {
+                print(tokens[i].literal)
+            }
+        }
+
+        root := parse_tokens(tokens)
+
+        if DEBUG == true {
+            print("AST:")
+            print(string_expr(root))
+        }
+
+        print("Answer: " + evaluate_expr(root) as string)
+        print("")
+    } else {
+        continue = false
     }
+
 }
-
-root := parse_tokens(tokens)
-
-if DEBUG == true {
-    print("AST:")
-    print(string_expr(root))
-}
-
-print(evaluate_expr(root))
 
 scan_source :: (src: string) -> List<Token> {
     lexer := Lexer()

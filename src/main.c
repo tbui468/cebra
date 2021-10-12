@@ -12,19 +12,15 @@
 
 ResultCode run_source(VM* vm, const char* source) {
 
-    printf("Before creating script compiler\n");
     struct Compiler script_comp;
-    printf("Before initializing script compiler\n");
     //passing in NULL for struct Type* bc compiler needs to be initialized
     //before Types can be created
     init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
 
-    printf("Before parser\n");
     struct NodeList* nl;
     //passing globals and nodes in here feels messy - couldn't we have parse CREATE them?
     //Note: script_comp.nodes are ALL nodes, whereas nl only contains top statement nodes
     ResultCode parse_result = parse(source, &nl, &script_comp.globals, &script_comp.nodes);
-    printf("After parser\n");
 
     if (parse_result == RESULT_FAILED) {
         free_compiler(&script_comp);
@@ -35,9 +31,7 @@ ResultCode run_source(VM* vm, const char* source) {
     print_node(nl);
 #endif
 
-    printf("Before compiler\n");
     ResultCode compile_result = compile_script(&script_comp, nl);
-    printf("After compiler\n");
 
     if (compile_result == RESULT_FAILED) {
         printf("Compilation Failed\n");
@@ -58,10 +52,8 @@ ResultCode run_source(VM* vm, const char* source) {
     //need to free script compiler, since need to pop two temporaries from root_stack
     free_compiler(&script_comp);
 
-    printf("Before run\n");
     //pop_roots here - no longer need to pop_roots
     ResultCode run_result = run(vm, script_comp.function);
-    printf("After run\n");
 
     if (run_result == RESULT_FAILED) {
         return RESULT_FAILED; 
