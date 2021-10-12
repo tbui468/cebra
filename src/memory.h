@@ -32,7 +32,6 @@ typedef struct {
     int next_gc;
     struct Obj* objects;
     VM* vm;
-    bool vm_globals_initialized;
     struct Obj** grays;
     int gray_capacity;
     int gray_count;

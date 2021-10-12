@@ -26,6 +26,7 @@ typedef struct {
     int error_count;
     struct Table globals;
     struct Table strings;
+    bool initialized;
 } VM;
 
 ResultCode init_vm(VM* vm);

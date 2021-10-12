@@ -35,21 +35,21 @@ static Value peek(VM* vm, int depth) {
 }
 
 ResultCode init_vm(VM* vm) {
+    vm->initialized = false;
     vm->stack_top = &vm->stack[0];
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
     vm->error_count = 0;
-    //setting strings table capacity
-    //since GC could be called when initing globals
-    vm->strings.count = 0;
-    vm->strings.capacity = 0;
     init_table(&vm->globals);
     init_table(&vm->strings);
+    vm->initialized = true;
 
     return RESULT_SUCCESS;
 }
 
 ResultCode free_vm(VM* vm) {
+    free_table(&vm->globals);
+    free_table(&vm->strings);
     pop_stack(vm);
     return RESULT_SUCCESS;
 }

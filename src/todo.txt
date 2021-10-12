@@ -21,6 +21,10 @@ Before string interning:
 
 IMPLEMENTATION:
 
+    Problem with GC trying to either:
+        trace_references on uninitialized fields
+        GC collecting unrooted objects/fields
+
     String interning!!!
         intern strings in vm (don't worry about deleting them now, so will need to mark entire table)
             but will need to deal with hanging pointers later

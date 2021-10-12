@@ -114,16 +114,12 @@ ResultCode run_script(VM* vm, const char* path) {
 
 int main(int argc, char** argv) {
 
-    //Note: memory manage needs a pointer to vm,
-    //and vm needs memory manager initialized before
-    //it can be initialized - this ordering is important
-    ////////////////
+    //VM needs memory manager initialized before
+    //vm.strings/vm.globals tables can be initialized
     init_memory_manager();
     VM vm;
     mm.vm = &vm;
     init_vm(&vm);
-    mm.vm_globals_initialized = true;
-    ////////////////
     
 
     ResultCode result = RESULT_SUCCESS;
@@ -133,19 +129,14 @@ int main(int argc, char** argv) {
         result = run_script(&vm, argv[1]);
     }
 
-    //Note: need to free tables and set
-    //vm_globals_initialized to false so
-    //GC doesn't try to mark vm.globals/vm.strings
-    //and reclaims the remaining memory
-    //////////////////////////
-    free_table(&vm.globals);
-    free_table(&vm.strings);
-    mm.vm_globals_initialized = false;
-    ////////////////////////////
+    //prevents GC from marking table so
+    //that keys/values can be collected
+    vm.initialized = false;
 
 #ifdef DEBUG_STRESS_GC
     collect_garbage();
 #endif
+
     free_vm(&vm);
 
     free_memory_manager();

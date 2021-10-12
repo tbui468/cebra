@@ -63,7 +63,6 @@ void init_memory_manager() {
     mm.gray_capacity = 0;
     mm.gray_count = 0;
     mm.vm = NULL;
-    mm.vm_globals_initialized = false;
 }
 
 
@@ -107,10 +106,10 @@ static void mark_vm_roots() {
         current = current->next;
     }
 
-    mark_table(&mm.vm->strings);
 
-    if (mm.vm_globals_initialized) {
+    if (mm.vm->initialized) {
         mark_table(&mm.vm->globals);
+        mark_table(&mm.vm->strings);
     }
 }
 
