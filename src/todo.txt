@@ -17,7 +17,8 @@ ADDING FEATURES:
 
 IMPLEMENTATION:
 
-    Stuff in constants table does NOT get deleted, so avoid putting stuff in there
+    In VM, ADD_PROP for Structs and Enums is different.
+        
 
     Write tests for 'when' statements
 

@@ -3,6 +3,11 @@ Token :: enum {
     two
 }
 
+one := 23
+
+
+print(one)
+
 Dog :: struct {
     name := "Mittens"
 }

@@ -189,7 +189,6 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             } else if (runtime_obj.type == VAL_ENUM) {
                 struct ObjEnum* klass = runtime_obj.as.enum_type;
                 set_table(&klass->props, prop, peek(vm, 0));
-                pop(vm);
             }
             break;
         }

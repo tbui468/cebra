@@ -632,7 +632,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //fill up &obj_enum->props
             int count = de->decls->count;
             for (int i = 0; i < count; i++) {
-                DeclVar* dv = (DeclVar*)(de->decls->nodes[i]);
+                struct Node* node = de->decls->nodes[i];
+                DeclVar* dv = (DeclVar*)node;
                 struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
                 push_root(to_string(prop_name));
 
@@ -640,6 +641,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_short(compiler, add_constant(compiler, to_integer(i)));
                 emit_byte(compiler, OP_ADD_PROP);
                 emit_short(compiler, add_constant(compiler, to_string(prop_name)));
+                emit_byte(compiler, OP_POP);
+
                 pop_root();
             }
 
