@@ -29,12 +29,12 @@ int free_object(struct Obj* obj) {
             bytes_freed += FREE(obj_fun, struct ObjFunction);
             break;
         }
-        case OBJ_CLASS: {
-            struct ObjClass* oc = (struct ObjClass*)obj;
+        case OBJ_STRUCT: {
+            struct ObjStruct* oc = (struct ObjStruct*)obj;
             //NOTE: this only frees the table entries - the key and any heap allocated values will
             //be freed by the GC
             bytes_freed += free_table(&oc->props);
-            bytes_freed += FREE(oc, struct ObjClass);
+            bytes_freed += FREE(oc, struct ObjStruct);
             break;
         }
         case OBJ_INSTANCE: {
@@ -88,9 +88,9 @@ void print_object(struct Obj* obj) {
             print_value(to_function((struct ObjFunction*)obj));
             printf("] : ");
             break;
-        case OBJ_CLASS:
-            struct ObjClass* c = (struct ObjClass*)obj;
-            printf("OBJ_CLASS: ");
+        case OBJ_STRUCT:
+            struct ObjStruct* c = (struct ObjStruct*)obj;
+            printf("OBJ_STRUCT: ");
             print_object((struct Obj*)(c->name));
             break;
         case OBJ_INSTANCE:
@@ -138,14 +138,13 @@ bool same_string(struct ObjString* s1, struct ObjString* s2) {
     return false;
 }
 
-//struct ObjClass* make_class(struct ObjString* name, struct Table castable_types) {
-struct ObjClass* make_class(Token name) {
+struct ObjStruct* make_struct(Token name) {
     struct ObjString* struct_string = make_string(name.start, name.length);
     push_root(to_string(struct_string));
-    struct ObjClass* obj = ALLOCATE(struct ObjClass);
-    push_root(to_class(obj));
+    struct ObjStruct* obj = ALLOCATE(struct ObjStruct);
+    push_root(to_struct(obj));
     obj->super = NULL;
-    obj->base.type = OBJ_CLASS;
+    obj->base.type = OBJ_STRUCT;
     obj->base.next = NULL;
     obj->base.is_marked = false;
     insert_object((struct Obj*)obj);
@@ -158,7 +157,7 @@ struct ObjClass* make_class(Token name) {
     return obj;
 }
 
-struct ObjInstance* make_instance(struct Table table, struct ObjClass* klass) {
+struct ObjInstance* make_instance(struct Table table, struct ObjStruct* klass) {
     struct ObjInstance* obj = ALLOCATE(struct ObjInstance);
     obj->base.type = OBJ_INSTANCE;
     obj->base.next = NULL;

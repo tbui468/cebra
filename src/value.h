@@ -18,7 +18,7 @@
 
 struct ObjInstance;
 struct ObjFunction;
-struct ObjClass;
+struct ObjStruct;
 struct ObjString;
 struct ObjNative;
 struct ObjList;
@@ -49,7 +49,7 @@ typedef struct {
         bool boolean_type;
         struct ObjString* string_type;
         struct ObjFunction* function_type;
-        struct ObjClass* class_type;
+        struct ObjStruct* class_type;
         struct ObjInstance* instance_type;
         struct Type* type_type;
         struct ObjNative* native_type;
@@ -65,7 +65,7 @@ Value to_integer(int32_t num);
 Value to_string(struct ObjString* obj);
 Value to_boolean(bool b);
 Value to_function(struct ObjFunction* obj);
-Value to_class(struct ObjClass* obj);
+Value to_struct(struct ObjStruct* obj);
 Value to_instance(struct ObjInstance* obj);
 Value to_type(struct Type* type);
 Value to_native(struct ObjNative* obj);

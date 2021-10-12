@@ -10,7 +10,7 @@
 typedef enum {
     OBJ_STRING,
     OBJ_FUNCTION,
-    OBJ_CLASS,
+    OBJ_STRUCT,
     OBJ_INSTANCE,
     OBJ_UPVALUE,
     OBJ_NATIVE,
@@ -32,17 +32,17 @@ struct ObjString {
     uint32_t hash;
 };
 
-struct ObjClass {
+struct ObjStruct {
     struct Obj base;
     struct ObjString* name;
     struct Table props;
-    struct ObjClass* super;
+    struct ObjStruct* super;
 };
 
 struct ObjInstance {
     struct Obj base;
     struct Table props;
-    struct ObjClass* klass;
+    struct ObjStruct* klass;
 };
 
 struct ObjEnum {
@@ -93,8 +93,8 @@ bool same_string(struct ObjString* s1, struct ObjString* s2);
 
 struct ObjString* make_string(const char* start, int length);
 struct ObjString* take_string(char* start, int length);
-struct ObjInstance* make_instance(struct Table table, struct ObjClass* klass);
-struct ObjClass* make_class(Token name);
+struct ObjInstance* make_instance(struct Table table, struct ObjStruct* klass);
+struct ObjStruct* make_struct(Token name);
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 struct ObjNative* make_native(struct ObjString* name, Value (*function)(int, Value*));

@@ -41,7 +41,7 @@ Value to_function(struct ObjFunction* obj) {
     return value;
 }
 
-Value to_class(struct ObjClass* obj) {
+Value to_struct(struct ObjStruct* obj) {
     Value value;
     value.type = VAL_STRUCT;
     value.as.class_type = obj;
@@ -373,7 +373,7 @@ struct Obj* get_object(Value* value) {
             return (struct Obj*)obj;
         }
         case VAL_STRUCT: {
-            struct ObjClass* obj = value->as.class_type;
+            struct ObjStruct* obj = value->as.class_type;
             return (struct Obj*)obj;
         }
         case VAL_INSTANCE: {

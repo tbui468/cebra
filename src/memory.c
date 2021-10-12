@@ -171,8 +171,8 @@ static void trace_references() {
                 mark_and_push((struct Obj*)(on->name));
                 break;
             }
-            case OBJ_CLASS: {
-                struct ObjClass* oc = (struct ObjClass*)obj;
+            case OBJ_STRUCT: {
+                struct ObjStruct* oc = (struct ObjStruct*)obj;
                 //table of props and types
                 mark_table(&oc->props);
                 //class name

@@ -156,11 +156,11 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
             //[super | nil ]
             Value super_val = pop(vm);
             Value klass_val = read_constant(frame, READ_TYPE(frame, uint16_t));
-            struct ObjClass* klass = klass_val.as.class_type; //how are the fields in here???
+            struct ObjStruct* klass = klass_val.as.class_type; //how are the fields in here???
             push(vm, klass_val);
             //copy all inherited fields
             if (super_val.type != VAL_NIL) {
-                struct ObjClass* super = super_val.as.class_type;
+                struct ObjStruct* super = super_val.as.class_type;
                 klass->super = super;
                 for (int i = 0; i < super->props.capacity; i++) {
                     struct Pair* pair = &super->props.pairs[i];
@@ -181,12 +181,12 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
         case OP_ADD_PROP: {
             //current stack: [script]...[class][value]
             struct ObjString* prop = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
-            struct ObjClass* klass = peek(vm, 1).as.class_type;
+            struct ObjStruct* klass = peek(vm, 1).as.class_type;
             set_table(&klass->props, prop, peek(vm, 0));
             break;
         }
         case OP_INSTANCE: {
-            struct ObjClass* klass = pop(vm).as.class_type;
+            struct ObjStruct* klass = pop(vm).as.class_type;
             struct Table props;
             init_table(&props);
             struct ObjInstance* inst = make_instance(props, klass);
@@ -582,13 +582,13 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                     add_error(vm, "Attempting to cast to non-struct type.");
                     return RESULT_FAILED;
                 }
-                struct ObjClass* sub = inst->klass; //This is the actual instance
-                struct ObjClass* to = val.as.class_type;
+                struct ObjStruct* sub = inst->klass; //This is the actual instance
+                struct ObjStruct* to = val.as.class_type;
 
                 //check cast down - check to see if target type cast is at or 
                 //higher than actual runtime instance type
                 bool cast_down = false;
-                struct ObjClass* current = sub;
+                struct ObjStruct* current = sub;
                 while (current != NULL) {
                     if (same_string(to->name, current->name)) {
                         cast_down = true;

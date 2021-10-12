@@ -552,8 +552,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct DeclStruct* dc = (struct DeclStruct*)node;
 
             //set up object
-            struct ObjClass* struct_obj = make_class(dc->name);
-            push_root(to_class(struct_obj));
+            struct ObjStruct* struct_obj = make_struct(dc->name);
+            push_root(to_struct(struct_obj));
 
             //compile super so that it's on the stack
             struct Type* super_type = NULL;
@@ -564,7 +564,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             emit_byte(compiler, OP_STRUCT);
-            emit_short(compiler, add_constant(compiler, to_class(struct_obj)));
+            emit_short(compiler, add_constant(compiler, to_struct(struct_obj)));
 
             //Get type already completely defined in parser
             Value v;
