@@ -427,6 +427,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     set_idx = add_local(compiler, df->name, make_infer_type());
                 }
 
+                //check for invalid parameter types
                 struct TypeFun* fun_type = (struct TypeFun*)(df->type);
                 struct TypeArray* params = (struct TypeArray*)(fun_type->params);
                 for (int i = 0; i < params->count; i++) {
@@ -436,6 +437,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     }
                 }
 
+                //compile function using new compiler
                 struct Compiler func_comp;
                 init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count, df->name, df->type);
                 add_node(df->parameters, df->body);
@@ -458,7 +460,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
 
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
-
                 if (inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL) {
                     add_error(compiler, df->name, "Return type must match type in function declaration.");
                     free_compiler(&func_comp);
@@ -466,14 +467,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 struct Type* ret_type = typefun->ret;
-                
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    if(!same_type(ret_type, inner_type)) {
-                        add_error(compiler, df->name, "Return type must match type in function declaration.");
-                        free_compiler(&func_comp);
-                        return RESULT_FAILED;
-                    }
+                    if (same_type(ret_type, inner_type)) continue;
+                    add_error(compiler, df->name, "Return type must match type in function declaration.");
+                    free_compiler(&func_comp);
+                    return RESULT_FAILED;
                 }
 
                 emit_byte(compiler, OP_FUN);
@@ -489,6 +488,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 *node_type = df->type;
                 return RESULT_SUCCESS;
             } else {
+                //compile function into new compiler
                 struct Compiler func_comp;
                 init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count, df->name, df->type);
                 add_node(df->parameters, df->body);
@@ -512,7 +512,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 //TODO: this should really be from script_compiler.globals, but it's the same regardless
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
-
                 if (inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL) {
                     add_error(compiler, df->name, "Return type must match type in function declaration.");
                     free_compiler(&func_comp);
@@ -520,14 +519,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 struct Type* ret_type = typefun->ret;
-                
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    if (!same_type(ret_type, inner_type)) {
-                        add_error(compiler, df->name, "Return type must match type in function declaration.");
-                        free_compiler(&func_comp);
-                        return RESULT_FAILED;
-                    }
+                    if (same_type(ret_type, inner_type)) continue;
+                    add_error(compiler, df->name, "Return type must match type in function declaration.");
+                    free_compiler(&func_comp);
+                    return RESULT_FAILED;
                 }
 
                 if (func_comp.upvalue_count > 0) {

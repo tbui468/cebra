@@ -1,4 +1,5 @@
 //Correctness test
+start_time := clock()
 
 //this won't work!  Need to make it a preprocessor directive so that code is NOT parsed/compiled
 basic := true
@@ -1229,3 +1230,6 @@ print(failed.size)
 for i := 0, i < failed.size, i = i + 1 {
     print(failed[i])
 }
+
+print("time:")
+print(clock() - start_time)
