@@ -84,11 +84,10 @@ static void mark_and_push(struct Obj* obj) {
 static void mark_table(struct Table* table) {
     for (int i = 0; i < table->capacity; i++) {
         struct Pair* pair = &table->pairs[i];
-        if (pair->key != NULL) {
-            mark_and_push((struct Obj*)(pair->key));
-            struct Obj* obj = get_object(&pair->value);
-            mark_and_push(obj);
-        }
+        if (pair->key == NULL) continue;
+        mark_and_push((struct Obj*)(pair->key));
+        struct Obj* obj = get_object(&pair->value);
+        mark_and_push(obj);
     }
 }
 

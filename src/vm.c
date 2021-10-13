@@ -169,9 +169,8 @@ ResultCode execute_frame(VM* vm, CallFrame* frame) {
                 struct ObjStruct* super = super_val.as.class_type;
                 for (int i = 0; i < super->props.capacity; i++) {
                     struct Pair* pair = &super->props.pairs[i];
-                    if (pair->key != NULL) {
-                        set_table(&klass->props, pair->key, pair->value);
-                    }
+                    if (pair->key == NULL) continue;
+                    set_table(&klass->props, pair->key, pair->value);
                 } 
             } else {
                 struct ObjStruct* klass = make_struct(struct_string, NULL);

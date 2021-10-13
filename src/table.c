@@ -30,14 +30,13 @@ void copy_table(struct Table* dest, struct Table* src) {
     reset_table_capacity(dest, src->capacity); 
     for (int i = 0; i < src->capacity; i++) {
         struct Pair* pair = &src->pairs[i];
-        if (pair->key != NULL) {
-            push_root(pair->value);
-            Value copy = copy_value(&pair->value);
-            push_root(copy);
-            set_table(dest, pair->key, copy);
-            pop_root();
-            pop_root();
-        }
+        if (pair->key == NULL) continue;
+        push_root(pair->value);
+        Value copy = copy_value(&pair->value);
+        push_root(copy);
+        set_table(dest, pair->key, copy);
+        pop_root();
+        pop_root();
     }
 }
 
@@ -45,11 +44,10 @@ static void grow_table(struct Table* table) {
     int pushed_count = 0;
     for (int i = 0; i < table->capacity; i++) {
         struct Pair* pair = &table->pairs[i];
-        if (pair->key != NULL) {
-            push_root(to_string(pair->key));
-            push_root(pair->value);
-            pushed_count += 2;
-        }
+        if (pair->key == NULL) continue;
+        push_root(to_string(pair->key));
+        push_root(pair->value);
+        pushed_count += 2;
     }
 
     struct Table temp;
@@ -61,9 +59,8 @@ static void grow_table(struct Table* table) {
 
     for (int i = 0; i < temp.capacity; i++) {
         struct Pair* pair = &temp.pairs[i];
-        if (pair->key != NULL) {
-            set_table(table, pair->key, pair->value);
-        }
+        if (pair->key == NULL) continue;
+        set_table(table, pair->key, pair->value);
     }
 
     free_table(&temp);

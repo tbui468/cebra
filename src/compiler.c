@@ -878,9 +878,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* current = type_inst;
             while (current != NULL) {
                 struct TypeStruct* tc = (struct TypeStruct*)current;
-                if (get_from_table(&tc->props, name, &type_val)) {
-                    break;
-                }
+                if (get_from_table(&tc->props, name, &type_val)) break;
                 current = tc->super;
             }
 
@@ -921,9 +919,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* current = type_inst;
                 while (current != NULL) {
                     struct TypeStruct* tc = (struct TypeStruct*)current;
-                    if (get_from_table(&tc->props, name, &type_val)) {
-                        break;
-                    }
+                    if (get_from_table(&tc->props, name, &type_val)) break;
                     current = tc->super;
                 }
 
