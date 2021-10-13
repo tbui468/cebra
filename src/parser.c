@@ -1072,12 +1072,11 @@ static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_
         //iterate through first_pass_nl to find correct struct DeclStruct
         for (int i = 0; i < first_pass_nl->count; i++) {
             struct Node* n = first_pass_nl->nodes[i];
-            if (n->type == NODE_STRUCT) {
-                struct DeclStruct* super = (struct DeclStruct*)n;
-                if (same_token_literal(gv->name, super->name)) {
-                    add_struct_by_order(nl, struct_set, super, first_pass_nl);
-                    break;
-                }
+            if (n->type != NODE_STRUCT) continue;
+            struct DeclStruct* super = (struct DeclStruct*)n;
+            if (same_token_literal(gv->name, super->name)) {
+                add_struct_by_order(nl, struct_set, super, first_pass_nl);
+                break;
             }
         }
     }
@@ -1169,6 +1168,36 @@ static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
     return RESULT_SUCCESS;
 }
 
+static ResultCode order_nodes_by_enums_structs_functions(struct NodeList* original, struct NodeList* ordered) {
+    //add enums first in compilation order
+    for (int i = 0; i < original->count; i++) {
+        struct Node* n = original->nodes[i];
+        if (n->type == NODE_ENUM) {
+            add_node(ordered, n);
+        }
+    }
+
+    //add structs next
+    //make temp table inside ObjEnum so that GC doesn't sweep it
+    struct ObjEnum* struct_set_wrapper = make_enum(make_dummy_token());
+    push_root(to_enum(struct_set_wrapper));
+    for (int i = 0; i < original->count; i++) {
+        struct Node* n = original->nodes[i];
+        if (n->type == NODE_STRUCT) {
+            add_struct_by_order(ordered, &struct_set_wrapper->props, (struct DeclStruct*)n, original);
+        }
+    }
+    pop_root();
+
+    //add functions last
+    for (int i = 0; i < original->count; i++) {
+        struct Node* n = original->nodes[i];
+        if (n->type == NODE_FUN) {
+            add_node(ordered, n);
+        }
+    }
+}
+
 ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes) {
     init_parser(source, globals);
     struct NodeList* script_nl = (struct NodeList*)make_node_list();
@@ -1185,21 +1214,13 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         }
     }
 
-    if (result != RESULT_FAILED) {
-        result = resolve_global_struct_identifiers(parser.globals);
-    }
+    if (result != RESULT_FAILED) result = resolve_global_struct_identifiers(parser.globals);
 
-    if (result != RESULT_FAILED) {
-        result = check_global_circular_inheritance(parser.globals);
-    }
+    if (result != RESULT_FAILED) result = check_global_circular_inheritance(parser.globals);
 
-    if (result != RESULT_FAILED) {
-        result = copy_global_inherited_props(parser.globals);
-    }
+    if (result != RESULT_FAILED) result = copy_global_inherited_props(parser.globals);
 
-    if (result != RESULT_FAILED) {
-        result = resolve_global_function_identifiers(parser.globals);
-    }
+    if (result != RESULT_FAILED) result = resolve_global_function_identifiers(parser.globals);
 
     //resolve remaining identifiers
     struct Node* node = *nodes;
@@ -1259,7 +1280,8 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
 
     //change order of structs to make sure base structs are compiled before any substructs
     struct NodeList* ordered_nl = (struct NodeList*)make_node_list();
-    if (result != RESULT_FAILED) {
+    if (result != RESULT_FAILED) result = order_nodes_by_enums_structs_functions(parser.first_pass_nl, ordered_nl);
+    /*
         //add enums first in compilation order
         for (int i = 0; i < parser.first_pass_nl->count; i++) {
             struct Node* n = parser.first_pass_nl->nodes[i];
@@ -1287,8 +1309,7 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
                 add_node(ordered_nl, n);
             }
         }
-
-    }
+*/
 
     for (int i = 0; i < script_nl->count; i++) {
         add_node(ordered_nl, script_nl->nodes[i]);
