@@ -1015,40 +1015,6 @@ static ResultCode resolve_map_identifiers(struct TypeMap* tm, struct Table* glob
 
 static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals);
 
-static ResultCode resolve_struct_identifiers(struct TypeStruct* tc) {
-    //resolve properties
-    for (int j = 0; j < tc->props.capacity; j++) {
-        struct Pair* inner_pair = &tc->props.pairs[j];
-        if (inner_pair->value.type == VAL_TYPE) {
-            switch(inner_pair->value.as.type_type->type) {
-                case TYPE_IDENTIFIER: {
-                    struct Type* result;
-                    if (resolve_identifier((struct TypeIdentifier*)(inner_pair->value.as.type_type), parser.globals, &result) == RESULT_FAILED) {
-                        return RESULT_FAILED;
-                    }
-                    set_table(&tc->props, inner_pair->key, to_type(result));
-                    break;
-                }
-                case TYPE_FUN: {
-                    if (resolve_function_identifiers((struct TypeFun*)(inner_pair->value.as.type_type), parser.globals) == RESULT_FAILED) {
-                        return RESULT_FAILED;
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    //resolve structs inherited from
-    if (tc->super != NULL && tc->super->type == TYPE_IDENTIFIER)  {
-        struct Type* result;
-        if (resolve_identifier((struct TypeIdentifier*)(tc->super), parser.globals, &result) == RESULT_FAILED) {
-            return RESULT_FAILED;
-        }
-        tc->super = result;
-    }
-    return RESULT_SUCCESS;
-}
-
 static ResultCode check_circular_inheritance(struct TypeStruct* klass) {
     Token struct_name = klass->name;
     struct Type* current = klass->super;
@@ -1150,6 +1116,47 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
     return RESULT_SUCCESS;
 }
 
+static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
+    for (int i = 0; i < globals->capacity; i++) {
+        struct Pair* pair = &globals->pairs[i];
+        if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
+            struct Type* type = pair->value.as.type_type;
+            struct TypeStruct* tc = (struct TypeStruct*)type;
+            //resolve properties
+            for (int j = 0; j < tc->props.capacity; j++) {
+                struct Pair* inner_pair = &tc->props.pairs[j];
+                if (inner_pair->value.type == VAL_TYPE) {
+                    switch(inner_pair->value.as.type_type->type) {
+                        case TYPE_IDENTIFIER: {
+                            struct Type* result;
+                            if (resolve_identifier((struct TypeIdentifier*)(inner_pair->value.as.type_type), globals, &result) == RESULT_FAILED) {
+                                return RESULT_FAILED;
+                            }
+                            set_table(&tc->props, inner_pair->key, to_type(result));
+                            break;
+                        }
+                        case TYPE_FUN: {
+                            if (resolve_function_identifiers((struct TypeFun*)(inner_pair->value.as.type_type), globals) == RESULT_FAILED) {
+                                return RESULT_FAILED;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            //resolve structs inherited from
+            if (tc->super != NULL && tc->super->type == TYPE_IDENTIFIER)  {
+                struct Type* result;
+                if (resolve_identifier((struct TypeIdentifier*)(tc->super), globals, &result) == RESULT_FAILED) {
+                    return RESULT_FAILED;
+                }
+                tc->super = result;
+            }
+        }
+    }
+    return RESULT_SUCCESS;
+}
+
 ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes) {
     init_parser(source, globals);
     struct NodeList* script_nl = (struct NodeList*)make_node_list();
@@ -1166,19 +1173,8 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         }
     }
 
-    //resolve identifiers in structs
     if (result != RESULT_FAILED) {
-        for (int i = 0; i < parser.globals->capacity; i++) {
-            struct Pair* pair = &parser.globals->pairs[i];
-            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
-                struct Type* type = pair->value.as.type_type;
-                struct TypeStruct* tc = (struct TypeStruct*)type;
-                if (resolve_struct_identifiers(tc) == RESULT_FAILED) {
-                    result = RESULT_FAILED;
-                    break;
-                }
-            }
-        }
+        if (resolve_global_struct_identifiers(parser.globals) == RESULT_FAILED) result = RESULT_FAILED; 
     }
 
     //check for circular inheritance
