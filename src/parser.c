@@ -68,6 +68,13 @@ void add_to_compile_pass(struct Node* decl, struct NodeList* first, struct NodeL
             if (((DeclFun*)decl)->anonymous) add_node(second, decl);
             else add_node(first, decl);
             break;
+        case NODE_LIST: {
+            struct NodeList* nl = (struct NodeList*)decl;
+            for (int i = 0; i < nl->count; i++) {
+                add_node(second, nl->nodes[i]);
+            }
+            break;
+        }
         default:
             add_node(second, decl);
             break;
@@ -558,25 +565,66 @@ static ResultCode param_declaration(struct Node** node) {
 }
 
 static ResultCode var_declaration(struct Node** node) {
+    Token tokens[256];
+    //will use types->count to track variable declaration count
+    struct TypeArray* types = (struct TypeArray*)make_array_type();
+    struct NodeList* nodes = (struct NodeList*)make_node_list();
+
     match(TOKEN_IDENTIFIER);
-    Token var_name = parser.previous;
-    match(TOKEN_COLON);  //var_declaration only called if this is true, so no need to check
+    tokens[0] = parser.previous;
+    
+    bool inferred_type = true;
+    if (match(TOKEN_COLON)) {
+        struct Type* type;
+        //Note: if type is not explicitly declared, this call will return a parsing error
+        PARSE_TYPE(tokens[0], &type, tokens[0], "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
+                tokens[0].length, tokens[0].start, tokens[0].length, tokens[0].start);
+        add_type(types, type);
+        inferred_type = type->type == TYPE_INFER;
 
-    struct Type* type;
-    PARSE_TYPE(var_name, &type, var_name, "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
-            var_name.length, var_name.start, var_name.length, var_name.start);
+        //single variable declaration
+        if (match(TOKEN_EQUAL)) {
+            struct Node* right;
+            PARSE(expression, tokens[0], &right, tokens[0], "Variable '%.*s' must be assigned to valid expression at declaration.", tokens[0].length, tokens[0].start);
+            *node = make_decl_var(tokens[0], types->types[0], right);
+            return RESULT_SUCCESS;
+        }
+    } else {
+        add_type(types, make_infer_type());
+    }
 
-    CONSUME(TOKEN_EQUAL, var_name, "Variables must be defined at declaration.");
+    //multi-variable declaration
+    while (match(TOKEN_COMMA)) {
+        int idx = types->count;
+        CONSUME(TOKEN_IDENTIFIER, tokens[idx-1], "Expected an identifier after ','.");
+        tokens[idx] = parser.previous;
+        if (!inferred_type) {
+            struct Type* type;
+            PARSE_TYPE(tokens[idx], &type, tokens[idx], "Variable '%.*s' type not declared.", tokens[idx].length, tokens[idx].start);
+            add_type(types, type);
+        } else {
+            add_type(types, make_infer_type());
+        }
+    }
 
-    struct Node* right;
+    if (inferred_type) CONSUME(TOKEN_COLON, tokens[0], "Expecting ':' for inferred types.");
 
-    PARSE(expression, var_name, &right, var_name, "Variable '%.*s' must be assigned to valid expression at declaration.", var_name.length, var_name.start);
-    *node = make_decl_var(var_name, type, right);
+    CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before assignment.");
+
+    for (int i = 0; i < types->count; i++) {
+        struct Node* right;
+        PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", tokens[i].length, tokens[i].start);
+        add_node(nodes, make_decl_var(tokens[i], types->types[i], right));
+        if (i < types->count - 1)
+            CONSUME(TOKEN_COMMA, tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", tokens[i+1].length, tokens[i+1].start);
+    }
+
+    *node = (struct Node*)nodes;
     return RESULT_SUCCESS;
 }
 
 static ResultCode declaration(struct Node** node) {
-    if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
+    if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_IDENTIFIER, TOKEN_COMMA)) {
         return var_declaration(node);
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
         match(TOKEN_IDENTIFIER);

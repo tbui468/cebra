@@ -22,7 +22,44 @@ Documentation:
 
     Consider looking at Nystrom's Wren to see how he put the interpreter in the browser
 
+    Maybe look into posting it on handmade network/reddit...
+        
+    Look at Odin-lang for reference for docs
+        could just have sample code user can look at rather than an actual interactive panel
+
 Implementation:
+
+    a: int, b: float = 2, -23.2
+    a, b := 1, 2.3
+
+    nums :: () -> (int, int) {
+        -> 1, 2
+    }
+
+    add :: (a: int, b: int) -> int {
+        -> a + b
+    }
+
+    print(add(nums()))
+
+    //this is super messy, but paren grouping is necessary to avoid ambiguous return/function relationships
+    //a single return is NOT wrapped in parens
+        fun :: () -> int {}
+        fun :: () -> (int, string) {}
+        fun :: () -> (()-> (int, int), ()-> int) {
+
+        }
+
+    Get it parsing
+    Get it compiling
+    Get it running
+
+    For function types, no take in a TypeArray for returns too
+    ret_types during compilation now also need to return TypeArrays
+    while parsing, need to redo make_decl_fun to include multiple returns
+        and when parsing return statements do the same
+    May need to include more info for ObjFun too (right now we have arity, but
+        may require return count too)
     
     Need multiple returns for easy file reading
         str, result := read(f) //where read returns a string and boolean where boolean is false if failed
