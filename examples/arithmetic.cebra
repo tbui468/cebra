@@ -1,0 +1,17 @@
+//comment
+
+add :: (a: int, b: int) -> int {
+    -> a + b
+}
+
+sub :: (a: int, b: int) -> int {
+    -> a - b
+}
+
+
+compute :: (a: int, b: int, op: (int, int) -> int) -> {
+    print(op(a, b))
+}
+
+compute(1, 2, add)
+compute(1, 2, sub)

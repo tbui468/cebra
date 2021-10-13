@@ -1,32 +1,63 @@
-DOCUMENTATION:
-    Deconstruct Wren to see how Nystom got the interpereter running in browser
-        recreate website locally to see if the interpreter can run locally
-        Analyze the 'try' page and get my own wasm/js compiled from C working
+Syntax highlighter:
+    Then remake extension project with better naming using 'yo code'
+        save to github too - can do it afterwards
 
-    Look at WebAssembly/test_html.html to see current code
-        can load simple.wasm (last commented out block), but it's
-        not a function that returns anything 
+        Reorganize syntax highlighting code into reasonable chunks
+        
+        Embed expressions into heirarchies to make it possible to highlight function parameters
+            struct fields, and enum fields.
 
-    Trying other things...
+        Correct highlighting for closures and anonymous functions
 
-ADDING FEATURES:
-    Add correctness tests for new features
-    Check that ALL memory is freed if GC is called at end of main()
-    Add more native functions - add way to import native functions
-    TODO: need a way to test type checking
+        Any way to highlight enum name when selecting enume elements??
 
-IMPLEMENTATION:
+    Fill in description.  Create simple cebra logo.
+
+    Put on vscode extensions marketplace
+
+Documentation:
+    Update sections titles to match current status
+
+    Update section on how to download/build from source and VSCode syntax highlighter
+
+    Consider looking at Nystrom's Wren to see how he put the interpreter in the browser
+
+Implementation:
+    
+    Need multiple returns for easy file reading
+        str, result := read(f) //where read returns a string and boolean where boolean is false if failed
 
     Reading/Writing to files.  How does python do this?  (or look at other languages)
         consider adding in \n for print() for more flexible ways to output data.
 
         Maybe generalize reading/writing?
        
-        f: file = open("test.txt") 
+        f: file = open("test.txt") //will automatically close with GC?  If so, need to make a runtime representation (ObjFile)
+        src := read(f)
+
         a := read(stdin)
-        b := read(file)
+        b := read(file) //read entire file until end
+        c := readln(file) //read one line up to, and including, \n
         write("Hello world", stdout)
         write("Hello world", f)
+
+    'import' keyword and importing modules (do this once I have enough native functions to require it)
+        how does python, ruby and others do this?
+        what is a module?  Structs, Enums and Functions?  
+        how should namespaces work (if we decide to use them)
+        should native functions be imported?  Or are they always included?
+
+        import "Parser.cbr"
+        import "Lexer.cbr"
+        import "Evaluator.cbr"
+
+        src := "12 - 23 / 4"
+        tokens := scan_source(src)
+        ast := parser_tokens(tokens)
+        print(evaluate_ast(ast))
+
+    Sockets for TCP and UDP connections - we just want a high level wrapper over the same
+        functionality.  Allow the user to create sockets and send bytes (or strings, floats, ints)
     
     Strings are interned.  Since interned strings are only used to removed repeated strings, they shouldn't be marked as a root.  Then
         after all references are traced but before sweeping, we should delete interned string pointers from 

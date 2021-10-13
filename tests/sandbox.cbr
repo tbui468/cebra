@@ -1,4 +1,6 @@
-
-print("testignnnn")
-a := input()
-print(a)
+f: file = open("test.txt")
+//write(f, "This text will replace everything in file")
+//append(f, "This text will be attached to end of file")
+//src := readln(f) will read next line - what happens if end of file?
+//OR allow multiple returns, and return a string + success code?  (empty string + true means end of line, empty string + false means end of file)
+//src := read(f) will read entire file, regardless of where current read pointer is

@@ -1251,6 +1251,12 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
     return RESULT_SUCCESS;
 }
 
+/*
+static Value open_native(int arg_count, Value* args) {
+    struct ObjString* file_name = args[0].as.string_type;
+    //open file in c (just do read for now)
+    //create ObjFile and return
+}*/
 
 static Value clock_native(int arg_count, Value* args) {
     return to_float((double)clock() / CLOCKS_PER_SEC);
@@ -1305,6 +1311,13 @@ static ResultCode define_native(struct Compiler* compiler, const char* name, Val
 
     return RESULT_SUCCESS;
 }
+/*
+static ResultCode define_open(struct Compiler* compiler) {
+    struct Type* str_type = make_string_type();
+    struct Type* params = make_array_type();
+    add_type((struct TypeArray*)params, str_type);
+    return define_native(compiler, "open", open_native, make_fun_type(params, make_file_type()));
+}*/
 
 static ResultCode define_input(struct Compiler* compiler) {
     return define_native(compiler, "input", input_native, make_fun_type(make_array_type(), make_string_type()));

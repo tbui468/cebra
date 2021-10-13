@@ -1,7 +1,5 @@
-//Mini interpreter to test cebra capabilities
-//integer as input numbers
-//four operations: +-*/
-//can use parentheses to indicate higher precedence
+//Mini interpreter for evaluating mathematical expressions
+//input expression can include intgers, +, -, *, / and parentheses
 //output is a double precision floating point
 
 //************Driver***************
@@ -99,7 +97,7 @@ is_whitespace :: (char: string) -> bool {
     -> char == " "
 }
 
-peek :: (lexer: Lexer, fun: (string) -> bool) -> bool {
+peek:: (lexer: Lexer, fun: (string) -> bool) -> bool {
     if lexer.index >= lexer.src.size {
         -> false
     } 
