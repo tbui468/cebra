@@ -1016,8 +1016,8 @@ static ResultCode resolve_map_identifiers(struct TypeMap* tm, struct Table* glob
 static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals);
 
 static ResultCode check_global_circular_inheritance(struct Table* globals) {
-    for (int i = 0; i < parser.globals->capacity; i++) {
-        struct Pair* pair = &parser.globals->pairs[i];
+    for (int i = 0; i < globals->capacity; i++) {
+        struct Pair* pair = &globals->pairs[i];
         if (pair->value.type != VAL_TYPE) continue;
         if (pair->value.as.type_type->type != TYPE_STRUCT) continue;
         struct Type* type = pair->value.as.type_type;
@@ -1036,13 +1036,19 @@ static ResultCode check_global_circular_inheritance(struct Table* globals) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode copy_down_props(struct TypeStruct* klass) {
-    struct Type* super_type = klass->super;
-    while (super_type != NULL) {
-        struct TypeStruct* super = (struct TypeStruct*)super_type;
-        for (int j = 0; j < super->props.capacity; j++) {
-            struct Pair* pair = &super->props.pairs[j];
-            if (pair->key != NULL) {
+static ResultCode copy_global_inherited_props(struct Table* globals) {
+    for (int i = 0; i < parser.globals->capacity; i++) {
+        struct Pair* pair = &parser.globals->pairs[i];
+        if (pair->value.type != VAL_TYPE) continue;
+        if (pair->value.as.type_type->type != TYPE_STRUCT) continue;
+        struct Type* type = pair->value.as.type_type;
+        struct TypeStruct* klass = (struct TypeStruct*)type; //this is the substruct we want to copy all props into
+        struct Type* super_type = klass->super;
+        while (super_type != NULL) {
+            struct TypeStruct* super = (struct TypeStruct*)super_type;
+            for (int j = 0; j < super->props.capacity; j++) {
+                struct Pair* pair = &super->props.pairs[j];
+                if (pair->key == NULL) continue;
                 Value val;
                 if (get_from_table(&klass->props, pair->key, &val)) {
                     if (val.as.type_type->type != TYPE_INFER && 
@@ -1054,8 +1060,8 @@ static ResultCode copy_down_props(struct TypeStruct* klass) {
                     set_table(&klass->props, pair->key, pair->value);
                 }
             }
+            super_type = super->super;
         }
-        super_type = super->super;
     }
     return RESULT_SUCCESS;
 }
@@ -1179,20 +1185,8 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         result = check_global_circular_inheritance(parser.globals);
     }
 
-
-    //for each TypeStruct*, copy down props and check that overwritten props are of same type
     if (result != RESULT_FAILED) {
-        for (int i = 0; i < parser.globals->capacity; i++) {
-            struct Pair* pair = &parser.globals->pairs[i];
-            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
-                struct Type* type = pair->value.as.type_type;
-                struct TypeStruct* klass = (struct TypeStruct*)type; //this is the substruct we want to copy all props into
-                if (copy_down_props(klass) == RESULT_FAILED) {
-                    result = RESULT_FAILED;
-                    break;
-                }
-            }
-        }
+        result = copy_global_inherited_props(parser.globals);
     }
 
     //resolve enum and struct identifiers in functions
