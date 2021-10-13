@@ -1119,39 +1119,32 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
 static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
         struct Pair* pair = &globals->pairs[i];
-        if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
-            struct Type* type = pair->value.as.type_type;
-            struct TypeStruct* tc = (struct TypeStruct*)type;
-            //resolve properties
-            for (int j = 0; j < tc->props.capacity; j++) {
-                struct Pair* inner_pair = &tc->props.pairs[j];
-                if (inner_pair->value.type == VAL_TYPE) {
-                    switch(inner_pair->value.as.type_type->type) {
-                        case TYPE_IDENTIFIER: {
-                            struct Type* result;
-                            if (resolve_identifier((struct TypeIdentifier*)(inner_pair->value.as.type_type), globals, &result) == RESULT_FAILED) {
-                                return RESULT_FAILED;
-                            }
-                            set_table(&tc->props, inner_pair->key, to_type(result));
-                            break;
-                        }
-                        case TYPE_FUN: {
-                            if (resolve_function_identifiers((struct TypeFun*)(inner_pair->value.as.type_type), globals) == RESULT_FAILED) {
-                                return RESULT_FAILED;
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            //resolve structs inherited from
-            if (tc->super != NULL && tc->super->type == TYPE_IDENTIFIER)  {
+        if (pair->value.type != VAL_TYPE || pair->value.as.type_type->type != TYPE_STRUCT) continue;
+        struct Type* type = pair->value.as.type_type;
+        struct TypeStruct* tc = (struct TypeStruct*)type;
+        //resolve properties
+        for (int j = 0; j < tc->props.capacity; j++) {
+            struct Pair* inner_pair = &tc->props.pairs[j];
+            if (inner_pair->value.type != VAL_TYPE) continue;
+            if (inner_pair->value.as.type_type->type == TYPE_IDENTIFIER) {
                 struct Type* result;
-                if (resolve_identifier((struct TypeIdentifier*)(tc->super), globals, &result) == RESULT_FAILED) {
+                if (resolve_identifier((struct TypeIdentifier*)(inner_pair->value.as.type_type), globals, &result) == RESULT_FAILED) {
                     return RESULT_FAILED;
                 }
-                tc->super = result;
+                set_table(&tc->props, inner_pair->key, to_type(result));
+            } else if (inner_pair->value.as.type_type->type == TYPE_FUN) {
+                if (resolve_function_identifiers((struct TypeFun*)(inner_pair->value.as.type_type), globals) == RESULT_FAILED) {
+                    return RESULT_FAILED;
+                }
             }
+        }
+        //resolve structs inherited from
+        if (tc->super != NULL && tc->super->type == TYPE_IDENTIFIER)  {
+            struct Type* result;
+            if (resolve_identifier((struct TypeIdentifier*)(tc->super), globals, &result) == RESULT_FAILED) {
+                return RESULT_FAILED;
+            }
+            tc->super = result;
         }
     }
     return RESULT_SUCCESS;
