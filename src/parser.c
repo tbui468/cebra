@@ -706,23 +706,46 @@ static ResultCode declaration(struct Node** node) {
                 ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
             }
 
-            DeclVar* dv = (DeclVar*)decl;
-            Token prop_name = dv->name;
-            struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
-            push_root(to_string(prop_string));
+            if (decl->type == NODE_LIST) {
+                struct NodeList* decls = (struct NodeList*)decl;
+                for (int i = 0; i < decls->count; i++) {
+                    DeclVar* dv = (DeclVar*)(decls->nodes[i]);
+                    Token prop_name = dv->name;
+                    struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
+                    push_root(to_string(prop_string));
 
-            struct TypeStruct* tc = (struct TypeStruct*)struct_type;
+                    struct TypeStruct* tc = (struct TypeStruct*)struct_type;
 
-            Value v;
-            if (get_from_table(&tc->props, prop_string, &v)) {
+                    Value v;
+                    if (get_from_table(&tc->props, prop_string, &v)) {
+                        pop_root();
+                        ERROR(prop_name, "Field name already used once in this struct.");
+                    }
+
+                    set_table(&tc->props, prop_string, to_type(dv->type));
+                    pop_root();
+
+                    add_node(nl, (struct Node*)dv);
+                }
+            } else {
+                DeclVar* dv = (DeclVar*)decl;
+                Token prop_name = dv->name;
+                struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
+                push_root(to_string(prop_string));
+
+                struct TypeStruct* tc = (struct TypeStruct*)struct_type;
+
+                Value v;
+                if (get_from_table(&tc->props, prop_string, &v)) {
+                    pop_root();
+                    ERROR(prop_name, "Field name already used once in this struct.");
+                }
+
+                set_table(&tc->props, prop_string, to_type(dv->type));
                 pop_root();
-                ERROR(prop_name, "Field name already used once in this struct.");
+
+                add_node(nl, (struct Node*)dv);
             }
-
-            set_table(&tc->props, prop_string, to_type(dv->type));
-            pop_root();
-
-            add_node(nl, decl);
         }
 
         *node = make_decl_struct(struct_name, super, nl);

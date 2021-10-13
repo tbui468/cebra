@@ -29,18 +29,18 @@ Documentation:
 
 Implementation:
 
-    a: int, b: float = 2, -23.2
-    a, b := 1, 2.3
+    Write tests for multi-variable declaration
 
-    nums :: () -> (int, int) {
-        -> 1, 2
-    }
+    Write code for multi-variable assignment
 
-    add :: (a: int, b: int) -> int {
-        -> a + b
-    }
+    Write code for multi-variable returns
 
-    print(add(nums()))
+    Write code for using multi-variable returns as argument into multi-parameter function
+        fun_ret_two :: () -> (int, int) {
+        }
+        fun_two_params :: (a: int, b: int) -> {
+        }
+        fun_two_params(fun_ret_two())
 
     //this is super messy, but paren grouping is necessary to avoid ambiguous return/function relationships
     //a single return is NOT wrapped in parens
