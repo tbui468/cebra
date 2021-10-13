@@ -1037,8 +1037,8 @@ static ResultCode check_global_circular_inheritance(struct Table* globals) {
 }
 
 static ResultCode copy_global_inherited_props(struct Table* globals) {
-    for (int i = 0; i < parser.globals->capacity; i++) {
-        struct Pair* pair = &parser.globals->pairs[i];
+    for (int i = 0; i < globals->capacity; i++) {
+        struct Pair* pair = &globals->pairs[i];
         if (pair->value.type != VAL_TYPE) continue;
         if (pair->value.as.type_type->type != TYPE_STRUCT) continue;
         struct Type* type = pair->value.as.type_type;
@@ -1113,12 +1113,10 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
     struct Type* ret = ft->ret;
     if (ret->type == TYPE_IDENTIFIER) {
         struct Type* result;
-        if (resolve_identifier((struct TypeIdentifier*)ret, parser.globals, &result) == RESULT_FAILED) {
-            return RESULT_FAILED;
-        } 
+        if (resolve_identifier((struct TypeIdentifier*)ret, parser.globals, &result) == RESULT_FAILED) return RESULT_FAILED;
         ft->ret = result;
     } else if (ret->type == TYPE_FUN) {
-        resolve_function_identifiers((struct TypeFun*)ret, globals);
+        if (resolve_function_identifiers((struct TypeFun*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
     } else if (ret->type == TYPE_LIST) {
         if (resolve_list_identifiers((struct TypeList*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
     } else if (ret->type == TYPE_MAP) {
@@ -1126,6 +1124,16 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
     }
 
     return RESULT_SUCCESS;
+}
+
+static ResultCode resolve_global_function_identifiers(struct Table* globals) {
+    for (int i = 0; i < globals->capacity; i++) {
+        struct Pair* pair = &globals->pairs[i];
+        if (pair->value.type != VAL_TYPE) continue;
+        if (pair->value.as.type_type->type != TYPE_FUN) continue;
+        struct TypeFun* fun_type = (struct TypeFun*)(pair->value.as.type_type);
+        if (resolve_function_identifiers(fun_type, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
+    }
 }
 
 static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
@@ -1189,18 +1197,8 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         result = copy_global_inherited_props(parser.globals);
     }
 
-    //resolve enum and struct identifiers in functions
     if (result != RESULT_FAILED) {
-        for (int i = 0; i < parser.globals->capacity; i++) {
-            struct Pair* pair = &parser.globals->pairs[i];
-            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_FUN) {
-                struct TypeFun* fun_type = (struct TypeFun*)(pair->value.as.type_type);
-                if (resolve_function_identifiers(fun_type, parser.globals) == RESULT_FAILED) { //recursively called if a parameter/return is also a function
-                    result = RESULT_FAILED;
-                    break;
-                }
-            }
-        }
+        result = resolve_global_function_identifiers(parser.globals);
     }
 
     //resolve remaining identifiers
