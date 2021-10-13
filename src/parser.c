@@ -1015,18 +1015,24 @@ static ResultCode resolve_map_identifiers(struct TypeMap* tm, struct Table* glob
 
 static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals);
 
-static ResultCode check_circular_inheritance(struct TypeStruct* klass) {
-    Token struct_name = klass->name;
-    struct Type* current = klass->super;
-    while (current != NULL) {
-        struct TypeStruct* super = (struct TypeStruct*)current;
-        Token super_name = super->name;
-        if (same_token_literal(struct_name, super_name)) {
-            ERROR(make_dummy_token(), "A struct cannot have a circular inheritance.");
+static ResultCode check_global_circular_inheritance(struct Table* globals) {
+    for (int i = 0; i < parser.globals->capacity; i++) {
+        struct Pair* pair = &parser.globals->pairs[i];
+        if (pair->value.type != VAL_TYPE) continue;
+        if (pair->value.as.type_type->type != TYPE_STRUCT) continue;
+        struct Type* type = pair->value.as.type_type;
+        struct TypeStruct* klass = (struct TypeStruct*)type;
+        Token struct_name = klass->name;
+        struct Type* current = klass->super;
+        while (current != NULL) {
+            struct TypeStruct* super = (struct TypeStruct*)current;
+            Token super_name = super->name;
+            if (same_token_literal(struct_name, super_name)) {
+                ERROR(make_dummy_token(), "A struct cannot have a circular inheritance.");
+            }
+            current = super->super;
         }
-        current = super->super;
     }
-
     return RESULT_SUCCESS;
 }
 
@@ -1120,8 +1126,7 @@ static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
         struct Pair* pair = &globals->pairs[i];
         if (pair->value.type != VAL_TYPE || pair->value.as.type_type->type != TYPE_STRUCT) continue;
-        struct Type* type = pair->value.as.type_type;
-        struct TypeStruct* tc = (struct TypeStruct*)type;
+        struct TypeStruct* tc = (struct TypeStruct*)(pair->value.as.type_type);
         //resolve properties
         for (int j = 0; j < tc->props.capacity; j++) {
             struct Pair* inner_pair = &tc->props.pairs[j];
@@ -1167,22 +1172,11 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     }
 
     if (result != RESULT_FAILED) {
-        if (resolve_global_struct_identifiers(parser.globals) == RESULT_FAILED) result = RESULT_FAILED; 
+        result = resolve_global_struct_identifiers(parser.globals);
     }
 
-    //check for circular inheritance
     if (result != RESULT_FAILED) {
-        for (int i = 0; i < parser.globals->capacity; i++) {
-            struct Pair* pair = &parser.globals->pairs[i];
-            if (pair->value.type == VAL_TYPE && pair->value.as.type_type->type == TYPE_STRUCT) {
-                struct Type* type = pair->value.as.type_type;
-                struct TypeStruct* klass = (struct TypeStruct*)type;
-                if (check_circular_inheritance(klass) == RESULT_FAILED) {
-                    result = RESULT_FAILED;
-                    break;
-                }
-            }
-        }
+        result = check_global_circular_inheritance(parser.globals);
     }
 
 
