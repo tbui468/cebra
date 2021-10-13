@@ -623,6 +623,23 @@ static ResultCode var_declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
+
+static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
+    Token prop_name = dv->name;
+    struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
+    push_root(to_string(prop_string));
+
+    Value v;
+    if (get_from_table(&tc->props, prop_string, &v)) {
+        pop_root();
+        ERROR(prop_name, "Field name already used once in this struct.");
+    }
+
+    set_table(&tc->props, prop_string, to_type(dv->type));
+    pop_root();
+    return RESULT_SUCCESS;
+}
+
 static ResultCode declaration(struct Node** node) {
     if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_IDENTIFIER, TOKEN_COMMA)) {
         return var_declaration(node);
@@ -690,7 +707,7 @@ static ResultCode declaration(struct Node** node) {
         }
 
         //set globals in parser (which compiler uses)
-        set_table(parser.globals, struct_string, to_type((struct Type*)struct_type));
+        set_table(parser.globals, struct_string, to_type(struct_type));
         pop_root();
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
@@ -706,45 +723,28 @@ static ResultCode declaration(struct Node** node) {
                 ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
             }
 
-            if (decl->type == NODE_LIST) {
-                struct NodeList* decls = (struct NodeList*)decl;
-                for (int i = 0; i < decls->count; i++) {
-                    DeclVar* dv = (DeclVar*)(decls->nodes[i]);
-                    Token prop_name = dv->name;
-                    struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
-                    push_root(to_string(prop_string));
+            struct TypeStruct* tc = (struct TypeStruct*)struct_type;
 
-                    struct TypeStruct* tc = (struct TypeStruct*)struct_type;
-
-                    Value v;
-                    if (get_from_table(&tc->props, prop_string, &v)) {
-                        pop_root();
-                        ERROR(prop_name, "Field name already used once in this struct.");
+            switch(decl->type) {
+                case NODE_LIST: {
+                    struct NodeList* decls = (struct NodeList*)decl;
+                    for (int i = 0; i < decls->count; i++) {
+                        DeclVar* dv = (DeclVar*)(decls->nodes[i]);
+                        if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
+                        add_node(nl, (struct Node*)dv);
                     }
-
-                    set_table(&tc->props, prop_string, to_type(dv->type));
-                    pop_root();
-
+                    break;
+                }
+                case NODE_DECL_VAR: {
+                    DeclVar* dv = (DeclVar*)decl;
+                    if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
                     add_node(nl, (struct Node*)dv);
+                    break;
                 }
-            } else {
-                DeclVar* dv = (DeclVar*)decl;
-                Token prop_name = dv->name;
-                struct ObjString* prop_string = make_string(prop_name.start, prop_name.length); 
-                push_root(to_string(prop_string));
-
-                struct TypeStruct* tc = (struct TypeStruct*)struct_type;
-
-                Value v;
-                if (get_from_table(&tc->props, prop_string, &v)) {
-                    pop_root();
-                    ERROR(prop_name, "Field name already used once in this struct.");
+                default: {
+                    ERROR(parser.previous, "Shit broke - expecting a NODE_LIST or NODE_DECL_VAR ast node.");
+                    break;
                 }
-
-                set_table(&tc->props, prop_string, to_type(dv->type));
-                pop_root();
-
-                add_node(nl, (struct Node*)dv);
             }
         }
 
