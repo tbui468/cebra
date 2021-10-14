@@ -561,6 +561,7 @@ static ResultCode param_declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
+//Note: also takes care of multi assignment since the parser can't look ahead far enough to know
 static ResultCode var_declaration(struct Node** node) {
     Token tokens[256];
     //will use types->count to track variable declaration count
@@ -614,9 +615,23 @@ static ResultCode var_declaration(struct Node** node) {
     print_token(parser.previous); printf("\n");
     if (inferred_type) {
         if (match(TOKEN_EQUAL)) {
-            //multi assignment TODO:
-//struct Node* make_set_var(struct Node* left, struct Node* right);
-//struct Node* make_get_var(Token name);
+            //multi assignment - TODO: is there a way to take this out?  Mixing assignment here with variable declarations is confusing
+            //  but then how can we handle single-line/multi variable declaration/assignment without the ability to look ahead an arbitrary
+            //  number of tokens?
+            struct NodeList* nodes = (struct NodeList*)make_node_list();
+            for (int i = 0; i < types->count; i++) {
+                struct Node* right;
+                PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
+                      tokens[i].length, tokens[i].start);
+                add_node(nodes, make_set_var(make_get_var(tokens[i]), right));
+                if (i < types->count - 1) {
+                    CONSUME(TOKEN_COMMA, tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", 
+                            tokens[i+1].length, tokens[i+1].start);
+                }
+            }
+
+            *node = (struct Node*)nodes;
+            return RESULT_SUCCESS;
         } else {
             CONSUME(TOKEN_COLON_EQUAL, tokens[0], "Expecting ':=' for inferred types.");
         }
@@ -627,10 +642,13 @@ static ResultCode var_declaration(struct Node** node) {
     struct NodeList* nodes = (struct NodeList*)make_node_list();
     for (int i = 0; i < types->count; i++) {
         struct Node* right;
-        PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", tokens[i].length, tokens[i].start);
+        PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
+              tokens[i].length, tokens[i].start);
         add_node(nodes, make_decl_var(tokens[i], types->types[i], right));
-        if (i < types->count - 1)
-            CONSUME(TOKEN_COMMA, tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", tokens[i+1].length, tokens[i+1].start);
+        if (i < types->count - 1) {
+            CONSUME(TOKEN_COMMA, tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", 
+                    tokens[i+1].length, tokens[i+1].start);
+        }
     }
 
     *node = (struct Node*)nodes;

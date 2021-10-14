@@ -29,12 +29,57 @@ Documentation:
 
 Implementation:
 
+    Idea!  For multi declaration and assignment
+        It's really messy now with assignments and var declarations all mixed up
+        Option: Whenever a new var declaration or assignment starts for 
+            assignment, var declaration or function parameters, put the identifier + 
+            type into a parser.tokens list and parser.types list.  If we see a comma,
+            keep adding to those parser lists.  Finally, when the end of the function 
+            parameters, or multi declarations/assignments is reached (')', '=' or ':=')
+            loop through those cached tokens/types and fill in the corresponding
+            nodes.  Need to make sure that for declarations that ALL types have to be either
+            inferred or explicit.
+
+            Will need to make a function to clear struct TypeList too (just need to reset the 
+            count to 0 since the struct Type* will be freed when the compiler is freed.
+
+    Add multiple return options to functions
+        need to make return type a TypeList
+        need to make Return node 'right' a NodeList
+        return types must be enclosed in parens now
+        fun :: (a: int) -> (int) {
+            -> 23
+        }
+        fun :: (a: int) -> () {
+        }
+        fun :: (a: int) -> (int, string) {
+            -> 23, "dog"
+        }
+
+        Implement syntax and test with single returns for now.
+        Then expand to test multiple returns with assignments - see below
+
+    Just swap order of variables for multiassignment/multideclaration:
+        three_returns ::() -> (int, int, int) {
+            i := 0
+            -> i = i + 1, i = i + 1, i = i + 1
+        }
+        a, b, c, d = 10, three_returns()
+
+        if compile right side if NOT function
+            a has expr for right, and assigned to top of stack
+        compile right side to get a function with three returns
+            grab b, c and d and reverse
+            d has three_returns() for right and is assigned to top of stack after compiling call on function
+            c has NULL for right, and assigned to top of stack
+            b has NULL for right, and assigned to top of stack
+
     Rewrite Lexer - it's very messy and error prone
         consider writing simple c program that reads in and tokenizes text
         then the program can count tokens to make sure it all adds up
             this would help us know if any changes to the lexer are breaking shit
 
-    Write code for multi-variable assignment
+    Write tests for multi-variable assignment
 
     Write code for multi-variable returns
 
