@@ -459,10 +459,6 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
 
 //Note: TOKEN_COLON is consume before if a variable declaration
 static ResultCode parse_type(Token var_name, struct Type** type) {
-    if (peek_one(TOKEN_EQUAL)) {
-        *type = make_infer_type(); //inferred type typenature TODO: should change name to TypeInferred
-        return RESULT_SUCCESS;
-    }
 
     //for explicit function type declaration
     if (match(TOKEN_LEFT_PAREN)) {
@@ -573,28 +569,35 @@ static ResultCode var_declaration(struct Node** node) {
 
     match(TOKEN_IDENTIFIER);
     tokens[0] = parser.previous;
-    
+
+    //new stuff
+    bool single = true;
     bool inferred_type = true;
-    if (match(TOKEN_COLON)) {
+    if (peek_one(TOKEN_COMMA)) {
+        add_type(types, make_infer_type());
+        single = false;
+    } else if (match(TOKEN_COLON_EQUAL)) {
+        add_type(types, make_infer_type());
+    } else if (match(TOKEN_COLON)) {
+        inferred_type = false;
         struct Type* type;
-        //Note: if type is not explicitly declared, this call will return a parsing error
         PARSE_TYPE(tokens[0], &type, tokens[0], "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
                 tokens[0].length, tokens[0].start, tokens[0].length, tokens[0].start);
         add_type(types, type);
-        inferred_type = type->type == TYPE_INFER;
-
-        //single variable declaration
-        if (match(TOKEN_EQUAL)) {
-            struct Node* right;
-            PARSE(expression, tokens[0], &right, tokens[0], "Variable '%.*s' must be assigned to valid expression at declaration.", tokens[0].length, tokens[0].start);
-            *node = make_decl_var(tokens[0], types->types[0], right);
-            return RESULT_SUCCESS;
+        if (peek_one(TOKEN_COMMA)) {
+            single = false;
+        } else {
+            CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before assignment.");
         }
-    } else {
-        add_type(types, make_infer_type());
-        inferred_type = false;
     }
 
+    if (single) {
+        struct Node* right;
+        PARSE(expression, tokens[0], &right, tokens[0], "Variable '%.*s' must be assigned to valid expression at declaration.", tokens[0].length, tokens[0].start);
+        *node = make_decl_var(tokens[0], types->types[0], right);
+        return RESULT_SUCCESS;
+    } 
+        
     //multi-variable declaration
     int idx = 0;
     while (match(TOKEN_COMMA)) {
@@ -610,10 +613,14 @@ static ResultCode var_declaration(struct Node** node) {
             add_type(types, make_infer_type());
         }
     }
+    print_token(parser.previous); printf("\n");
+    if (inferred_type) {
+        CONSUME(TOKEN_COLON_EQUAL, tokens[0], "Expecting ':=' for inferred types.");
+    } else {
+        CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before variable assignments.");
+    }
 
-    if (inferred_type) CONSUME(TOKEN_COLON, tokens[0], "Expecting ':' for inferred types.");
-
-    CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before assignment.");
+    //CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before assignment.");
 
     for (int i = 0; i < types->count; i++) {
         struct Node* right;
@@ -645,7 +652,9 @@ static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
 }
 
 static ResultCode declaration(struct Node** node) {
-    if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_IDENTIFIER, TOKEN_COMMA)) {
+    if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
+        peek_two(TOKEN_IDENTIFIER, TOKEN_COMMA) ||
+        peek_two(TOKEN_IDENTIFIER, TOKEN_COLON_EQUAL)) {
         return var_declaration(node);
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
         match(TOKEN_IDENTIFIER);

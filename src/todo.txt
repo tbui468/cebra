@@ -34,6 +34,9 @@ Implementation:
     TOKEN_COLON_EQUAL should be a token - combine ':=' together so we know it's an inferred type
 
     Rewrite Lexer - it's very messy and error prone
+        consider writing simple c program that reads in and tokenizes text
+        then the program can count tokens to make sure it all adds up
+            this would help us know if any changes to the lexer are breaking shit
 
     Write code for multi-variable assignment
 

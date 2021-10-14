@@ -33,6 +33,7 @@ void print_token(Token token) {
         case TOKEN_RIGHT_BRACE: printf("TOKEN_RIGHT_BRACE"); break;
         case TOKEN_COLON: printf("TOKEN_COLON"); break;
         case TOKEN_COLON_COLON: printf("TOKEN_COLON_COLON"); break;
+        case TOKEN_COLON_EQUAL: printf("TOKEN_COLON_EQUAL"); break;
         case TOKEN_RIGHT_ARROW: printf("TOKEN_RIGHT_ARROW"); break;
         case TOKEN_EQUAL: printf("TOKEN_EQUAL"); break;
         case TOKEN_IF: printf("TOKEN_IF"); break;

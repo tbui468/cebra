@@ -187,6 +187,10 @@ Token next_token() {
                 next_char();
                 return new_token(TOKEN_COLON_COLON);
             }
+            if (peek_char() == '=') {
+                next_char();
+                return new_token(TOKEN_COLON_EQUAL);
+            }
             return new_token(TOKEN_COLON);
         case '=':   
             if (peek_char() == '=') {
