@@ -207,12 +207,12 @@ static ResultCode primary(Token var_name, struct Node** node) {
         *node = make_decl_container(identifier, make_map_type(template_type)); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IDENTIFIER)) {
-        *node = make_get_var(parser.previous, NULL);
+        *node = make_get_var(parser.previous);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_STRING_TYPE)) {
         Token token = parser.previous;
         token.type = TOKEN_IDENTIFIER;
-        *node = make_get_var(token, NULL);
+        *node = make_get_var(token);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_PAREN)) {
         Token name = parser.previous;
@@ -565,12 +565,10 @@ static ResultCode var_declaration(struct Node** node) {
     Token tokens[256];
     //will use types->count to track variable declaration count
     struct TypeArray* types = (struct TypeArray*)make_array_type();
-    struct NodeList* nodes = (struct NodeList*)make_node_list();
 
     match(TOKEN_IDENTIFIER);
     tokens[0] = parser.previous;
 
-    //new stuff
     bool single = true;
     bool inferred_type = true;
     if (peek_one(TOKEN_COMMA)) {
@@ -615,13 +613,18 @@ static ResultCode var_declaration(struct Node** node) {
     }
     print_token(parser.previous); printf("\n");
     if (inferred_type) {
-        CONSUME(TOKEN_COLON_EQUAL, tokens[0], "Expecting ':=' for inferred types.");
+        if (match(TOKEN_EQUAL)) {
+            //multi assignment TODO:
+//struct Node* make_set_var(struct Node* left, struct Node* right);
+//struct Node* make_get_var(Token name);
+        } else {
+            CONSUME(TOKEN_COLON_EQUAL, tokens[0], "Expecting ':=' for inferred types.");
+        }
     } else {
         CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before variable assignments.");
     }
 
-    //CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before assignment.");
-
+    struct NodeList* nodes = (struct NodeList*)make_node_list();
     for (int i = 0; i < types->count; i++) {
         struct Node* right;
         PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", tokens[i].length, tokens[i].start);
@@ -724,7 +727,7 @@ static ResultCode declaration(struct Node** node) {
         pop_root();
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
-                             make_get_var(parser.previous, NULL) : 
+                             make_get_var(parser.previous) : 
                              NULL;
 
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before class body.");
@@ -910,7 +913,7 @@ static ResultCode declaration(struct Node** node) {
         //condition 
         Token prop_token = make_token(TOKEN_IDENTIFIER, -1, "size", 4);
         Token less_token = make_token(TOKEN_LESS, -1, "<", 1);
-        struct Node* get_idx = make_get_var(idx_token, NULL);
+        struct Node* get_idx = make_get_var(idx_token);
         struct Node* get_size = make_get_prop(list, prop_token);
         struct Node* condition = make_logical(less_token, get_idx, get_size);
 

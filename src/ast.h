@@ -193,7 +193,6 @@ typedef struct {
 typedef struct {
     struct Node base;
     Token name;
-    struct Type* template_type;
 } GetVar;
 
 typedef struct {
@@ -242,7 +241,7 @@ struct Node* make_unary(Token name, struct Node* right);
 struct Node* make_binary(Token name, struct Node* left, struct Node* right);
 struct Node* make_logical(Token name, struct Node* left, struct Node* right);
 struct Node* make_decl_var(Token name, struct Type* type, struct Node* right);
-struct Node* make_get_var(Token name, struct Type* template_type);
+struct Node* make_get_var(Token name);
 struct Node* make_set_var(struct Node* left, struct Node* right);
 struct Node* make_get_element(Token name, struct Node* left, struct Node* idx);
 struct Node* make_set_element(struct Node* left, struct Node* right);

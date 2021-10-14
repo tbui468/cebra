@@ -230,10 +230,9 @@ struct Node* make_set_prop(struct Node* inst, struct Node* right) {
     return insert_node((struct Node*)set_prop);
 }
 
-struct Node* make_get_var(Token name, struct Type* template_type) {
+struct Node* make_get_var(Token name) {
     GetVar* get_var = ALLOCATE(GetVar);
     get_var->name = name;
-    get_var->template_type = template_type;
     get_var->base.type = NODE_GET_VAR;
 
     return insert_node((struct Node*)get_var);
@@ -436,7 +435,6 @@ void print_node(struct Node* node) {
             GetVar* gv = (GetVar*)node;
             printf("( GetVar ");
             print_token(gv->name);
-            if (gv->template_type != NULL) print_type(gv->template_type);
             printf(" )");
             break;
         }
