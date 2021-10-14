@@ -23,6 +23,9 @@ typedef struct {
     struct Table* globals;
     struct NodeList* first_pass_nl;
     struct NodeList* resolve_id_list;
+    Token tokens[256];
+    struct TypeArray* types;
+    int var_count;
 } Parser;
 
 ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes);

@@ -561,100 +561,67 @@ static ResultCode param_declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-//Note: also takes care of multi assignment since the parser can't look ahead far enough to know
-static ResultCode var_declaration(struct Node** node) {
-    Token tokens[256];
-    //will use types->count to track variable declaration count
-    struct TypeArray* types = (struct TypeArray*)make_array_type();
-
-    match(TOKEN_IDENTIFIER);
-    tokens[0] = parser.previous;
-
-    bool single = true;
-    bool inferred_type = true;
-    if (peek_one(TOKEN_COMMA)) {
-        add_type(types, make_infer_type());
-        single = false;
-    } else if (match(TOKEN_COLON_EQUAL)) {
-        add_type(types, make_infer_type());
-    } else if (match(TOKEN_COLON)) {
-        inferred_type = false;
-        struct Type* type;
-        PARSE_TYPE(tokens[0], &type, tokens[0], "Variable '%.*s' type not declared.  Alternatively, use '%.*s := <expression>' to infer type.", 
-                tokens[0].length, tokens[0].start, tokens[0].length, tokens[0].start);
-        add_type(types, type);
-        if (peek_one(TOKEN_COMMA)) {
-            single = false;
-        } else {
-            CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before assignment.");
-        }
-    }
-
-    if (single) {
-        struct Node* right;
-        PARSE(expression, tokens[0], &right, tokens[0], "Variable '%.*s' must be assigned to valid expression at declaration.", tokens[0].length, tokens[0].start);
-        *node = make_decl_var(tokens[0], types->types[0], right);
-        return RESULT_SUCCESS;
-    } 
-        
-    //multi-variable declaration
-    int idx = 0;
-    while (match(TOKEN_COMMA)) {
-        idx++;
-        CONSUME(TOKEN_IDENTIFIER, tokens[idx-1], "Expected an identifier after ','.");
-        tokens[idx] = parser.previous;
-        if (!inferred_type) {
-            CONSUME(TOKEN_COLON, tokens[idx], "Expected a ':' after identifier.");
-            struct Type* type;
-            PARSE_TYPE(tokens[idx], &type, tokens[idx], "Variable '%.*s' type not declared.", tokens[idx].length, tokens[idx].start);
-            add_type(types, type);
-        } else {
-            add_type(types, make_infer_type());
-        }
-    }
-    print_token(parser.previous); printf("\n");
-    if (inferred_type) {
-        if (match(TOKEN_EQUAL)) {
-            //multi assignment - TODO: is there a way to take this out?  Mixing assignment here with variable declarations is confusing
-            //  but then how can we handle single-line/multi variable declaration/assignment without the ability to look ahead an arbitrary
-            //  number of tokens?
-            struct NodeList* nodes = (struct NodeList*)make_node_list();
-            for (int i = 0; i < types->count; i++) {
-                struct Node* right;
-                PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
-                      tokens[i].length, tokens[i].start);
-                add_node(nodes, make_set_var(make_get_var(tokens[i]), right));
-                if (i < types->count - 1) {
-                    CONSUME(TOKEN_COMMA, tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", 
-                            tokens[i+1].length, tokens[i+1].start);
-                }
-            }
-
-            *node = (struct Node*)nodes;
-            return RESULT_SUCCESS;
-        } else {
-            CONSUME(TOKEN_COLON_EQUAL, tokens[0], "Expecting ':=' for inferred types.");
-        }
+static ResultCode parse_id_and_type() {
+    CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expecting an identifier.");
+    Token var = parser.previous;
+    parser.tokens[parser.var_count] = var;
+    parser.var_count++;
+    //Note: type info will be unused if assignment (TOKEN_EQUAL)
+    if (peek_one(TOKEN_COLON_EQUAL) || peek_one(TOKEN_COMMA) || peek_one(TOKEN_EQUAL)) {
+        add_type(parser.types, make_infer_type());
     } else {
-        CONSUME(TOKEN_EQUAL, tokens[0], "Expecting '=' before variable assignments.");
+        CONSUME(TOKEN_COLON, var, "Expected ':' before type.");
+        struct Type* type;
+        PARSE_TYPE(var, &type, var, "Parameter identifier '%.*s' type invalid.", var.length, var.start);
+        add_type(parser.types, type);
     }
-
-    struct NodeList* nodes = (struct NodeList*)make_node_list();
-    for (int i = 0; i < types->count; i++) {
-        struct Node* right;
-        PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
-              tokens[i].length, tokens[i].start);
-        add_node(nodes, make_decl_var(tokens[i], types->types[i], right));
-        if (i < types->count - 1) {
-            CONSUME(TOKEN_COMMA, tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", 
-                    tokens[i+1].length, tokens[i+1].start);
-        }
-    }
-
-    *node = (struct Node*)nodes;
     return RESULT_SUCCESS;
 }
 
+static ResultCode parse_var_declarations(struct Node** node) {
+    //Note: marking size here to rest size at the end of the function
+    //  parser.var_count and parser.types are an array, so this
+    //  marking is used to allow list declarations with functions as assignments
+    int original_var_count = parser.var_count;
+
+    do {
+        if (parse_id_and_type() == RESULT_FAILED) return RESULT_FAILED;
+    } while (match(TOKEN_COMMA));
+
+    bool inferred = false;
+    if (match(TOKEN_COLON_EQUAL)) {
+        inferred = true;
+    } else {
+        CONSUME(TOKEN_EQUAL, parser.previous, "Expected ':=' or '=' for assignment after declaration.");
+    }
+
+    struct NodeList* nodes = (struct NodeList*)make_node_list();
+    for (int i = original_var_count; i < parser.var_count; i++) {
+        if (inferred) {
+            if (parser.types->types[i]->type != TYPE_INFER) {
+                ERROR(parser.tokens[i], "Type cannot be explicitly declared if using ':=' notation.");
+            }
+        } else {
+            if (parser.types->types[i]->type == TYPE_INFER) {
+                ERROR(parser.tokens[i], "Type must be explicitly declared if using '=' notation.");
+            }
+        }
+        struct Node* right;
+        PARSE(expression, parser.tokens[i], &right, parser.tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
+              parser.tokens[i].length, parser.tokens[i].start);
+        add_node(nodes, make_decl_var(parser.tokens[i], parser.types->types[i], right));
+
+        if (i >= parser.var_count - 1) break;
+        CONSUME(TOKEN_COMMA, parser.tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", 
+                parser.tokens[i+1].length, parser.tokens[i+1].start);
+    }
+
+    //reset to original size here
+    parser.var_count = original_var_count;
+    parser.types->count = original_var_count;
+    *node = (struct Node*)nodes;
+    return RESULT_SUCCESS;
+}
 
 static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
     Token prop_name = dv->name;
@@ -676,7 +643,11 @@ static ResultCode declaration(struct Node** node) {
     if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
         peek_two(TOKEN_IDENTIFIER, TOKEN_COMMA) ||
         peek_two(TOKEN_IDENTIFIER, TOKEN_COLON_EQUAL)) {
-        return var_declaration(node);
+        //Note: assignment is an expression by default, and is
+        //  wrapped in a ExprStmt to pop the result if free standing
+        //  see end of this function for the code
+        return parse_var_declarations(node);
+        //return var_declaration(node);
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
         match(TOKEN_IDENTIFIER);
         Token enum_name = parser.previous;
@@ -752,32 +723,38 @@ static ResultCode declaration(struct Node** node) {
 
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
-            struct Node* decl;
-            if (var_declaration(&decl) == RESULT_FAILED) {
+            struct Node* decl_list;
+            if (parse_var_declarations(&decl_list) == RESULT_FAILED) {
                 ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
             }
 
-            struct TypeStruct* tc = (struct TypeStruct*)struct_type;
+            struct NodeList* list = (struct NodeList*)decl_list;
 
-            switch(decl->type) {
-                case NODE_LIST: {
-                    struct NodeList* decls = (struct NodeList*)decl;
-                    for (int i = 0; i < decls->count; i++) {
-                        DeclVar* dv = (DeclVar*)(decls->nodes[i]);
+            for (int i = 0; i < list->count; i++) {
+
+                struct TypeStruct* tc = (struct TypeStruct*)struct_type;
+                struct Node* decl = list->nodes[i];
+
+                switch(decl->type) {
+                    case NODE_LIST: {
+                        struct NodeList* decls = (struct NodeList*)decl;
+                        for (int i = 0; i < decls->count; i++) {
+                            DeclVar* dv = (DeclVar*)(decls->nodes[i]);
+                            if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
+                            add_node(nl, (struct Node*)dv);
+                        }
+                        break;
+                    }
+                    case NODE_DECL_VAR: {
+                        DeclVar* dv = (DeclVar*)decl;
                         if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
                         add_node(nl, (struct Node*)dv);
+                        break;
                     }
-                    break;
-                }
-                case NODE_DECL_VAR: {
-                    DeclVar* dv = (DeclVar*)decl;
-                    if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
-                    add_node(nl, (struct Node*)dv);
-                    break;
-                }
-                default: {
-                    ERROR(parser.previous, "Shit broke - expecting a NODE_LIST or NODE_DECL_VAR ast node.");
-                    break;
+                    default: {
+                        ERROR(parser.previous, "Shit broke - expecting a NODE_LIST or NODE_DECL_VAR ast node.");
+                        break;
+                    }
                 }
             }
         }
@@ -886,9 +863,10 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
         struct Node* initializer = NULL;
         if (!match(TOKEN_COMMA)) {
-            if (declaration(&initializer) == RESULT_FAILED) { //TODO: should this be var_decl???  This would allow other declarations here
+            if (parse_var_declarations(&initializer) == RESULT_FAILED) {
                 ERROR(name, "Expect initializer or empty space for first item in 'for' loop.");
             }
+            initializer = ((struct NodeList*)initializer)->nodes[0];
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
         }
 
@@ -975,7 +953,9 @@ static void init_parser(const char* source, struct Table* globals) {
     parser.error_count = 0;
     parser.globals = globals;
     parser.first_pass_nl = (struct NodeList*)make_node_list();
+    parser.var_count = 0;
     parser.resolve_id_list = (struct NodeList*)make_node_list();
+    parser.types = (struct TypeArray*)make_array_type();
 }
 
 static void free_parser() {

@@ -968,6 +968,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
             pop_root();
+            print_token(gv->name);
             add_error(compiler, gv->name, "[GetVar] Attempting to access undeclared variable.");
             return RESULT_FAILED;
         }
