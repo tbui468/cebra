@@ -29,6 +29,10 @@ Documentation:
 
 Implementation:
 
+    Change function parameters to new list declarations
+
+    Change assignment to new list declarations
+
     Idea!  For multi declaration and assignment
         It's really messy now with assignments and var declarations all mixed up
         Option: Whenever a new var declaration or assignment starts for 

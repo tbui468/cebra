@@ -561,31 +561,31 @@ static ResultCode param_declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode parse_id_and_type() {
+static ResultCode parse_id_and_type(Token* tokens, struct TypeArray* types) {
     CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expecting an identifier.");
     Token var = parser.previous;
-    parser.tokens[parser.var_count] = var;
-    parser.var_count++;
+    tokens[types->count] = var;
     //Note: type info will be unused if assignment (TOKEN_EQUAL)
     if (peek_one(TOKEN_COLON_EQUAL) || peek_one(TOKEN_COMMA) || peek_one(TOKEN_EQUAL)) {
-        add_type(parser.types, make_infer_type());
+        add_type(types, make_infer_type());
     } else {
         CONSUME(TOKEN_COLON, var, "Expected ':' before type.");
         struct Type* type;
         PARSE_TYPE(var, &type, var, "Parameter identifier '%.*s' type invalid.", var.length, var.start);
-        add_type(parser.types, type);
+        add_type(types, type);
     }
     return RESULT_SUCCESS;
 }
 
 static ResultCode parse_var_declarations(struct Node** node) {
-    //Note: marking size here to rest size at the end of the function
-    //  parser.var_count and parser.types are an array, so this
-    //  marking is used to allow list declarations with functions as assignments
-    int original_var_count = parser.var_count;
+    Token tokens[256];
+    struct TypeArray* types = (struct TypeArray*)make_array_type();
 
     do {
-        if (parse_id_and_type() == RESULT_FAILED) return RESULT_FAILED;
+        if (types->count > 255) {
+            ERROR(parser.previous, "Maximun number of declarations separated by ',' is 256.");
+        }
+        if (parse_id_and_type(tokens, types) == RESULT_FAILED) return RESULT_FAILED;
     } while (match(TOKEN_COMMA));
 
     bool inferred = false;
@@ -596,29 +596,26 @@ static ResultCode parse_var_declarations(struct Node** node) {
     }
 
     struct NodeList* nodes = (struct NodeList*)make_node_list();
-    for (int i = original_var_count; i < parser.var_count; i++) {
+    for (int i = 0; i < types->count; i++) {
         if (inferred) {
-            if (parser.types->types[i]->type != TYPE_INFER) {
-                ERROR(parser.tokens[i], "Type cannot be explicitly declared if using ':=' notation.");
+            if (types->types[i]->type != TYPE_INFER) {
+                ERROR(tokens[i], "Type cannot be explicitly declared if using ':=' notation.");
             }
         } else {
-            if (parser.types->types[i]->type == TYPE_INFER) {
-                ERROR(parser.tokens[i], "Type must be explicitly declared if using '=' notation.");
+            if (types->types[i]->type == TYPE_INFER) {
+                ERROR(tokens[i], "Type must be explicitly declared if using '=' notation.");
             }
         }
         struct Node* right;
-        PARSE(expression, parser.tokens[i], &right, parser.tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
-              parser.tokens[i].length, parser.tokens[i].start);
-        add_node(nodes, make_decl_var(parser.tokens[i], parser.types->types[i], right));
+        PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
+              tokens[i].length, tokens[i].start);
+        add_node(nodes, make_decl_var(tokens[i], types->types[i], right));
 
-        if (i >= parser.var_count - 1) break;
-        CONSUME(TOKEN_COMMA, parser.tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", 
-                parser.tokens[i+1].length, parser.tokens[i+1].start);
+        if (i >= types->count - 1) break;
+        CONSUME(TOKEN_COMMA, tokens[i], "Expected ',' followed by another expression for assignment to '%.*s'.", 
+                tokens[i+1].length, tokens[i+1].start);
     }
 
-    //reset to original size here
-    parser.var_count = original_var_count;
-    parser.types->count = original_var_count;
     *node = (struct Node*)nodes;
     return RESULT_SUCCESS;
 }
@@ -953,9 +950,7 @@ static void init_parser(const char* source, struct Table* globals) {
     parser.error_count = 0;
     parser.globals = globals;
     parser.first_pass_nl = (struct NodeList*)make_node_list();
-    parser.var_count = 0;
     parser.resolve_id_list = (struct NodeList*)make_node_list();
-    parser.types = (struct TypeArray*)make_array_type();
 }
 
 static void free_parser() {
