@@ -1,21 +1,21 @@
 Syntax highlighter:
-    Then remake extension project with better naming using 'yo code'
-        save to github too - can do it afterwards
 
-        Reorganize syntax highlighting code into reasonable chunks
-        
-        Embed expressions into heirarchies to make it possible to highlight function parameters
-            struct fields, and enum fields.
+    Fill in description.  
+        Include link to Github src and Docs for Cebra
 
-        Correct highlighting for closures and anonymous functions
+    Create simple cebra logo.
+        Look sample logos to see what kind is acceptable for extensions
 
-        Any way to highlight enum name when selecting enume elements??
-
-    Fill in description.  Create simple cebra logo.
-
-    Put on vscode extensions marketplace
+    Publish on VSCode extensions marketplace
+        Look at tutorial to see what steps need to be taken
 
 Documentation:
+    Look at GifTuna website for simple but effective layout
+
+    Upload logo to website
+
+    Clean up colors to make it more simple and clean.
+
     Update sections titles to match current status
 
     Update section on how to download/build from source and VSCode syntax highlighter

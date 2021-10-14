@@ -36,6 +36,7 @@ cast_to_float := true
 cast_to_bool := true
 cast_struct_instances := true
 when_statement := true
+multi_declaration := true
 
 passed := List<string>()
 failed := List<string>()
@@ -45,6 +46,14 @@ add_failed := (msg: string) -> {
 }
 add_passed := (msg: string) -> {
     passed[passed.size] = msg
+}
+
+
+Token :: enum {
+    plus
+    minus
+    star
+    slash
 }
 
 Animal :: struct {
@@ -1008,12 +1017,6 @@ if lists_maps_in_structs {
 
 if enums {
     print("-Enums")
-    Token :: enum {
-        plus
-        minus
-        star
-        slash
-    }
 
     a: Token = Token.plus
     ai := Token.plus
@@ -1216,6 +1219,40 @@ if when_statement {
     }
 }
 
+if multi_declaration {
+    print("-Multi-declarations on a single line")
+    a: int, b: int = 1, 2
+    if a + b == 3 {
+        add_passed("Two declarations, explicit types: Passed!")
+    } else {
+        add_failed("Two declarations, explicit types: Failed!")
+    }
+    c, d := 4, 5
+    if c + d == 9 {
+        add_passed("Two declarations, same implicit types: Passed!")
+    } else {
+        add_failed("Two declarations, same implicit types: Failed!")
+    }
+    e, f := "dog", true
+    if e == "dog" and f {
+        add_passed("Two declarations, different implicit types: Passed!")
+    } else {
+        add_failed("Two declarations, different implicit types: Failed!")
+    }
+
+    dog2: Dog, tok2: Token = Dog(), Token.plus
+    if dog2.name == "Mittens" and tok2 == Token.plus {
+        add_passed("Two declarations, different explicit custom types: Passed!")
+    } else {
+        add_failed("Two declarations, different explicit custom types: Failed!")
+    }
+    dog, tok := Dog(), Token.plus
+    if dog.name == "Mittens" and tok == Token.plus {
+        add_passed("Two declarations, different implicit custom types: Passed!")
+    } else {
+        add_failed("Two declarations, different implicit custom types: Failed!")
+    }
+}
 
 print("----------------------------------")
 print("Total Tests:")

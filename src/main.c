@@ -125,9 +125,9 @@ int main(int argc, char** argv) {
     //that keys/values can be collected
     vm.initialized = false;
 
-#ifdef DEBUG_STRESS_GC
+//#ifdef DEBUG_STRESS_GC
     collect_garbage();
-#endif
+//#endif
 
     free_vm(&vm);
 
