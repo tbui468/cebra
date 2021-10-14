@@ -457,8 +457,9 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
+//Note: TOKEN_COLON is consume before if a variable declaration
 static ResultCode parse_type(Token var_name, struct Type** type) {
-    if (parser.previous.type == TOKEN_COLON && peek_one(TOKEN_EQUAL)) {
+    if (peek_one(TOKEN_EQUAL)) {
         *type = make_infer_type(); //inferred type typenature TODO: should change name to TypeInferred
         return RESULT_SUCCESS;
     }
@@ -541,9 +542,9 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     }
 
     if (match(TOKEN_NIL) || 
-            //function definition
+            //function declaration: create nil return type
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
-            //function declaration
+            //closure declaration: create nil return type
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))) {
         *type = make_nil_type();
         return RESULT_SUCCESS;
@@ -591,14 +592,17 @@ static ResultCode var_declaration(struct Node** node) {
         }
     } else {
         add_type(types, make_infer_type());
+        inferred_type = false;
     }
 
     //multi-variable declaration
+    int idx = 0;
     while (match(TOKEN_COMMA)) {
-        int idx = types->count;
+        idx++;
         CONSUME(TOKEN_IDENTIFIER, tokens[idx-1], "Expected an identifier after ','.");
         tokens[idx] = parser.previous;
         if (!inferred_type) {
+            CONSUME(TOKEN_COLON, tokens[idx], "Expected a ':' after identifier.");
             struct Type* type;
             PARSE_TYPE(tokens[idx], &type, tokens[idx], "Variable '%.*s' type not declared.", tokens[idx].length, tokens[idx].start);
             add_type(types, type);
