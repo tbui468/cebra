@@ -112,20 +112,20 @@ static Token read_keyword(char c) {
 }
 
 Token next_token() {
-
     consume_whitespace();
 
     unsigned char c = next_char();
 
     //skip line comments
     while (c == '/' && peek_char() == '/') {
-        while (next_char() != '\n') {
+        while (peek_char() != '\n' && peek_char() != '\0') {
+            next_char();
         }        
         lexer.line++;
         consume_whitespace();
         c = next_char();
     }
-   
+
     //float with leading . 
     if (c == '.' && isdigit(peek_char())) {
         read_numbers();

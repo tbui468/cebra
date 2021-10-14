@@ -177,20 +177,10 @@ Expr :: struct {
 }
 
 PrimaryExpr :: struct < Expr { 
-    PrimaryExpr :: (token: Token) -> PrimaryExpr {
-        self.token = token
-        -> self
-    }
 }
 
 
 BinaryExpr :: struct < Expr { 
-    BinaryExpr :: (token: Token, left: Expr, right: Expr) -> BinaryExpr {
-        self.token = token
-        self.left = left
-        self.right = right
-        -> self
-    }
     left: Expr = nil
     right: Expr = nil
 }

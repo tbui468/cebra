@@ -933,7 +933,6 @@ static ResultCode declaration(struct Node** node) {
 
     struct Node* expr;
     PARSE(expression, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
-
     *node = make_expr_stmt(expr);
     return RESULT_SUCCESS;
 }
@@ -1255,13 +1254,9 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     }
 
     if (result != RESULT_FAILED) result = resolve_global_struct_identifiers(parser.globals);
-
     if (result != RESULT_FAILED) result = check_global_circular_inheritance(parser.globals);
-
     if (result != RESULT_FAILED) result = copy_global_inherited_props(parser.globals);
-
     if (result != RESULT_FAILED) result = resolve_global_function_identifiers(parser.globals);
-
     if (result != RESULT_FAILED) result = resolve_remaining_identifiers(parser.globals, *all_nodes);
 
     struct NodeList* ordered_nl = (struct NodeList*)make_node_list();

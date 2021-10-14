@@ -29,7 +29,11 @@ Documentation:
 
 Implementation:
 
-    Write tests for multi-variable declaration
+    Bug: files ending in a comment crash program
+
+    TOKEN_COLON_EQUAL should be a token - combine ':=' together so we know it's an inferred type
+
+    Rewrite Lexer - it's very messy and error prone
 
     Write code for multi-variable assignment
 
