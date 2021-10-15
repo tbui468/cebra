@@ -26,23 +26,6 @@ Documentation:
         could just have sample code user can look at rather than an actual interactive panel
 
 Implementation:
-
-    Make a 'parse_single_expression' function that calls assignment with 'expected' = 1,
-        unwraps, and then returns the result - this function will need to be used in
-        'if', 'while', etc.  Replace the code in 'for loop' and 'function call' with this function too.
-
-        look at where expression is called and see if it only parses one
-
-    Change expression() to 'parse_expression_sequence()' which will parse one or more expressions if separated
-        by commas
-
-    Currently we are calling assignment with parameter 'expected' set to 1 
-        when parsing for loop items, and function arguments.  This is to prevent
-        assignment() from consuming the ',' and messing up parsing.  The return
-        value is also manually unwrapped from the struct NodeList* since expression()
-        normally does that.  Could we call expression() and pass the 'expected' parameter
-        there?  But that would require a rewrite of all the 'expression()' calls
-        
     Add multiple return options to functions
         need to make return type a TypeList
         need to make Return node 'right' a NodeList

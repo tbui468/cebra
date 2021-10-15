@@ -42,7 +42,7 @@
 
 Parser parser;
 
-static ResultCode expression(Token var_name, struct Node** node);
+static ResultCode parse_multiple_expressions(Token var_name, struct Node** node);
 static ResultCode declaration(struct Node** node);
 static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode parse_type(Token var_name, struct Type** type);
@@ -487,7 +487,7 @@ static ResultCode parse_single_expression(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode expression(Token var_name, struct Node** node) {
+static ResultCode parse_multiple_expressions(Token var_name, struct Node** node) {
     struct Node* result;
     if (assignment(var_name, &result, -1) == RESULT_FAILED) {
         return RESULT_FAILED;
@@ -722,7 +722,7 @@ static ResultCode declaration(struct Node** node) {
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* field;
-            PARSE(expression, make_dummy_token(), &field, struct_name, "Expect field declarations inside struct body.");
+            PARSE(parse_multiple_expressions, make_dummy_token(), &field, struct_name, "Expect field declarations inside struct body.");
             struct TypeStruct* tc = (struct TypeStruct*)struct_type;
             switch(field->type) {
                 case NODE_DECL_VAR: {
@@ -910,13 +910,13 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(expression, make_dummy_token(), &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
+        PARSE(parse_multiple_expressions, make_dummy_token(), &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
         *node = make_return(name, right);
         return RESULT_SUCCESS;
     }
 
     struct Node* expr;
-    PARSE(expression, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
+    PARSE(parse_multiple_expressions, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
     //TODO: if a DeclVar, don't pop it
     if (expr->type == NODE_LIST) {
         struct NodeList* list = (struct NodeList*)expr;
