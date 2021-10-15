@@ -435,9 +435,9 @@ static ResultCode assignment(Token var_name, struct Node** node, int expected) {
 
 
     while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
-        Token  name = parser.previous;
+        Token name = parser.previous;
 
-        int inferred = parser.previous.type == TOKEN_EQUAL;
+        int inferred = parser.previous.type == TOKEN_COLON_EQUAL;
 
         struct Node* assign_value;
         if (assignment(var_name, &assign_value, node_sequence->count) == RESULT_FAILED) { 
@@ -467,8 +467,9 @@ static ResultCode assignment(Token var_name, struct Node** node, int expected) {
                 if (left->type == NODE_GET_VAR) {
                     GetVar* gv = (GetVar*)left;
                     left = make_decl_var(gv->name, make_infer_type(), right);
+                } else if (left->type == NODE_DECL_VAR) {
+                    ERROR(parser.previous, "Type inference using ':=' cannot be used if type is already explicitly declared.");
                 }
-                //TODO: add error here
             }
 
             node_sequence->nodes[i] = left;

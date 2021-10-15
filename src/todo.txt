@@ -93,6 +93,32 @@ Implementation:
             }
         }
 
+    private keywords?  I want to be able to encapsulate data/functions (mainly for modules)
+        //private enums, structs and functions can't be accessed/instantiated, but if
+        a function returns it, the user can still use it.
+
+        //the star means add_two and Dog are hidden outside the module
+        //Calling the function/struct is done without the * as the * is
+        //just to mark it as private and not part of the struct name
+        add_two* :: (a: int, b: int) -> (int) {
+        }
+        Dog* :: struct {
+            name* := "Dog" //name is a private field only accessible by parameter marked with*
+            class := "Mammal"
+        }
+        //d's private fields can be accessed
+        mutate_dog* :: (d: Dog*, a: int) -> () {
+            d.name = "Bubbles" //okay
+            d.friend.name = "Mittens" //invalid since only Dog "d" is mutable
+        }
+        invalid_fun :: (d: Dog) -> () {
+            d.name = "Bubbles" //setting is invalid
+            str: string = d.name //this is okay
+            print(d.name) //reading is still okay
+            friend := d.friend //okay
+            friend.name = "Bubbles" //invalid
+        }
+
     'break' and 'continue' for loops
 
     Rewrite Lexer - it's very messy and error prone
