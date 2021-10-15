@@ -1,4 +1,5 @@
-a , b: int = 1, 4
 
-print(a)
-print(b)
+
+if a, b := true, true {
+    print("true")
+}

@@ -234,7 +234,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
         //check for group (expression in parentheses)
         struct Node* expr;
-        PARSE(expression, var_name, &expr, name, "Expect valid expression after '('.");
+        PARSE(parse_single_expression, var_name, &expr, name, "Expect valid expression after '('.");
 
         CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after expression.");
         *node = expr;
@@ -269,9 +269,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 if (!match(TOKEN_RIGHT_PAREN)) {
                     do {
                         struct Node* arg;
-                        if (parse_single_expression(var_name, &arg) == RESULT_FAILED) {
-                            ERROR(parser.previous, "Function call argument must be a valid expression.");
-                        }
+                        PARSE(parse_single_expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
                         add_node(args, arg); 
                     } while (match(TOKEN_COMMA));
                     CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after arguments.");
@@ -283,7 +281,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
             case TOKEN_LEFT_BRACKET: {
                 Token left_bracket = parser.previous;
                 struct Node* idx;
-                PARSE(expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
+                PARSE(parse_single_expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
                 left = make_get_element(parser.previous, left, idx);
                 CONSUME(TOKEN_RIGHT_BRACKET, left_bracket, "Expect ']' after index.");
                 break;
@@ -765,9 +763,9 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
 
         struct Node* condition;
-        PARSE(expression, make_dummy_token(), &condition, name, "Expect boolean expression after 'if'.");
+        PARSE(parse_single_expression, make_dummy_token(), &condition, name, "Expect single boolean expression after 'if'.");
 
-        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' after 'if' condition.");
+        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect boolean expression and '{' after 'if' condition.");
 
         Token left_brace_token = parser.previous;
         struct Node* then_block;
@@ -790,7 +788,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHEN)) {
         Token name = parser.previous;
         struct Node* left;
-        PARSE(expression, name, &left, name, "Expected a valid expression after 'when'.");
+        PARSE(parse_single_expression, name, &left, name, "Expected a valid expression after 'when'.");
         CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after 'when' and variable.");
         struct NodeList* cases = (struct NodeList*)make_node_list();
 
@@ -798,7 +796,7 @@ static ResultCode declaration(struct Node** node) {
             Token is = parser.previous;
 
             struct Node* right;
-            PARSE(expression, is, &right, is, "Expected expression to test equality with variable after 'when'.");
+            PARSE(parse_single_expression, is, &right, is, "Expected expression to test equality with variable after 'when'.");
             Token make_token(TokenType type, int line, const char* start, int length);
             Token equal = make_token(TOKEN_EQUAL_EQUAL, is.line, "==", 2);
             struct Node* condition = make_logical(equal, left, right);
@@ -831,7 +829,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
         struct Node* condition;
-        PARSE(expression, make_dummy_token(), &condition, name, "Expect condition after 'while'.");
+        PARSE(parse_single_expression, make_dummy_token(), &condition, name, "Expect condition after 'while'.");
         CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
 
         struct Node* then_block;
@@ -844,22 +842,20 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
         struct Node* initializer = NULL;
         if (!match(TOKEN_COMMA)) {
-            PARSE(expression, make_dummy_token(), &initializer, name, "Expected initializer or empty space for first item in 'for' loop.");
+            PARSE(parse_single_expression, make_dummy_token(), &initializer, name, "Expected initializer or empty space for first item in 'for' loop.");
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
         }
 
         struct Node* condition = NULL;
         if (!match(TOKEN_COMMA)) {
-            if (parse_single_expression(make_dummy_token(), &condition) == RESULT_FAILED) {
-                ERROR(name, "Expect update or empty space for third item in 'for' loop.");
-            }
+            PARSE(parse_single_expression, make_dummy_token(), &condition, name, "Expect update or empty space for third item in 'for' loop.");
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
         }
 
         struct Node* update = NULL;
         if (!match(TOKEN_LEFT_BRACE)) {
             struct Node* update_expr;
-            PARSE(expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
+            PARSE(parse_single_expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
             update = make_expr_stmt(update_expr);
             CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after for-loop update.");
         }
@@ -879,7 +875,7 @@ static ResultCode declaration(struct Node** node) {
         CONSUME(TOKEN_IN, name, "Expect 'in' after element declaration.");
 
         struct Node* list;
-        PARSE(expression, make_dummy_token(), &list, name, "Expect List identifier after 'in' in foreach loop.");
+        PARSE(parse_single_expression, make_dummy_token(), &list, name, "Expect List identifier after 'in' in foreach loop.");
 
         //initializer
         Token idx_token = make_token(TOKEN_IDENTIFIER, -1, "_idx_", 5);
