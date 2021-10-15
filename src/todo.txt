@@ -26,6 +26,37 @@ Documentation:
         could just have sample code user can look at rather than an actual interactive panel
 
 Implementation:
+    Change syntax so that function returns are all wrapped in parentheses
+
+    Change Return AST node and TypeFun so that returns take in a list of expressions, and TypeFun->ret a list of types
+
+    Returns compile each expression in the correct order in the parser - make them compile each expression in the compiler
+
+    If a function call with more than one return is a statement, need to pop equal to the number of returns
+        - could just let the compiler handle this.  After compiling the inside of each StmtExpr, we normally
+        just pop one, but this time look at the returned type - pop again for each return over 1
+
+    For assignment, multiassignment from multiple returns might be tricky if we also allow arbitrary number in the 
+        sequence.  We don't know the number of returns in a closure until compile time, so we simpled can't reverse
+        the lhs of the assignments.
+
+        One solution: have the function still compile the returns in order from left to right, but when returning
+            we know how many returns there are - pop the returns into a temp stack, and then pop them back into the 
+            vm stack so that the returns are in reverse order (and correct order for the declarations and assignments)
+            ..but then we still don't know a
+
+            One solution to that problem: we know that all statements will either be a var declaration or one of the three
+                assignments.  Make a new Sequence ast node that holds a list of declarations/assignments with NULL right sides, 
+                and a second list of all right side expressions.  At compile time, compile ALL the right sides in sequence and
+                then check if the sum of values on the stack is equal to the declarations/assignments in the first list. 
+                Then compile the first list in REVERSE order so that they line up with the elements in the stack.  Make sure
+                to put in NULL checks so that if the right hand side is null, declaration/assignment nodes just assign to top
+                of the stack.  
+                Will also need to think about how /when to pop the stack...
+                Note: this means that in sequences, all right hand side expressions are evaluated before they are assigned
+                at the end.
+    
+
     Add multiple return options to functions
         need to make return type a TypeList
         need to make Return node 'right' a NodeList
