@@ -434,8 +434,6 @@ static ResultCode assignment(Token var_name, struct Node** node, int expected) {
     while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
         Token name = parser.previous;
 
-        int inferred = parser.previous.type == TOKEN_COLON_EQUAL;
-
         struct Node* assign_value;
         if (assignment(var_name, &assign_value, node_sequence->count) == RESULT_FAILED) { 
             ERROR(var_name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
@@ -729,6 +727,18 @@ static ResultCode declaration(struct Node** node) {
                     DeclVar* dv = (DeclVar*)field;
                     if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
                     add_node(nl, (struct Node*)dv);
+                    break;
+                }
+                case NODE_LIST: {
+                    struct NodeList* decls = (struct NodeList*)field;
+                    for (int i = 0; i < decls->count; i++) {
+                        if (decls->nodes[i]->type != NODE_DECL_VAR) {
+                            ERROR(struct_name, "Expecting field declarations and assignments.");
+                        }
+                        DeclVar* dv = (DeclVar*)(decls->nodes[i]);
+                        if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
+                        add_node(nl, (struct Node*)dv);
+                    }
                     break;
                 }
                 default: {
