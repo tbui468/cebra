@@ -36,7 +36,7 @@ cast_to_float := true
 cast_to_bool := true
 cast_struct_instances := true
 when_statement := true
-multi_declaration := true
+sequences := true
 
 passed := List<string>()
 failed := List<string>()
@@ -1220,7 +1220,7 @@ if when_statement {
 }
 
 
-if multi_declaration {
+if sequences {
     print("-Multi-declarations on a single line")
     a: int, b: int = 1, 2
     if a + b == 3 {
@@ -1253,6 +1253,38 @@ if multi_declaration {
     } else {
         add_failed("Two declarations, different implicit custom types: Failed!")
     }
+
+    g := 2
+    h: int, g = 5, 6
+    if g == 6 and h == 5 {
+        add_passed("One assignment, One declaration: Passed!")
+    } else {
+        add_failed("One assignment, One declaration: Failed!")
+    }
+
+    //lists and maps
+    list, map := List<Dog>(), Map<int>()
+    list[0], list[1], map["one"] = Dog(), Dog(), 20
+    list[0].friend, list[1].friend = list[1], list[0]
+    list[0].friend.name, list[1].friend.name = "friend 1", "friend 0"
+
+    if list[0].name == "friend 0" and list[1].name == "friend 1" {
+        add_passed("Sequence with Lists Holding Structs: Passed")
+    } else {
+        add_failed("Sequence with Lists Holding Structs: Failed")
+    }
+
+    a, dog3: Dog = 99, Dog()
+    dog4 := Dog()
+    dog3.name, dog3.class, dog3.friend = "Bubbles", "Mammal", dog4
+    dog3.friend.name, dog3.friend.friend = "Boxy", dog3
+
+    if dog3.friend.name == "Boxy" and dog3.friend.friend.name == dog3.name {
+        add_passed("Sequence with Structs and Properties: Passed")
+    } else {
+        add_failed("Sequence with Structs and Properties: Failed")
+    }
+
 }
 
 print("----------------------------------")
@@ -1260,9 +1292,6 @@ print("Total Tests:")
 print(passed.size + failed.size)
 print("Passed:")
 print(passed.size)
-//for i := 0, i < passed.size, i = i + 1 {
-//    print(passed[i])
-//}
 print("Failed:")
 print(failed.size)
 for i := 0, i < failed.size, i = i + 1 {

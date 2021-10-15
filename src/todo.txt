@@ -1,13 +1,5 @@
 Syntax highlighter:
-
-    Fill in description.  
-        Include link to Github src and Docs for Cebra
-
-    Create simple cebra logo.
-        Look sample logos to see what kind is acceptable for extensions
-
-    Publish on VSCode extensions marketplace
-        Look at tutorial to see what steps need to be taken
+    Push update to the marketplace - fixed typo with function colors not showing
 
 Documentation:
     Update build/download instructions
@@ -35,14 +27,16 @@ Documentation:
 
 Implementation:
 
-    Clean up unused code in parser
+    'inferred' in assignment() is unused, but I need to error check some things
+    with it - all declarations/assignments and their types need to match '=' or ':=' 
+    using this.  The tests should crash
 
-    Write tests for sequential assignment/declaration including with 
-        setting fields and elements
+    Make a 'parse_single_expression' function that calls assignment with 'expected' = 1,
+        unwraps, and then returns the result - this function will need to be used in
+        'if', 'while', etc.  Replace the code in 'for loop' and 'function call' with this function too.
 
-        'inferred' in assignment() is unused, but I need to error check some things
-        with it - all declarations/assignments and their types need to match '=' or ':=' 
-        using this.  The tests should crash
+    Change expression() to 'parse_expression_sequence()' which will parse one or more expressions if separated
+        by commas
 
     Currently we are calling assignment with parameter 'expected' set to 1 
         when parsing for loop items, and function arguments.  This is to prevent

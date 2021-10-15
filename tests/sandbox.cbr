@@ -1,8 +1,33 @@
-a, b := "dog", 23.23
+//assign and declare in same line
+a := 2
+b: int, a = 5, 6
+
+
+//lists and maps
+list, map := List<Dog>(), Map<int>()
+list[0], list[1], map["one"] = Dog(), Dog(), 20
+
+list[0].friend, list[1].friend = list[1], list[0]
+list[0].friend.name, list[1].friend.name = "friend 1", "friend 0"
+
+print(list[0].name)
+print(list[1].name)
+
+print(list.size)
+print(map.keys.size)
+
+//structs
+Dog :: struct {
+    name := "Mittens"
+    class := "Canine"
+    friend: Dog = nil
+}
+
+a, dog: Dog = 99, Dog()
+dog2 := Dog()
+dog.name, dog.class, dog.friend = "Bubbles", "Mammal", dog2
+dog.friend.name, dog.friend.friend = "Boxy", dog
 
 print(a)
-print(b)
-
-for i: int = 0, i < 3, i = i + 1 {
-    print(i)
-}
+print(dog.name)
+print(dog.class)
