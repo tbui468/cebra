@@ -413,6 +413,22 @@ static ResultCode assignment(Token var_name, struct Node** node) {
     struct Node* left;
     PARSE_WITHOUT_MSG(or, var_name, &left);
 
+    //if next is TOKEN_COMMA, we know it must be an assignment
+    //  so call expression until we get to a TOKEN_EQUAL
+    //  we don't allow cascading assignments with multiassignments, so
+    //  once this is processed, return the list
+    /*
+    if (peek_one(TOKEN_COMMA)) {
+        //save left in list
+        while (match(TOKEN_COMMA)) {
+            //parse new left and add it list
+        }
+        
+        CONSUME(TOKEN_EQUAL, parser.previous, "Expect '=' followed by assignment.");
+        //keep parsing expressions until reaching matching number of 'lefts' (if functions, add the number = return counts)
+        //then wrap left + right together into a either a set_element, set_var, or set_prop
+    }*/
+
     while (match(TOKEN_EQUAL)) {
         Token  name = parser.previous;
         struct Node* right;
@@ -597,14 +613,11 @@ static ResultCode parse_var_declarations(struct Node** node) {
 
     struct NodeList* nodes = (struct NodeList*)make_node_list();
     for (int i = 0; i < types->count; i++) {
-        if (inferred) {
-            if (types->types[i]->type != TYPE_INFER) {
-                ERROR(tokens[i], "Type cannot be explicitly declared if using ':=' notation.");
-            }
-        } else {
-            if (types->types[i]->type == TYPE_INFER) {
-                ERROR(tokens[i], "Type must be explicitly declared if using '=' notation.");
-            }
+        if (inferred && types->types[i]->type != TYPE_INFER) {
+            ERROR(tokens[i], "Type cannot be explicitly declared if using ':=' notation.");
+        }
+        if (!inferred && types->types[i]->type == TYPE_INFER) {
+            ERROR(tokens[i], "Type must be explicitly declared if using '=' notation.");
         }
         struct Node* right;
         PARSE(expression, tokens[i], &right, tokens[i], "Variable '%.*s' must be assigned to valid expression at declaration.", 
