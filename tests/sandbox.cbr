@@ -1,3 +1,8 @@
-a, b := 23, 4
+a, b := "dog", 23.23
+
 print(a)
 print(b)
+
+for i: int = 0, i < 3, i = i + 1 {
+    print(i)
+}

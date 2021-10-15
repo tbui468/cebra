@@ -48,6 +48,7 @@ static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode parse_type(Token var_name, struct Type** type);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode var_declaration(struct Node** node);
+static ResultCode assignment(Token var_name, struct Node** node, int expected);
 
 static void print_all_tokens() {
     printf("******start**********\n");
@@ -268,7 +269,12 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 if (!match(TOKEN_RIGHT_PAREN)) {
                     do {
                         struct Node* arg;
-                        PARSE(expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
+                        //PARSE(expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
+                        if (assignment(var_name, &arg, 1) == RESULT_FAILED) {
+                            ERROR(parser.previous, "Function call argument must be a valid expression.");
+                        }
+                        //Note: manually unwrapping NodeList since assignment() doesn't do it (only expression() does)
+                        arg = ((struct NodeList*)arg)->nodes[0];
                         add_node(args, arg); 
                     } while (match(TOKEN_COMMA));
                     CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after arguments.");
@@ -416,64 +422,99 @@ static ResultCode or(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode assignment(Token var_name, struct Node** node) {
+static ResultCode assignment(Token var_name, struct Node** node, int expected) {
     //OLD STUFF////
-    struct Node* left;
-    PARSE_WITHOUT_MSG(or, var_name, &left);
+    //struct Node* left;
+    //PARSE_WITHOUT_MSG(or, var_name, &left);
 
-    /*
-    struct Node** node_sequence;
-    int node_count = 0;
+    //NEWSTUFF
+    struct NodeList* node_sequence = (struct NodeList*)make_node_list();
 
     do {
-        if (node_count > 255) {
+        if (node_sequence->count > 255) {
             ERROR(parser.previous, "Maximun number of assignments/declarations separated by ',' is 256.");
         }
-        PARSE_WITHOUT_MSG(or, var_name, &node_sequence[node_count]);
-        node_count++;
-    } while (match(TOKEN_COMMA));*/
+        struct Node* left;
+        PARSE_WITHOUT_MSG(or, var_name, &left);
+        add_node(node_sequence, left);
+        if (expected != -1 && node_sequence->count >= expected) break;
+    } while (match(TOKEN_COMMA));
+
+    ////////////
 
     while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
         Token  name = parser.previous;
-/*
-        inferred = true; 
-        if (match(TOKEN_EQUAL)) {
-            inferred = false;
-        } else {
-            CONSUME(TOKEN_COLON_EQUAL, parser.previous, "Expected either a '=' or ':=' followed by a sequence of expressions for assignment.");
+
+        //NEW STUFF
+        int inferred = parser.previous.type == TOKEN_EQUAL;
+
+        struct Node* assign_value;
+        //PARSE(assignment, var_name, &assign_value, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
+        if (assignment(var_name, &assign_value, node_sequence->count) == RESULT_FAILED) { 
+            ERROR(var_name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
+            return RESULT_FAILED;
         }
 
-        struct NodeList* nodes = (struct NodeList*)make_node_list();
-        for (int i = 0; i < node_count; i++) {*/
+        //TODO: need to add type checking for counts: a, b = 1, 3 need to both have counts of two
+        if (node_sequence->count != ((struct NodeList*)assign_value)->count) {
+            ERROR(parser.previous, "Sequence lengths must match.");
+        }
+        
+        for (int i = 0; i < node_sequence->count; i++) {
+            struct Node* left = node_sequence->nodes[i];
+            struct Node* right = ((struct NodeList*)assign_value)->nodes[i];
 
-
-        struct Node* right;
-        PARSE(expression, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-
-        if (name.type == TOKEN_EQUAL) {
-            if (left->type == NODE_GET_ELEMENT) {
-                left = make_set_element(left, right);
-            } else if (left->type == NODE_GET_VAR) {
-                left = make_set_var(left, right);
-            } else if (left->type == NODE_GET_PROP) {
-                left = make_set_prop(left, right);
-            } else if (left->type == NODE_DECL_VAR) {
-                ((DeclVar*)left)->right = right;
+            if (name.type == TOKEN_EQUAL) {
+                if (left->type == NODE_GET_ELEMENT) {
+                    left = make_set_element(left, right);
+                } else if (left->type == NODE_GET_VAR) {
+                    left = make_set_var(left, right);
+                } else if (left->type == NODE_GET_PROP) {
+                    left = make_set_prop(left, right);
+                } else if (left->type == NODE_DECL_VAR) {
+                    ((DeclVar*)left)->right = right;
+                }
+            } else { //TOKEN_COLON_EQUAL
+                if (left->type == NODE_GET_VAR) {
+                    GetVar* gv = (GetVar*)left;
+                    left = make_decl_var(gv->name, make_infer_type(), right);
+                }
+                //TODO: add error here
             }
-        } else { //TOKEN_COLON_EQUAL
-            if (left->type == NODE_GET_VAR) {
-                GetVar* gv = (GetVar*)left;
-                left = make_decl_var(gv->name, make_infer_type(), right);
-            }
+
+            node_sequence->nodes[i] = left;
+
+            /*
+            if (i < node_sequence->count - 1) {
+                print_token(parser.previous);
+                CONSUME(TOKEN_COMMA, name, "Expected a ',' followed by an expression for assignment.");
+            }*/
         }
     }
 
-    *node = left;
+   /* 
+    if (node_sequence->count == 1) {
+        *node = node_sequence->nodes[0];
+        return RESULT_SUCCESS;
+    } */
+
+    *node = (struct Node*)node_sequence;
     return RESULT_SUCCESS;
 }
 
 static ResultCode expression(Token var_name, struct Node** node) {
-    return assignment(var_name, node);
+    struct Node* result;
+    if (assignment(var_name, &result, -1) == RESULT_FAILED) {
+        return RESULT_FAILED;
+    }
+
+    if (result->type == NODE_LIST && ((struct NodeList*)result)->count == 1) {
+        *node = ((struct NodeList*)result)->nodes[0];
+        return RESULT_SUCCESS;
+    }
+
+    *node = result;
+    return RESULT_SUCCESS;
 }
 
 static ResultCode block(struct Node* prepend, struct Node** node) {
@@ -937,8 +978,13 @@ static ResultCode declaration(struct Node** node) {
 
         struct Node* condition = NULL;
         if (!match(TOKEN_COMMA)) {
-            PARSE(expression, make_dummy_token(), &condition, name, "Expect condition or empty space for second item in 'for' loop.");
+            //PARSE(expression, make_dummy_token(), &condition, name, "Expect condition or empty space for second item in 'for' loop.");
+            if (assignment(make_dummy_token(), &condition, 1) == RESULT_FAILED) {
+                ERROR(name, "Expect update or empty space for third item in 'for' loop.");
+            }
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
+            //Note: need to manually unwrap from NodeList since we're calling assignment() directly, and expression() unwraps lists of one element
+            condition = ((struct NodeList*)condition)->nodes[0];
         }
 
         struct Node* update = NULL;
@@ -1007,11 +1053,25 @@ static ResultCode declaration(struct Node** node) {
     struct Node* expr;
     PARSE(expression, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
     //TODO: if a DeclVar, don't pop it
-    if (expr->type != NODE_DECL_VAR) {
+    if (expr->type == NODE_LIST) {
+        struct NodeList* list = (struct NodeList*)expr;
+        for (int i = 0; i < list->count; i++) {
+            if (list->nodes[i]->type != NODE_DECL_VAR) {
+                list->nodes[i] = make_expr_stmt(list->nodes[i]);
+            }
+        }
+        if (list->count == 1) {
+            *node = list->nodes[0];
+        } else {
+            *node = (struct Node*)list;
+        }
+        return RESULT_SUCCESS;
+    } else if (expr->type != NODE_DECL_VAR) {
         *node = make_expr_stmt(expr);
-    } else {
-        *node = expr;
+        return RESULT_SUCCESS;
     }
+
+    *node = expr;
     return RESULT_SUCCESS;
 }
 
