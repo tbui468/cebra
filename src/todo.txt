@@ -10,36 +10,7 @@ Syntax highlighter:
         Look at tutorial to see what steps need to be taken
 
 Documentation:
-    Need to have DeclVar NOT POP too
-    comment out var_decla in declarations and try this:
-        in primary()
-            make single identifiers a GetVar, and make identifier + colon + type DeclVar
-        in call_dot()
-            will need checks here later, but skip for now
-        in assignment(), also check for ':=':
-            if DeclVar need to check for '='
-            if GetVar and ':=', the need to convert to DeclVar with inferred type 
-    
-    How about make var declarations expressions too?  This means we call
-        expressions to take care of them, and then pop them as usual.
-        One big difference is primary only makes a temporary 
-
-
-    Make the sequential format more general without special cases
-
-        parse left
-            if a single identifer is followed by a ',', '=', or ':='
-                make a temp DeclVar node with the token, TypeInfer and NULL right
-            otherwise parse expression()
-        check next: 
-            if '=',
-                change all DeclVar with TypeInfer into GetVar,
-            otherwise leave the DeclVar as is
-        parse right:
-            match with correct 'left' in sequence:
-                if GetVar, GetProp, GetElement - make set version with right side
-                
-        
+    Update build/download instructions
 
     Look at GifTuna website for simple but effective layout
 
@@ -64,108 +35,22 @@ Documentation:
 
 Implementation:
 
-    One solution! Only allow sequential assignment as a free standing statement.  
-    It's a little more verbose, but it makes syntax clearer
-        a, b = returns_two_values()
-        takes_two_values(a, b)
-        while (true) {
-            a, b, = returns_two_values()
-            print(a)
-        }
+    Clean up unused code in parser
 
-        Don't need to touch assignment or any of the expression parsing code now - it currently only
-            accepts a single assignment, and will report an error if programmer tries to add more using ','. 
+    Write tests for sequential assignment/declaration including with 
+        setting fields and elements
 
-        Change name of parse_var_declaration to parse_sequential.
-            parse_sequential will then take care of single/multi declaration and multiassignment
-            If it's a single declaration, return that without wrapping in NodeList.  Otherwise
-            wrap in nodelist for caller (declaration()) to unwrap and add to the node list.  
-            Single assignments are handled by the expression() recursive calls, so no need to worry 
-            about those, but can consider refactoring them later.
+        'inferred' in assignment() is unused, but I need to error check some things
+        with it - all declarations/assignments and their types need to match '=' or ':=' 
+        using this.  The tests should crash
 
-        if ':=', all left hand sides must be DeclVars with inferred types --- error check
-        if '=', left hand sides can be GetVar, GetProp, GetElement OR DeclVars with explicit types --- error check
-            when doing functions with multiple returns, need to modify those four nodes to allow
-            us to set them to values on the stack after the function call - essentially reverse
-            the order of the sequence, and set a flag in the node (or just right == NULL) so
-            that the nodes set to the top of the stack without compiling 'right'.  All the 
-            set statements also need to be wrapped in a ExprStmt
-
-            three_returns :: () -> (int, int, int) {
-                -> 1, 2, 3
-            }
+    Currently we are calling assignment with parameter 'expected' set to 1 
+        when parsing for loop items, and function arguments.  This is to prevent
+        assignment() from consuming the ',' and messing up parsing.  The return
+        value is also manually unwrapped from the struct NodeList* since expression()
+        normally does that.  Could we call expression() and pass the 'expected' parameter
+        there?  But that would require a rewrite of all the 'expression()' calls
         
-            eg, a, b: int, c[0] = three_returns()
-            make_stmt_expr(make_set_element(get_element [c, 0], right))
-            make_stmt_expr(make_decl_var(token [b], NULL))
-            make_stmt_expr(make_set_var(get_var [a], NULL))
-
-            Set element will compile the call on 'two_returns', which leaves [1][2][3] on the stack
-            set element will then set itself to the top of the stack, 3.  Then the StmtExpr wrapper pops 3
-            decl var will set b to the top of the stack, 2,  without compiling (since right is NULL).  Wrapper pops 2
-            set var will set a = to top of stack 1.  Wrapper pops 1
-            
-            a is set to 1
-            b is declared and set to 2
-            c[0] is set to 3
-    
-    One solution!  For struct NodeList returns with assignments, ALWAYS wrap all assignment
-    Nodes with a StmtExpr EXCEPT for the last one - for that last one, have the caller
-    wrap it or leave it.  The only caller that should wrap the last assignment node is 
-    declaration(), right?  
-        
-        Will also need to write a switch case in compile_node to take care of struct NodeList* 
-            - this is cleaner and more general than having to unwrap struct NodeList everywhere
-            in the parser.  
-
-            When are sequentials used? and wouldn't this syntax overlap with for loop syntax?
-                expressions - a, b + 3 (result of b + 3 on stack)
-                assignment - a, b = 23, 5 (5 on stack)
-
-    Finishing implementing multiassignments in assignment() function.  
-
-    Wait! What happens if someone writes this:
-        if true and x, y = false, true { }
-        //when x = false is compiled, it should pop the result from the stack and only
-        if true and y = true { } is evaluated
-
-        Wouldn' this mean that ALL functions that may use the multiassignment
-        needs to wrap the results in ExprStmt???
-
-        Could this problem be solve by making multiassignment/declaration into
-        a special ast node (rather than parsing it into simpiler ast nodes)?
-        The struct MultiDecl and MultAssign could have two lists of Tokens + type + right
-        or left + right,  and then let the compiler sort out the compilation order???
-
-    Change assignment to new list declarations
-        Problem:
-            How to deal with user trying to do a double assignment inside condition?
-            If it's a list, then the second element is used as the final result
-            This allows us to use the second result as a result code if necessary
-
-            cool_function :: (n: int) -> (int, bool) {
-                -> n - 1, n > 0
-            }
-
-            a := 5
-            while a, b, = cool_function(a) {
-                print(a) //should print 4, 3, 2, 1, 0
-            }
-
-            a, b = 5, 2 //this will wrap each expression in a stmt, popping the results
-                need to look at end of expression() - if result is a struct NodeList*, 
-                wrap each element in a ExprStmt, and return a new struct NodeList* with
-                the newly wrapped nodes
-
-        Assignments will possibly need to be wrapped in a StmtExpr to pop the results.
-        Leave that responsibility to the caller of expression() - if they receive a struct NodeList*
-        back (it should be full of assignments), then it needs to decide how to wrap each element.
-            1. If expression is called in declaration, then all assignments need to be wrapped in ExprStmt.
-            2. If expression as part of a condition, then all except the last assignment is wrapped in ExprStmt
-            3. If expression is an argument, then none should be wrapped (but the order may need to be reversed???)
-            4. Others???
-
-
     Add multiple return options to functions
         need to make return type a TypeList
         need to make Return node 'right' a NodeList
