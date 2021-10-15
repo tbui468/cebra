@@ -207,7 +207,14 @@ static ResultCode primary(Token var_name, struct Node** node) {
         *node = make_decl_container(identifier, make_map_type(template_type)); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IDENTIFIER)) {
-        *node = make_get_var(parser.previous);
+        Token id = parser.previous;
+        if (match(TOKEN_COLON)) {
+            struct Type* type;
+            PARSE_TYPE(var_name, &type, var_name, "Expected valid type after ':'.");
+            *node = make_decl_var(id, type, NULL);
+            return RESULT_SUCCESS;
+        } 
+        *node = make_get_var(id);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_STRING_TYPE)) {
         Token token = parser.previous;
@@ -410,35 +417,54 @@ static ResultCode or(Token var_name, struct Node** node) {
 }
 
 static ResultCode assignment(Token var_name, struct Node** node) {
+    //OLD STUFF////
     struct Node* left;
     PARSE_WITHOUT_MSG(or, var_name, &left);
 
-    //if next is TOKEN_COMMA, we know it must be an assignment
-    //  so call expression until we get to a TOKEN_EQUAL
-    //  we don't allow cascading assignments with multiassignments, so
-    //  once this is processed, return the list
     /*
-    if (peek_one(TOKEN_COMMA)) {
-        //save left in list
-        while (match(TOKEN_COMMA)) {
-            //parse new left and add it list
-        }
-        
-        CONSUME(TOKEN_EQUAL, parser.previous, "Expect '=' followed by assignment.");
-        //keep parsing expressions until reaching matching number of 'lefts' (if functions, add the number = return counts)
-        //then wrap left + right together into a either a set_element, set_var, or set_prop
-    }*/
+    struct Node** node_sequence;
+    int node_count = 0;
 
-    while (match(TOKEN_EQUAL)) {
+    do {
+        if (node_count > 255) {
+            ERROR(parser.previous, "Maximun number of assignments/declarations separated by ',' is 256.");
+        }
+        PARSE_WITHOUT_MSG(or, var_name, &node_sequence[node_count]);
+        node_count++;
+    } while (match(TOKEN_COMMA));*/
+
+    while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
         Token  name = parser.previous;
+/*
+        inferred = true; 
+        if (match(TOKEN_EQUAL)) {
+            inferred = false;
+        } else {
+            CONSUME(TOKEN_COLON_EQUAL, parser.previous, "Expected either a '=' or ':=' followed by a sequence of expressions for assignment.");
+        }
+
+        struct NodeList* nodes = (struct NodeList*)make_node_list();
+        for (int i = 0; i < node_count; i++) {*/
+
+
         struct Node* right;
         PARSE(expression, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-        if (left->type == NODE_GET_ELEMENT) {
-            left = make_set_element(left, right);
-        } else if (left->type == NODE_GET_VAR) {
-            left = make_set_var(left, right);
-        } else { //NODE_GET_PROP
-            left = make_set_prop(left, right);
+
+        if (name.type == TOKEN_EQUAL) {
+            if (left->type == NODE_GET_ELEMENT) {
+                left = make_set_element(left, right);
+            } else if (left->type == NODE_GET_VAR) {
+                left = make_set_var(left, right);
+            } else if (left->type == NODE_GET_PROP) {
+                left = make_set_prop(left, right);
+            } else if (left->type == NODE_DECL_VAR) {
+                ((DeclVar*)left)->right = right;
+            }
+        } else { //TOKEN_COLON_EQUAL
+            if (left->type == NODE_GET_VAR) {
+                GetVar* gv = (GetVar*)left;
+                left = make_decl_var(gv->name, make_infer_type(), right);
+            }
         }
     }
 
@@ -650,6 +676,7 @@ static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
 }
 
 static ResultCode declaration(struct Node** node) {
+    /*
     if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) ||
         peek_two(TOKEN_IDENTIFIER, TOKEN_COMMA) ||
         peek_two(TOKEN_IDENTIFIER, TOKEN_COLON_EQUAL)) {
@@ -658,7 +685,7 @@ static ResultCode declaration(struct Node** node) {
         //  see end of this function for the code
         return parse_var_declarations(node);
         //return var_declaration(node);
-    } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
+    } else*/ if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
         match(TOKEN_IDENTIFIER);
         Token enum_name = parser.previous;
         match(TOKEN_COLON_COLON);
@@ -733,12 +760,38 @@ static ResultCode declaration(struct Node** node) {
 
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
+            struct Node* field;
+            PARSE(expression, make_dummy_token(), &field, struct_name, "Expect field declarations inside struct body.");
+            struct TypeStruct* tc = (struct TypeStruct*)struct_type;
+            switch(field->type) {
+                /*
+                case NODE_LIST: {
+                    struct NodeList* decls = (struct NodeList*)decl;
+                    for (int i = 0; i < decls->count; i++) {
+                        DeclVar* dv = (DeclVar*)(decls->nodes[i]);
+                        if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
+                        add_node(nl, (struct Node*)dv);
+                    }
+                    break;
+                }*/
+                case NODE_DECL_VAR: {
+                    DeclVar* dv = (DeclVar*)field;
+                    if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
+                    add_node(nl, (struct Node*)dv);
+                    break;
+                }
+                default: {
+                    ERROR(parser.previous, "Shit broke - expecting a NODE_LIST or NODE_DECL_VAR ast node.");
+                    break;
+                }
+            }
+            /*
             struct Node* decl_list;
             if (parse_var_declarations(&decl_list) == RESULT_FAILED) {
                 ERROR(parser.previous, "Invalid field declaration in struct '%.*s'.", struct_name.length, struct_name.start);
             }
 
-            struct NodeList* list = (struct NodeList*)decl_list;
+            struct NodeList* list = (struct NodeList*)decl_list; //unwrapping in case of sequential declarations
 
             for (int i = 0; i < list->count; i++) {
 
@@ -766,7 +819,7 @@ static ResultCode declaration(struct Node** node) {
                         break;
                     }
                 }
-            }
+            }*/
         }
 
         *node = make_decl_struct(struct_name, super, nl);
@@ -873,10 +926,12 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
         struct Node* initializer = NULL;
         if (!match(TOKEN_COMMA)) {
+            PARSE(expression, make_dummy_token(), &initializer, name, "Expected initializer or empty space for first item in 'for' loop.");
+            /*
             if (parse_var_declarations(&initializer) == RESULT_FAILED) {
                 ERROR(name, "Expect initializer or empty space for first item in 'for' loop.");
             }
-            initializer = ((struct NodeList*)initializer)->nodes[0];
+            initializer = ((struct NodeList*)initializer)->nodes[0];*/
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
         }
 
@@ -951,7 +1006,12 @@ static ResultCode declaration(struct Node** node) {
 
     struct Node* expr;
     PARSE(expression, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
-    *node = make_expr_stmt(expr);
+    //TODO: if a DeclVar, don't pop it
+    if (expr->type != NODE_DECL_VAR) {
+        *node = make_expr_stmt(expr);
+    } else {
+        *node = expr;
+    }
     return RESULT_SUCCESS;
 }
 

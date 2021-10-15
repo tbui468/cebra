@@ -58,7 +58,8 @@ parse_tokens :: (tokens: List<Token>) -> Expr {
 //************Lexer************
 
 Lexer :: struct {
-    src: string , current_char: string = "", ""
+    src: string = ""
+    current_char: string = ""
     index := 0
 }
 

@@ -10,6 +10,37 @@ Syntax highlighter:
         Look at tutorial to see what steps need to be taken
 
 Documentation:
+    Need to have DeclVar NOT POP too
+    comment out var_decla in declarations and try this:
+        in primary()
+            make single identifiers a GetVar, and make identifier + colon + type DeclVar
+        in call_dot()
+            will need checks here later, but skip for now
+        in assignment(), also check for ':=':
+            if DeclVar need to check for '='
+            if GetVar and ':=', the need to convert to DeclVar with inferred type 
+    
+    How about make var declarations expressions too?  This means we call
+        expressions to take care of them, and then pop them as usual.
+        One big difference is primary only makes a temporary 
+
+
+    Make the sequential format more general without special cases
+
+        parse left
+            if a single identifer is followed by a ',', '=', or ':='
+                make a temp DeclVar node with the token, TypeInfer and NULL right
+            otherwise parse expression()
+        check next: 
+            if '=',
+                change all DeclVar with TypeInfer into GetVar,
+            otherwise leave the DeclVar as is
+        parse right:
+            match with correct 'left' in sequence:
+                if GetVar, GetProp, GetElement - make set version with right side
+                
+        
+
     Look at GifTuna website for simple but effective layout
 
     Upload logo to website

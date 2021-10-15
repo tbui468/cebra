@@ -1219,6 +1219,7 @@ if when_statement {
     }
 }
 
+
 if multi_declaration {
     print("-Multi-declarations on a single line")
     a: int, b: int = 1, 2
