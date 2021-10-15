@@ -48,6 +48,7 @@ static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode parse_type(Token var_name, struct Type** type);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode assignment(Token var_name, struct Node** node, int expected);
+static ResultCode parse_single_expression(Token var_name, struct Node** node);
 
 static void print_all_tokens() {
     printf("******start**********\n");
@@ -268,11 +269,9 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 if (!match(TOKEN_RIGHT_PAREN)) {
                     do {
                         struct Node* arg;
-                        if (assignment(var_name, &arg, 1) == RESULT_FAILED) {
+                        if (parse_single_expression(var_name, &arg) == RESULT_FAILED) {
                             ERROR(parser.previous, "Function call argument must be a valid expression.");
                         }
-                        //Note: manually unwrapping NodeList since assignment() doesn't do it (only expression() does)
-                        arg = ((struct NodeList*)arg)->nodes[0];
                         add_node(args, arg); 
                     } while (match(TOKEN_COMMA));
                     CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after arguments.");
@@ -478,6 +477,15 @@ static ResultCode assignment(Token var_name, struct Node** node, int expected) {
     }
 
     *node = (struct Node*)node_sequence;
+    return RESULT_SUCCESS;
+}
+
+static ResultCode parse_single_expression(Token var_name, struct Node** node) {
+    if (assignment(var_name, node, 1) == RESULT_FAILED) {
+        //caller should add error
+        return RESULT_FAILED;
+    }
+    *node = ((struct NodeList*)(*node))->nodes[0];
     return RESULT_SUCCESS;
 }
 
@@ -842,12 +850,10 @@ static ResultCode declaration(struct Node** node) {
 
         struct Node* condition = NULL;
         if (!match(TOKEN_COMMA)) {
-            if (assignment(make_dummy_token(), &condition, 1) == RESULT_FAILED) {
+            if (parse_single_expression(make_dummy_token(), &condition) == RESULT_FAILED) {
                 ERROR(name, "Expect update or empty space for third item in 'for' loop.");
             }
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
-            //Note: need to manually unwrap from NodeList since we're calling assignment() directly, and expression() unwraps lists of one element
-            condition = ((struct NodeList*)condition)->nodes[0];
         }
 
         struct Node* update = NULL;
