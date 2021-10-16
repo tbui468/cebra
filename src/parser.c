@@ -149,7 +149,9 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
     CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
 
     struct Type* ret_type;
+    CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return type list.");
     PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
+    CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return type list.");
 
     struct Type* fun_type = make_fun_type(param_type, ret_type);
 
@@ -538,8 +540,10 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
             CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter types.");
         }
         CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' followed by return type.");
+        CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return types.");
         struct Type* ret;
         PARSE_TYPE(var_name, &ret, var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
+        CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return types.");
         *type = make_fun_type(params, ret);
         return RESULT_SUCCESS;
     }
@@ -604,10 +608,13 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     }
 
     if (match(TOKEN_NIL) || 
+            (parser.previous.type == TOKEN_LEFT_PAREN && peek_one(TOKEN_RIGHT_PAREN))
+            /*
             //function declaration: create nil return type
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
             //closure declaration: create nil return type
-            (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))) {
+            (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_EQUAL))*/
+            ) {
         *type = make_nil_type();
         return RESULT_SUCCESS;
     }

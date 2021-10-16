@@ -41,10 +41,10 @@ sequences := true
 passed := List<string>()
 failed := List<string>()
 
-add_failed := (msg: string) -> {
+add_failed := (msg: string) -> () {
     failed[failed.size] = msg
 }
-add_passed := (msg: string) -> {
+add_passed := (msg: string) -> () {
     passed[passed.size] = msg
 }
 
@@ -88,7 +88,7 @@ Dog :: struct < Canine {
     map: Map<int> = nil 
 }
 
-make_dog :: () -> Dog {
+make_dog :: () -> (Dog) {
     d := Dog()
     d.name = "Mittens"
     d.age = 3
@@ -306,12 +306,12 @@ if loops {
 if functions_returning_primitives {
     
     print("-Functions Returning Primitives")
-    a1 := () -> {
+    a1 := () -> () {
         add_passed("Zero Parameters / No Return: Passed!")
     }
     a1()
 
-    b1 :: () -> int {
+    b1 :: () -> (int) {
         -> -1
     }
     if b1() == -1 {
@@ -320,7 +320,7 @@ if functions_returning_primitives {
         add_failed("Zero Parameters / Integer Return: Failed!")
     }
 
-    c1 := (i: int) -> {
+    c1 := (i: int) -> () {
         if i == 2 {
             add_passed("Integer Parameter: Passed!")
         } else {
@@ -329,7 +329,7 @@ if functions_returning_primitives {
     }
     c1(2)
 
-    fib :: (i: int) -> int {
+    fib :: (i: int) -> (int) {
         if i < 2 {
             -> i
         }
@@ -345,13 +345,13 @@ if functions_returning_primitives {
 if functions_returning_functions{
     
     print("-Functions Returning Functions")
-    a := () -> () -> {
-        b := () -> {
+    a := () -> (() -> ()) {
+        b := () -> () {
             add_passed("No Parameters / Nil Return: Passed!")
         }
         -> b
     }
-    ai := () -> () -> {
+    ai := () -> (() -> ()) {
         bi := () -> {
             add_passed("No Parameters / Nil Return (Inferred): Passed!")
         }
@@ -361,14 +361,14 @@ if functions_returning_functions{
     a()()
     ai()()
 
-    c :: () -> (int) -> int {
-        d :: (n: int) -> int {
+    c :: () -> ((int) -> (int)) {
+        d :: (n: int) -> (int) {
             -> n * 2
         }
         -> d
     }
-    ci :: () -> (int) -> int {
-        di :: (n: int) -> int {
+    ci :: () -> ((int) -> (int)) {
+        di :: (n: int) -> (int) {
             -> n * 2
         }
         -> di
@@ -385,24 +385,24 @@ if functions_as_parameters {
     
     print("-Functions as Parameters")
 
-    add :: (a: int, b: int) -> int {
+    add :: (a: int, b: int) -> (int) {
         -> a + b
     }
-    addi :: (a: int, b: int) -> int {
+    addi :: (a: int, b: int) -> (int) {
         -> a + b
     }
 
-    mul :: (a: int, b: int) -> int {
+    mul :: (a: int, b: int) -> (int) {
         -> a * b
     }
-    muli :: (a: int, b: int) -> int {
+    muli :: (a: int, b: int) -> (int) {
         -> a * b
     }
 
-    fun :: (a: int, b: int, c: (int, int)->int) -> int {
+    fun :: (a: int, b: int, c: (int, int)-> (int)) -> (int) {
         -> c(a, b)
     }
-    funi :: (a: int, b: int, c: (int, int)->int) -> int {
+    funi :: (a: int, b: int, c: (int, int)-> (int)) -> (int) {
         -> c(a, b)
     }
 
@@ -419,7 +419,7 @@ if cascading_calls {
     
     print("-Cascading Calls")
 
-    a2 :: () -> () -> () -> int {
+    a2 :: () -> (() -> (() -> (int))) {
         b2 :: () -> () -> int {
             c2 :: () -> int {
                 -> 1

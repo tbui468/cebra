@@ -2,11 +2,11 @@ Syntax highlighter:
     Push update to the marketplace - fixed typo with function colors not showing
 
 Documentation:
+    Html/Css is all fucked up in Chrome but fine in Firefox
+
     Update build/download instructions
 
     Look at GifTuna website for simple but effective layout
-
-    Upload logo to website
 
     Include language specification, eg:
         VarDecl     = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
@@ -27,6 +27,7 @@ Documentation:
 
 Implementation:
     Change syntax so that function returns are all wrapped in parentheses
+        finishing wrapping returns in parentheses in correctness.cbr (starting at 'cascading calls')
 
     Change Return AST node and TypeFun so that returns take in a list of expressions, and TypeFun->ret a list of types
 

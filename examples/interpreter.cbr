@@ -36,7 +36,7 @@ while (continue) {
 
 }
 
-scan_source :: (src: string) -> List<Token> {
+scan_source :: (src: string) -> (List<Token>) {
     lexer := Lexer()
     lexer.src = src
     t: Token = nil
@@ -48,7 +48,7 @@ scan_source :: (src: string) -> List<Token> {
     -> tokens
 }
 
-parse_tokens :: (tokens: List<Token>) -> Expr {
+parse_tokens :: (tokens: List<Token>) -> (Expr) {
     parser := Parser()
     parser.tokens = tokens
     parser.current_token = parser.tokens[parser.index]
@@ -62,7 +62,7 @@ Lexer :: struct {
     index := 0
 }
 
-TokenType :: enum {
+TokenType :: enum {k
     default
     number
     plus
@@ -79,7 +79,7 @@ Token :: struct {
     literal := ""
 }
 
-is_digit :: (char: string) -> bool {
+is_digit :: (char: string) -> (bool) {
     -> char == "0" or
        char == "1" or
        char == "2" or
@@ -92,18 +92,18 @@ is_digit :: (char: string) -> bool {
        char == "9"
 }
 
-is_whitespace :: (char: string) -> bool {
+is_whitespace :: (char: string) -> (bool) {
     -> char == " "
 }
 
-peek:: (lexer: Lexer, fun: (string) -> bool) -> bool {
+peek:: (lexer: Lexer, fun: (string) -> (bool)) -> (bool) {
     if lexer.index >= lexer.src.size {
         -> false
     } 
     -> fun(lexer.src[lexer.index])
 }
 
-next_char :: (lexer: Lexer) -> bool {
+next_char :: (lexer: Lexer) -> (bool) {
     if lexer.index >= lexer.src.size {
         -> false
     }
@@ -112,7 +112,7 @@ next_char :: (lexer: Lexer) -> bool {
     -> true
 }
 
-next_token :: (lexer: Lexer) -> Token {
+next_token :: (lexer: Lexer) -> (Token) {
 
     while peek(lexer, is_whitespace) {
         next_char(lexer)
@@ -158,13 +158,13 @@ Parser :: struct {
     current_token: Token = nil 
 }
 
-advance :: (parser: Parser) -> {
+advance :: (parser: Parser) -> () {
     parser.previous_token = parser.current_token
     parser.index = parser.index + 1
     parser.current_token = parser.tokens[parser.index]
 }
 
-match :: (parser: Parser, type: TokenType) -> bool {
+match :: (parser: Parser, type: TokenType) -> (bool) {
     if type == parser.current_token.type {
         advance(parser)
         -> true
@@ -185,13 +185,13 @@ BinaryExpr :: struct < Expr {
     right: Expr = nil
 }
 
-make_primary_expr :: (token: Token) -> Expr {
+make_primary_expr :: (token: Token) -> (Expr) {
     primary := PrimaryExpr()
     primary.token = token
     -> primary as Expr
 }
 
-make_binary_expr :: (token: Token, left: Expr, right: Expr) -> Expr {
+make_binary_expr :: (token: Token, left: Expr, right: Expr) -> (Expr) {
     binary := BinaryExpr()
     binary.token = token
     binary.left = left
@@ -199,7 +199,7 @@ make_binary_expr :: (token: Token, left: Expr, right: Expr) -> Expr {
     -> binary as Expr
 }
 
-parse_primary :: (parser: Parser) -> Expr {
+parse_primary :: (parser: Parser) -> (Expr) {
     if match(parser, TokenType.number) {
         -> make_primary_expr(parser.previous_token)
     }
@@ -211,7 +211,7 @@ parse_primary :: (parser: Parser) -> Expr {
     }
 }
 
-parse_factor :: (parser: Parser) -> Expr {
+parse_factor :: (parser: Parser) -> (Expr) {
     left := parse_primary(parser)
 
     while match(parser, TokenType.star) or match(parser, TokenType.slash) {
@@ -221,7 +221,7 @@ parse_factor :: (parser: Parser) -> Expr {
     -> left
 }
 
-parse_term :: (parser: Parser) -> Expr {
+parse_term :: (parser: Parser) -> (Expr) {
     left := parse_factor(parser)
 
     while match(parser, TokenType.plus) or match(parser, TokenType.minus) {
@@ -231,11 +231,11 @@ parse_term :: (parser: Parser) -> Expr {
     -> left
 }
 
-parse_expression :: (parser: Parser) -> Expr {
+parse_expression :: (parser: Parser) -> (Expr) {
     -> parse_term(parser)
 }
 
-string_expr :: (expr: Expr) -> string {
+string_expr :: (expr: Expr) -> (string) {
     if expr as PrimaryExpr != nil {
         -> " " + expr.token.literal + " "
     }
@@ -247,7 +247,7 @@ string_expr :: (expr: Expr) -> string {
 }
 
 //**********Evaluator***********
-evaluate_expr :: (expr: Expr) -> float {
+evaluate_expr :: (expr: Expr) -> (float) {
     when true {
         is expr as PrimaryExpr != nil {
             -> (expr as PrimaryExpr).token.literal as float
