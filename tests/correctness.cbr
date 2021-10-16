@@ -352,7 +352,7 @@ if functions_returning_functions{
         -> b
     }
     ai := () -> (() -> ()) {
-        bi := () -> {
+        bi := () -> () {
             add_passed("No Parameters / Nil Return (Inferred): Passed!")
         }
         -> bi
@@ -420,8 +420,8 @@ if cascading_calls {
     print("-Cascading Calls")
 
     a2 :: () -> (() -> (() -> (int))) {
-        b2 :: () -> () -> int {
-            c2 :: () -> int {
+        b2 :: () -> (() -> (int)) {
+            c2 :: () -> (int) {
                 -> 1
             }
             -> c2
@@ -435,8 +435,8 @@ if cascading_calls {
         add_failed("Triple calls: Failed!")
     }
 
-    d2 :: () -> (int) -> int {
-        e2 :: (n: int) -> int {
+    d2 :: () -> ((int) -> (int)) {
+        e2 :: (n: int) -> (int) {
             -> 2 * n
         }
         -> e2
@@ -453,11 +453,11 @@ if anonymous_functions {
     
     print("-Anonymous Functions")
 
-    op :: (a: int, b: int, c: (int, int) -> int) -> int {
+    op :: (a: int, b: int, c: (int, int) -> (int)) -> (int) {
         -> c(a, b)
     }
 
-    if op(3, 2, (a: int, b: int) -> int { -> a * b }) == 6 {
+    if op(3, 2, (a: int, b: int) -> (int) { -> a * b }) == 6 {
         add_passed("Anonymous Function: Passed!")
     } else {
         add_failed("Anonymous Function: Failed!")
@@ -469,7 +469,7 @@ if closures_depth_1 {
     print("-Closures Depth 1")
 
     a: int = 0
-    b3 := () -> {
+    b3 := () -> () {
         a = a + 1
     }
 
@@ -491,7 +491,7 @@ if closures_depth_1 {
 
     var: string = "hello world"
     vari := "hello world"
-    c3 := () -> string {
+    c3 := () -> (string) {
         -> var + "!"
     }
 
@@ -515,13 +515,13 @@ if closures_depth_2 {
 
     str1: string = "hello "
     str2: string = "world"
-    a4 := () -> () -> string {
-        b4 := () -> string {
+    a4 := () -> (() -> (string)) {
+        b4 := () -> (string) {
             -> str1 + str2
         }
         -> b4
     }
-    c4: () -> string = a4()
+    c4: () -> (string) = a4()
 
     str1i := "hello "
     str2i := "world"
@@ -532,17 +532,17 @@ if closures_depth_2 {
         add_failed("Open upvalues, Depth 2: Failed!")
     }
 
-    x := () -> () -> () -> string {
-        y := () -> () -> string {
-            z := () -> string {
+    x := () -> (() -> (() -> (string))) {
+        y := () -> (() -> (string)) {
+            z := () -> (string) {
                 -> str1 + str2
             }
             -> z
         }
         -> y
     }
-    xx: () -> () -> string = x()
-    yy: () -> string = xx()
+    xx: () -> (() -> (string)) = x()
+    yy: () -> (string) = xx()
 
     if yy() == "hello world" {
         add_passed("Open upvalues, Depth 3: Passed!")
@@ -560,14 +560,14 @@ if closures_depth_2 {
 if closed_upvalues {
     
     print("-Closed Upvalues")
-    outer1 :: () -> () -> string {
+    outer1 :: () -> (() -> (string)) {
         x: string = "outside"
-        inner1 := () -> string{
+        inner1 := () -> (string) {
             -> x
         }
         -> inner1
     }
-    closure: () -> string = outer1()
+    closure: () -> (string) = outer1()
 
     if closure() == "outside" {
         add_passed("Closed Upvalues: Passed!")
@@ -599,7 +599,7 @@ if structs {
         add_failed("Set Property: Failed!")
     }
 
-    increment := () -> {
+    increment := () -> () {
         dog.age = dog.age + 1
     }
 
@@ -611,18 +611,18 @@ if structs {
         add_failed("Instance Upvalue: Failed!")
     }
 
-    outer := () -> () -> {
+    outer := () -> (() -> () ){
         Cat :: struct {
             name: string = "Whiskey"
             age: int = 2
         }
-        make_cat :: () -> Cat {
+        make_cat :: () -> (Cat) {
             c := Cat()
             c.name = "Whiskey"
             c.age = 2
             -> c
         }
-        inner := () -> {
+        inner := () -> () {
             c: Cat = make_cat()
             if c.name == "Whiskey" and c.age == 2 {
                 add_passed("Class upvalue: Passed!")
@@ -652,7 +652,7 @@ if structs {
     }
 
     dog3: Dog = make_dog()
-    dog_age :: (d: Dog) -> {
+    dog_age :: (d: Dog) -> () {
         d.age = 10
     }
     dog_age(dog3)
@@ -662,7 +662,7 @@ if structs {
         add_failed("Instance as Parameter: Failed!")
     }
 
-    dog_factory :: () -> Dog {
+    dog_factory :: () -> (Dog) {
         d: Dog = make_dog()
         d.age = 100
         -> d
@@ -869,11 +869,11 @@ if struct_typing {
     
     print("-Struct Typing")
 
-    fun2 :: (a: Animal) -> {
+    fun2 :: (a: Animal) -> () {
         a.class = "Reptile"
     }
 
-    make_bird :: () -> Animal {
+    make_bird :: () -> (Animal) {
         b: Bird = Bird()
         -> b as Animal
     }
