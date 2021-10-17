@@ -305,7 +305,8 @@ ResultCode run_program(VM* vm) {
             }
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_TYPE(frame, uint8_t);
-                frame->locals[slot] = peek(vm, 0);
+                uint8_t depth = READ_TYPE(frame, uint8_t);
+                frame->locals[slot] = peek(vm, depth);
                 break;
             }
             case OP_GET_UPVALUE: {
@@ -315,7 +316,8 @@ ResultCode run_program(VM* vm) {
             }
             case OP_SET_UPVALUE: {
                 uint8_t slot = READ_TYPE(frame, uint8_t);
-                *frame->function->upvalues[slot]->location = peek(vm, 0);
+                uint8_t depth = READ_TYPE(frame, uint8_t);
+                *frame->function->upvalues[slot]->location = peek(vm, depth);
                 break;
             }
             case OP_CLOSE_UPVALUE: {

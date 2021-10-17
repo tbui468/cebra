@@ -27,6 +27,9 @@ Documentation:
 
 Implementation:
 
+    SetVar currently only emits index of the variable to set to the top of the stack
+        include an index down the stack to set to
+
     Add Sequence AST node and integrate new recursive parsing algorithms for parsing sequences - see next two notes sections:
         - Create Sequence node and integrate into parser/compiler - include sequence length checks
               in compiler, compile all right-hand-sides sequentially, and then the left hand sides

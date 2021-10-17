@@ -448,10 +448,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 right_seq_type = (struct Type*)ta;
             }
 
+            //x, y, z = 1, 2, 3
+            //[1][2][3]
+            //compile z, y and then x manually to set to stack top
             //compile left side right-to-left to align with values pushed onto stack
             //whe compiling right side above
             for (int i = seq->left->count - 1; i >= 0; i--) {
-                COMPILE_NODE(nl->
+                struct Type* left_type;
+                COMPILE_NODE(nl->nodes[i], NULL, &left_type);
             }
 
             //compile right side
@@ -1000,20 +1004,18 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             GetVar* gv = (GetVar*)node;
 
             int idx = resolve_local(compiler, gv->name);
+            OpCode op = OP_GET_LOCAL;
+            if (idx == -1) {
+                idx = resolve_upvalue(compiler, gv->name);
+                op = OP_GET_UPVALUE;
+            }
+
             if (idx != -1) {
-                emit_byte(compiler, OP_GET_LOCAL);
+                emit_byte(compiler, op);
                 emit_byte(compiler, idx);
                 *node_type = resolve_type(compiler, gv->name);
                 return RESULT_SUCCESS;
-            }
-
-            int upvalue_idx = resolve_upvalue(compiler, gv->name);
-            if (upvalue_idx != -1) {
-                emit_byte(compiler, OP_GET_UPVALUE);
-                emit_byte(compiler, upvalue_idx);
-                *node_type = resolve_type(compiler, gv->name);
-                return RESULT_SUCCESS;
-            }
+            } 
 
             //check if global -this needs to check enclosing compiler too
             struct ObjString* name = make_string(gv->name.start, gv->name.length);
@@ -1045,22 +1047,20 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             *node_type = var_type;
 
             int idx = resolve_local(compiler, var);
+            OpCode op = OP_SET_LOCAL;
+            if (idx == -1) {
+                idx = resolve_upvalue(compiler, var);
+                op = OP_SET_UPVALUE;
+            }
+
             if (idx != -1) {
                 CHECK_TYPE(!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type), 
                            var, "Right side type must match variable type.");
 
-                emit_byte(compiler, OP_SET_LOCAL);
+                emit_byte(compiler, op);
                 emit_byte(compiler, idx);
-                return RESULT_SUCCESS;
-            }
-
-            int upvalue_idx = resolve_upvalue(compiler, var);
-            if (upvalue_idx != -1) {
-                CHECK_TYPE(!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type), 
-                           var, "Right side type must match variable type.");
-
-                emit_byte(compiler, OP_SET_UPVALUE);
-                emit_byte(compiler, upvalue_idx);
+                int depth = 0;
+                emit_byte(compiler, depth);
                 return RESULT_SUCCESS;
             }
 
