@@ -443,6 +443,9 @@ static ResultCode assignment(Token var_name, struct Node** node, int expected) {
         Token name = parser.previous;
 
         struct Node* assign_value;
+        //TODO: parse with or() here and manually check for ',' to prevent a sequence within sequence
+        //parse until ':=' or '=' or non ',' since we don't know how many will exists if functions with multiple
+        //returns are included
         if (assignment(var_name, &assign_value, node_sequence->count) == RESULT_FAILED) { 
             ERROR(var_name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
             return RESULT_FAILED;

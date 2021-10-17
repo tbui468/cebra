@@ -1,7 +1,4 @@
+a := b := 23
 
-
-match :: (a: int, b: int) -> (bool) {
-    -> false
-}
-a: bool = true
-a = match(3, 2)
+print(a)
+print(b)
