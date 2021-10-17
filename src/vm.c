@@ -409,13 +409,12 @@ ResultCode run_program(VM* vm) {
                 if (value.type == VAL_LIST) {
                     struct ObjList* list = value.as.list_type;
                     push(vm, to_integer(list->values.count));
-                    break;
                 }
                 if (value.type == VAL_STRING) {
                     struct ObjString* str = value.as.string_type;
                     push(vm, to_integer(str->length));
-                    break;
                 }
+                break;
             }
             case OP_SET_SIZE: {
                 //[new count][list | string]

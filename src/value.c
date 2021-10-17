@@ -417,16 +417,18 @@ Value copy_value(Value* value) {
             copy_table(&map->table, &orig_map->table);
             pop_root();
             return to_map(map);
-        }
+        }/*
         case VAL_LIST: {
             struct ObjList* orig_list = value->as.list_type;
+            return to_list(copy_list(orig_list));
+            
             struct ObjList* list = make_list();
             push_root(to_list(list));
             list->default_value = orig_list->default_value;
             copy_value_array(&list->values, &orig_list->values);
             pop_root();
             return to_list(list);
-        }
+        }*/
         case VAL_STRING: {
             struct ObjString* orig_str = value->as.string_type;
             push_root(to_string(orig_str));

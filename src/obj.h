@@ -98,6 +98,7 @@ struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 struct ObjNative* make_native(struct ObjString* name, Value (*function)(int, Value*));
 struct ObjList* make_list();
+struct ObjList* copy_list(struct ObjList* l);
 struct ObjMap* make_map();
 struct ObjEnum* make_enum(Token name);
 

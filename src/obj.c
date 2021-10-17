@@ -240,6 +240,26 @@ struct ObjList* make_list() {
     return obj;
 }
 
+/*
+struct ObjList* copy_list(struct ObjList* l) {
+    struct ObjList* obj = ALLOCATE(struct ObjList);
+    push_root(to_list(obj));
+    obj->base.type = OBJ_LIST;
+    obj->base.next = NULL;
+    obj->base.is_marked = false;
+    obj->default_value = to_nil();
+    insert_object((struct Obj*)obj);
+
+    init_value_array(&obj->values);
+
+    for (int i = 0; i < l->values.count; i++) {
+        add_value(&obj->values, copy_value(&l->values.values[i]));
+    }
+
+    pop_root();
+    return obj;
+}*/
+
 struct ObjMap* make_map() {
     struct ObjMap* obj = ALLOCATE(struct ObjMap);
     push_root(to_map(obj)); 

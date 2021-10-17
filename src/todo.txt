@@ -26,6 +26,13 @@ Documentation:
         could just have sample code user can look at rather than an actual interactive panel
 
 Implementation:
+    could we just create a new ObjList and then add each element over???  WAIT!!! There shouldn't
+    be anything in the ObjList at all!  
+    copy_value() on the list is the problem - if we just return the original it works fine. 
+    commenting out OBJ_LIST in copy_value makes it run fine - need to figure this out or
+        just force user to set Lists and Maps in structs to nil - this is really ugly though
+
+        run code in valgrind in vm to see the crash
 
     SetVar currently only emits index of the variable to set to the top of the stack
         include an index down the stack to set to
