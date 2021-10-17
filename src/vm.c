@@ -497,24 +497,19 @@ ResultCode run_program(VM* vm) {
             case OP_SET_ELEMENT: {
                 //[value][list | map | string][idx]
                 Value left = peek(vm, 1);
+                Value value = peek(vm, READ_TYPE(frame, uint8_t) + 2);
                 if (left.type == VAL_STRING) {
                     struct ObjString* str = left.as.string_type;
                     int idx = peek(vm, 0).as.integer_type;
-                    Value value = peek(vm, 2); 
                     if (value.as.string_type->length > 1) {
                         add_error(vm, "Character at index can only be set to single character string.");
                     }
 
                     str->chars[idx] = *(value.as.string_type->chars);
-
-                    pop(vm);
-                    pop(vm);
-                    break;
                 }
                 if (left.type == VAL_LIST) {
                     struct ObjList* list = left.as.list_type;
                     int idx = peek(vm, 0).as.integer_type;
-                    Value value = peek(vm, 2);
                     if (idx >= list->values.count) {
                         while (list->values.count < idx) {
                             add_value(&list->values, list->default_value);
@@ -523,19 +518,15 @@ ResultCode run_program(VM* vm) {
                     } else {
                         list->values.values[idx] = value;
                     }
-                    pop(vm);
-                    pop(vm);
-                    break;
                 }
                 if (left.type == VAL_MAP) {
                     struct ObjMap* map = left.as.map_type;
                     struct ObjString* key = peek(vm, 0).as.string_type;
-                    Value value = peek(vm, 2);
                     set_table(&map->table, key, value);
-                    pop(vm);
-                    pop(vm);
-                    break;
                 }
+                pop(vm);
+                pop(vm);
+                break;
             }
             case OP_IN_LIST: {
                 //[value][list]

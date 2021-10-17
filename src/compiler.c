@@ -1121,6 +1121,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 CHECK_TYPE(!same_type(template, right_type), get_idx->name, "List type and right side type must match.");
 
                 emit_byte(compiler, OP_SET_ELEMENT);
+                int depth = 0;
+                emit_byte(compiler, depth);
                 *node_type = right_type;
                 return RESULT_SUCCESS;
             }
@@ -1132,6 +1134,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 CHECK_TYPE(!same_type(template, right_type), get_idx->name, "Map type and right side type must match.");
 
                 emit_byte(compiler, OP_SET_ELEMENT);
+                int depth = 0;
+                emit_byte(compiler, depth);
                 *node_type = right_type;
                 return RESULT_SUCCESS;
             }
