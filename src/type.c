@@ -39,7 +39,7 @@ struct Type* make_infer_type() {
     return (struct Type*)sd;
 }
 
-struct Type* make_array_type() {
+struct TypeArray* make_type_array() {
     struct TypeArray* type_list = ALLOCATE(struct TypeArray);
     type_list->types = ALLOCATE_ARRAY(struct Type*);
     type_list->count = 0;
@@ -48,7 +48,7 @@ struct Type* make_array_type() {
     type_list->base.type = TYPE_ARRAY;
 
     insert_type((struct Type*)type_list);
-    return (struct Type*)type_list;
+    return type_list;
 }
 
 struct Type* make_int_type() {

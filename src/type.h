@@ -100,7 +100,7 @@ struct TypeMap {
 
 void insert_type(struct Type* type);
 
-struct Type* make_array_type();
+struct TypeArray* make_type_array();
 void add_type(struct TypeArray* sl, struct Type* type);
 struct Type* make_int_type();
 struct Type* make_float_type();

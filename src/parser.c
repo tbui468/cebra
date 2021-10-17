@@ -126,7 +126,7 @@ static void synchronize() {
 static ResultCode parse_function(Token var_name, struct Node** node, bool anonymous) {
 
     struct NodeList* params = (struct NodeList*)make_node_list();
-    struct TypeArray* param_type_list = (struct TypeArray*)make_array_type();
+    struct TypeArray* param_type_list = make_type_array();
 
     if (!match(TOKEN_RIGHT_PAREN)) {
         do {
@@ -148,7 +148,7 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
 
     CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
     CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return type list.");
-    struct TypeArray* ret_type_list = (struct TypeArray*)make_array_type();
+    struct TypeArray* ret_type_list = make_type_array();
     if (match(TOKEN_RIGHT_PAREN)) {
         add_type(ret_type_list, make_nil_type());
     } else {
@@ -537,7 +537,7 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     //for explicit function type declaration
     //TODO: fix bug here
     if (match(TOKEN_LEFT_PAREN)) {
-        struct TypeArray* params = (struct TypeArray*)make_array_type();
+        struct TypeArray* params = make_type_array();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Type* param_type;
@@ -549,7 +549,7 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
         CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' followed by return type.");
         CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return types.");
         //TODO: need to loop here and return typearray of returns
-        struct TypeArray* returns = (struct TypeArray*)make_array_type();
+        struct TypeArray* returns = make_type_array();
         if (match(TOKEN_RIGHT_PAREN)) {
             add_type(returns, make_nil_type());
         } else {

@@ -582,11 +582,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 push_root(to_string(prop_name));
 
-                struct Type* class_ret_types = make_array_type();
+                struct TypeArray* class_ret_types = make_type_array();
 
                 start_scope(compiler);
                 struct Type* right_type;
-                COMPILE_NODE(node, (struct TypeArray*)class_ret_types, &right_type);
+                COMPILE_NODE(node, class_ret_types, &right_type);
 
                 //update types in TypeStruct if property type is inferred
                 Value v;
@@ -1234,10 +1234,10 @@ void free_compiler(struct Compiler* compiler) {
 }
 
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array) {
-    struct Type* ret_types = make_array_type();
+    struct TypeArray* ret_types = make_type_array();
     for (int i = 0; i < nl->count; i++) {
         struct Type* type;
-        ResultCode result = compile_node(compiler, nl->nodes[i], (struct TypeArray*)ret_types, &type);
+        ResultCode result = compile_node(compiler, nl->nodes[i], ret_types, &type);
         if (result == RESULT_FAILED) {
             add_error(compiler, make_dummy_token(), "Failed to compile function.");
             print_object((struct Obj*)(compiler->function->name));
@@ -1245,12 +1245,12 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
         }
     }
 
-    if (((struct TypeArray*)ret_types)->count == 0) {
+    if ((ret_types)->count == 0) {
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);
     }
 
-    *type_array = (struct TypeArray*)ret_types;
+    *type_array = ret_types;
 
     return RESULT_SUCCESS;
 }
@@ -1318,21 +1318,21 @@ static ResultCode define_native(struct Compiler* compiler, const char* name, Val
 /*
 static ResultCode define_open(struct Compiler* compiler) {
     struct Type* str_type = make_string_type();
-    struct Type* params = make_array_type();
+    struct Type* params = make_type_array();
     add_type((struct TypeArray*)params, str_type);
     return define_native(compiler, "open", open_native, make_fun_type(params, make_file_type()));
 }*/
 
 static ResultCode define_input(struct Compiler* compiler) {
-    struct TypeArray* returns = (struct TypeArray*)make_array_type();
+    struct TypeArray* returns = make_type_array();
     add_type(returns, make_string_type());
-    return define_native(compiler, "input", input_native, make_fun_type((struct TypeArray*)make_array_type(), returns));
+    return define_native(compiler, "input", input_native, make_fun_type(make_type_array(), returns));
 }
 
 static ResultCode define_clock(struct Compiler* compiler) {
-    struct TypeArray* returns = (struct TypeArray*)make_array_type();
+    struct TypeArray* returns = make_type_array();
     add_type(returns, make_float_type());
-    return define_native(compiler, "clock", clock_native, make_fun_type((struct TypeArray*)make_array_type(), returns));
+    return define_native(compiler, "clock", clock_native, make_fun_type(make_type_array(), returns));
 }
 
 static ResultCode define_print(struct Compiler* compiler) {
@@ -1347,9 +1347,9 @@ static ResultCode define_print(struct Compiler* compiler) {
     int_type->opt = float_type;
     float_type->opt = nil_type;
     nil_type->opt = enum_type;
-    struct TypeArray* sl = (struct TypeArray*)make_array_type();
+    struct TypeArray* sl = make_type_array();
     add_type(sl, str_type);
-    struct TypeArray* returns = (struct TypeArray*)make_array_type();
+    struct TypeArray* returns = make_type_array();
     add_type(returns, make_nil_type());
     return define_native(compiler, "print", print_native, make_fun_type(sl, returns));
 }

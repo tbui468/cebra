@@ -25,11 +25,12 @@ Documentation:
     Look at Odin-lang for reference for docs
         could just have sample code user can look at rather than an actual interactive panel
 
+Main Problems: Allowing multiple returns and redoing sequences so that they can be recursively called to 
+    handle multiple sequence assignments
 Implementation:
-    Main Problems: Allowing multiple returns and redoing sequences so that they can be recursively called to 
-        handle multiple sequence assignments
 
-    Should pull Nil return type check for function returns into the caller rather than in parse
+    See @ symbol in compiler to see locations where we're just grabbing the first TypeArray type to make
+        the program compile - need to implement multireturns next
 
     make_type_array() should return struct TypeArray* since we always need to put stuff in it anyway - let caller cast 
         to struct Type* if they need to later
