@@ -1,3 +1,0 @@
-C:/dev/cebra/src/build-vscode/CMakeFiles/Cebra.dir
-C:/dev/cebra/src/build-vscode/CMakeFiles/edit_cache.dir
-C:/dev/cebra/src/build-vscode/CMakeFiles/rebuild_cache.dir

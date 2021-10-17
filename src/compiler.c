@@ -430,7 +430,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             return result;
         }
         case NODE_SEQUENCE: {
-                                /*
             struct Sequence* seq = (struct Sequence*)node;
 
             //compile right side left-to-right
@@ -439,7 +438,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 COMPILE_NODE(seq->right, NULL, &right_seq_type);
             } else if (seq->right->type == NODE_LIST) {
                 struct NodeList* nl = (struct NodeList*)(seq->right);
-                struct TypeArray ta = make_type_array();
+                struct TypeArray* ta = make_type_array();
                 for (int i = 0; i < nl->count; i++) {
                     struct Type* var_type;
                     COMPILE_NODE(nl->nodes[i], NULL, &var_type);
@@ -450,26 +449,34 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             //x, y, z = 1, 2, 3
             //[1][2][3]
-            //compile z, y and then x manually to set to stack top
-            //compile left side right-to-left to align with values pushed onto stack
-            //whe compiling right side above
-            for (int i = seq->left->count - 1; i >= 0; i--) {
-                struct Type* left_type;
-                COMPILE_NODE(nl->nodes[i], NULL, &left_type);
+            struct TypeArray* left_seq_type = make_type_array();
+            for (int i = 0; i < seq->left->count; i++) {
+                //TODO: testing on SetVar only first - need to integer SetElement, SetProp, DeclVar later
+                Token var = ((GetVar*)(seq->left->nodes[i]))->name;
+                struct Type* var_type = resolve_type(compiler, var);
+                add_type(left_seq_type, var_type);
+
+                int idx = resolve_local(compiler, var);
+                OpCode op = OP_SET_LOCAL;
+                if (idx == -1) {
+                    idx = resolve_upvalue(compiler, var);
+                    op = OP_SET_UPVALUE;
+                }
+
+                if (idx != -1) {
+                    emit_byte(compiler, op);
+                    emit_byte(compiler, idx);
+                    int depth = seq->left->count - 1 - i;
+                    emit_byte(compiler, depth);
+                }
             }
 
-            //compile right side
-                //if sequence, just compile entire node
-                //if NodeList, compile from left to right
-            //compile left side from right to left order
-                //need to check and emit proper bytes for OP_SET_[VAR|ELEMENT|PROP]
-                //good chance to pull out reusable code there to insert here
-            if (!same_type(left_seq_type, right_seq_type)) {
+            if (!same_type((struct Type*)left_seq_type, (struct Type*)right_seq_type)) {
                 add_error(compiler, seq->name, "Sequence types must all match.");
                 return RESULT_FAILED;
             }
             *node_type = left_seq_type; //== right_seq_type
-            return RESULT_SUCCESS;*/
+            return RESULT_SUCCESS;
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;

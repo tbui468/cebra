@@ -25,24 +25,15 @@ Documentation:
     Look at Odin-lang for reference for docs
         could just have sample code user can look at rather than an actual interactive panel
 
+Bugs: disabling copy_value() - major bug with memory being collected by GC.  Lists and Maps (and probably structs)
+    instantiated inside a struct body will all reference the same instance rather than different ones.  Need to
+    fix this ...
+
 Implementation:
-    could we just create a new ObjList and then add each element over???  WAIT!!! There shouldn't
-    be anything in the ObjList at all!  
-    copy_value() on the list is the problem - if we just return the original it works fine. 
-    commenting out OBJ_LIST in copy_value makes it run fine - need to figure this out or
-        just force user to set Lists and Maps in structs to nil - this is really ugly though
-
-        run code in valgrind in vm to see the crash
-
-    SetVar currently only emits index of the variable to set to the top of the stack
-        include an index down the stack to set to
 
     Add Sequence AST node and integrate new recursive parsing algorithms for parsing sequences - see next two notes sections:
-        - Create Sequence node and integrate into parser/compiler - include sequence length checks
-              in compiler, compile all right-hand-sides sequentially, and then the left hand sides
-                check that code compiles and runs
         - Disallow sequence within sequences, and combine parse_expressions functions into one
-                check that code compiles and runs
+        - integrate with new Sequence nodes and check they it all still works
         - Declarations are NOT expressions - allowing them to be expressions would trap other items on the stack
             or knock them off the stack - all declarations should NOT return a value
             if a: bool = 22 > 242 { }
