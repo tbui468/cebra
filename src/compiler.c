@@ -975,6 +975,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 push_root(to_string(name));
                 emit_byte(compiler, OP_SET_PROP);
                 emit_short(compiler, add_constant(compiler, to_string(name))); 
+                int depth = 0;
+                emit_byte(compiler, depth);
                 pop_root();
 
                 Value type_val = to_nil();

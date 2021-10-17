@@ -286,16 +286,17 @@ ResultCode run_program(VM* vm) {
             }
             case OP_SET_PROP: {
                 if (peek(vm, 0).type == VAL_NIL) {
-                    READ_TYPE(frame, uint16_t);
+                    READ_TYPE(frame, uint16_t); //reading prop name to remove from stack
+                    READ_TYPE(frame, uint8_t); //reading depth to remove from stack
                     add_error(vm, "Attempting to set property of a 'nil'.");
                     pop(vm);
                     return RESULT_FAILED;
                 }
-                struct ObjInstance* inst = peek(vm, 0).as.instance_type;
-                Value value = peek(vm, 1);
+                struct ObjInstance* inst = pop(vm).as.instance_type;
                 struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
+                int depth = READ_TYPE(frame, uint8_t);
+                Value value = peek(vm, depth);
                 set_table(&inst->props, prop_name, value);
-                pop(vm);
                 break;
             }
             case OP_GET_LOCAL: {
