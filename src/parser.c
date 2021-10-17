@@ -126,7 +126,7 @@ static void synchronize() {
 static ResultCode parse_function(Token var_name, struct Node** node, bool anonymous) {
 
     struct NodeList* params = (struct NodeList*)make_node_list();
-    struct Type* param_type = make_array_type();
+    struct TypeArray* param_type_list = (struct TypeArray*)make_array_type();
 
     if (!match(TOKEN_RIGHT_PAREN)) {
         do {
@@ -140,20 +140,26 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
             }
 
             DeclVar* vd = (DeclVar*)var_decl;
-            add_type((struct TypeArray*)param_type, vd->type);
+            add_type(param_type_list, vd->type);
             add_node(params, var_decl);
         } while (match(TOKEN_COMMA));
         CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter list.");
     }
 
     CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
-
-    struct Type* ret_type;
     CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return type list.");
-    PARSE_TYPE(var_name, &ret_type, parser.previous, "Expect valid return type after function parameters.");
-    CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return type list.");
-
-    struct Type* fun_type = make_fun_type(param_type, ret_type);
+    struct TypeArray* ret_type_list = (struct TypeArray*)make_array_type();
+    if (match(TOKEN_RIGHT_PAREN)) {
+        add_type(ret_type_list, make_nil_type());
+    } else {
+        do {
+            struct Type* single_ret_type;
+            PARSE_TYPE(var_name, &single_ret_type, parser.previous, "Expect valid return type after function parameters.");
+            add_type(ret_type_list, single_ret_type);
+        } while(match(TOKEN_COMMA));
+        CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return type list.");
+    }
+    struct Type* fun_type = make_fun_type(param_type_list, ret_type_list);
 
     //create type and add to global types for regular functions (not anonymous)
     if (!anonymous) {
@@ -166,7 +172,7 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
         }
 
         //set globals in parser (which compiler uses)
-        set_table(parser.globals, fun_string, to_type((struct Type*)fun_type));
+        set_table(parser.globals, fun_string, to_type(fun_type));
         pop_root();
     }
 
@@ -529,22 +535,32 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
 static ResultCode parse_type(Token var_name, struct Type** type) {
 
     //for explicit function type declaration
+    //TODO: fix bug here
     if (match(TOKEN_LEFT_PAREN)) {
-        struct Type* params = make_array_type();
+        struct TypeArray* params = (struct TypeArray*)make_array_type();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Type* param_type;
                 PARSE_TYPE(var_name, &param_type, var_name, "Invalid parameter type for function declaration '%.*s'.", var_name.length, var_name.start);
-                add_type((struct TypeArray*)params, param_type);
+                add_type(params, param_type);
             } while(match(TOKEN_COMMA));
             CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter types.");
         }
         CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' followed by return type.");
         CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return types.");
-        struct Type* ret;
-        PARSE_TYPE(var_name, &ret, var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
-        CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return types.");
-        *type = make_fun_type(params, ret);
+        //TODO: need to loop here and return typearray of returns
+        struct TypeArray* returns = (struct TypeArray*)make_array_type();
+        if (match(TOKEN_RIGHT_PAREN)) {
+            add_type(returns, make_nil_type());
+        } else {
+            do {
+                struct Type* ret_type;
+                PARSE_TYPE(var_name, &ret_type, var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
+                add_type(returns, ret_type);
+            } while(match(TOKEN_COMMA));
+            CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return types.");
+        }
+        *type = make_fun_type(params, returns);
         return RESULT_SUCCESS;
     }
 
@@ -607,8 +623,8 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
         return RESULT_SUCCESS;
     }
 
-    if (match(TOKEN_NIL) || 
-            (parser.previous.type == TOKEN_LEFT_PAREN && peek_one(TOKEN_RIGHT_PAREN))
+    if (match(TOKEN_NIL)
+            //|| (parser.previous.type == TOKEN_LEFT_PAREN && peek_one(TOKEN_RIGHT_PAREN))
             /*
             //function declaration: create nil return type
             (parser.previous.type == TOKEN_RIGHT_ARROW && peek_one(TOKEN_LEFT_BRACE)) ||
@@ -1113,7 +1129,7 @@ static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_
 
 static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals) {
     //check parameters
-    struct TypeArray* params = (struct TypeArray*)(ft->params);
+    struct TypeArray* params = (ft->params);
     for (int i = 0; i < params->count; i++) {
         struct Type* param_type = params->types[i];
         if (param_type->type == TYPE_IDENTIFIER) {
@@ -1126,17 +1142,19 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
     }
 
     //check return
-    struct Type* ret = ft->ret;
-    if (ret->type == TYPE_IDENTIFIER) {
-        struct Type* result;
-        if (resolve_identifier((struct TypeIdentifier*)ret, parser.globals, &result) == RESULT_FAILED) return RESULT_FAILED;
-        ft->ret = result;
-    } else if (ret->type == TYPE_FUN) {
-        if (resolve_function_identifiers((struct TypeFun*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
-    } else if (ret->type == TYPE_LIST) {
-        if (resolve_list_identifiers((struct TypeList*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
-    } else if (ret->type == TYPE_MAP) {
-        if (resolve_map_identifiers((struct TypeMap*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
+    for (int i = 0; i < ft->returns->count; i++) {
+        struct Type* ret = ft->returns->types[i];
+        if (ret->type == TYPE_IDENTIFIER) {
+            struct Type* result;
+            if (resolve_identifier((struct TypeIdentifier*)ret, parser.globals, &result) == RESULT_FAILED) return RESULT_FAILED;
+            ft->returns->types[i] = result;
+        } else if (ret->type == TYPE_FUN) {
+            if (resolve_function_identifiers((struct TypeFun*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
+        } else if (ret->type == TYPE_LIST) {
+            if (resolve_list_identifiers((struct TypeList*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
+        } else if (ret->type == TYPE_MAP) {
+            if (resolve_map_identifiers((struct TypeMap*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
+        }
     }
 
     return RESULT_SUCCESS;

@@ -1,13 +1,7 @@
 
-fun :: (f: () -> (int)) -> (int) {
-    -> f()
+
+match :: (a: int, b: int) -> (bool) {
+    -> false
 }
-
-
-print(fun(f))
-
-
-f := () -> (int) {
-    print("Hello world")
-    -> 20
-}
+a: bool = true
+a = match(3, 2)

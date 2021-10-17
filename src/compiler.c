@@ -429,9 +429,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 //check for invalid parameter types
                 struct TypeFun* fun_type = (struct TypeFun*)(df->type);
-                struct TypeArray* params = (struct TypeArray*)(fun_type->params);
-                for (int i = 0; i < params->count; i++) {
-                    if (params->types[i]->type == TYPE_NIL) {
+                for (int i = 0; i < fun_type->params->count; i++) {
+                    if (fun_type->params->types[i]->type == TYPE_NIL) {
                         add_error(compiler, df->name, "Parameter identifier type invalid.");
                         return RESULT_FAILED;
                     }
@@ -460,19 +459,23 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
 
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
-                if (inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL) {
-                    add_error(compiler, df->name, "Return type must match type in function declaration.");
+                if (inner_ret_types->count == 0 &&
+                    typefun->returns->count != 1 &&
+                    typefun->returns->types[0]->type != TYPE_NIL)
+                {
+                    add_error(compiler, df->name, "A function with no return must declared with no return type.");
                     free_compiler(&func_comp);
                     return RESULT_FAILED;
                 }
 
-                struct Type* ret_type = typefun->ret;
+                //@only grabbin first return for now
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    if (same_type(ret_type, inner_type)) continue;
-                    add_error(compiler, df->name, "Return type must match type in function declaration.");
-                    free_compiler(&func_comp);
-                    return RESULT_FAILED;
+                    if (!same_type(typefun->returns->types[0], inner_type)) {
+                        add_error(compiler, df->name, "Return type must match type in function declaration.");
+                        free_compiler(&func_comp);
+                        return RESULT_FAILED;
+                    }
                 }
 
                 emit_byte(compiler, OP_FUN);
@@ -510,21 +513,24 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 #endif
 
 
-                //TODO: this should really be from script_compiler.globals, but it's the same regardless
                 struct TypeFun* typefun = (struct TypeFun*)df->type;
-                if (inner_ret_types->count == 0 && typefun->ret->type != TYPE_NIL) {
-                    add_error(compiler, df->name, "Return type must match type in function declaration.");
+                if (inner_ret_types->count == 0 &&
+                    typefun->returns->count != 1 &&
+                    typefun->returns->types[0]->type != TYPE_NIL)
+                {
+                    add_error(compiler, df->name, "A function with no return must be declared with no return type.");
                     free_compiler(&func_comp);
                     return RESULT_FAILED;
                 }
 
-                struct Type* ret_type = typefun->ret;
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    if (same_type(ret_type, inner_type)) continue;
-                    add_error(compiler, df->name, "Return type must match type in function declaration.");
-                    free_compiler(&func_comp);
-                    return RESULT_FAILED;
+                    //@ only grabbing first return for now
+                    if (!same_type(typefun->returns->types[0], inner_type)) {
+                        add_error(compiler, df->name, "Return type must match type in function declaration.");
+                        free_compiler(&func_comp);
+                        return RESULT_FAILED;
+                    }
                 }
 
                 if (func_comp.upvalue_count > 0) {
@@ -791,8 +797,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             Return* ret = (Return*)node;
             struct Type* type;
             COMPILE_NODE(ret->right, ret_types, &type);
-
             emit_byte(compiler, OP_RETURN);
+
+            //@need to take care of multiple returns later
+
             add_type(ret_types, type);
             *node_type = type;
             return RESULT_SUCCESS;
@@ -1107,7 +1115,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             if (type->type == TYPE_FUN) {
                 struct TypeFun* type_fun = (struct TypeFun*)type;
-                struct TypeArray* params = (struct TypeArray*)(type_fun->params);
+                struct TypeArray* params = (type_fun->params);
 
                 if (call->arguments->count != params->count) {
                     add_error(compiler, call->name, "Argument count must match function parameter count.");
@@ -1127,7 +1135,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_CALL);
                 emit_byte(compiler, (uint8_t)(call->arguments->count));
 
-                *node_type = type_fun->ret;
+                //@need to integrate multiple returns later - just grabbing return at index 0 for now
+                //*node_type = (struct Type*)(type_fun->returns);
+                *node_type = ((struct TypeArray*)(type_fun->returns))->types[0];
                 return RESULT_SUCCESS;
             }
 
@@ -1314,11 +1324,15 @@ static ResultCode define_open(struct Compiler* compiler) {
 }*/
 
 static ResultCode define_input(struct Compiler* compiler) {
-    return define_native(compiler, "input", input_native, make_fun_type(make_array_type(), make_string_type()));
+    struct TypeArray* returns = (struct TypeArray*)make_array_type();
+    add_type(returns, make_string_type());
+    return define_native(compiler, "input", input_native, make_fun_type((struct TypeArray*)make_array_type(), returns));
 }
 
 static ResultCode define_clock(struct Compiler* compiler) {
-    return define_native(compiler, "clock", clock_native, make_fun_type(make_array_type(), make_float_type()));
+    struct TypeArray* returns = (struct TypeArray*)make_array_type();
+    add_type(returns, make_float_type());
+    return define_native(compiler, "clock", clock_native, make_fun_type((struct TypeArray*)make_array_type(), returns));
 }
 
 static ResultCode define_print(struct Compiler* compiler) {
@@ -1333,9 +1347,11 @@ static ResultCode define_print(struct Compiler* compiler) {
     int_type->opt = float_type;
     float_type->opt = nil_type;
     nil_type->opt = enum_type;
-    struct Type* sl = make_array_type();
-    add_type((struct TypeArray*)sl, str_type);
-    return define_native(compiler, "print", print_native, make_fun_type((struct Type*)sl, make_nil_type()));
+    struct TypeArray* sl = (struct TypeArray*)make_array_type();
+    add_type(sl, str_type);
+    struct TypeArray* returns = (struct TypeArray*)make_array_type();
+    add_type(returns, make_nil_type());
+    return define_native(compiler, "print", print_native, make_fun_type(sl, returns));
 }
 
 

@@ -65,8 +65,8 @@ struct TypeNil {
 
 struct TypeFun {
     struct Type base;
-    struct Type* params; //TODO: should be a TypeArray since that's more specific
-    struct Type* ret;
+    struct TypeArray* params;
+    struct TypeArray* returns;
 };
 
 struct TypeStruct {
@@ -107,7 +107,7 @@ struct Type* make_float_type();
 struct Type* make_bool_type();
 struct Type* make_string_type();
 struct Type* make_nil_type();
-struct Type* make_fun_type(struct Type* params, struct Type* ret);
+struct Type* make_fun_type(struct TypeArray* params, struct TypeArray* returns);
 struct Type* make_struct_type(Token name, struct Type* super);
 struct Type* make_identifier_type(Token identifier);
 struct Type* make_list_type(struct Type* type);

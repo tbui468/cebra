@@ -92,12 +92,12 @@ struct Type* make_nil_type() {
     return (struct Type*)type;
 }
 
-struct Type* make_fun_type(struct Type* params, struct Type* ret) {
+struct Type* make_fun_type(struct TypeArray* params, struct TypeArray* returns) {
     struct TypeFun* type_fun = ALLOCATE(struct TypeFun);
 
     type_fun->base.type = TYPE_FUN;
     type_fun->params = params;
-    type_fun->ret = ret;
+    type_fun->returns = returns;
     
     insert_type((struct Type*)type_fun);
     return (struct Type*)type_fun;
@@ -209,7 +209,8 @@ bool same_type(struct Type* type1, struct Type* type2) {
         case TYPE_FUN: {
             struct TypeFun* sf1 = (struct TypeFun*)type1;
             struct TypeFun* sf2 = (struct TypeFun*)type2;
-            return same_type(sf1->ret, sf2->ret) && same_type(sf1->params, sf2->params);
+            return same_type((struct Type*)(sf1->returns), (struct Type*)(sf2->returns)) && 
+                   same_type((struct Type*)(sf1->params), (struct Type*)(sf2->params));
         }
         case TYPE_STRUCT: {
             struct TypeStruct* sc1 = (struct TypeStruct*)type1;
@@ -254,7 +255,7 @@ void print_type(struct Type* type) {
         }
         case TYPE_ARRAY: {
             struct TypeArray* sl = (struct TypeArray*)type;
-            printf("(");
+            printf("(TypeArray: ");
             for (int i = 0; i < sl->count; i++) {
                 print_type(sl->types[i]);
             }
@@ -262,14 +263,16 @@ void print_type(struct Type* type) {
             break;
         }
         case TYPE_FUN: {
-            struct TypeFun* sf = (struct TypeFun*)type;
-            struct TypeArray* params = (struct TypeArray*)(sf->params);
+            struct TypeFun* tf = (struct TypeFun*)type;
             printf("(");
-            for (int i = 0; i < params->count; i++) {
-                print_type(params->types[i]);
+            for (int i = 0; i < tf->params->count; i++) {
+                print_type(tf->params->types[i]);
             } 
-            printf(") -> ");
-            print_type(sf->ret);
+            printf(") -> (");
+            for (int i = 0; i < tf->returns->count; i++) {
+                print_type(tf->returns->types[i]);
+            } 
+            printf(")");
             break;
         }
         case TYPE_STRUCT: {

@@ -26,8 +26,20 @@ Documentation:
         could just have sample code user can look at rather than an actual interactive panel
 
 Implementation:
-    Change syntax so that function returns are all wrapped in parentheses
-        finishing wrapping returns in parentheses in correctness.cbr (starting at 'cascading calls')
+    Main Problems: Allowing multiple returns and redoing sequences so that they can be recursively called to 
+        handle multiple sequence assignments
+
+    Should pull Nil return type check for function returns into the caller rather than in parse
+
+    make_type_array() should return struct TypeArray* since we always need to put stuff in it anyway - let caller cast 
+        to struct Type* if they need to later
+
+    Fix other compiler errors from changing TypeFun to hold two TypeArrays for parameters and returns rather
+        than two Type* before (one was a TypeArray, and the other varied).  This is more general - we know that it's
+        always and array, so we can just check sizes
+
+    parse_type() should really be a switch statement - make a peek_token() that returns the next token (rather than
+        peek_one(TokenType) which requires you to guess the next token.
 
     Change Return AST node and TypeFun so that returns take in a list of expressions, and TypeFun->ret a list of types
 
@@ -56,7 +68,31 @@ Implementation:
                 Will also need to think about how /when to pop the stack...
                 Note: this means that in sequences, all right hand side expressions are evaluated before they are assigned
                 at the end.
-    
+
+    Is sequential assignment too ambiguous?  
+        Sequences need to also follow right side precedence, so we simply can't loop - 
+        it needs to be called recursively for every := or = that follows:
+
+        If sequence (parse 1 expression and check if followed by comma), then call
+        parse_sequence_right(lhs).  
+
+            struct Sequence* s = parse_sequence()
+            if next is := or = {
+                check that all nodes are GetVar, GetElement, GetProp, or DeclVar
+                result = parse_sequence_right(s)
+            }
+
+            parse_sequence_right :: (lhs) -> struct Sequence* {
+                rhs = parse right side separated by commas
+                if after parsing right is := or = {
+                    check that ALL right nodes are GetVar, GetElement, or GetProp
+                    -> parse_sequence_right(right)
+                } else {
+                    -> make_set_sequence(lhs, rhs) //base case
+                }
+            }
+       
+            a, b = c = 23, 4 
 
     Add multiple return options to functions
         need to make return type a TypeList
