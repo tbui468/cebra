@@ -34,7 +34,8 @@ typedef enum {
     NODE_ENUM,
     NODE_CAST,
     NODE_CONTAINER,
-    NODE_WHEN
+    NODE_WHEN,
+    NODE_SEQUENCE
 } NodeType;
 
 struct Node {
@@ -47,6 +48,13 @@ struct NodeList {
     struct Node** nodes;
     int count;
     int capacity;
+};
+
+struct Sequence {
+    struct Node base;
+    Token name;
+    struct NodeList* left; 
+    struct Node* right; //NodeList* or Sequence* for cascading sequential assignments/declarations
 };
 
 /*
@@ -262,6 +270,7 @@ struct Node* make_nil(Token name);
 struct Node* make_decl_enum(Token name, struct NodeList* decls);
 struct Node* make_cast(Token name, struct Node* left, struct Type* type);
 struct Node* make_decl_container(Token name, struct Type* type);
+struct Node* make_sequence(Token name, struct NodeList* left, struct Node* right);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

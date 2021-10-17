@@ -1,0 +1,72 @@
+[
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\obj.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\obj.c",
+  "file": "C:/dev/cebra/src/obj.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\table.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\table.c",
+  "file": "C:/dev/cebra/src/table.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\main.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\main.c",
+  "file": "C:/dev/cebra/src/main.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\memory.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\memory.c",
+  "file": "C:/dev/cebra/src/memory.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\token.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\token.c",
+  "file": "C:/dev/cebra/src/token.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\type.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\type.c",
+  "file": "C:/dev/cebra/src/type.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\value.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\value.c",
+  "file": "C:/dev/cebra/src/value.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\lexer.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\lexer.c",
+  "file": "C:/dev/cebra/src/lexer.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\parser.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\parser.c",
+  "file": "C:/dev/cebra/src/parser.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\ast.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\ast.c",
+  "file": "C:/dev/cebra/src/ast.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\value_array.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\value_array.c",
+  "file": "C:/dev/cebra/src/value_array.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\chunk.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\chunk.c",
+  "file": "C:/dev/cebra/src/chunk.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\compiler.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\compiler.c",
+  "file": "C:/dev/cebra/src/compiler.c"
+},
+{
+  "directory": "C:/dev/cebra/src/build-vscode",
+  "command": "C:\\PROGRA~1\\LLVM\\bin\\clang-cl.exe  /nologo /DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1 /FoCMakeFiles\\Cebra.dir\\vm.c.obj /FdTARGET_COMPILE_PDB -c -- C:\\dev\\cebra\\src\\vm.c",
+  "file": "C:/dev/cebra/src/vm.c"
+}
+]

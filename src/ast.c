@@ -19,6 +19,15 @@ struct Node* make_node_list() {
     return insert_node((struct Node*)nl);
 }
 
+struct Node* make_sequence(Token name, struct NodeList* left, struct Node* right) {
+    struct Sequence* seq = ALLOCATE(struct Sequence);
+    seq->left = left;
+    seq->right = right;
+    seq->base.type = NODE_SEQUENCE;
+
+    return insert_node((struct Node*)seq);
+}
+
 void add_node(struct NodeList* nl, struct Node* node) {
     if (nl->count + 1 > nl->capacity) {
         int new_capacity = nl->capacity == 0 ? 8 : nl->capacity * 2;
@@ -310,6 +319,10 @@ void print_node(struct Node* node) {
             printf(")");
             break;
         }
+        case NODE_SEQUENCE: {
+            printf("( NodeSequence ");
+            break;
+        }
         //Declarations
         case NODE_DECL_VAR: {
             DeclVar* dv = (DeclVar*)node;
@@ -477,6 +490,11 @@ void free_node(struct Node* node) {
             struct NodeList* nl = (struct NodeList*)node;
             FREE_ARRAY(nl->nodes, struct Node*, nl->capacity);
             FREE(nl, struct NodeList);
+            break;
+        }
+        case NODE_SEQUENCE: {
+            struct Sequence* seq = (struct Sequence*)node;
+            FREE(seq, struct Sequence);
             break;
         }
         //Declarations

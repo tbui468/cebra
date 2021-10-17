@@ -1,4 +1,14 @@
-a := b := 23
+c := 4
+a := (c + 4) + 232 + c
 
 print(a)
-print(b)
+print(c)
+
+Dog :: struct {
+    name := ""
+    Dog: Dog = nil
+}
+
+dog := Dog()
+//dog.name = "Mittens"
+//print(dog.name)

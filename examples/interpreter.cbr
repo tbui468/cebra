@@ -58,7 +58,8 @@ parse_tokens :: (tokens: List<Token>) -> (Expr) {
 //************Lexer************
 
 Lexer :: struct {
-    src , current_char := "", ""
+    src := ""
+    current_char := ""
     index := 0
 }
 
@@ -152,7 +153,7 @@ next_token :: (lexer: Lexer) -> (Token) {
 
 //**********Parser***************
 Parser :: struct {
-    tokens: List<Token> = nil
+    tokens: List<Token> = List<Token>()
     index := 0
     previous_token: Token = nil
     current_token: Token = nil 

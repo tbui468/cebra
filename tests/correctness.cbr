@@ -84,8 +84,8 @@ Dog :: struct < Canine {
     age: int = 3
     length: float = 100.2
     friend: Dog = nil
-    list: List<int> = nil
-    map: Map<int> = nil 
+    list: List<int> = List<int>()
+    map: Map<int> = Map<int>()
 }
 
 make_dog :: () -> (Dog) {
@@ -715,21 +715,21 @@ if lists {
     }
 
     a.size = 2
-    if a.size == 2 and a[0] == nil and a[1] == nil {
+    if a.size == 2 {
         add_passed("Set Higher Size / Fill with Default: Passed!")
     } else {
         add_failed("Set Higher Size / Fill with Default: Failed!")
     }
 
     a[10] = 10
-    if a.size == 11 and a[10] == 10 and a[9] == nil {
+    if a.size == 11 and a[10] == 10 {
         add_passed("Set Higher Index / Fill with Default: Passed!")
     } else {
         add_failed("Set Higher Index / Fill with Default: Failed!")
     }
 
     a[5] = 33
-    if a.size == 11 and a[10] == 10 and a[9] == nil and a[5] == 33 {
+    if a.size == 11 and a[10] == 10 and a[5] == 33 {
         add_passed("Set Lower Index: Passed!")
     } else {
         add_failed("Set Lower Index: Failed!")
@@ -741,7 +741,7 @@ if lists {
     b[0] = d
     b.size = 2
 
-    if b[0].name == "Bubbles" and b[1] == nil {
+    if b[0].name == "Bubbles" {
         add_passed("Structs in List: Passed!")
     } else {
         add_failed("Structs in List: Failed!")
@@ -774,12 +774,6 @@ if maps {
     
     print("-Maps")
     map: Map<int> = Map<int>()
-
-    if map["two"] == nil {
-        add_passed("Invalid Key: Passed!")
-    } else {
-        add_failed("Invalid Key: Failed!")
-    }
 
     if !("two" in map.keys) {
         add_passed("Map Keys List: Passed!")

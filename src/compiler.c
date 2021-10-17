@@ -21,6 +21,12 @@ struct Compiler* script_compiler = NULL;
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type);
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array);
 
+static bool struct_or_function_to_nil(struct Type* var_type, struct Type* right_type) {
+    if (right_type->type != TYPE_NIL) return false;
+    if (var_type->type != TYPE_FUN && var_type->type != TYPE_STRUCT) return false;
+    return true;
+}
+
 static void add_error(struct Compiler* compiler, Token token, const char* message) {
     CompileError error;
     error.token = token;
@@ -181,7 +187,7 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
     struct Type* right_type;
     COMPILE_NODE(logical->right, NULL, &right_type);
 
-    CHECK_TYPE(!same_type(left_type, right_type), logical->name, "Left and right types must match.");
+    CHECK_TYPE(!same_type(left_type, right_type) && !struct_or_function_to_nil(left_type, right_type), logical->name, "Left and right types must match.");
     switch(logical->name.type) {
         case TOKEN_LESS:
             emit_byte(compiler, OP_LESS);
@@ -218,7 +224,14 @@ static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, s
     COMPILE_NODE(binary->right, NULL, &type2);
     CHECK_TYPE(!same_type(type1, type2), binary->name, "Left and right types must match.");
     switch(binary->name.type) {
-        case TOKEN_PLUS: emit_byte(compiler, OP_ADD); break;
+        case TOKEN_PLUS: {
+            if (type1->type != TYPE_INT && type1->type != TYPE_FLOAT && type1->type != TYPE_STRING) {
+                add_error(compiler, binary->name, "'+' can only be used on ints, floats and strings");
+                return RESULT_FAILED;
+            }
+            emit_byte(compiler, OP_ADD);
+            break;
+        }
         case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT); break;
         case TOKEN_STAR: emit_byte(compiler, OP_MULTIPLY); break;
         case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE); break;
@@ -354,6 +367,55 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
+static ResultCode compile_decl_var(struct Compiler* compiler, DeclVar* dv, struct TypeArray* ret_types, struct Type** node_type) {
+    struct Type* type = NULL;
+
+    if (declared_in_scope(compiler, dv->name)) {
+        add_error(compiler, dv->name, "Identifier already defined.");
+        return RESULT_FAILED;
+    }
+
+    //inferred type, defined
+    if (dv->type->type == TYPE_INFER) {
+        int idx = add_local(compiler, dv->name, dv->type);
+
+        COMPILE_NODE(dv->right, NULL, &type);
+        CHECK_TYPE(type->type == TYPE_NIL , dv->name,
+                   "Inferred type cannot be assigned to 'nil.");
+
+        CHECK_TYPE(type->type == TYPE_DECL, dv->name, 
+                   "Variable cannot be assigned to a user declared type.");
+
+        set_local(compiler, dv->name, type, idx);
+    }
+    
+    //explicit type, defined and parameters
+    if (dv->type->type != TYPE_INFER) {
+        int idx = add_local(compiler, dv->name, dv->type);
+        COMPILE_NODE(dv->right, NULL, &type);
+
+        if (type->type != TYPE_NIL) {
+            set_local(compiler, dv->name, type, idx);
+
+            if (dv->type->type == TYPE_LIST) {
+                struct TypeList* tl = (struct TypeList*)(dv->type);
+                CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
+            }
+
+            if (dv->type->type == TYPE_MAP) {
+                struct TypeMap* tm = (struct TypeMap*)(dv->type);
+                CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
+            }
+
+            CHECK_TYPE(!same_type(dv->type, type), dv->name,
+                       "Declaration type and right hand side type must match.");
+        }
+
+    }
+
+    *node_type = type;
+    return RESULT_SUCCESS;
+}
 
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
     if (node == NULL) {
@@ -363,55 +425,47 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
     switch(node->type) {
         //declarations
         case NODE_DECL_VAR: {
-            DeclVar* dv = (DeclVar*)node;
+            ResultCode result = compile_decl_var(compiler, (DeclVar*)node, ret_types, node_type);
+            *node_type = make_nil_type();
+            return result;
+        }
+        case NODE_SEQUENCE: {
+                                /*
+            struct Sequence* seq = (struct Sequence*)node;
 
-            struct Type* type = NULL;
+            //compile right side left-to-right
+            struct Type* right_seq_type;
+            if (seq->right->type == NODE_SEQUENCE) {
+                COMPILE_NODE(seq->right, NULL, &right_seq_type);
+            } else if (seq->right->type == NODE_LIST) {
+                struct NodeList* nl = (struct NodeList*)(seq->right);
+                struct TypeArray ta = make_type_array();
+                for (int i = 0; i < nl->count; i++) {
+                    struct Type* var_type;
+                    COMPILE_NODE(nl->nodes[i], NULL, &var_type);
+                    add_type(ta, var_type);
+                }
+                right_seq_type = (struct Type*)ta;
+            }
 
-            if (declared_in_scope(compiler, dv->name)) {
-                add_error(compiler, dv->name, "Identifier already defined.");
+            //compile left side right-to-left to align with values pushed onto stack
+            //whe compiling right side above
+            for (int i = seq->left->count - 1; i >= 0; i--) {
+                COMPILE_NODE(nl->
+            }
+
+            //compile right side
+                //if sequence, just compile entire node
+                //if NodeList, compile from left to right
+            //compile left side from right to left order
+                //need to check and emit proper bytes for OP_SET_[VAR|ELEMENT|PROP]
+                //good chance to pull out reusable code there to insert here
+            if (!same_type(left_seq_type, right_seq_type)) {
+                add_error(compiler, seq->name, "Sequence types must all match.");
                 return RESULT_FAILED;
             }
-
-            //inferred type, defined
-            if (dv->type->type == TYPE_INFER) {
-                int idx = add_local(compiler, dv->name, dv->type);
-
-                COMPILE_NODE(dv->right, NULL, &type);
-                CHECK_TYPE(type->type == TYPE_NIL , dv->name,
-                           "Inferred type cannot be assigned to 'nil.");
-
-                CHECK_TYPE(type->type == TYPE_DECL, dv->name, 
-                           "Variable cannot be assigned to a user declared type.");
-
-                set_local(compiler, dv->name, type, idx);
-            }
-            
-            //explicit type, defined and parameters
-            if (dv->type->type != TYPE_INFER) {
-                int idx = add_local(compiler, dv->name, dv->type);
-                COMPILE_NODE(dv->right, NULL, &type);
-
-                if (type->type != TYPE_NIL) {
-                    set_local(compiler, dv->name, type, idx);
-
-                    if (dv->type->type == TYPE_LIST) {
-                        struct TypeList* tl = (struct TypeList*)(dv->type);
-                        CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
-                    }
-
-                    if (dv->type->type == TYPE_MAP) {
-                        struct TypeMap* tm = (struct TypeMap*)(dv->type);
-                        CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
-                    }
-
-                    CHECK_TYPE(!same_type(dv->type, type), dv->name,
-                               "Declaration type and right hand side type must match.");
-                }
-
-            }
-
-            *node_type = type;
-            return RESULT_SUCCESS;
+            *node_type = left_seq_type; //== right_seq_type
+            return RESULT_SUCCESS;*/
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
@@ -586,7 +640,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 start_scope(compiler);
                 struct Type* right_type;
-                COMPILE_NODE(node, class_ret_types, &right_type);
+                if (compile_decl_var(compiler, (DeclVar*)node, NULL, &right_type) == RESULT_FAILED) {
+                    return RESULT_FAILED;
+                }
 
                 //update types in TypeStruct if property type is inferred
                 Value v;
@@ -595,13 +651,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     set_table(&klass_type->props, prop_name, to_type(right_type));
                 }
 
-                //check types here
-                if (right_type->type != TYPE_NIL) {
-                    Value left_val_type;
-                    get_from_table(&klass_type->props, prop_name, &left_val_type);
-                    CHECK_TYPE(!same_type(left_val_type.as.type_type, right_type), dv->name, "Property type must match right hand side.");
-                }
-
+                Value left_val_type;
+                get_from_table(&klass_type->props, prop_name, &left_val_type);
+                CHECK_TYPE(!same_type(left_val_type.as.type_type, right_type) && 
+                           !struct_or_function_to_nil(left_val_type.as.type_type, right_type), 
+                           dv->name, "Property type must match right hand side.");
 
                 emit_byte(compiler, OP_ADD_PROP);
                 emit_short(compiler, add_constant(compiler, to_string(prop_name)));
@@ -613,7 +667,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //set globals in vm
             emit_byte(compiler, OP_ADD_GLOBAL);
 
-            //Get type already completely defined in parser
             *node_type = (struct Type*)klass_type;
 
             return RESULT_SUCCESS;
@@ -933,7 +986,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     return RESULT_FAILED;
                 }
 
-                CHECK_TYPE(!same_type(type_val.as.type_type, right_type), prop, "Property and assignment types must match.");
+                CHECK_TYPE(!same_type(type_val.as.type_type, right_type) && 
+                           !struct_or_function_to_nil(type_val.as.type_type, right_type), 
+                           prop, "Property and assignment types must match.");
 
                 *node_type = right_type;
                 return RESULT_SUCCESS;
@@ -991,7 +1046,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             int idx = resolve_local(compiler, var);
             if (idx != -1) {
-                CHECK_TYPE(!same_type(var_type, right_type), var, "Right side type must match variable type.");
+                CHECK_TYPE(!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type), 
+                           var, "Right side type must match variable type.");
 
                 emit_byte(compiler, OP_SET_LOCAL);
                 emit_byte(compiler, idx);
@@ -1000,7 +1056,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             int upvalue_idx = resolve_upvalue(compiler, var);
             if (upvalue_idx != -1) {
-                CHECK_TYPE(!same_type(var_type, right_type), var, "Right side type must match variable type.");
+                CHECK_TYPE(!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type), 
+                           var, "Right side type must match variable type.");
 
                 emit_byte(compiler, OP_SET_UPVALUE);
                 emit_byte(compiler, upvalue_idx);
