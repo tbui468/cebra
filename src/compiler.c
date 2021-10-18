@@ -437,6 +437,31 @@ static ResultCode set_var_to_stack_idx(struct Compiler* compiler, Token var, int
     return RESULT_FAILED;
 }
 
+static ResultCode compile_set_element(struct Compiler* compiler, Token name, struct Type* left_type, struct Type* idx_type, 
+                                      struct Type* right_type, int depth) {
+    if (left_type->type != TYPE_LIST && left_type->type != TYPE_MAP) {
+        add_error(compiler, name, "[] access must be used on a list or map type.");
+        return RESULT_FAILED;
+    }
+
+    struct Type* template;
+    if (left_type->type == TYPE_LIST) {
+        CHECK_TYPE(idx_type->type != TYPE_INT, name, "Index must be integer type.");
+        template = ((struct TypeList*)left_type)->type;
+        CHECK_TYPE(!same_type(template, right_type), name, "List type and right side type must match.");
+    }
+
+    if (left_type->type == TYPE_MAP) {
+        CHECK_TYPE(idx_type->type != TYPE_STRING, name, "Key must be string type.");
+        template = ((struct TypeMap*)left_type)->type;
+        CHECK_TYPE(!same_type(template, right_type), name, "Map type and right side type must match.");
+    }
+
+    emit_byte(compiler, OP_SET_ELEMENT);
+    emit_byte(compiler, depth);
+    return RESULT_SUCCESS;
+}
+
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
     if (node == NULL) {
         *node_type = make_nil_type();
@@ -522,7 +547,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             for (int i = 0; i < seq->left->count; i++) {
                 switch (seq->left->nodes[i]->type) {
                     case NODE_GET_ELEMENT: {
-                        SetElement* set_idx = (SetElement*)node;
                         GetElement* ge = (GetElement*)(seq->left->nodes[i]);
 
                         struct Type* left_type;
@@ -530,40 +554,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         struct Type* idx_type;
                         COMPILE_NODE(ge->idx, ret_types, &idx_type);
 
-                        if (left_type->type != TYPE_LIST && left_type->type != TYPE_MAP) {
-                            add_error(compiler, ge->name, "[] access must be used on a list or map type.");
-                            return RESULT_FAILED;
-                        }
+                        int depth = seq->left->count - 1 - i;
+                        struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
+                        ResultCode result = compile_set_element(compiler, ge->name, left_type, idx_type, right_type, depth);
+                        if (result == RESULT_FAILED) return RESULT_FAILED;
 
-                        if (left_type->type == TYPE_LIST) {
-                            CHECK_TYPE(idx_type->type != TYPE_INT, ge->name, "Index must be integer type.");
-
-                            struct Type* template = ((struct TypeList*)left_type)->type;
-                            CHECK_TYPE(!same_type(template, ((struct TypeArray*)right_seq_type)->types[i]), ge->name, "List type and right side type must match.");
-
-                            emit_byte(compiler, OP_SET_ELEMENT);
-                            int depth = seq->left->count - 1 - i;
-                            emit_byte(compiler, depth);
-                            add_type(left_seq_type, template);
-                        }
-
-                        if (left_type->type == TYPE_MAP) {
-                            CHECK_TYPE(idx_type->type != TYPE_STRING, ge->name, "Key must be string type.");
-
-                            struct Type* template = ((struct TypeList*)left_type)->type;
-                            CHECK_TYPE(!same_type(template, ((struct TypeArray*)right_seq_type)->types[i]), ge->name, "Map type and right side type must match.");
-
-                            emit_byte(compiler, OP_SET_ELEMENT);
-                            int depth = seq->left->count - 1 - i;
-                            emit_byte(compiler, depth);
-                            add_type(left_seq_type, template);
-                        }
+                        add_type(left_seq_type, right_type);
 
                         break;
                     }
                     case NODE_GET_PROP: {
-                        //compile GetProp to get struct inst. or list
-                        //emit SET_PROP + depth for prop on the stack already
                         GetProp* gp = (GetProp*)(seq->left->nodes[i]);
                         struct Type* type_inst;
                         COMPILE_NODE(gp->inst, NULL, &type_inst);
@@ -610,7 +610,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         break;
                     }
                     case NODE_GET_VAR: {
-                        //setting all vars
                         Token var = ((GetVar*)(seq->left->nodes[i]))->name;
                         struct Type* var_type = resolve_type(compiler, var);
                         add_type(left_seq_type, var_type);
@@ -618,7 +617,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         break;
                     }
                     case NODE_DECL_VAR: {
-                        //setting all vars
                         Token var = ((DeclVar*)(seq->left->nodes[i]))->name;
                         struct Type* var_type = resolve_type(compiler, var);
                         add_type(left_seq_type, var_type);
@@ -1275,44 +1273,22 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             return RESULT_FAILED;
         }
         case NODE_SET_ELEMENT: {
-            SetElement* set_idx = (SetElement*)node;
-            GetElement* get_idx = (GetElement*)(set_idx->left);
+            SetElement* set_elem = (SetElement*)node;
+            GetElement* get_elem = (GetElement*)(set_elem->left);
 
             struct Type* right_type;
-            COMPILE_NODE(set_idx->right, ret_types, &right_type);
+            COMPILE_NODE(set_elem->right, ret_types, &right_type);
             struct Type* left_type;
-            COMPILE_NODE(get_idx->left, ret_types, &left_type);
+            COMPILE_NODE(get_elem->left, ret_types, &left_type);
             struct Type* idx_type;
-            COMPILE_NODE(get_idx->idx, ret_types, &idx_type);
+            COMPILE_NODE(get_elem->idx, ret_types, &idx_type);
 
-            if (left_type->type == TYPE_LIST) {
-                CHECK_TYPE(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
+            int depth = 0;
+            ResultCode result = compile_set_element(compiler, get_elem->name, left_type, idx_type, right_type, depth);
+            if (result == RESULT_FAILED) return RESULT_FAILED;
 
-                struct Type* template = ((struct TypeList*)left_type)->type;
-                CHECK_TYPE(!same_type(template, right_type), get_idx->name, "List type and right side type must match.");
-
-                emit_byte(compiler, OP_SET_ELEMENT);
-                int depth = 0;
-                emit_byte(compiler, depth);
-                *node_type = right_type;
-                return RESULT_SUCCESS;
-            }
-
-            if (left_type->type == TYPE_MAP) {
-                CHECK_TYPE(idx_type->type != TYPE_STRING, get_idx->name, "Key must be string type.");
-
-                struct Type* template = ((struct TypeList*)left_type)->type;
-                CHECK_TYPE(!same_type(template, right_type), get_idx->name, "Map type and right side type must match.");
-
-                emit_byte(compiler, OP_SET_ELEMENT);
-                int depth = 0;
-                emit_byte(compiler, depth);
-                *node_type = right_type;
-                return RESULT_SUCCESS;
-            }
-
-            add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
-            return RESULT_FAILED;
+            *node_type = right_type;
+            return RESULT_SUCCESS;
         }
         case NODE_CONTAINER: {
             struct DeclContainer* dc = (struct DeclContainer*)node;
