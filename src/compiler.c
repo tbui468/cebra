@@ -419,6 +419,24 @@ static ResultCode compile_decl_var(struct Compiler* compiler, DeclVar* dv, struc
     return RESULT_SUCCESS;
 }
 
+static ResultCode set_var_to_stack_idx(struct Compiler* compiler, Token var, int depth) {
+    int idx = resolve_local(compiler, var);
+    OpCode op = OP_SET_LOCAL;
+    if (idx == -1) {
+        idx = resolve_upvalue(compiler, var);
+        op = OP_SET_UPVALUE;
+    }
+
+    if (idx != -1) {
+        emit_byte(compiler, op);
+        emit_byte(compiler, idx);
+        emit_byte(compiler, depth);
+        return RESULT_SUCCESS;
+    }
+
+    return RESULT_FAILED;
+}
+
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
     if (node == NULL) {
         *node_type = make_nil_type();
@@ -433,7 +451,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         }
         case NODE_SEQUENCE: {
             struct Sequence* seq = (struct Sequence*)node;
-
 
             //if right is NULL, just compile left in order and return types in TypeArray
             if (seq->right == NULL) {
@@ -460,63 +477,22 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     COMPILE_NODE(decl_var, NULL, &type);
                     int idx = resolve_local(compiler, dv->name);
                     decl_idx[decl_idx_count++] = -1;
-
-                    if (type->type != TYPE_NIL) {
-                        set_local(compiler, dv->name, type, idx);
-
-                        if (dv->type->type == TYPE_LIST) {
-                            struct TypeList* tl = (struct TypeList*)(dv->type);
-                            CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
-                        }
-
-                        if (dv->type->type == TYPE_MAP) {
-                            struct TypeMap* tm = (struct TypeMap*)(dv->type);
-                            CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
-                        }
-
-                        CHECK_TYPE(!same_type(dv->type, type), dv->name,
-                                   "Declaration type and right hand side type must match.");
-                    }
-                    continue;
-                }
-                if (seq->left->nodes[i]->type != NODE_GET_VAR) {
+                } else if (seq->op.type == TOKEN_COLON_EQUAL && seq->left->nodes[i]->type == NODE_GET_VAR) {
+                    Token name = ((GetVar*)(seq->left->nodes[i]))->name;
+                    //Int Type is just a place holder and is replaced later
+                    struct Node* decl_var = make_decl_var(name, make_int_type(), make_nil(make_dummy_token()));
+                    DeclVar* dv = (DeclVar*)decl_var;
+                    struct Type* type;
+                    COMPILE_NODE(decl_var, NULL, &type);
+                    int idx = resolve_local(compiler, name);
+                    decl_idx[decl_idx_count++] = idx;
+                } else {
                     decl_idx[decl_idx_count++] = -1;
-                    continue;
-                }
-                if (seq->op.type != TOKEN_COLON_EQUAL) {
-                    decl_idx[decl_idx_count++] = -1;
-                    continue;
-                }
-
-                Token name = ((GetVar*)(seq->left->nodes[i]))->name;
-                //Type is just a place holder and is replaced later
-                struct Node* decl_var = make_decl_var(name, make_int_type(), make_nil(make_dummy_token()));
-
-                DeclVar* dv = (DeclVar*)decl_var;
-                struct Type* type;
-                COMPILE_NODE(decl_var, NULL, &type);
-                int idx = resolve_local(compiler, name);
-                decl_idx[decl_idx_count++] = idx;
-
-                if (type->type != TYPE_NIL) {
-                    set_local(compiler, dv->name, type, idx);
-
-                    if (dv->type->type == TYPE_LIST) {
-                        struct TypeList* tl = (struct TypeList*)(dv->type);
-                        CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
-                    }
-
-                    if (dv->type->type == TYPE_MAP) {
-                        struct TypeMap* tm = (struct TypeMap*)(dv->type);
-                        CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
-                    }
-
-                    CHECK_TYPE(!same_type(dv->type, type), dv->name,
-                               "Declaration type and right hand side type must match.");
                 }
             }
 
             //otherwise compile right side onto the stack
+            //so that left hand side can be assigned to them
             struct Type* right_seq_type;
             if (seq->right->type == NODE_SEQUENCE) {
                 COMPILE_NODE(seq->right, NULL, &right_seq_type);
@@ -532,8 +508,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
            
             //update types for variable declarations here
-            //this won't work.... we need to know which idx in right_seq_type we
-            //need to set this to...
             for (int i = 0; i < decl_idx_count; i++) {
                 if (decl_idx[i] != -1) {
                     compiler->locals[decl_idx[i]].type = ((struct TypeArray*)right_seq_type)->types[i];
@@ -546,7 +520,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //setting variables/props/elements in reverse order to match stack order
             struct TypeArray* left_seq_type = make_type_array();
             for (int i = 0; i < seq->left->count; i++) {
-                //TODO: testing on SetVar only first - need to integer SetElement, SetProp, DeclVar later
                 switch (seq->left->nodes[i]->type) {
                     case NODE_GET_ELEMENT: {
                         SetElement* set_idx = (SetElement*)node;
@@ -641,20 +614,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         Token var = ((GetVar*)(seq->left->nodes[i]))->name;
                         struct Type* var_type = resolve_type(compiler, var);
                         add_type(left_seq_type, var_type);
-
-                        int idx = resolve_local(compiler, var);
-                        OpCode op = OP_SET_LOCAL;
-                        if (idx == -1) {
-                            idx = resolve_upvalue(compiler, var);
-                            op = OP_SET_UPVALUE;
-                        }
-
-                        if (idx != -1) {
-                            emit_byte(compiler, op);
-                            emit_byte(compiler, idx);
-                            int depth = seq->left->count - 1 - i;
-                            emit_byte(compiler, depth);
-                        }
+                        set_var_to_stack_idx(compiler, var, seq->left->count - 1 - i);
                         break;
                     }
                     case NODE_DECL_VAR: {
@@ -662,27 +622,17 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         Token var = ((DeclVar*)(seq->left->nodes[i]))->name;
                         struct Type* var_type = resolve_type(compiler, var);
                         add_type(left_seq_type, var_type);
-
-                        int idx = resolve_local(compiler, var);
-                        OpCode op = OP_SET_LOCAL;
-                        if (idx == -1) {
-                            idx = resolve_upvalue(compiler, var);
-                            op = OP_SET_UPVALUE;
-                        }
-
-                        if (idx != -1) {
-                            emit_byte(compiler, op);
-                            emit_byte(compiler, idx);
-                            int depth = seq->left->count - 1 - i;
-                            emit_byte(compiler, depth);
-                        }
+                        set_var_to_stack_idx(compiler, var, seq->left->count - 1 - i);
                         break;
                     }
                     default:
                         break;
                 }
             }
-/* //TODO: need to turn this back on after everything works
+
+            //TODO: need to turn this back on after everything works
+ 
+            /*
             if (!same_type((struct Type*)left_seq_type, (struct Type*)right_seq_type)) {
                 add_error(compiler, seq->op, "Sequence types must all match.");
                 return RESULT_FAILED;
@@ -1279,27 +1229,16 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             Token var = ((GetVar*)(sv->left))->name;
             struct Type* var_type = resolve_type(compiler, var);
             *node_type = var_type;
+            CHECK_TYPE(!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type), 
+                       var, "Right side type must match variable type.");
 
-            int idx = resolve_local(compiler, var);
-            OpCode op = OP_SET_LOCAL;
-            if (idx == -1) {
-                idx = resolve_upvalue(compiler, var);
-                op = OP_SET_UPVALUE;
+            int depth = 0;
+            if (set_var_to_stack_idx(compiler, var, depth) == RESULT_FAILED) {
+                add_error(compiler, var, "Local variable not declared.");
+                return RESULT_FAILED;
             }
 
-            if (idx != -1) {
-                CHECK_TYPE(!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type), 
-                           var, "Right side type must match variable type.");
-
-                emit_byte(compiler, op);
-                emit_byte(compiler, idx);
-                int depth = 0;
-                emit_byte(compiler, depth);
-                return RESULT_SUCCESS;
-            }
-
-            add_error(compiler, var, "Local variable not declared.");
-            return RESULT_FAILED;
+            return RESULT_SUCCESS;
         }
         case NODE_GET_ELEMENT: {
             GetElement* get_idx = (GetElement*)node;
