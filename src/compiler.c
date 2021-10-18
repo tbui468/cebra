@@ -22,6 +22,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array);
 
 static bool struct_or_function_to_nil(struct Type* var_type, struct Type* right_type) {
+    //TODO: allowing nil declarations for now to make sequences work
+    return true;
     if (right_type->type != TYPE_NIL) return false;
     if (var_type->type != TYPE_FUN && var_type->type != TYPE_STRUCT) return false;
     return true;
@@ -429,11 +431,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             *node_type = make_nil_type();
             return result;
         }
-                            /*
         case NODE_SEQUENCE: {
             struct Sequence* seq = (struct Sequence*)node;
 
-            printf("-1\n");
 
             //if right is NULL, just compile left in order and return types in TypeArray
             if (seq->right == NULL) {
@@ -447,102 +447,208 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_SUCCESS;
             }
 
-            //otherwise compile right, left and then order it
+            //tracking locals indices to update types if inferred
+            int decl_idx[256];
+            int decl_idx_count = 0;
+
+            //compile all variable declarations
+            for (int i = 0; i < seq->left->count; i++) {
+                if (seq->op.type == TOKEN_EQUAL && seq->left->nodes[i]->type == NODE_DECL_VAR) {
+                    DeclVar* dv = (DeclVar*)(seq->left->nodes[i]);
+                    if (declared_in_scope(compiler, dv->name)) {
+                        add_error(compiler, dv->name, "Identifier already defined.");
+                        return RESULT_FAILED;
+                    }
+                    int idx = add_local(compiler, dv->name, dv->type);
+                    decl_idx[decl_idx_count++] = idx;
+                    struct Type* type;
+                    COMPILE_NODE(dv->right, NULL, &type);
+
+                    if (type->type != TYPE_NIL) {
+                        set_local(compiler, dv->name, type, idx);
+
+                        if (dv->type->type == TYPE_LIST) {
+                            struct TypeList* tl = (struct TypeList*)(dv->type);
+                            CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
+                        }
+
+                        if (dv->type->type == TYPE_MAP) {
+                            struct TypeMap* tm = (struct TypeMap*)(dv->type);
+                            CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
+                        }
+
+                        CHECK_TYPE(!same_type(dv->type, type), dv->name,
+                                   "Declaration type and right hand side type must match.");
+                    }
+                    continue;
+                }
+                if (seq->left->nodes[i]->type != NODE_GET_VAR) {
+                    decl_idx[decl_idx_count++] = -1;
+                    continue;
+                }
+                if (seq->op.type != TOKEN_COLON_EQUAL) {
+                    decl_idx[decl_idx_count++] = -1;
+                    continue;
+                }
+
+                Token name = ((GetVar*)(seq->left->nodes[i]))->name;
+                //TODO: need a way to set type during declaration OR do it afterwards - could save index, for example
+                struct Node* decl_var = make_decl_var(name, make_infer_type(), make_nil(make_dummy_token()));
+
+                DeclVar* dv = (DeclVar*)decl_var;
+                if (declared_in_scope(compiler, dv->name)) {
+                    add_error(compiler, dv->name, "Identifier already defined.");
+                    return RESULT_FAILED;
+                }
+                int idx = add_local(compiler, dv->name, dv->type);
+                decl_idx[decl_idx_count++] = idx;
+                struct Type* type;
+                COMPILE_NODE(dv->right, NULL, &type);
+
+                if (type->type != TYPE_NIL) {
+                    set_local(compiler, dv->name, type, idx);
+
+                    if (dv->type->type == TYPE_LIST) {
+                        struct TypeList* tl = (struct TypeList*)(dv->type);
+                        CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
+                    }
+
+                    if (dv->type->type == TYPE_MAP) {
+                        struct TypeMap* tm = (struct TypeMap*)(dv->type);
+                        CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
+                    }
+
+                    CHECK_TYPE(!same_type(dv->type, type), dv->name,
+                               "Declaration type and right hand side type must match.");
+                }
+            }
+
+            //otherwise compile right side onto the stack
             struct Type* right_seq_type;
             if (seq->right->type == NODE_SEQUENCE) {
                 COMPILE_NODE(seq->right, NULL, &right_seq_type);
             } else if (seq->right->type == NODE_LIST) {
                 struct NodeList* nl = (struct NodeList*)(seq->right);
                 struct TypeArray* ta = make_type_array();
-                printf("right seq types\n");
                 for (int i = 0; i < nl->count; i++) {
                     struct Type* var_type;
                     COMPILE_NODE(nl->nodes[i], NULL, &var_type);
                     add_type(ta, var_type);
-                    print_type(var_type);
                 }
                 right_seq_type = (struct Type*)ta;
             }
-            
-            printf("0\n");
+           
+            //update types for variable declarations here
+            //this won't work.... we need to know which idx in right_seq_type we
+            //need to set this to...
+            for (int i = 0; i < decl_idx_count; i++) {
+                if (decl_idx[i] != -1) {
+                    compiler->locals[decl_idx[i]].type = ((struct TypeArray*)right_seq_type)->types[i];
+                }
+            }
+
 
             //x, y, z = 1, 2, 3
             //[1][2][3]
+            //setting variables/props/elements in reverse order to match stack order
             struct TypeArray* left_seq_type = make_type_array();
             for (int i = 0; i < seq->left->count; i++) {
-                printf("i: %d\n", i); //why only 1?
                 //TODO: testing on SetVar only first - need to integer SetElement, SetProp, DeclVar later
                 switch (seq->left->nodes[i]->type) {
-                    case NODE_SET_VAR: {
-                        Token var = ((DeclVar*)(seq->left->nodes[i]))->name;
-                        struct Type* var_type = resolve_type(compiler, var);
-                        add_type(left_seq_type, var_type);
-                        print_type(var_type);
+                    case NODE_GET_ELEMENT: {
+                        SetElement* set_idx = (SetElement*)node;
+                        GetElement* ge = (GetElement*)(seq->left->nodes[i]);
 
-                        int idx = resolve_local(compiler, var);
-                        OpCode op = OP_SET_LOCAL;
-                        if (idx == -1) {
-                            idx = resolve_upvalue(compiler, var);
-                            op = OP_SET_UPVALUE;
+                        struct Type* left_type;
+                        COMPILE_NODE(ge->left, ret_types, &left_type);
+                        struct Type* idx_type;
+                        COMPILE_NODE(ge->idx, ret_types, &idx_type);
+
+                        if (left_type->type != TYPE_LIST && left_type->type != TYPE_MAP) {
+                            add_error(compiler, ge->name, "[] access must be used on a list or map type.");
+                            return RESULT_FAILED;
                         }
 
-                        if (idx != -1) {
-                            emit_byte(compiler, op);
-                            emit_byte(compiler, idx);
+                        if (left_type->type == TYPE_LIST) {
+                            CHECK_TYPE(idx_type->type != TYPE_INT, ge->name, "Index must be integer type.");
+
+                            struct Type* template = ((struct TypeList*)left_type)->type;
+                            CHECK_TYPE(!same_type(template, ((struct TypeArray*)right_seq_type)->types[i]), ge->name, "List type and right side type must match.");
+
+                            emit_byte(compiler, OP_SET_ELEMENT);
                             int depth = seq->left->count - 1 - i;
                             emit_byte(compiler, depth);
+                            add_type(left_seq_type, template);
+                        }
+
+                        if (left_type->type == TYPE_MAP) {
+                            CHECK_TYPE(idx_type->type != TYPE_STRING, ge->name, "Key must be string type.");
+
+                            struct Type* template = ((struct TypeList*)left_type)->type;
+                            CHECK_TYPE(!same_type(template, ((struct TypeArray*)right_seq_type)->types[i]), ge->name, "Map type and right side type must match.");
+
+                            emit_byte(compiler, OP_SET_ELEMENT);
+                            int depth = seq->left->count - 1 - i;
+                            emit_byte(compiler, depth);
+                            add_type(left_seq_type, template);
+                        }
+
+                        break;
+                    }
+                    case NODE_GET_PROP: {
+                        //compile GetProp to get struct inst. or list
+                        //emit SET_PROP + depth for prop on the stack already
+                        GetProp* gp = (GetProp*)(seq->left->nodes[i]);
+                        struct Type* type_inst;
+                        COMPILE_NODE(gp->inst, NULL, &type_inst);
+
+                        if (type_inst->type != TYPE_LIST && type_inst->type != TYPE_STRUCT) {
+                            add_error(compiler, gp->prop, "Property cannot be set.");
+                            return RESULT_FAILED;
+                        }
+
+                        if (type_inst->type == TYPE_LIST) {
+                            if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
+                                emit_byte(compiler, OP_SET_SIZE);
+                                add_type(left_seq_type, make_int_type());
+                            } else {
+                                add_error(compiler, gp->prop, "Property doesn't exist on Lists.");
+                                return RESULT_FAILED;
+                            }
+                        }
+
+                        if (type_inst->type == TYPE_STRUCT) {
+                            struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
+                            push_root(to_string(name));
+                            emit_byte(compiler, OP_SET_PROP);
+                            emit_short(compiler, add_constant(compiler, to_string(name))); 
+                            int depth = seq->left->count - 1 - i;
+                            emit_byte(compiler, depth);
+                            pop_root();
+
+                            Value type_val = to_nil();
+                            struct Type* current = type_inst;
+                            while (current != NULL) {
+                                struct TypeStruct* tc = (struct TypeStruct*)current;
+                                if (get_from_table(&tc->props, name, &type_val)) break;
+                                current = tc->super;
+                            }
+
+                            if (current == NULL) {
+                                add_error(compiler, gp->prop, "Property not found in instance.");
+                                return RESULT_FAILED;
+                            }
+
+                            add_type(left_seq_type, current);
                         }
                         break;
                     }
                     case NODE_GET_VAR: {
-                        //if op is :=, then decl_var it - could we just create and set it to nil
-                        //then set it as usual afterwards (making it a two step process)
-                        if (seq->op.type == TOKEN_COLON_EQUAL) {
-                            Token name = ((GetVar*)(seq->left->nodes[i]))->name;
-                            struct Type* type = ((struct TypeArray*)right_seq_type)->types[seq->left->count - 1 - i];
-                            struct Node* decl_var = make_decl_var(name, type, make_nil(make_dummy_token()));
-                            ////////manually compile decl_var
-                            DeclVar* dv = (DeclVar*)decl_var;
-                            if (declared_in_scope(compiler, dv->name)) {
-                                add_error(compiler, dv->name, "Identifier already defined.");
-                                return RESULT_FAILED;
-                            }
-                            if (dv->type->type != TYPE_INFER) {
-                                int idx = add_local(compiler, dv->name, dv->type);
-                                COMPILE_NODE(dv->right, NULL, &type);
-
-                                if (type->type != TYPE_NIL) {
-                                    set_local(compiler, dv->name, type, idx);
-
-                                    if (dv->type->type == TYPE_LIST) {
-                                        struct TypeList* tl = (struct TypeList*)(dv->type);
-                                        CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
-                                    }
-
-                                    if (dv->type->type == TYPE_MAP) {
-                                        struct TypeMap* tm = (struct TypeMap*)(dv->type);
-                                        CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
-                                    }
-
-                                    CHECK_TYPE(!same_type(dv->type, type), dv->name,
-                                               "Declaration type and right hand side type must match.");
-                                }
-
-                            }
-                            ////////////
-                        }
-
-                                           printf("get var 0\n");
+                        //setting all vars
                         Token var = ((GetVar*)(seq->left->nodes[i]))->name;
-                                           printf("get var x\n");
-                                           print_token(var);
                         struct Type* var_type = resolve_type(compiler, var);
-                                           printf("get var y\n");
                         add_type(left_seq_type, var_type);
-                                           printf("get var z\n");
-                        //print_type(var_type);
 
-                                           printf("get var 1\n");
                         int idx = resolve_local(compiler, var);
                         OpCode op = OP_SET_LOCAL;
                         if (idx == -1) {
@@ -550,7 +656,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                             op = OP_SET_UPVALUE;
                         }
 
-                                           printf("get var 2\n");
                         if (idx != -1) {
                             emit_byte(compiler, op);
                             emit_byte(compiler, idx);
@@ -560,19 +665,18 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         break;
                     }
                     default:
-                        printf("No case\n");
                         break;
                 }
             }
-
-            printf("1\n");
+/* //TODO: need to turn this back on after everything works
             if (!same_type((struct Type*)left_seq_type, (struct Type*)right_seq_type)) {
                 add_error(compiler, seq->op, "Sequence types must all match.");
                 return RESULT_FAILED;
-            }
-            *node_type = (struct Type*)left_seq_type; //== right_seq_type
+            }*/
+            printf("sequence type: "); print_type((struct Type*)left_seq_type); printf("\n");
+            *node_type = (struct Type*)left_seq_type;
             return RESULT_SUCCESS;
-        }*/
+        }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
 
@@ -814,10 +918,18 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* type;
             COMPILE_NODE(es->expr, ret_types, &type);
 
+            //pop multiple times if sequence of Declarations....
+            if (type->type == TYPE_ARRAY) {
+                for (int i = 0; i < ((struct TypeArray*)type)->count; i++) {
+                    emit_byte(compiler, OP_POP);
+                }
             //while/if-else etc return VAL_NIL (and leave nothing on stack)
-            if (type->type != TYPE_NIL) {
+            //should have those also push a nil on the stack so that everything
+            //is popped for consistency...
+            } else if (type->type != TYPE_NIL) {
                 emit_byte(compiler, OP_POP);
             }
+
             *node_type = make_nil_type();
             return RESULT_SUCCESS;
         }
@@ -974,6 +1086,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* type_inst;
             COMPILE_NODE(gp->inst, ret_types, &type_inst);
 
+            printf("inst type in GET_PROP: "); print_type(type_inst); printf("\n");
+
             if (type_inst->type == TYPE_LIST) {
                 if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
                     emit_byte(compiler, OP_GET_SIZE);
@@ -1032,27 +1146,32 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
 
-            emit_byte(compiler, OP_GET_PROP);
-            struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
-            push_root(to_string(name));
-            emit_short(compiler, add_constant(compiler, to_string(name))); 
-            pop_root();
+            if (type_inst->type == TYPE_STRUCT) {
+                emit_byte(compiler, OP_GET_PROP);
+                struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
+                push_root(to_string(name));
+                emit_short(compiler, add_constant(compiler, to_string(name))); 
+                pop_root();
 
-            Value type_val = to_nil();
-            struct Type* current = type_inst;
-            while (current != NULL) {
-                struct TypeStruct* tc = (struct TypeStruct*)current;
-                if (get_from_table(&tc->props, name, &type_val)) break;
-                current = tc->super;
+                Value type_val = to_nil();
+                struct Type* current = type_inst;
+                while (current != NULL) {
+                    struct TypeStruct* tc = (struct TypeStruct*)current;
+                    if (get_from_table(&tc->props, name, &type_val)) break;
+                    current = tc->super;
+                }
+
+                if (current == NULL) {
+                    add_error(compiler, gp->prop, "Property not found in instance.@@@@");
+                    return RESULT_FAILED;
+                }
+
+                *node_type = type_val.as.type_type;
+                return RESULT_SUCCESS;
             }
 
-            if (current == NULL) {
-                add_error(compiler, gp->prop, "Property not found in instance.");
-                return RESULT_FAILED;
-            }
-
-            *node_type = type_val.as.type_type;
-            return RESULT_SUCCESS;
+            add_error(compiler, gp->prop, "Trying to access property from invalid object.");
+            return RESULT_FAILED;
         }
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;

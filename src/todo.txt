@@ -30,64 +30,39 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
     the same instance rather than different ones.  Need to fix this ...
 
 Implementation:
-
-    The first declaration is being compiled as a sequence of 1....
-
-    resolve_type in compiler should return error code, and then type should be set by pointer to pointer
     
-    Fix compilation of Sequences - make it run sandbox.cbr
-    
-    Need to finish implemenation of multiple returns:
-        See @ symbol in compiler to see locations where we're just grabbing the first TypeArray type to make
-            the program compile - need to implement multireturns next.  Multiple returns only occur for function 
-            calls, so we should be able to limit the changes we have to make in the code to those only...
-            Note: this can't be correct/tested until the new Sequence AST node is implemented
+    Implement SET_PROP
 
-    Idea: have two types for multiple types: 
-        TypeSequence is for function parameters, returns and Sequence AST nodes.  Order matters for sequences.
-        TypeArray is the general array of types for MULTIPLE options - so remove the weird Type->opt we have for 'print_native'
+    Implement SET_ELEMENT
 
-    parse_type() should really be a switch statement - make a peek_token() that returns the next token (rather than
-        peek_one(TokenType) which requires you to guess the next token.
+    Types of declared variables is now set to TYPE_INFER - need to update them after the right side is compiled
+        and also need to type check too
 
-    Change Return AST node and TypeFun so that returns take in a list of expressions, and TypeFun->ret a list of types
+    All results are popped now if a stmt, but need to have expression versions type check a TypeArray
 
-    Returns compile each expression in the correct order in the parser - make them compile each expression in the compiler
+    For function parameters, need to update how they are compiled - Function nodes should now take in a Sequence 
+    node (with seq->right NULL)
 
-    If a function call with more than one return is a statement, need to pop equal to the number of returns
-        - could just let the compiler handle this.  After compiling the inside of each StmtExpr, we normally
-        just pop one, but this time look at the returned type - pop again for each return over 1
+    Feature: Attempted to add sequences to allow functions with multiple returns, but it's now working right now.
+        parse_sequence and compilation of sequences is commented out for now.
 
-    Add multiple return options to functions
-        need to make return type a TypeList
-        need to make Return node 'right' a NodeList
-        return types must be enclosed in parens now
-        fun :: (a: int) -> (int) {
-            -> 23
-        }
-        fun :: (a: int) -> () {
-        }
-        fun :: (a: int) -> (int, string) {
-            -> 23, "dog"
-        }
+        One possible solution: all declarations must be compiled (and set to 'nil') before any of the right sides
+            are compiled.  Then compile right sides, then compile left again to set the values.  So compile sequences
+            in three steps.
 
-        Implement syntax and test with single returns for now.
-        Then expand to test multiple returns with assignments - see below
+            compile decl_var in left (either DeclVar with '=' or GetVar with ':=').  Should be able to use the compile_decl_var
+                function now.
+            compile ALL right
+            compile ALL left (initializing the dec_vars.  If originally DeclVar, then just grab token and make a GetVar to compile)
+                setting the variables/properties/elements in reverse order
 
-    Just swap order of variables for multiassignment/multideclaration:
-        three_returns ::() -> (int, int, int) {
-            i := 0
-            -> i = i + 1, i = i + 1, i = i + 1
-        }
-        a, b, c, d = 10, three_returns()
+            step 1: parse it again at end of declarations, and ucomment parse_sequence
+            step 2: change compilation to allow nil types during declaration
+            step 3: uncomment NODE_SEQUENCE in compiler
 
-        if compile right side if NOT function
-            a has expr for right, and assigned to top of stack
-        compile right side to get a function with three returns
-            grab b, c and d and reverse
-            d has three_returns() for right and is assigned to top of stack after compiling call on function
-            c has NULL for right, and assigned to top of stack
-            b has NULL for right, and assigned to top of stack
+    Fix the memory bug with Maps/Lists as properties in structs - see 'Bugs' above
+
+    Simplify code and make it fast - this is supposed to be a selling point
 
     Get REPL working - this is the key difference between Cebra and other compiled languages like Go
 

@@ -424,7 +424,7 @@ static ResultCode or(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-/*
+
 static ResultCode parse_sequence(Token var_name, struct Node** node) {
 
     struct NodeList* left = (struct NodeList*)make_node_list();
@@ -448,7 +448,7 @@ static ResultCode parse_sequence(Token var_name, struct Node** node) {
         *node = make_sequence(name, left, NULL);
     }
     return RESULT_SUCCESS;
-}*/
+}
 
 static ResultCode parse_expression(Token var_name, struct Node** node) {
     struct Node* left;
@@ -831,7 +831,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
         struct Node* condition;
-        PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect condition after 'while'.");
+        PARSE(parse_expression, name, &condition, name, "Expect condition after 'while'.");
         CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
 
         struct Node* then_block;
@@ -917,12 +917,12 @@ static ResultCode declaration(struct Node** node) {
         return RESULT_SUCCESS;
     }
 
-    /*
     struct Node* seq;
     PARSE(parse_sequence, parser.previous, &seq, parser.previous, "YEEEEEP");
-    *node = seq;
-    return RESULT_SUCCESS;*/
+    *node = make_expr_stmt(seq);
+    return RESULT_SUCCESS;
 
+    /*
     struct Node* expr;
     PARSE(parse_expression, parser.previous, &expr, parser.previous, "Invalid expressionss.");
 
@@ -946,7 +946,7 @@ static ResultCode declaration(struct Node** node) {
     }
 
     *node = expr;
-    return RESULT_SUCCESS;
+    return RESULT_SUCCESS;*/
 }
 
 static void init_parser(const char* source, struct Table* globals) {

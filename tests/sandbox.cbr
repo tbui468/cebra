@@ -1,7 +1,15 @@
-x := 23
-y := 5.34
+TokenType :: enum {
+    one
+    two
+}
 
-x, y = 99, 6.45
+Token :: struct {
+    type: TokenType = TokenType.one
+}
 
-print(x)
-print(y)
+t := Token()
+
+while (t = Token()).type != TokenType.one {
+    print("HI")
+}
+
