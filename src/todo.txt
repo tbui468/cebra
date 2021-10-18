@@ -30,10 +30,8 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
     the same instance rather than different ones.  Need to fix this ...
 
 Implementation:
-    
-    Implement SET_PROP
 
-    Implement SET_ELEMENT
+    Sequences don't work now when the right side is a call (eg, to instantiate struct) since we don't look for that now
 
     Types of declared variables is now set to TYPE_INFER - need to update them after the right side is compiled
         and also need to type check too

@@ -1,15 +1,11 @@
-TokenType :: enum {
-    one
-    two
+
+
+j: int = 0
+ji := 0
+for i: int = 0, i < 2, i = i + 1 {
+    j = j + 1
 }
-
-Token :: struct {
-    type: TokenType = TokenType.one
-}
-
-t := Token()
-
-while (t = Token()).type != TokenType.one {
-    print("HI")
+for i := 0, i < 3, i = i + 1 {
+    ji = ji + 1
 }
 

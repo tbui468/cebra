@@ -455,14 +455,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             for (int i = 0; i < seq->left->count; i++) {
                 if (seq->op.type == TOKEN_EQUAL && seq->left->nodes[i]->type == NODE_DECL_VAR) {
                     DeclVar* dv = (DeclVar*)(seq->left->nodes[i]);
-                    if (declared_in_scope(compiler, dv->name)) {
-                        add_error(compiler, dv->name, "Identifier already defined.");
-                        return RESULT_FAILED;
-                    }
-                    int idx = add_local(compiler, dv->name, dv->type);
-                    decl_idx[decl_idx_count++] = idx;
                     struct Type* type;
-                    COMPILE_NODE(dv->right, NULL, &type);
+                    struct Node* decl_var = make_decl_var(dv->name, dv->type, make_nil(make_dummy_token()));
+                    COMPILE_NODE(decl_var, NULL, &type);
+                    int idx = resolve_local(compiler, dv->name);
+                    decl_idx[decl_idx_count++] = -1;
 
                     if (type->type != TYPE_NIL) {
                         set_local(compiler, dv->name, type, idx);
@@ -492,18 +489,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
 
                 Token name = ((GetVar*)(seq->left->nodes[i]))->name;
-                //TODO: need a way to set type during declaration OR do it afterwards - could save index, for example
-                struct Node* decl_var = make_decl_var(name, make_infer_type(), make_nil(make_dummy_token()));
+                //Type is just a place holder and is replaced later
+                struct Node* decl_var = make_decl_var(name, make_int_type(), make_nil(make_dummy_token()));
 
                 DeclVar* dv = (DeclVar*)decl_var;
-                if (declared_in_scope(compiler, dv->name)) {
-                    add_error(compiler, dv->name, "Identifier already defined.");
-                    return RESULT_FAILED;
-                }
-                int idx = add_local(compiler, dv->name, dv->type);
-                decl_idx[decl_idx_count++] = idx;
                 struct Type* type;
-                COMPILE_NODE(dv->right, NULL, &type);
+                COMPILE_NODE(decl_var, NULL, &type);
+                int idx = resolve_local(compiler, name);
+                decl_idx[decl_idx_count++] = idx;
 
                 if (type->type != TYPE_NIL) {
                     set_local(compiler, dv->name, type, idx);
@@ -603,7 +596,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         COMPILE_NODE(gp->inst, NULL, &type_inst);
 
                         if (type_inst->type != TYPE_LIST && type_inst->type != TYPE_STRUCT) {
-                            add_error(compiler, gp->prop, "Property cannot be set.");
+                            add_error(compiler, gp->prop, "Property cannot be set.......");
                             return RESULT_FAILED;
                         }
 
@@ -673,7 +666,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 add_error(compiler, seq->op, "Sequence types must all match.");
                 return RESULT_FAILED;
             }*/
-            printf("sequence type: "); print_type((struct Type*)left_seq_type); printf("\n");
             *node_type = (struct Type*)left_seq_type;
             return RESULT_SUCCESS;
         }
@@ -1085,8 +1077,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             GetProp* gp = (GetProp*)node;
             struct Type* type_inst;
             COMPILE_NODE(gp->inst, ret_types, &type_inst);
-
-            printf("inst type in GET_PROP: "); print_type(type_inst); printf("\n");
 
             if (type_inst->type == TYPE_LIST) {
                 if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {

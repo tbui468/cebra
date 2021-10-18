@@ -63,7 +63,7 @@ Lexer :: struct {
     index := 0
 }
 
-TokenType :: enum {k
+TokenType :: enum {
     default
     number
     plus
