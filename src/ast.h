@@ -41,6 +41,7 @@ typedef enum {
 struct Node {
     NodeType type;
     struct Node* next;
+    bool has_decls;
 };
 
 struct NodeList {
@@ -52,7 +53,7 @@ struct NodeList {
 
 struct Sequence {
     struct Node base;
-    Token name;
+    Token op;
     struct NodeList* left; 
     struct Node* right; //NodeList* or Sequence* for cascading sequential assignments/declarations
 };

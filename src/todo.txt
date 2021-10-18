@@ -31,78 +31,12 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
 
 Implementation:
 
-    Finish implemention Sequences inside of assignment...
-        Sequence should be the general item we use for declaration + assignment - if the sequence has a single item in
-        both left and right sides, then it's the regular 1 to 1 assignment/declaration/setting 
+    The first declaration is being compiled as a sequence of 1....
 
-        See notes about recursive algorithm below.  This requires a major reworking...
-
-    Add Sequence AST node and integrate new recursive parsing algorithms for parsing sequences - see next two notes sections:
-        - Disallow sequence within sequences, and combine parse_expressions functions into one
-        - integrate with new Sequence nodes and check they it all still works
-        - Declarations are NOT expressions - allowing them to be expressions would trap other items on the stack
-            or knock them off the stack - all declarations should NOT return a value
-            if a: bool = 22 > 242 { }
-            if a = 23 > 242 { } //this is find if a a bool
-
-        Don't allow  Sequences within sequences (so parse a single expression at a time
-            x, y, z = a := 1, 3, 2 //will be parsed as x = a := 1, y = 3, and z = 2
-            if a function with multiple returns is called, the return counts will be checked at runtime
-
-        See these notes in parser.c too.  This also simplifies our parser since we don't need to have
-            two parse_expression() functions anymore, and assignment() doesn't need the expected parameter
-            since we check that in the compiler now.
-                TODO: parse with or() here and manually check for ',' to prevent a sequence within sequence
-                parse until ':=' or '=' or non ',' since we don't know how many will exists if functions with multiple
-                returns are included
-        
-        1. For assignment, multiassignment from multiple returns might be tricky if we also allow arbitrary number in the 
-            sequence.  We don't know the number of returns in a closure until compile time, so we simpled can't reverse
-            the lhs of the assignments.
-
-            One solution: have the function still compile the returns in order from left to right, but when returning
-                we know how many returns there are - pop the returns into a temp stack, and then pop them back into the 
-                vm stack so that the returns are in reverse order (and correct order for the declarations and assignments)
-                ..but then we still don't know a
-
-                One solution to that problem: we know that all statements will either be a var declaration or one of the three
-                    assignments.  Make a new Sequence ast node that holds a list of declarations/assignments with NULL right sides, 
-                    and a second list of all right side expressions.  At compile time, compile ALL the right sides in sequence and
-                    then check if the sum of values on the stack is equal to the declarations/assignments in the first list. 
-                    Then compile the first list in REVERSE order so that they line up with the elements in the stack.  Make sure
-                    to put in NULL checks so that if the right hand side is null, declaration/assignment nodes just assign to top
-                    of the stack.  
-                    Will also need to think about how /when to pop the stack...
-                    Note: this means that in sequences, all right hand side expressions are evaluated before they are assigned
-                    at the end.  This should be mentioned in the docs.
-
-        2. Is sequential assignment too ambiguous?  
-            Sequences need to be right associative, so we simply can't loop - 
-            it needs to be called recursively for every := or = that follows:
-
-            If sequence (parse 1 expression and check if followed by comma), then call
-            parse_sequence_right(lhs).  
-
-                struct Sequence* s = parse_sequence()
-                if next is := or = {
-                    check that all nodes are GetVar, GetElement, GetProp, or DeclVar with right == NULL
-                    result = parse_sequence_right(s)
-                }
-
-                parse_sequence_right :: (lhs) -> struct Sequence* {
-                    rhs = parse right side separated by commas
-                    if after parsing right is := or = {
-                        check that ALL right nodes are GetVar, GetElement, GetProp or DeclVar with right == NULL
-                        -> parse_sequence_right(right)
-                    } else {
-                        -> make_set_sequence(lhs, rhs) //base case
-                    }
-                }
-           
-                a, b = c = 23, 4 
-
-            Have the parser check for errors here - see comments in pseudo code above
-
+    resolve_type in compiler should return error code, and then type should be set by pointer to pointer
+    
+    Fix compilation of Sequences - make it run sandbox.cbr
+    
     Need to finish implemenation of multiple returns:
         See @ symbol in compiler to see locations where we're just grabbing the first TypeArray type to make
             the program compile - need to implement multireturns next.  Multiple returns only occur for function 

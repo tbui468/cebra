@@ -1,8 +1,9 @@
 #include "ast.h"
 #include "memory.h"
 
-
+//also init 'has_declarations'
 struct Node* insert_node(struct Node* node) {
+    node->has_decls = false;
     node->next = current_compiler->nodes;
     current_compiler->nodes = node;    
 
@@ -19,8 +20,9 @@ struct Node* make_node_list() {
     return insert_node((struct Node*)nl);
 }
 
-struct Node* make_sequence(Token name, struct NodeList* left, struct Node* right) {
+struct Node* make_sequence(Token op, struct NodeList* left, struct Node* right) {
     struct Sequence* seq = ALLOCATE(struct Sequence);
+    seq->op = op;
     seq->left = left;
     seq->right = right;
     seq->base.type = NODE_SEQUENCE;
