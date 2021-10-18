@@ -462,6 +462,47 @@ static ResultCode compile_set_element(struct Compiler* compiler, Token name, str
     return RESULT_SUCCESS;
 }
 
+static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct Type* inst_type, struct Type* right_type, int depth) {
+    if (inst_type->type == TYPE_LIST) {
+        if (same_token_literal(prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
+            emit_byte(compiler, OP_SET_SIZE);
+            return RESULT_SUCCESS;
+        }
+        add_error(compiler, prop, "Property doesn't exist on Lists.");
+        return RESULT_FAILED;
+    }
+
+    if (inst_type->type == TYPE_STRUCT) {
+        struct ObjString* name = make_string(prop.start, prop.length);
+        push_root(to_string(name));
+        emit_byte(compiler, OP_SET_PROP);
+        emit_short(compiler, add_constant(compiler, to_string(name))); 
+        emit_byte(compiler, depth);
+        pop_root();
+
+        Value type_val = to_nil();
+        struct Type* current = inst_type;
+        while (current != NULL) {
+            struct TypeStruct* tc = (struct TypeStruct*)current;
+            if (get_from_table(&tc->props, name, &type_val)) break;
+            current = tc->super;
+        }
+
+        if (current == NULL) {
+            add_error(compiler, prop, "Property not found in instance.");
+            return RESULT_FAILED;
+        }
+
+        CHECK_TYPE(!same_type(type_val.as.type_type, right_type) && 
+                   !struct_or_function_to_nil(type_val.as.type_type, right_type), 
+                   prop, "Property and assignment types must match.");
+
+        return RESULT_SUCCESS;
+    }
+    add_error(compiler, prop, "Property cannot be set.");
+    return RESULT_FAILED;
+}
+
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
     if (node == NULL) {
         *node_type = make_nil_type();
@@ -567,46 +608,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         GetProp* gp = (GetProp*)(seq->left->nodes[i]);
                         struct Type* type_inst;
                         COMPILE_NODE(gp->inst, NULL, &type_inst);
+                        struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
 
-                        if (type_inst->type != TYPE_LIST && type_inst->type != TYPE_STRUCT) {
-                            add_error(compiler, gp->prop, "Property cannot be set.......");
-                            return RESULT_FAILED;
-                        }
+                        int depth = seq->left->count - 1 - i;
+                        ResultCode result = compile_set_prop(compiler, gp->prop, type_inst, right_type, depth);
+                        if (result == RESULT_FAILED) return RESULT_FAILED;
 
-                        if (type_inst->type == TYPE_LIST) {
-                            if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
-                                emit_byte(compiler, OP_SET_SIZE);
-                                add_type(left_seq_type, make_int_type());
-                            } else {
-                                add_error(compiler, gp->prop, "Property doesn't exist on Lists.");
-                                return RESULT_FAILED;
-                            }
-                        }
-
-                        if (type_inst->type == TYPE_STRUCT) {
-                            struct ObjString* name = make_string(gp->prop.start, gp->prop.length);
-                            push_root(to_string(name));
-                            emit_byte(compiler, OP_SET_PROP);
-                            emit_short(compiler, add_constant(compiler, to_string(name))); 
-                            int depth = seq->left->count - 1 - i;
-                            emit_byte(compiler, depth);
-                            pop_root();
-
-                            Value type_val = to_nil();
-                            struct Type* current = type_inst;
-                            while (current != NULL) {
-                                struct TypeStruct* tc = (struct TypeStruct*)current;
-                                if (get_from_table(&tc->props, name, &type_val)) break;
-                                current = tc->super;
-                            }
-
-                            if (current == NULL) {
-                                add_error(compiler, gp->prop, "Property not found in instance.");
-                                return RESULT_FAILED;
-                            }
-
-                            add_type(left_seq_type, current);
-                        }
+                        add_type(left_seq_type, right_type);
                         break;
                     }
                     case NODE_GET_VAR: {
@@ -1140,47 +1148,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             COMPILE_NODE(((GetProp*)(sp->inst))->inst, ret_types, &type_inst);
             Token prop = ((GetProp*)sp->inst)->prop;
 
-            if (type_inst->type == TYPE_LIST) {
-                if (same_token_literal(prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
-                    emit_byte(compiler, OP_SET_SIZE);
-                    *node_type = make_int_type();
-                    return RESULT_SUCCESS;
-                }
-                add_error(compiler, prop, "Property doesn't exist on Lists.");
-                return RESULT_FAILED;
-            }
+            int depth = 0;
+            ResultCode result = compile_set_prop(compiler, prop, type_inst, right_type, depth);
+            if (result == RESULT_FAILED) return RESULT_FAILED;
 
-            if (type_inst->type == TYPE_STRUCT) {
-                struct ObjString* name = make_string(prop.start, prop.length);
-                push_root(to_string(name));
-                emit_byte(compiler, OP_SET_PROP);
-                emit_short(compiler, add_constant(compiler, to_string(name))); 
-                int depth = 0;
-                emit_byte(compiler, depth);
-                pop_root();
-
-                Value type_val = to_nil();
-                struct Type* current = type_inst;
-                while (current != NULL) {
-                    struct TypeStruct* tc = (struct TypeStruct*)current;
-                    if (get_from_table(&tc->props, name, &type_val)) break;
-                    current = tc->super;
-                }
-
-                if (current == NULL) {
-                    add_error(compiler, prop, "Property not found in instance.");
-                    return RESULT_FAILED;
-                }
-
-                CHECK_TYPE(!same_type(type_val.as.type_type, right_type) && 
-                           !struct_or_function_to_nil(type_val.as.type_type, right_type), 
-                           prop, "Property and assignment types must match.");
-
-                *node_type = right_type;
-                return RESULT_SUCCESS;
-            }
-            add_error(compiler, prop, "Property cannot be set.");
-            return RESULT_FAILED;
+            *node_type = right_type;
+            return RESULT_SUCCESS;
         }
         case NODE_GET_VAR: {
             GetVar* gv = (GetVar*)node;
