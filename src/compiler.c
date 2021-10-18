@@ -430,6 +430,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             return result;
         }
         case NODE_SEQUENCE: {
+                                /*
             struct Sequence* seq = (struct Sequence*)node;
 
             //compile right side left-to-right
@@ -452,22 +453,47 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct TypeArray* left_seq_type = make_type_array();
             for (int i = 0; i < seq->left->count; i++) {
                 //TODO: testing on SetVar only first - need to integer SetElement, SetProp, DeclVar later
-                Token var = ((GetVar*)(seq->left->nodes[i]))->name;
-                struct Type* var_type = resolve_type(compiler, var);
-                add_type(left_seq_type, var_type);
+                switch (seq->left->nodes[i]->type) {
+                    case NODE_DECL_VAR: {
+                        Token var = ((DeclVar*)(seq->left->nodes[i]))->name;
+                        struct Type* var_type = resolve_type(compiler, var);
+                        add_type(left_seq_type, var_type);
 
-                int idx = resolve_local(compiler, var);
-                OpCode op = OP_SET_LOCAL;
-                if (idx == -1) {
-                    idx = resolve_upvalue(compiler, var);
-                    op = OP_SET_UPVALUE;
-                }
+                        int idx = resolve_local(compiler, var);
+                        OpCode op = OP_SET_LOCAL;
+                        if (idx == -1) {
+                            idx = resolve_upvalue(compiler, var);
+                            op = OP_SET_UPVALUE;
+                        }
 
-                if (idx != -1) {
-                    emit_byte(compiler, op);
-                    emit_byte(compiler, idx);
-                    int depth = seq->left->count - 1 - i;
-                    emit_byte(compiler, depth);
+                        if (idx != -1) {
+                            emit_byte(compiler, op);
+                            emit_byte(compiler, idx);
+                            int depth = seq->left->count - 1 - i;
+                            emit_byte(compiler, depth);
+                        }
+                        break;
+                    }
+                    case NODE_GET_VAR: {
+                        Token var = ((GetVar*)(seq->left->nodes[i]))->name;
+                        struct Type* var_type = resolve_type(compiler, var);
+                        add_type(left_seq_type, var_type);
+
+                        int idx = resolve_local(compiler, var);
+                        OpCode op = OP_SET_LOCAL;
+                        if (idx == -1) {
+                            idx = resolve_upvalue(compiler, var);
+                            op = OP_SET_UPVALUE;
+                        }
+
+                        if (idx != -1) {
+                            emit_byte(compiler, op);
+                            emit_byte(compiler, idx);
+                            int depth = seq->left->count - 1 - i;
+                            emit_byte(compiler, depth);
+                        }
+                        break;
+                    }
                 }
             }
 
@@ -476,7 +502,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 return RESULT_FAILED;
             }
             *node_type = left_seq_type; //== right_seq_type
-            return RESULT_SUCCESS;
+            return RESULT_SUCCESS;*/
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;

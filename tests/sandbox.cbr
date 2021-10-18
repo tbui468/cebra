@@ -1,14 +1,68 @@
-c := 4
-a := (c + 4) + 232 + c
 
-print(a)
-print(c)
+if sequences {
+    print("-Multi-declarations on a single line")
+    a: int, b: int = 1, 2
+    if a + b == 3 {
+        add_passed("Two declarations, explicit types: Passed!")
+    } else {
+        add_failed("Two declarations, explicit types: Failed!")
+    }
+    c, d := 4, 5
+    if c + d == 9 {
+        add_passed("Two declarations, same implicit types: Passed!")
+    } else {
+        add_failed("Two declarations, same implicit types: Failed!")
+    }
+    e, f := "dog", true
+    if e == "dog" and f {
+        add_passed("Two declarations, different implicit types: Passed!")
+    } else {
+        add_failed("Two declarations, different implicit types: Failed!")
+    }
 
-Dog :: struct {
-    name := ""
-    Dog: Dog = nil
+    dog2: Dog, tok2: Token = Dog(), Token.plus
+    if dog2.name == "Mittens" and tok2 == Token.plus {
+        add_passed("Two declarations, different explicit custom types: Passed!")
+    } else {
+        add_failed("Two declarations, different explicit custom types: Failed!")
+    }
+    dog, tok := Dog(), Token.plus
+    if dog.name == "Mittens" and tok == Token.plus {
+        add_passed("Two declarations, different implicit custom types: Passed!")
+    } else {
+        add_failed("Two declarations, different implicit custom types: Failed!")
+    }
+
+    g := 2
+    h: int, g = 5, 6
+    if g == 6 and h == 5 {
+        add_passed("One assignment, One declaration: Passed!")
+    } else {
+        add_failed("One assignment, One declaration: Failed!")
+    }
+
+    //lists and maps
+    list, map := List<Dog>(), Map<int>()
+    list[0], list[1], map["one"] = Dog(), Dog(), 20
+    list[0].friend, list[1].friend = list[1], list[0]
+    list[0].friend.name, list[1].friend.name = "friend 1", "friend 0"
+
+    if list[0].name == "friend 0" and list[1].name == "friend 1" {
+        add_passed("Sequence with Lists Holding Structs: Passed")
+    } else {
+        add_failed("Sequence with Lists Holding Structs: Failed")
+    }
+
+    a, dog3: Dog = 99, Dog()
+    dog4 := Dog()
+    dog3.name, dog3.class, dog3.friend = "Bubbles", "Mammal", dog4
+    dog3.friend.name, dog3.friend.friend = "Boxy", dog3
+
+    if dog3.friend.name == "Boxy" and dog3.friend.friend.name == dog3.name {
+        add_passed("Sequence with Structs and Properties: Passed")
+    } else {
+        add_failed("Sequence with Structs and Properties: Failed")
+    }
+
 }
 
-dog := Dog()
-//dog.name = "Mittens"
-//print(dog.name)

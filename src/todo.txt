@@ -25,11 +25,17 @@ Documentation:
     Look at Odin-lang for reference for docs
         could just have sample code user can look at rather than an actual interactive panel
 
-Bugs: disabling copy_value() - major bug with memory being collected by GC.  Lists and Maps (and probably structs)
-    instantiated inside a struct body will all reference the same instance rather than different ones.  Need to
-    fix this ...
+Bugs: commented out copy_value() - major bug with memory being collected by GC and program trying to use freed memory.  
+    Because it's off, Lists and Maps (and probably structs) instantiated inside a struct body will all reference 
+    the same instance rather than different ones.  Need to fix this ...
 
 Implementation:
+
+    Finish implemention Sequences inside of assignment...
+        Sequence should be the general item we use for declaration + assignment - if the sequence has a single item in
+        both left and right sides, then it's the regular 1 to 1 assignment/declaration/setting 
+
+        See notes about recursive algorithm below.  This requires a major reworking...
 
     Add Sequence AST node and integrate new recursive parsing algorithms for parsing sequences - see next two notes sections:
         - Disallow sequence within sequences, and combine parse_expressions functions into one

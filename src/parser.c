@@ -42,13 +42,12 @@
 
 Parser parser;
 
-static ResultCode parse_multiple_expressions(Token var_name, struct Node** node);
 static ResultCode declaration(struct Node** node);
 static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode parse_type(Token var_name, struct Type** type);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode assignment(Token var_name, struct Node** node, int expected);
-static ResultCode parse_single_expression(Token var_name, struct Node** node);
+static ResultCode parse_expression(Token var_name, struct Node** node);
 
 static void print_all_tokens() {
     printf("******start**********\n");
@@ -242,7 +241,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
         //check for group (expression in parentheses)
         struct Node* expr;
-        PARSE(parse_single_expression, var_name, &expr, name, "Expect valid expression after '('.");
+        PARSE(parse_expression, var_name, &expr, name, "Expect valid expression after '('.");
 
         CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after expression.");
         *node = expr;
@@ -277,7 +276,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 if (!match(TOKEN_RIGHT_PAREN)) {
                     do {
                         struct Node* arg;
-                        PARSE(parse_single_expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
+                        PARSE(parse_expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
                         add_node(args, arg); 
                     } while (match(TOKEN_COMMA));
                     CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after arguments.");
@@ -289,7 +288,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
             case TOKEN_LEFT_BRACKET: {
                 Token left_bracket = parser.previous;
                 struct Node* idx;
-                PARSE(parse_single_expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
+                PARSE(parse_expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
                 left = make_get_element(parser.previous, left, idx);
                 CONSUME(TOKEN_RIGHT_BRACKET, left_bracket, "Expect ']' after index.");
                 break;
@@ -438,18 +437,16 @@ static ResultCode assignment(Token var_name, struct Node** node, int expected) {
         if (expected != -1 && node_sequence->count >= expected) break;
     } while (match(TOKEN_COMMA));
 
-
     while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
         Token name = parser.previous;
 
-        struct Node* assign_value;
-        //TODO: parse with or() here and manually check for ',' to prevent a sequence within sequence
-        //parse until ':=' or '=' or non ',' since we don't know how many will exists if functions with multiple
-        //returns are included
-        if (assignment(var_name, &assign_value, node_sequence->count) == RESULT_FAILED) { 
-            ERROR(var_name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
-            return RESULT_FAILED;
-        }
+        struct NodeList* assign_value = (struct NodeList*)make_node_list();
+        do {
+            struct Node* expr;
+            PARSE(parse_expression, name, &expr, var_name, "Invalid expression.");
+            add_node(assign_value, expr);
+            if (expected != -1 && assign_value->count >= expected) break;
+        } while (match(TOKEN_COMMA));
 
         if (node_sequence->count != ((struct NodeList*)assign_value)->count) {
             ERROR(parser.previous, "Sequence lengths must match.");
@@ -487,7 +484,8 @@ static ResultCode assignment(Token var_name, struct Node** node, int expected) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode parse_single_expression(Token var_name, struct Node** node) {
+//expecting single expression with no commas
+static ResultCode parse_expression(Token var_name, struct Node** node) {
     if (assignment(var_name, node, 1) == RESULT_FAILED) {
         //caller should add error
         return RESULT_FAILED;
@@ -496,19 +494,9 @@ static ResultCode parse_single_expression(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode parse_multiple_expressions(Token var_name, struct Node** node) {
-    struct Node* result;
-    if (assignment(var_name, &result, -1) == RESULT_FAILED) {
-        return RESULT_FAILED;
-    }
-
-    if (result->type == NODE_LIST && ((struct NodeList*)result)->count == 1) {
-        *node = ((struct NodeList*)result)->nodes[0];
-        return RESULT_SUCCESS;
-    }
-
-    *node = result;
-    return RESULT_SUCCESS;
+//expecting a sequence of length 1 or more (length 1 is the same as a single expression)
+static ResultCode parse_sequence(Token var_name, struct Node** node) {
+    return assignment(var_name, node, -1);
 }
 
 static ResultCode block(struct Node* prepend, struct Node** node) {
@@ -746,7 +734,7 @@ static ResultCode declaration(struct Node** node) {
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* field;
-            PARSE(parse_multiple_expressions, make_dummy_token(), &field, struct_name, "Expect field declarations inside struct body.");
+            PARSE(parse_expression, struct_name, &field, struct_name, "Expected field declarations inside struct body.");
             struct TypeStruct* tc = (struct TypeStruct*)struct_type;
             switch(field->type) {
                 case NODE_DECL_VAR: {
@@ -799,7 +787,7 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
 
         struct Node* condition;
-        PARSE(parse_single_expression, make_dummy_token(), &condition, name, "Expect single boolean expression after 'if'.");
+        PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect single boolean expression after 'if'.");
 
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect boolean expression and '{' after 'if' condition.");
 
@@ -824,7 +812,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHEN)) {
         Token name = parser.previous;
         struct Node* left;
-        PARSE(parse_single_expression, name, &left, name, "Expected a valid expression after 'when'.");
+        PARSE(parse_expression, name, &left, name, "Expected a valid expression after 'when'.");
         CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after 'when' and variable.");
         struct NodeList* cases = (struct NodeList*)make_node_list();
 
@@ -832,7 +820,7 @@ static ResultCode declaration(struct Node** node) {
             Token is = parser.previous;
 
             struct Node* right;
-            PARSE(parse_single_expression, is, &right, is, "Expected expression to test equality with variable after 'when'.");
+            PARSE(parse_expression, is, &right, is, "Expected expression to test equality with variable after 'when'.");
             Token make_token(TokenType type, int line, const char* start, int length);
             Token equal = make_token(TOKEN_EQUAL_EQUAL, is.line, "==", 2);
             struct Node* condition = make_logical(equal, left, right);
@@ -865,7 +853,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
         struct Node* condition;
-        PARSE(parse_single_expression, make_dummy_token(), &condition, name, "Expect condition after 'while'.");
+        PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect condition after 'while'.");
         CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
 
         struct Node* then_block;
@@ -878,20 +866,20 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
         struct Node* initializer = NULL;
         if (!match(TOKEN_COMMA)) {
-            PARSE(parse_single_expression, make_dummy_token(), &initializer, name, "Expected initializer or empty space for first item in 'for' loop.");
+            PARSE(parse_expression, make_dummy_token(), &initializer, name, "Expected initializer or empty space for first item in 'for' loop.");
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
         }
 
         struct Node* condition = NULL;
         if (!match(TOKEN_COMMA)) {
-            PARSE(parse_single_expression, make_dummy_token(), &condition, name, "Expect update or empty space for third item in 'for' loop.");
+            PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect update or empty space for third item in 'for' loop.");
             CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
         }
 
         struct Node* update = NULL;
         if (!match(TOKEN_LEFT_BRACE)) {
             struct Node* update_expr;
-            PARSE(parse_single_expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
+            PARSE(parse_expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
             update = make_expr_stmt(update_expr);
             CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after for-loop update.");
         }
@@ -911,7 +899,7 @@ static ResultCode declaration(struct Node** node) {
         CONSUME(TOKEN_IN, name, "Expect 'in' after element declaration.");
 
         struct Node* list;
-        PARSE(parse_single_expression, make_dummy_token(), &list, name, "Expect List identifier after 'in' in foreach loop.");
+        PARSE(parse_expression, make_dummy_token(), &list, name, "Expect List identifier after 'in' in foreach loop.");
 
         //initializer
         Token idx_token = make_token(TOKEN_IDENTIFIER, -1, "_idx_", 5);
@@ -946,13 +934,13 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(parse_multiple_expressions, make_dummy_token(), &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
+        PARSE(parse_expression, name, &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
         *node = make_return(name, right);
         return RESULT_SUCCESS;
     }
 
     struct Node* expr;
-    PARSE(parse_multiple_expressions, make_dummy_token(), &expr, parser.previous, "Invalid expression.");
+    PARSE(parse_expression, parser.previous, &expr, parser.previous, "Return value must be and expression, or leave empty for 'nil' return.");
     //TODO: if a DeclVar, don't pop it
     if (expr->type == NODE_LIST) {
         struct NodeList* list = (struct NodeList*)expr;
