@@ -29,11 +29,6 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
 
 Implementation:
 
-    After it all works, clean up code - it's a real mess now
-        could combine SET_VAR, SET_ELEMENT, and SET_PROP code
-
-    Turn on Sequence type checker - need to compare TypeArrays
-
     Integrate Sequences into returns for multiple returns
 
     Integrate Sequences into function arguments to allow this:

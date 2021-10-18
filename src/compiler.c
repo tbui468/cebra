@@ -636,13 +636,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 }
             }
 
-            //TODO: need to turn this back on after everything works
- 
-            /*
             if (!same_type((struct Type*)left_seq_type, (struct Type*)right_seq_type)) {
                 add_error(compiler, seq->op, "Sequence types must all match.");
                 return RESULT_FAILED;
-            }*/
+            }
             *node_type = (struct Type*)left_seq_type;
             return RESULT_SUCCESS;
         }

@@ -182,7 +182,7 @@ bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct) 
 
 bool same_type(struct Type* type1, struct Type* type2) {
     if (type1 == NULL || type2 == NULL) return false;
-    //if (type1->type == TYPE_NIL || type2->type == TYPE_NIL) return true;
+    if (type1->type == TYPE_NIL || type2->type == TYPE_NIL) return true;
     if (type1->type != type2->type) {
         struct Type* left = type1;
         while (left != NULL) {
@@ -258,7 +258,7 @@ void print_type(struct Type* type) {
             struct TypeArray* sl = (struct TypeArray*)type;
             printf("(TypeArray: ");
             for (int i = 0; i < sl->count; i++) {
-                print_type(sl->types[i]);
+                print_type(sl->types[i]); printf(", ");
             }
             printf(")");
             break;
