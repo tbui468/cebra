@@ -5,7 +5,4 @@ ji := 0
 for i: int = 0, i < 2, i = i + 1 {
     j = j + 1
 }
-for i := 0, i < 3, i = i + 1 {
-    ji = ji + 1
-}
 

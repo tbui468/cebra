@@ -657,6 +657,27 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         }
                         break;
                     }
+                    case NODE_DECL_VAR: {
+                        //setting all vars
+                        Token var = ((DeclVar*)(seq->left->nodes[i]))->name;
+                        struct Type* var_type = resolve_type(compiler, var);
+                        add_type(left_seq_type, var_type);
+
+                        int idx = resolve_local(compiler, var);
+                        OpCode op = OP_SET_LOCAL;
+                        if (idx == -1) {
+                            idx = resolve_upvalue(compiler, var);
+                            op = OP_SET_UPVALUE;
+                        }
+
+                        if (idx != -1) {
+                            emit_byte(compiler, op);
+                            emit_byte(compiler, idx);
+                            int depth = seq->left->count - 1 - i;
+                            emit_byte(compiler, depth);
+                        }
+                        break;
+                    }
                     default:
                         break;
                 }

@@ -2,8 +2,6 @@ Syntax highlighter:
     Push update to the marketplace - fixed typo with function colors not showing
 
 Documentation:
-    Html/Css is all fucked up in Chrome but fine in Firefox
-
     Update build/download instructions
 
     Look at GifTuna website for simple but effective layout
@@ -31,7 +29,10 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
 
 Implementation:
 
-    Sequences don't work now when the right side is a call (eg, to instantiate struct) since we don't look for that now
+    Loops don't work with new sequences - run code in sandbox and check stack trace
+
+    After it all works, clean up code - it's a real mess now
+        could combine SET_VAR, SET_ELEMENT, and SET_PROP code
 
     Types of declared variables is now set to TYPE_INFER - need to update them after the right side is compiled
         and also need to type check too
