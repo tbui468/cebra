@@ -1,11 +1,10 @@
-if true {
-    x := () -> (() -> (() -> (string))) {
-        y := () -> (() -> (string)) {
-            z := () -> (string) {
-                -> "dog" + "Dog"
-            }
-            -> z
-        }
-        -> y
-    }
+
+
+fun :: () -> (int, int) {
+    -> 2, 3
 }
+
+x, y := fun()
+
+print(x)
+print(y)

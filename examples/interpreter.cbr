@@ -3,9 +3,8 @@
 //output is a double precision floating point
 
 //************Driver***************
-DEBUG := false
+DEBUG, continue := false, true
 
-continue := true
 
 while (continue) {
     print("Enter expression to evaluate:")
@@ -28,7 +27,12 @@ while (continue) {
             print(string_expr(root))
         }
 
-        print("Answer: " + evaluate_expr(root) as string)
+        answer, result := evaluate_expr(root)
+        if result {
+            print("Answer: " + answer as string)
+        } else {
+            print("Invalid input")
+        }
         print("")
     } else {
         continue = false
@@ -248,22 +252,23 @@ string_expr :: (expr: Expr) -> (string) {
 }
 
 //**********Evaluator***********
-evaluate_expr :: (expr: Expr) -> (float) {
+evaluate_expr :: (expr: Expr) -> (float, bool) {
     when true {
         is expr as PrimaryExpr != nil {
-            -> (expr as PrimaryExpr).token.literal as float
+            -> (expr as PrimaryExpr).token.literal as float, true
         }
 
         is expr as BinaryExpr != nil {
             b := expr as BinaryExpr
-            left := evaluate_expr(b.left)
-            right := evaluate_expr(b.right)
+            left, result1 := evaluate_expr(b.left)
+            right, result2 := evaluate_expr(b.right)
             when b.token.literal {
-                is "+" { -> left + right }
-                is "-" { -> left - right }
-                is "*" { -> left * right }
-                is "/" { -> left / right }
+                is "+" { -> left + right, true }
+                is "-" { -> left - right, true }
+                is "*" { -> left * right, true }
+                is "/" { -> left / right, true }
             }
         }
     }
+    -> 0.0, false
 }

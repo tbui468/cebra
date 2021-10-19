@@ -4,6 +4,11 @@ Syntax highlighter:
 Documentation:
     Update build/download instructions
 
+    Mention current status
+        instantiation of structs/list/maps in struct definitions don't work
+        invalid syntax handling is still being worked on, and may crash program
+        error messages and line numbers may not be accurate
+
     Look at GifTuna website for simple but effective layout
 
     Include language specification, eg:
@@ -25,73 +30,38 @@ Documentation:
 
 Bugs: commented out copy_value() - major bug with memory being collected by GC and program trying to use freed memory.  
     Because it's off, Lists and Maps (and probably structs) instantiated inside a struct body will all reference 
-    the same instance rather than different ones.  Need to fix this ...
+    the same instance rather than different ones.  Need to fix this ... could try to instantiate using a different
+    method rather than copying - how about running the struct creation code again?
+
+Stack overflow
+    big stack allocations:
+        NODE_WHEN  256 ints
+        NODE_SEQUENCE 256 ints
+        OP_RETURN 256 Values
+        Parser - errors
+        Compiler - locals, upvalues, errors
+        VM - stack, callframes, errors
 
 Implementation:
 
-    Issue with stack overflow I think
+    Get website main page up and working
 
-if true {
+    Allow sequences in struct fields... this may require changing some things since right now sequence declarations
+        are immediatly added as locals.  Struct fields need to be pushed onto the stack along with the prop
+        name to store in struct definition
 
-    x := () -> (() -> (() -> (string))) {
-        y := () -> (() -> (string)) {
-            z := () -> (string) {
-                -> "dog" + "cat"
-            }
-            -> z
-        }
-        -> y
-    }
-}
-
-    Problem compilng closures - depth 2 ones, and maybe depth 1 and closed upvalues too
-        seems to be in Sequence compilation - specifically compiling when the seq->right is NULL
-        compiling the concatenation of two strings is the problem....
-        
-        Maybe try writing a simple function that just returns a concat of two strings to see what happens
-
-    Integrate Sequences into returns for multiple returns
-        compiling breaks now that we're using multiple returns for functions
-        it works fine with basic example in sandbox - it could either be the type checking or ops emitted
-
-        fun :: () -> (int, int) {
-            -> 1, 2
-        }
-
-        x, y := fun()
-
-        print(x)
-        print(y)
+        could generalize Sequences further: a sequence is kind of like a higher level data type that can
+        be type check as usual.  This would allow us to make function arguments be a Sequence so that
+        a return from a function (itself a sequence) can be passed directly into a different function.
+        If there are embedded sequences, they need to be unwrapped to form a single depth Sequence
 
     Integrate Sequences into function arguments to allow this:
         takes_three(returns_two(), third_arg())
 
-    Types of declared variables is now set to TYPE_INFER - need to update them after the right side is compiled
-        and also need to type check too
-
-    All results are popped now if a stmt, but need to have expression versions type check a TypeArray
-
-    For function parameters, need to update how they are compiled - Function nodes should now take in a Sequence 
-    node (with seq->right NULL)
-
-    Feature: Attempted to add sequences to allow functions with multiple returns, but it's now working right now.
-        parse_sequence and compilation of sequences is commented out for now.
-
-        One possible solution: all declarations must be compiled (and set to 'nil') before any of the right sides
-            are compiled.  Then compile right sides, then compile left again to set the values.  So compile sequences
-            in three steps.
-
-            compile decl_var in left (either DeclVar with '=' or GetVar with ':=').  Should be able to use the compile_decl_var
-                function now.
-            compile ALL right
-            compile ALL left (initializing the dec_vars.  If originally DeclVar, then just grab token and make a GetVar to compile)
-                setting the variables/properties/elements in reverse order
-
-            step 1: parse it again at end of declarations, and ucomment parse_sequence
-            step 2: change compilation to allow nil types during declaration
-            step 3: uncomment NODE_SEQUENCE in compiler
-
     Fix the memory bug with Maps/Lists as properties in structs - see 'Bugs' above
+
+    Error messages need to point to correct line (how about when inside {}?) and give
+        accurate messages
 
     Simplify code and make it fast - this is supposed to be a selling point
 

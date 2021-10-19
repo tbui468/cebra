@@ -381,7 +381,7 @@ ResultCode run_program(VM* vm) {
             }
             case OP_RETURN: {
                 int return_count = (int)READ_TYPE(frame, uint8_t);
-                Value returns[8];
+                Value returns[256];
                 int return_idx = 0;
                 for (int i = 0; i < return_count; i++) {
                     returns[return_idx++] = pop(vm);

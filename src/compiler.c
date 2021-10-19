@@ -538,7 +538,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             //tracking locals indices to update types if inferred
-            int decl_idx[8]; //TODO: this might be bad
+            int decl_idx[256]; //TODO: this might be bad
             int decl_idx_count = 0;
 
             //compile all variable declarations
