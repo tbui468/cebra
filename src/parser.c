@@ -121,62 +121,76 @@ static void synchronize() {
     }
 }
 
+static ResultCode parse_function_parameters_and_types(struct NodeList* params, struct TypeArray* param_types) {
+    //no parameters
+    if (match(TOKEN_RIGHT_PAREN)) return RESULT_SUCCESS;
 
-static ResultCode parse_function(Token var_name, struct Node** node, bool anonymous) {
+    do {
+        struct Node* var_decl;
+        if (param_declaration(&var_decl) == RESULT_FAILED) return RESULT_FAILED;
 
-    struct NodeList* params = (struct NodeList*)make_node_list();
-    struct TypeArray* param_type_list = make_type_array();
-
-    if (!match(TOKEN_RIGHT_PAREN)) {
-        do {
-            struct Node* var_decl;
-            if (param_declaration(&var_decl) == RESULT_FAILED) return RESULT_FAILED;
-
-            if (match(TOKEN_EQUAL)) {
-                Token param_token = ((DeclVar*)var_decl)->name;
-                ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be assigned.", 
-                        param_token.length, param_token.start);
-            }
-
-            DeclVar* vd = (DeclVar*)var_decl;
-            add_type(param_type_list, vd->type);
-            add_node(params, var_decl);
-        } while (match(TOKEN_COMMA));
-        CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter list.");
-    }
-
-    CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
-    CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return type list.");
-    struct TypeArray* ret_type_list = make_type_array();
-    if (match(TOKEN_RIGHT_PAREN)) {
-        add_type(ret_type_list, make_nil_type());
-    } else {
-        do {
-            struct Type* single_ret_type;
-            PARSE_TYPE(var_name, &single_ret_type, parser.previous, "Expect valid return type after function parameters.");
-            add_type(ret_type_list, single_ret_type);
-        } while(match(TOKEN_COMMA));
-        CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return type list.");
-    }
-    struct Type* fun_type = make_fun_type(param_type_list, ret_type_list);
-
-    //create type and add to global types for regular functions (not anonymous)
-    if (!anonymous) {
-        struct ObjString* fun_string = make_string(var_name.start, var_name.length);
-        push_root(to_string(fun_string));
-        Value v;
-        if (get_from_table(parser.globals, fun_string, &v)) {
-            pop_root();
-            ERROR(var_name, "The identifier for this function is already used.");
+        if (match(TOKEN_EQUAL)) {
+            Token param_token = ((DeclVar*)var_decl)->name;
+            ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be assigned.", 
+                    param_token.length, param_token.start);
         }
 
-        //set globals in parser (which compiler uses)
-        set_table(parser.globals, fun_string, to_type(fun_type));
-        pop_root();
+        DeclVar* vd = (DeclVar*)var_decl;
+        add_type(param_types, vd->type);
+        add_node(params, var_decl);
+    } while (match(TOKEN_COMMA));
+    CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter list.");
+
+    return RESULT_SUCCESS;
+}
+static ResultCode parse_function_return_types(struct TypeArray* return_types) {
+    Token param_token = parser.previous;
+    CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' after parameter list.");
+    CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return type list.");
+    //no return
+    if (match(TOKEN_RIGHT_PAREN)) {
+        add_type(return_types, make_nil_type());
+        return RESULT_SUCCESS;
     }
 
-    CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
+    do {
+        struct Type* single_ret_type;
+        PARSE_TYPE(param_token, &single_ret_type, param_token, "Expect valid return type after function parameters.");
+        add_type(return_types, single_ret_type);
+    } while(match(TOKEN_COMMA));
+    CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return type list.");
 
+    return RESULT_SUCCESS;
+}
+
+static ResultCode parse_static_function(Token name, struct Node** node) {
+    struct NodeList* params = (struct NodeList*)make_node_list();
+    struct TypeArray* param_types = make_type_array();
+    if (parse_function_parameters_and_types(params, param_types) == RESULT_FAILED) {
+        return RESULT_FAILED;
+    }
+
+    struct TypeArray* return_types = make_type_array();
+    if (parse_function_return_types(return_types) == RESULT_FAILED) {
+        return RESULT_FAILED;
+    }
+
+    struct Type* fun_type = make_fun_type(param_types, return_types);
+
+    //create type and add to global types for static functions
+    struct ObjString* fun_string = make_string(name.start, name.length);
+    push_root(to_string(fun_string));
+    Value v;
+    if (get_from_table(parser.globals, fun_string, &v)) {
+        pop_root();
+        ERROR(name, "The identifier for this function is already used.");
+    }
+
+    //set globals in parser (which compiler uses)
+    set_table(parser.globals, fun_string, to_type(fun_type));
+    pop_root();
+
+    CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
     Token body_start = parser.previous;
     struct Node* body;
     if (block(NULL, &body) == RESULT_FAILED) {
@@ -184,7 +198,35 @@ static ResultCode parse_function(Token var_name, struct Node** node, bool anonym
     }
 
     //fun_type is only necessary for anonymous functions 
-    *node = make_decl_fun(var_name, params, fun_type, body, anonymous);
+    bool anonymous = false;
+    *node = make_decl_fun(name, params, fun_type, body, anonymous);
+    return RESULT_SUCCESS;
+}
+
+static ResultCode parse_anonymous_function(struct Node** node) {
+    struct NodeList* params = (struct NodeList*)make_node_list();
+    struct TypeArray* param_types = make_type_array();
+    if (parse_function_parameters_and_types(params, param_types) == RESULT_FAILED) {
+        return RESULT_FAILED;
+    }
+
+    struct TypeArray* return_types = make_type_array();
+    if (parse_function_return_types(return_types) == RESULT_FAILED) {
+        return RESULT_FAILED;
+    }
+
+    struct Type* fun_type = make_fun_type(param_types, return_types);
+
+    CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
+    Token body_start = parser.previous;
+    struct Node* body;
+    if (block(NULL, &body) == RESULT_FAILED) {
+        ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
+    }
+
+    //fun_type is only necessary for anonymous functions 
+    bool anonymous = true;
+    *node = make_decl_fun(make_dummy_token(), params, fun_type, body, anonymous);
     return RESULT_SUCCESS;
 }
 
@@ -233,7 +275,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token name = parser.previous;
 
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
-            if (parse_function(make_dummy_token(), node, true) == RESULT_FAILED) { 
+            if (parse_anonymous_function(node) == RESULT_FAILED) { 
                 ERROR(var_name, "Invalid anonymous function declaration."); 
             }
             return RESULT_SUCCESS;
@@ -744,15 +786,13 @@ static ResultCode declaration(struct Node** node) {
         return RESULT_SUCCESS;
     } else if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_LEFT_PAREN)) {
         match(TOKEN_IDENTIFIER);
-        Token var_name = parser.previous;
+        Token fun_name = parser.previous;
         match(TOKEN_COLON_COLON);
         match(TOKEN_LEFT_PAREN);
 
-        if (parse_function(var_name, node, false) == RESULT_FAILED) { 
-            ERROR(var_name, "Invalid function declaration."); 
+        if (parse_static_function(fun_name, node) == RESULT_FAILED) {
+            return RESULT_FAILED;
         }
-
-        //TODO: need to get node function final type and add to parser.globals
         
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {

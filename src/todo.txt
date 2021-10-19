@@ -43,10 +43,11 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
+    Token var_name is not being used anymore in parser, right?  Remove it if so.
+        only using it in parse function now - break up parse function into chunks
+        so that var_name doesn't need to be passed in
 
     Move ret_types into compiler so that we don't need to pass it into every compile_node call
-
-    Token var_name is not being used anymore in parser, right?  Remove it if so.
 
     Get website main page up and working
 
