@@ -322,7 +322,10 @@ void print_node(struct Node* node) {
             break;
         }
         case NODE_SEQUENCE: {
+            struct Sequence* seq = (struct Sequence*)node;
             printf("( NodeSequence ");
+            printf("left count: %d", seq->left->count);
+            printf(")");
             break;
         }
         //Declarations

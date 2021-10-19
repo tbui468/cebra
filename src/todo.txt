@@ -29,7 +29,37 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
 
 Implementation:
 
+if true {
+
+    x := () -> (() -> (() -> (string))) {
+        y := () -> (() -> (string)) {
+            z := () -> (string) {
+                -> "dog" + "cat"
+            }
+            -> z
+        }
+        -> y
+    }
+}
+
+    Problem compilng closures - depth 2 ones, and maybe depth 1 and closed upvalues too
+        seems to be in Sequence compilation - specifically compiling when the seq->right is NULL
+        compiling the concatenation of two strings is the problem....
+        
+        Maybe try writing a simple function that just returns a concat of two strings to see what happens
+
     Integrate Sequences into returns for multiple returns
+        compiling breaks now that we're using multiple returns for functions
+        it works fine with basic example in sandbox - it could either be the type checking or ops emitted
+
+        fun :: () -> (int, int) {
+            -> 1, 2
+        }
+
+        x, y := fun()
+
+        print(x)
+        print(y)
 
     Integrate Sequences into function arguments to allow this:
         takes_three(returns_two(), third_arg())

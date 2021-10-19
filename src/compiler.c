@@ -221,7 +221,9 @@ static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, s
     Binary* binary = (Binary*)node;
 
     struct Type* type1;
+    printf("before left\n");
     COMPILE_NODE(binary->left, NULL, &type1);
+    printf("after left\n");
     struct Type* type2;
     COMPILE_NODE(binary->right, NULL, &type2);
     CHECK_TYPE(!same_type(type1, type2), binary->name, "Left and right types must match.");
@@ -504,6 +506,7 @@ static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct
 }
 
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
+    printf("compile node\n");
     if (node == NULL) {
         *node_type = make_nil_type();
         return RESULT_SUCCESS;
@@ -521,10 +524,22 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //if right is NULL, just compile left in order and return types in TypeArray
             if (seq->right == NULL) {
                 struct TypeArray* types = make_type_array();
+                print_node(node);
                 for (int i = 0; i < seq->left->count; i++) {
+                    printf("i: %d\n", i);
                     struct Type* t;
+                    printf("0\n");
+                    print_node(seq->left->nodes[i]);
                     COMPILE_NODE(seq->left->nodes[i], NULL, &t);
-                    add_type(types, t);
+                    printf("1\n");
+                    //unwrap type array and insert 
+                    if (t->type == TYPE_ARRAY) {
+                        for (int i = 0; i < ((struct TypeArray*)t)->count; i++) {
+                            add_type(types, ((struct TypeArray*)t)->types[i]);
+                        }
+                    } else {
+                        add_type(types, t);
+                    }
                 }
                 *node_type = (struct Type*)types;
                 return RESULT_SUCCESS;
@@ -701,8 +716,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 //@only grabbin first return for now
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
-                    if (!same_type(typefun->returns->types[0], inner_type)) {
-                        add_error(compiler, df->name, "Return type must match type in function declaration.");
+                    //print_type(inner_type); printf("\n");
+                    //print_type((struct Type*)(typefun->returns)); printf("\n");
+                    if (!same_type((struct Type*)(typefun->returns), inner_type)) {
+                    //if (!same_type(typefun->returns->types[0], inner_type)) {
+                        add_error(compiler, df->name, "Return type must match type in anonymous function declaration.");
                         free_compiler(&func_comp);
                         return RESULT_FAILED;
                     }
@@ -756,7 +774,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 for (int i = 0; i < inner_ret_types->count; i++) {
                     struct Type* inner_type = inner_ret_types->types[i];
                     //@ only grabbing first return for now
-                    if (!same_type(typefun->returns->types[0], inner_type)) {
+                    //if (!same_type(typefun->returns->types[0], inner_type)) {
+                    if (!same_type((struct Type*)(typefun->returns), inner_type)) {
                         add_error(compiler, df->name, "Return type must match type in function declaration.");
                         free_compiler(&func_comp);
                         return RESULT_FAILED;
@@ -1034,7 +1053,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             Return* ret = (Return*)node;
             struct Type* type;
             COMPILE_NODE(ret->right, ret_types, &type);
+            int return_count = 0;
+            if (type->type == TYPE_ARRAY) {
+                return_count = ((struct TypeArray*)type)->count; 
+            }
             emit_byte(compiler, OP_RETURN);
+            emit_byte(compiler, return_count);
 
             //@need to take care of multiple returns later
 
@@ -1315,9 +1339,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 emit_byte(compiler, OP_CALL);
                 emit_byte(compiler, (uint8_t)(call->arguments->count));
 
+                if (type_fun->returns->count == 1) {
+                    *node_type = type_fun->returns->types[0];
+                } else {
+                    *node_type = (struct Type*)(type_fun->returns);
+                }
                 //@need to integrate multiple returns later - just grabbing return at index 0 for now
-                //*node_type = (struct Type*)(type_fun->returns);
-                *node_type = ((struct TypeArray*)(type_fun->returns))->types[0];
+                //*node_type = ((struct TypeArray*)(type_fun->returns))->types[0];
                 return RESULT_SUCCESS;
             }
 
@@ -1428,6 +1456,7 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
     if ((ret_types)->count == 0) {
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);
+        emit_byte(compiler, 1);
     }
 
     *type_array = ret_types;

@@ -912,7 +912,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(parse_expression, name, &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
+        PARSE(parse_sequence, name, &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
         *node = make_return(name, right);
         return RESULT_SUCCESS;
     }

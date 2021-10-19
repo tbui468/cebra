@@ -1,8 +1,11 @@
-
-
-j: int = 0
-ji := 0
-for i: int = 0, i < 2, i = i + 1 {
-    j = j + 1
+if true {
+    x := () -> (() -> (() -> (string))) {
+        y := () -> (() -> (string)) {
+            z := () -> (string) {
+                -> "dog" + "Dog"
+            }
+            -> z
+        }
+        -> y
+    }
 }
-

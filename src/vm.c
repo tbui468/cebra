@@ -374,21 +374,24 @@ ResultCode run_program(VM* vm) {
                     for (int i = 0; i < arity + 1; i++) {
                         pop(vm);
                     }
-                   // if (result.type != VAL_NIL) { //TODO: commenting out since sequences pop expressions now
-                        push(vm, result);
-                   // }
+                    push(vm, result);
                 }
                 frame = &vm->frames[vm->frame_count - 1];
                 break;
             }
             case OP_RETURN: {
-                Value ret = pop(vm);
+                int return_count = (int)READ_TYPE(frame, uint8_t);
+                Value returns[256];
+                int return_idx = 0;
+                for (int i = 0; i < return_count; i++) {
+                    returns[return_idx++] = pop(vm);
+                }
                 close_upvalues(vm, frame->locals); 
                 vm->stack_top = frame->locals;
                 vm->frame_count--;
-                //if (ret.type != VAL_NIL) {
-                    push(vm, ret);
-                //}
+                for (int i = return_count - 1; i >= 0; i--) {
+                    push(vm, returns[i]);
+                }
                 if (vm->frame_count > 0) frame = &vm->frames[vm->frame_count - 1];
                 break;
             }
