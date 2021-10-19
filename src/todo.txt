@@ -43,6 +43,9 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
+    
+    Found the problem with locals!!!  We are overwritting the buffer storing user input each time, BUT
+        the const char* is there is being used to track tokens for locals in compiler....
 
     REPL
         read input into a buffer, and track {}()[] on a stack.  Push lefts, and pop rights if they match top

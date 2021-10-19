@@ -8,7 +8,7 @@
 #include "obj.h"
 #include <time.h>
 
-#define MAX_CHARS 256
+#define MAX_CHARS 1024
 
 
 
@@ -168,6 +168,8 @@ ResultCode run_script(VM* vm, const char* path) {
 ResultCode repl(VM* vm) {
     char input_line[MAX_CHARS];
 
+    int current = 0;
+
     struct Compiler script_comp;
     init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
     define_clock(&script_comp);
@@ -176,14 +178,18 @@ ResultCode repl(VM* vm) {
 
     while(true) {
         printf("> ");
-        fgets(input_line, MAX_CHARS, stdin);
-        if (input_line[0] == 'q') {
+        fgets(&input_line[current], MAX_CHARS - current, stdin);
+        if (input_line[current] == 'q') {
             break;
         }
 
-        run_source(vm, &script_comp, &input_line[0]);
 
+        run_source(vm, &script_comp, &input_line[current]);
+        current += 100;
+
+//        print_stack(vm); printf("\n");
         script_comp.function->chunk.count = 0;
+//        printf("locals: "); print_locals(&script_comp); printf("\n");
     }
 
     vm->open_upvalues = NULL;

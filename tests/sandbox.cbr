@@ -1,8 +1,5 @@
+a := 24
+b := 32
 
-
-fun :: () -> (int, int) {
-    -> 2, 3
-}
-
-x, y := fun()
-
+print(a)
+print(b)

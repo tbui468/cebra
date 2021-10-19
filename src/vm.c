@@ -665,10 +665,25 @@ ResultCode run_program(VM* vm) {
 ResultCode run(VM* vm, struct ObjFunction* script) {
     if (vm->stack == vm->stack_top) {
         push(vm, to_function(script));
+        CallFrame frame;
+        frame.function = script;
+        frame.locals = vm->stack_top - script->arity - 1;
+        frame.ip = 0;
+        frame.arity = script->arity;
+
+        vm->frames[vm->frame_count] = frame;
+        vm->frame_count++;
     } else {
         vm->stack[0] = to_function(script);
+        CallFrame frame;
+        frame.function = script;
+        frame.locals = vm->stack;
+        frame.ip = 0;
+        frame.arity = script->arity;
+
+        vm->frames[0] = frame;
+        vm->frame_count = 1;
     }
-    call(vm, script);
 
     ResultCode result = run_program(vm);
 
