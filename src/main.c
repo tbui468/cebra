@@ -8,7 +8,7 @@
 #include "obj.h"
 #include <time.h>
 
-#define MAX_CHARS 1024
+#define MAX_CHARS 256 * 256
 
 
 
@@ -87,7 +87,7 @@ ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) 
     struct NodeList* nl;
     //passing globals and nodes in here feels messy - couldn't we have parse CREATE them?
     //Note: script_comp.nodes are ALL nodes, whereas nl only contains top statement nodes
-    printf("before parsing\n");
+    //printf("before parsing\n");
     ResultCode parse_result = parse(source, &nl, &script_comp->globals, &script_comp->nodes);
 
     if (parse_result == RESULT_FAILED) {
@@ -98,7 +98,7 @@ ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) 
     print_node(nl);
 #endif
 
-    printf("before compiling\n");
+    //printf("before compiling\n");
     ResultCode compile_result = compile_script(script_comp, nl);
 
     if (compile_result == RESULT_FAILED) {
@@ -115,7 +115,7 @@ ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) 
     }
 #endif
 
-    printf("before running\n");
+    //printf("before running\n");
     ResultCode run_result = run(vm, script_comp->function);
 
 
@@ -166,6 +166,8 @@ ResultCode run_script(VM* vm, const char* path) {
 }
 
 ResultCode repl(VM* vm) {
+    printf("Cebra 0.0.1\nType 'quit()' to exit the repl.\n");
+
     char input_line[MAX_CHARS];
 
     int current = 0;
@@ -176,10 +178,11 @@ ResultCode repl(VM* vm) {
     define_print(&script_comp);
     define_input(&script_comp);
 
+    //TODO: reading all input into same buffer is temporary placeholder
     while(true) {
-        printf("> ");
+        printf(">>> ");
         fgets(&input_line[current], MAX_CHARS - current, stdin);
-        if (input_line[current] == 'q') {
+        if (memcmp(&input_line[current], "quit()", 6) == 0) {
             break;
         }
 
@@ -187,9 +190,7 @@ ResultCode repl(VM* vm) {
         run_source(vm, &script_comp, &input_line[current]);
         current += 100;
 
-//        print_stack(vm); printf("\n");
         script_comp.function->chunk.count = 0;
-//        printf("locals: "); print_locals(&script_comp); printf("\n");
     }
 
     vm->open_upvalues = NULL;
