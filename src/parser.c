@@ -551,9 +551,6 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
 
 //Note: TOKEN_COLON is consume before if a variable declaration
 static ResultCode parse_type(Token var_name, struct Type** type) {
-
-    //for explicit function type declaration
-    //TODO: fix bug here
     if (match(TOKEN_LEFT_PAREN)) {
         struct TypeArray* params = make_type_array();
         if (!match(TOKEN_RIGHT_PAREN)) {
@@ -566,7 +563,6 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
         }
         CONSUME(TOKEN_RIGHT_ARROW, parser.previous, "Expect '->' followed by return type.");
         CONSUME(TOKEN_LEFT_PAREN, parser.previous, "Expect '(' before return types.");
-        //TODO: need to loop here and return typearray of returns
         struct TypeArray* returns = make_type_array();
         if (match(TOKEN_RIGHT_PAREN)) {
             add_type(returns, make_nil_type());
@@ -599,22 +595,6 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
 
     if (match(TOKEN_STRING_TYPE)) {
         *type = make_string_type();
-        return RESULT_SUCCESS;
-    }
-
-    if (match(TOKEN_STRUCT)) {
-        if (match(TOKEN_LESS)) {
-            CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect superclass identifier after '<'.");
-            *type = make_struct_type(var_name, make_identifier_type(parser.previous));
-            return RESULT_SUCCESS;
-        }
-
-        *type = make_struct_type(var_name, NULL);
-        return RESULT_SUCCESS;
-    }
-
-    if (match(TOKEN_ENUM)) {
-        *type = make_enum_type(var_name);
         return RESULT_SUCCESS;
     }
 
@@ -685,7 +665,7 @@ static ResultCode declaration(struct Node** node) {
         match(TOKEN_ENUM);
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before enum body.");
 
-        //create enum type to fill
+        //create enum type to fill with props
         struct TypeEnum* type = (struct TypeEnum*)make_enum_type(enum_name);
         struct ObjString* enum_string = make_string(enum_name.start, enum_name.length);
         push_root(to_string(enum_string));
@@ -729,8 +709,17 @@ static ResultCode declaration(struct Node** node) {
         Token struct_name = parser.previous;
         match(TOKEN_COLON_COLON);
 
+        //not calling parse_type() to avoid passing Token with every call of parse_type
         struct Type* struct_type;
-        PARSE_TYPE(struct_name, &struct_type, struct_name, "Invalid type.");
+        match(TOKEN_STRUCT);
+        if (match(TOKEN_LESS)) {
+            CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expect superclass identifier after '<'.");
+            Token super_identifier = parser.previous;
+            struct_type = make_struct_type(struct_name, make_identifier_type(super_identifier));
+        } else {
+            struct_type = make_struct_type(struct_name, NULL);
+        }
+
         struct ObjString* struct_string = make_string(struct_name.start, struct_name.length);
         push_root(to_string(struct_string));
 
