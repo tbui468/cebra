@@ -44,6 +44,21 @@ Stack overflow
 
 Implementation:
 
+    REPL
+        read input into a buffer, and track {}()[] on a stack.  Push lefts, and pop rights if they match top
+        if stack is empty, then run buffer in vm
+        else keep reading into buffer
+        pushing enter twice without entering anything will automatically send the buffer to the vm
+            useful if user made syntax error and wants to start over:
+
+        move defining libraries out of loop
+
+        Init script compiler
+
+        parse, compile, run
+
+        Free script compiler        
+
     Get website main page up and working
 
     Allow sequences in struct fields... this may require changing some things since right now sequence declarations

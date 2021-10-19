@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <math.h>
 
 #include "compiler.h"
@@ -1410,6 +1409,9 @@ void init_compiler(struct Compiler* compiler, const char* start, int length, int
 
     compiler->enclosing = current_compiler;
     current_compiler = compiler;
+
+    pop_root();
+    pop_root();
 }
 
 void free_compiler(struct Compiler* compiler) {
@@ -1428,9 +1430,6 @@ void free_compiler(struct Compiler* compiler) {
     }
     free_table(&compiler->globals);
     current_compiler = compiler->enclosing;
-    //popping function name object and function object pushed onto stack in init_compiler()
-    pop_root();
-    pop_root();
 }
 
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array) {
@@ -1456,55 +1455,18 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
     return RESULT_SUCCESS;
 }
 
-/*
-static Value open_native(int arg_count, Value* args) {
-    struct ObjString* file_name = args[0].as.string_type;
-    //open file in c (just do read for now)
-    //create ObjFile and return
-}*/
 
-static Value clock_native(int arg_count, Value* args) {
-    return to_float((double)clock() / CLOCKS_PER_SEC);
-}
-
-static Value print_native(int arg_count, Value* args) {
-    Value value = args[0];
-    switch(value.type) {
-        case VAL_STRING: {
-            struct ObjString* str = value.as.string_type;
-            printf("%.*s\n", str->length, str->chars);
-            break;
-        }
-        case VAL_INT:
-            printf("%d\n", value.as.integer_type);
-            break;
-        case VAL_FLOAT:
-            printf("%f\n", value.as.float_type);
-            break; 
-        case VAL_NIL:
-            printf("nil\n");
-            break;
-    }
-    return to_nil();
-}
-
-static Value input_native(int arg_count, Value* args) {
-    char input[100];
-    fgets(input, 100, stdin);
-    return to_string(make_string(input, strlen(input) - 1));
-}
-
-static ResultCode define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Type* type) {
+ResultCode define_native(struct Compiler* compiler, const char* name, Value (*function)(int, Value*), struct Type* type) {
     //set globals in compiler for checks
     struct ObjString* native_string = make_string(name, strlen(name));
     push_root(to_string(native_string));
     Value v;
-    if (get_from_table(&script_compiler->globals, native_string, &v)) {
+    if (get_from_table(&compiler->globals, native_string, &v)) {
         pop_root();
         add_error(compiler, make_dummy_token(), "The identifier for this function is already used.");
         return RESULT_FAILED;
     }
-    set_table(&script_compiler->globals, native_string, to_type(type));
+    set_table(&compiler->globals, native_string, to_type(type));
     pop_root();
 
     emit_byte(compiler, OP_NATIVE);
@@ -1516,56 +1478,31 @@ static ResultCode define_native(struct Compiler* compiler, const char* name, Val
 
     return RESULT_SUCCESS;
 }
-/*
-static ResultCode define_open(struct Compiler* compiler) {
-    struct Type* str_type = make_string_type();
-    struct Type* params = make_type_array();
-    add_type((struct TypeArray*)params, str_type);
-    return define_native(compiler, "open", open_native, make_fun_type(params, make_file_type()));
-}*/
-
-static ResultCode define_input(struct Compiler* compiler) {
-    struct TypeArray* returns = make_type_array();
-    add_type(returns, make_string_type());
-    return define_native(compiler, "input", input_native, make_fun_type(make_type_array(), returns));
-}
-
-static ResultCode define_clock(struct Compiler* compiler) {
-    struct TypeArray* returns = make_type_array();
-    add_type(returns, make_float_type());
-    return define_native(compiler, "clock", clock_native, make_fun_type(make_type_array(), returns));
-}
-
-static ResultCode define_print(struct Compiler* compiler) {
-    struct Type* str_type = make_string_type();
-    struct Type* int_type = make_int_type();
-    struct Type* float_type = make_float_type();
-    struct Type* nil_type = make_nil_type();
-    //using dummy token with enum type to allow printing enums (as integer)
-    //otherwise the typechecker sees it as an error
-    struct Type* enum_type = make_enum_type(make_dummy_token());
-    str_type->opt = int_type;
-    int_type->opt = float_type;
-    float_type->opt = nil_type;
-    nil_type->opt = enum_type;
-    struct TypeArray* sl = make_type_array();
-    add_type(sl, str_type);
-    struct TypeArray* returns = make_type_array();
-    add_type(returns, make_nil_type());
-    return define_native(compiler, "print", print_native, make_fun_type(sl, returns));
-}
-
 
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
-    //TODO:script_compiler is currently used to get access to top compiler globals table
+    //TODO:'script_compiler' is a global currently used to get access to top compiler globals table
     //  this is kind of messy
     script_compiler = compiler;
-    define_clock(compiler);
-    define_print(compiler);
-    define_input(compiler);
+   
+    //this part is mostly the same as compile_function, except
+    //that return opcodes for functions is emitted 
+    ResultCode result;
+    struct TypeArray* ret_types = make_type_array();
+    for (int i = 0; i < nl->count; i++) {
+        struct Type* type;
+        result = compile_node(compiler, nl->nodes[i], ret_types, &type);
+        if (result == RESULT_FAILED) {
+            add_error(compiler, make_dummy_token(), "Failed to compile script.");
+            print_object((struct Obj*)(compiler->function->name));
+            break;
+        }
+    }
 
-    struct TypeArray* ret_types;
-    ResultCode result = compile_function(compiler, nl, &ret_types);
+    if ((ret_types)->count == 0) {
+        emit_byte(compiler, OP_NIL);
+        emit_byte(compiler, OP_RETURN);
+        emit_byte(compiler, 1);
+    }
 
     if (result == RESULT_FAILED || compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {

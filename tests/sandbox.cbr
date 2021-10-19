@@ -6,5 +6,3 @@ fun :: () -> (int, int) {
 
 x, y := fun()
 
-print(x)
-print(y)
