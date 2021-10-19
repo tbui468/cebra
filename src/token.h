@@ -57,6 +57,7 @@ typedef enum {
     TOKEN_AS,
     TOKEN_WHEN,
     TOKEN_IS,
+    TOKEN_UNDER_SCORE,
     TOKEN_EOF,
 } TokenType;
 

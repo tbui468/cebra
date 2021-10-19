@@ -767,21 +767,18 @@ static ResultCode declaration(struct Node** node) {
         struct Node* condition;
         PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect single boolean expression after 'if'.");
 
-        CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect boolean expression and '{' after 'if' condition.");
-
-        Token left_brace_token = parser.previous;
         struct Node* then_block;
-        if (block(NULL, &then_block) == RESULT_FAILED) {
-            ERROR(left_brace_token, "Expect closing '}' to end 'if' statement body.");
+        if (declaration(&then_block) == RESULT_FAILED) {
+            ERROR(name, "Expected a body statement after for 'if' statement.");
+            return RESULT_FAILED;
         }
 
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
             Token else_token = parser.previous;
-            CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' after 'else'.");
-
-            if (block(NULL, &else_block) == RESULT_FAILED) {
-                ERROR(else_token, "Expect closing '}' to end 'else' statement body.");
+            if (declaration(&else_block) == RESULT_FAILED) {
+                ERROR(else_token, "Expected a body statement after for 'else' statement.");
+                return RESULT_FAILED;
             }
         }
 
@@ -803,11 +800,11 @@ static ResultCode declaration(struct Node** node) {
             Token equal = make_token(TOKEN_EQUAL_EQUAL, is.line, "==", 2);
             struct Node* condition = make_logical(equal, left, right);
 
-            CONSUME(TOKEN_LEFT_BRACE, name, "Expected '{' after 'is' and expression.");
             struct Node* body = NULL;
-            if (block(NULL, &body) == RESULT_FAILED) {
-                ERROR(name, "Expect close '}' after 'is' block body.");
+            if (declaration(&body) == RESULT_FAILED) {
+                ERROR(is, "Expect statment body after 'is'.");
             }
+
             struct Node* if_stmt = make_if_else(is, condition, body, NULL);
             add_node(cases, if_stmt);
         }
@@ -815,12 +812,12 @@ static ResultCode declaration(struct Node** node) {
         //make_if_else(else token, true, block, NULL)
         if (match(TOKEN_ELSE)) {
             Token else_token = parser.previous;
-            CONSUME(TOKEN_LEFT_BRACE, name, "Expected '{' after 'else'.");
             Token true_token = make_token(TOKEN_TRUE, else_token.line, "true", 4);
             struct Node* condition = make_literal(true_token);
+
             struct Node* body = NULL;
-            if (block(NULL, &body) == RESULT_FAILED) {
-                ERROR(name, "Expect close '}' after 'else' block body.");
+            if (declaration(&body) == RESULT_FAILED) {
+                ERROR(else_token, "Expect statement body after 'else' in 'when' body.");
             }
             add_node(cases, make_if_else(else_token, condition, body, NULL));
         }
@@ -832,39 +829,43 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
         struct Node* condition;
         PARSE(parse_expression, name, &condition, name, "Expect condition after 'while'.");
-        CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
 
+        /*
+        CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
         struct Node* then_block;
         if (block(NULL, &then_block) == RESULT_FAILED) {
             ERROR(name, "Expect close '}' after 'while' body.");
+        }*/
+        struct Node* then_block;
+        if (declaration(&then_block) == RESULT_FAILED) {
+            ERROR(name, "Expected body statement for 'while' loop.");
         }
+
         *node = make_while(name, condition, then_block);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_FOR)) {
         Token name = parser.previous;
         struct Node* initializer = NULL;
-        if (!match(TOKEN_COMMA)) {
-            PARSE(parse_expression, make_dummy_token(), &initializer, name, "Expected initializer or empty space for first item in 'for' loop.");
-            CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
+
+        if (!match(TOKEN_UNDER_SCORE)) {
+            PARSE(parse_expression, make_dummy_token(), &initializer, name, "Expected initializer or '_' for first item in 'for' loop.");
         }
+        CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
 
         struct Node* condition = NULL;
-        if (!match(TOKEN_COMMA)) {
-            PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect update or empty space for third item in 'for' loop.");
-            CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
-        }
+        PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect update for second item in 'for' loop.");
+        CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
 
         struct Node* update = NULL;
-        if (!match(TOKEN_LEFT_BRACE)) {
+        if (!match(TOKEN_UNDER_SCORE)) {
             struct Node* update_expr;
             PARSE(parse_expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
             update = make_expr_stmt(update_expr);
-            CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after for-loop update.");
         }
 
         struct Node* then_block;
-        if (block(NULL, &then_block) == RESULT_FAILED) {
-            ERROR(name, "Expect closing '}' after for-loop body.");
+        if (declaration(&then_block) == RESULT_FAILED) {
+            ERROR(name, "Expect body statement for 'for' loop.");
         }
 
         *node = make_for(name, initializer, condition, update, then_block);
@@ -898,21 +899,25 @@ static ResultCode declaration(struct Node** node) {
         struct Node* update = make_expr_stmt(make_set_var(get_idx, sum)); 
 
         //body
-        CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' before foreach loop body.");
-
         struct Node* get_element = make_get_element(make_dummy_token(), list, get_idx);
         ((DeclVar*)element)->right = get_element;
-        struct Node* then_block;
-        if (block(element, &then_block) == RESULT_FAILED) {
-            ERROR(name, "Expect closing '}' after foreach loop body.");
+
+        //prepending element to body
+        struct NodeList* body = (struct NodeList*)make_node_list();
+        add_node(body, element);
+        struct Node* remaining_body;
+        if (declaration(&remaining_body) == RESULT_FAILED) {
+            ERROR(name, "Expected body statement for 'foreach' loop.");
         }
+        add_node(body, remaining_body);
+        struct Node* then_block = make_block(name, body);
 
         *node = make_for(name, initializer, condition, update, then_block);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(parse_sequence, name, &right, name, "Return value must be and expression, or leave empty for 'nil' return.");
+        PARSE(parse_sequence, name, &right, name, "Return value must be and expression or 'nil'.");
         *node = make_return(name, right);
         return RESULT_SUCCESS;
     }

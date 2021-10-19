@@ -43,26 +43,16 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    
-    Found the problem with locals!!!  We are overwritting the buffer storing user input each time, BUT
-        the const char* is there is being used to track tokens for locals in compiler....
 
-    REPL
-        read input into a buffer, and track {}()[] on a stack.  Push lefts, and pop rights if they match top
-        if stack is empty, then run buffer in vm
-        else keep reading into buffer
-        pushing enter twice without entering anything will automatically send the buffer to the vm
-            useful if user made syntax error and wants to start over:
+    Move ret_types into compiler so that we don't need to pass it into every compile_node call
 
-        Added an OP_HALT, but vm/compiler state is not being saved between repl reads, so it's not
-            active now.  
-
-            I think it's a problem with upvalues
-
-            when compiling a new node, need to use old function where all constants/globals are held.  
-            Then the vm needs to pick up where it left off last time, and NOT start over
+    Token var_name is not being used anymore in parser, right?  Remove it if so.
 
     Get website main page up and working
+
+    Need to reset state when REPL fails. 
+        when a struct is defined, if it fails partway through the compilation, the name will still be in the globals
+        table.  This then prevents the user from trying it again.
 
     Allow sequences in struct fields... this may require changing some things since right now sequence declarations
         are immediatly added as locals.  Struct fields need to be pushed onto the stack along with the prop
@@ -82,8 +72,6 @@ Implementation:
         accurate messages
 
     Simplify code and make it fast - this is supposed to be a selling point
-
-    Get REPL working - this is the key difference between Cebra and other compiled languages like Go
 
     'with' statement?   Creates a shadow variable with casted type in new scope, but only does so if cast is valid (not nil)
         //this cuts out 1 indent, and 3 lines compared to using 'when/is' statements

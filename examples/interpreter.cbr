@@ -28,11 +28,9 @@ while (continue) {
         }
 
         answer, result := evaluate_expr(root)
-        if result {
-            print("Answer: " + answer as string)
-        } else {
-            print("Invalid input")
-        }
+        if result   print("Answer: " + answer as string)
+        else        print("Invalid input")
+
         print("")
     } else {
         continue = false
@@ -128,12 +126,12 @@ next_token :: (lexer: Lexer) -> (Token) {
         token.literal = lexer.current_char
 
         when lexer.current_char {
-            is "+" { token.type = TokenType.plus }
-            is "-" { token.type = TokenType.minus }
-            is "*" { token.type = TokenType.star }
-            is "/" { token.type = TokenType.slash }
-            is "(" { token.type = TokenType.left_paren }
-            is ")" { token.type = TokenType.right_paren }
+            is "+" token.type = TokenType.plus
+            is "-" token.type = TokenType.minus
+            is "*" token.type = TokenType.star
+            is "/" token.type = TokenType.slash
+            is "(" token.type = TokenType.left_paren
+            is ")" token.type = TokenType.right_paren
             else {
                 //scanning a number
                 num_string := lexer.current_char
@@ -263,10 +261,10 @@ evaluate_expr :: (expr: Expr) -> (float, bool) {
             left, result1 := evaluate_expr(b.left)
             right, result2 := evaluate_expr(b.right)
             when b.token.literal {
-                is "+" { -> left + right, true }
-                is "-" { -> left - right, true }
-                is "*" { -> left * right, true }
-                is "/" { -> left / right, true }
+                is "+" -> left + right, true
+                is "-" -> left - right, true
+                is "*" -> left * right, true
+                is "/" -> left / right, true
             }
         }
     }

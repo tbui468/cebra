@@ -262,10 +262,10 @@ if loops {
     ai := 0
     b: int = 0
     bi := 0
-    for , b < 5, b = b + 1 {
+    for _ , b < 5, b = b + 1 {
         a = a + 1
     }
-    for , bi < 5, bi = bi + 1 {
+    for _ , bi < 5, bi = bi + 1 {
         ai = ai + 1
     }
     if a == 5 and ai == 5 {
@@ -276,10 +276,10 @@ if loops {
 
     c: int = 0
     ci := 0
-    for , c < 5, {
+    for _ , c < 5, _ {
         c = c + 1
     }
-    for , ci < 5, {
+    for _ , ci < 5, _ {
         ci = ci + 1
     }
     if c == 5 and ci == 5 {

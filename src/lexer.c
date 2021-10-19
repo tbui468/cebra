@@ -107,6 +107,9 @@ static Token read_keyword(char c) {
             if (match_string("hile")) return new_token(TOKEN_WHILE);
             if (match_string("hen")) return new_token(TOKEN_WHEN);
             break;
+        case '_':
+            if (match_string("")) return new_token(TOKEN_UNDER_SCORE);
+            break;
     }
     return new_token(TOKEN_IDENTIFIER);
 }
@@ -159,7 +162,7 @@ Token next_token() {
     }
 
     //keyword
-    if (isalpha(c)) {
+    if (isalpha(c) || c == '_') {
         return read_keyword(c);
     }
 

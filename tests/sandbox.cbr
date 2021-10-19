@@ -1,5 +1,7 @@
-a := 24
-b := 32
 
-print(a)
-print(b)
+i := 5
+
+for _ , i > 0, _ 
+    i = i - 1
+
+print(i)
