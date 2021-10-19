@@ -649,6 +649,9 @@ ResultCode run_program(VM* vm) {
                 push(vm, val);
                 break;
             }
+            case OP_HALT: {
+                return RESULT_SUCCESS;
+            }
         } 
 
 #ifdef DEBUG_TRACE
@@ -660,7 +663,11 @@ ResultCode run_program(VM* vm) {
 }
 
 ResultCode run(VM* vm, struct ObjFunction* script) {
-    push(vm, to_function(script));
+    if (vm->stack == vm->stack_top) {
+        push(vm, to_function(script));
+    } else {
+        vm->stack[0] = to_function(script);
+    }
     call(vm, script);
 
     ResultCode result = run_program(vm);

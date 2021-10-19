@@ -48,7 +48,8 @@ typedef enum {
     OP_CAST,
     OP_ENUM,
     OP_ADD_GLOBAL,
-    OP_GET_GLOBAL
+    OP_GET_GLOBAL,
+    OP_HALT
 } OpCode;
 
 typedef struct {

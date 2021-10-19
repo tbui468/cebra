@@ -1498,11 +1498,13 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
         }
     }
 
+    emit_byte(compiler, OP_HALT);
+/*
     if ((ret_types)->count == 0) {
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);
-        emit_byte(compiler, 1);
-    }
+        emit_byte(compiler, 0); //so that nil is popped off script after returning to leave empty stack
+    }*/
 
     if (result == RESULT_FAILED || compiler->error_count > 0) {
         for (int i = 0; i < compiler->error_count; i++) {

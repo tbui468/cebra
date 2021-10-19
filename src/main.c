@@ -127,32 +127,6 @@ ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) 
 }
 
 
-ResultCode repl(VM* vm) {
-    char input_line[MAX_CHARS];
-
-    struct Compiler script_comp;
-    init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
-
-    define_clock(&script_comp);
-    define_print(&script_comp);
-    define_input(&script_comp);
-
-    while(true) {
-        printf("> ");
-        fgets(input_line, MAX_CHARS, stdin);
-        if (input_line[0] == 'q') {
-            break;
-        }
-
-        //if not a complete statement expression, should keep reading
-
-        run_source(vm, &script_comp, &input_line[0]);
-    }
-
-    free_compiler(&script_comp);
-
-    return RESULT_SUCCESS;
-}
 
 const char* read_file(const char* path) {
     FILE* file = fopen(path, "rb");
@@ -170,24 +144,54 @@ ResultCode run_script(VM* vm, const char* path) {
 
     const char* source = read_file(path);
 
-
-    struct Compiler script_comp;
     //passing in NULL for struct Type* bc compiler needs to be initialized
     //before Types can be created
-    printf("before init compiler\n");
+    struct Compiler script_comp;
     init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
     define_clock(&script_comp);
     define_print(&script_comp);
     define_input(&script_comp);
-    print_stack(vm);
 
     ResultCode result = run_source(vm, &script_comp, source);
+
+    //free open_upvalues and stack so that GC can reclaim memory
+    vm->open_upvalues = NULL;
+    pop_stack(vm);
 
     free_compiler(&script_comp);
 
     free((void*)source);
 
     return result;
+}
+
+ResultCode repl(VM* vm) {
+    char input_line[MAX_CHARS];
+
+    struct Compiler script_comp;
+    init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
+    define_clock(&script_comp);
+    define_print(&script_comp);
+    define_input(&script_comp);
+
+    while(true) {
+        printf("> ");
+        fgets(input_line, MAX_CHARS, stdin);
+        if (input_line[0] == 'q') {
+            break;
+        }
+
+        run_source(vm, &script_comp, &input_line[0]);
+
+        script_comp.function->chunk.count = 0;
+    }
+
+    vm->open_upvalues = NULL;
+    pop_stack(vm);
+
+    free_compiler(&script_comp);
+
+    return RESULT_SUCCESS;
 }
 
 int main(int argc, char** argv) {

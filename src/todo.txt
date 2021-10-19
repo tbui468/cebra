@@ -51,13 +51,13 @@ Implementation:
         pushing enter twice without entering anything will automatically send the buffer to the vm
             useful if user made syntax error and wants to start over:
 
-        move defining libraries out of loop
+        Added an OP_HALT, but vm/compiler state is not being saved between repl reads, so it's not
+            active now.  
 
-        Init script compiler
+            I think it's a problem with upvalues
 
-        parse, compile, run
-
-        Free script compiler        
+            when compiling a new node, need to use old function where all constants/globals are held.  
+            Then the vm needs to pick up where it left off last time, and NOT start over
 
     Get website main page up and working
 
