@@ -29,6 +29,8 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
 
 Implementation:
 
+    Issue with stack overflow I think
+
 if true {
 
     x := () -> (() -> (() -> (string))) {

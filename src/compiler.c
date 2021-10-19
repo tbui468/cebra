@@ -221,9 +221,7 @@ static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, s
     Binary* binary = (Binary*)node;
 
     struct Type* type1;
-    printf("before left\n");
     COMPILE_NODE(binary->left, NULL, &type1);
-    printf("after left\n");
     struct Type* type2;
     COMPILE_NODE(binary->right, NULL, &type2);
     CHECK_TYPE(!same_type(type1, type2), binary->name, "Left and right types must match.");
@@ -506,7 +504,6 @@ static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct
 }
 
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
-    printf("compile node\n");
     if (node == NULL) {
         *node_type = make_nil_type();
         return RESULT_SUCCESS;
@@ -524,14 +521,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //if right is NULL, just compile left in order and return types in TypeArray
             if (seq->right == NULL) {
                 struct TypeArray* types = make_type_array();
-                print_node(node);
                 for (int i = 0; i < seq->left->count; i++) {
-                    printf("i: %d\n", i);
                     struct Type* t;
-                    printf("0\n");
-                    print_node(seq->left->nodes[i]);
                     COMPILE_NODE(seq->left->nodes[i], NULL, &t);
-                    printf("1\n");
                     //unwrap type array and insert 
                     if (t->type == TYPE_ARRAY) {
                         for (int i = 0; i < ((struct TypeArray*)t)->count; i++) {
@@ -546,7 +538,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             //tracking locals indices to update types if inferred
-            int decl_idx[256];
+            int decl_idx[8]; //TODO: this might be bad
             int decl_idx_count = 0;
 
             //compile all variable declarations
