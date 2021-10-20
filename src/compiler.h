@@ -36,6 +36,7 @@ struct Compiler {
     struct Type* types;
     struct Node* nodes;
     struct Table globals;
+    struct TypeArray* return_types;
 };
 
 extern struct Compiler* current_compiler;

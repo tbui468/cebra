@@ -6,8 +6,8 @@
 #include "memory.h"
 #include "obj.h"
 
-#define COMPILE_NODE(node, ret_node, node_type) \
-            if (compile_node(compiler, node, ret_node, node_type) == RESULT_FAILED) return RESULT_FAILED
+#define COMPILE_NODE(node, node_type) \
+            if (compile_node(compiler, node, node_type) == RESULT_FAILED) return RESULT_FAILED
 
 #define CHECK_TYPE(fail_condition, token, msg) \
                 if (fail_condition) { \
@@ -17,7 +17,7 @@
 
 struct Compiler* current_compiler = NULL;
 struct Compiler* script_compiler = NULL;
-static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type);
+static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct Type** node_type);
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array);
 
 static bool struct_or_function_to_nil(struct Type* var_type, struct Type* right_type) {
@@ -133,7 +133,7 @@ static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, 
 static ResultCode compile_unary(struct Compiler* compiler, struct Node* node, struct Type** node_type) {
     Unary* unary = (Unary*)node;
     struct Type* type;
-    COMPILE_NODE(unary->right, NULL, &type);
+    COMPILE_NODE(unary->right, &type);
     emit_byte(compiler, OP_NEGATE);
     *node_type = type;
     return RESULT_SUCCESS;
@@ -144,11 +144,11 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
 
     if (logical->name.type == TOKEN_AND) {
         struct Type* left_type;
-        COMPILE_NODE(logical->left, NULL, &left_type);
+        COMPILE_NODE(logical->left, &left_type);
         int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
         emit_byte(compiler, OP_POP);
         struct Type* right_type;
-        COMPILE_NODE(logical->right, NULL, &right_type);
+        COMPILE_NODE(logical->right, &right_type);
         patch_jump(compiler, false_jump);
         CHECK_TYPE(!same_type(left_type, right_type), logical->name, "Left and right types must match.");
         *node_type = make_bool_type();
@@ -157,11 +157,11 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
 
     if (logical->name.type == TOKEN_OR) {
         struct Type* left_type;
-        COMPILE_NODE(logical->left, NULL, &left_type);
+        COMPILE_NODE(logical->left, &left_type);
         int true_jump = emit_jump(compiler, OP_JUMP_IF_TRUE);
         emit_byte(compiler, OP_POP);
         struct Type* right_type;
-        COMPILE_NODE(logical->right, NULL, &right_type);
+        COMPILE_NODE(logical->right, &right_type);
         patch_jump(compiler, true_jump);
         CHECK_TYPE(!same_type(left_type, right_type), logical->name, "Left and right types must match.");
         *node_type = make_bool_type();
@@ -170,9 +170,9 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
 
     if (logical->name.type == TOKEN_IN) {
         struct Type* element_type;
-        COMPILE_NODE(logical->left, NULL, &element_type);
+        COMPILE_NODE(logical->left, &element_type);
         struct Type* list_type;
-        COMPILE_NODE(logical->right, NULL, &list_type);
+        COMPILE_NODE(logical->right, &list_type);
 
         CHECK_TYPE(list_type->type != TYPE_LIST, logical->name, "Identifier after 'in' must reference a List.");
 
@@ -184,9 +184,9 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
     }
 
     struct Type* left_type;
-    COMPILE_NODE(logical->left, NULL, &left_type);
+    COMPILE_NODE(logical->left, &left_type);
     struct Type* right_type;
-    COMPILE_NODE(logical->right, NULL, &right_type);
+    COMPILE_NODE(logical->right, &right_type);
 
     CHECK_TYPE(!same_type(left_type, right_type) && !struct_or_function_to_nil(left_type, right_type), logical->name, "Left and right types must match.");
     switch(logical->name.type) {
@@ -220,9 +220,9 @@ static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, s
     Binary* binary = (Binary*)node;
 
     struct Type* type1;
-    COMPILE_NODE(binary->left, NULL, &type1);
+    COMPILE_NODE(binary->left, &type1);
     struct Type* type2;
-    COMPILE_NODE(binary->right, NULL, &type2);
+    COMPILE_NODE(binary->right, &type2);
     CHECK_TYPE(!same_type(type1, type2), binary->name, "Left and right types must match.");
     switch(binary->name.type) {
         case TOKEN_PLUS: {
@@ -368,7 +368,7 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
-static ResultCode compile_decl_var(struct Compiler* compiler, DeclVar* dv, struct TypeArray* ret_types, struct Type** node_type) {
+static ResultCode compile_decl_var(struct Compiler* compiler, DeclVar* dv, struct Type** node_type) {
     struct Type* type = NULL;
 
     if (declared_in_scope(compiler, dv->name)) {
@@ -380,7 +380,7 @@ static ResultCode compile_decl_var(struct Compiler* compiler, DeclVar* dv, struc
     if (dv->type->type == TYPE_INFER) {
         int idx = add_local(compiler, dv->name, dv->type);
 
-        COMPILE_NODE(dv->right, NULL, &type);
+        COMPILE_NODE(dv->right, &type);
         CHECK_TYPE(type->type == TYPE_NIL , dv->name,
                    "Inferred type cannot be assigned to 'nil.");
 
@@ -393,7 +393,7 @@ static ResultCode compile_decl_var(struct Compiler* compiler, DeclVar* dv, struc
     //explicit type, defined and parameters
     if (dv->type->type != TYPE_INFER) {
         int idx = add_local(compiler, dv->name, dv->type);
-        COMPILE_NODE(dv->right, NULL, &type);
+        COMPILE_NODE(dv->right, &type);
 
         if (type->type != TYPE_NIL) {
             set_local(compiler, dv->name, type, idx);
@@ -502,7 +502,7 @@ static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct
     return RESULT_FAILED;
 }
 
-static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct TypeArray* ret_types, struct Type** node_type) {
+static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct Type** node_type) {
     if (node == NULL) {
         *node_type = make_nil_type();
         return RESULT_SUCCESS;
@@ -510,7 +510,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
     switch(node->type) {
         //declarations
         case NODE_DECL_VAR: {
-            ResultCode result = compile_decl_var(compiler, (DeclVar*)node, ret_types, node_type);
+            ResultCode result = compile_decl_var(compiler, (DeclVar*)node, node_type);
             *node_type = make_nil_type();
             return result;
         }
@@ -522,7 +522,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct TypeArray* types = make_type_array();
                 for (int i = 0; i < seq->left->count; i++) {
                     struct Type* t;
-                    COMPILE_NODE(seq->left->nodes[i], NULL, &t);
+                    COMPILE_NODE(seq->left->nodes[i], &t);
                     //unwrap type array and insert 
                     if (t->type == TYPE_ARRAY) {
                         for (int i = 0; i < ((struct TypeArray*)t)->count; i++) {
@@ -546,7 +546,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     DeclVar* dv = (DeclVar*)(seq->left->nodes[i]);
                     struct Type* type;
                     struct Node* decl_var = make_decl_var(dv->name, dv->type, make_nil(make_dummy_token()));
-                    COMPILE_NODE(decl_var, NULL, &type);
+                    COMPILE_NODE(decl_var, &type);
                     int idx = resolve_local(compiler, dv->name);
                     decl_idx[decl_idx_count++] = -1;
                 } else if (seq->op.type == TOKEN_COLON_EQUAL && seq->left->nodes[i]->type == NODE_GET_VAR) {
@@ -555,7 +555,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     struct Node* decl_var = make_decl_var(name, make_int_type(), make_nil(make_dummy_token()));
                     DeclVar* dv = (DeclVar*)decl_var;
                     struct Type* type;
-                    COMPILE_NODE(decl_var, NULL, &type);
+                    COMPILE_NODE(decl_var, &type);
                     int idx = resolve_local(compiler, name);
                     decl_idx[decl_idx_count++] = idx;
                 } else {
@@ -567,13 +567,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //so that left hand side can be assigned to them
             struct Type* right_seq_type;
             if (seq->right->type == NODE_SEQUENCE) {
-                COMPILE_NODE(seq->right, NULL, &right_seq_type);
+                COMPILE_NODE(seq->right, &right_seq_type);
             } else if (seq->right->type == NODE_LIST) {
                 struct NodeList* nl = (struct NodeList*)(seq->right);
                 struct TypeArray* ta = make_type_array();
                 for (int i = 0; i < nl->count; i++) {
                     struct Type* var_type;
-                    COMPILE_NODE(nl->nodes[i], NULL, &var_type);
+                    COMPILE_NODE(nl->nodes[i], &var_type);
                     add_type(ta, var_type);
                 }
                 right_seq_type = (struct Type*)ta;
@@ -597,9 +597,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         GetElement* ge = (GetElement*)(seq->left->nodes[i]);
 
                         struct Type* left_type;
-                        COMPILE_NODE(ge->left, ret_types, &left_type);
+                        COMPILE_NODE(ge->left, &left_type);
                         struct Type* idx_type;
-                        COMPILE_NODE(ge->idx, ret_types, &idx_type);
+                        COMPILE_NODE(ge->idx, &idx_type);
 
                         int depth = seq->left->count - 1 - i;
                         struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
@@ -613,7 +613,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     case NODE_GET_PROP: {
                         GetProp* gp = (GetProp*)(seq->left->nodes[i]);
                         struct Type* type_inst;
-                        COMPILE_NODE(gp->inst, NULL, &type_inst);
+                        COMPILE_NODE(gp->inst, &type_inst);
                         struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
 
                         int depth = seq->left->count - 1 - i;
@@ -797,7 +797,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             //compile super so that it's on the stack
             struct Type* super_type = NULL;
             if (dc->super != NULL) {
-                COMPILE_NODE(dc->super, ret_types, &super_type);
+                COMPILE_NODE(dc->super, &super_type);
             } else {
                 emit_byte(compiler, OP_NIL);
             }
@@ -826,7 +826,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 start_scope(compiler);
                 struct Type* right_type;
-                if (compile_decl_var(compiler, (DeclVar*)node, NULL, &right_type) == RESULT_FAILED) {
+                if (compile_decl_var(compiler, (DeclVar*)node, &right_type) == RESULT_FAILED) {
                     return RESULT_FAILED;
                 }
 
@@ -892,7 +892,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_EXPR_STMT: {
             ExprStmt* es = (ExprStmt*)node;
             struct Type* type;
-            COMPILE_NODE(es->expr, ret_types, &type);
+            COMPILE_NODE(es->expr, &type);
 
             //pop multiple times if sequence of Declarations....
             if (type->type == TYPE_ARRAY) {
@@ -914,7 +914,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             start_scope(compiler);
             for (int i = 0; i < block->decl_list->count; i++) {
                 struct Type* type;
-                COMPILE_NODE(block->decl_list->nodes[i], ret_types, &type);
+                COMPILE_NODE(block->decl_list->nodes[i], &type);
             }
             end_scope(compiler);
             *node_type = make_nil_type();
@@ -923,7 +923,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_IF_ELSE: {
             IfElse* ie = (IfElse*)node;
             struct Type* cond;
-            COMPILE_NODE(ie->condition, ret_types, &cond);
+            COMPILE_NODE(ie->condition, &cond);
 
             CHECK_TYPE(cond->type != TYPE_BOOL, ie->name, 
                        "Condition must evaluate to boolean.");
@@ -932,14 +932,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             emit_byte(compiler, OP_POP);
             struct Type* then_type;
-            COMPILE_NODE(ie->then_block, ret_types, &then_type);
+            COMPILE_NODE(ie->then_block, &then_type);
             int jump_else = emit_jump(compiler, OP_JUMP);
 
             patch_jump(compiler, jump_then);
             emit_byte(compiler, OP_POP);
 
             struct Type* else_type;
-            COMPILE_NODE(ie->else_block, ret_types, &else_type);
+            COMPILE_NODE(ie->else_block, &else_type);
             patch_jump(compiler, jump_else);
 
             *node_type = make_nil_type();
@@ -952,14 +952,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             for (int i = 0; i < when->cases->count; i++) {
                 IfElse* kase = (IfElse*)(when->cases->nodes[i]);
                 struct Type* cond_type;
-                COMPILE_NODE(kase->condition, ret_types, &cond_type);
+                COMPILE_NODE(kase->condition, &cond_type);
                 CHECK_TYPE(cond_type->type != TYPE_BOOL, kase->name, 
                         "The expressions after 'when' and 'is' must be comparable using a '==' operator.");
 
                 int jump_then = emit_jump(compiler, OP_JUMP_IF_FALSE);
                 emit_byte(compiler, OP_POP);
                 struct Type* then_type;
-                COMPILE_NODE(kase->then_block, ret_types, &then_type);
+                COMPILE_NODE(kase->then_block, &then_type);
                 int jump_end = emit_jump(compiler, OP_JUMP);
                 if (je_count >= 255) {
                     add_error(compiler, when->name, "Limit of 256 'is' and 'else' cases in a 'when' statement.");
@@ -983,7 +983,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             While* wh = (While*)node;
             int start = compiler->function->chunk.count;
             struct Type* cond;
-            COMPILE_NODE(wh->condition, ret_types, &cond);
+            COMPILE_NODE(wh->condition, &cond);
             CHECK_TYPE(cond->type != TYPE_BOOL, wh->name,
                        "Condition must evaluate to boolean.");
 
@@ -991,7 +991,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             emit_byte(compiler, OP_POP);
             struct Type* then_block;
-            COMPILE_NODE(wh->then_block, ret_types, &then_block);
+            COMPILE_NODE(wh->then_block, &then_block);
 
             //+3 to include OP_JUMP_BACK and uint16_t for jump distance
             int from = compiler->function->chunk.count + 3;
@@ -1007,12 +1007,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
            
             //initializer
             struct Type* init;
-            COMPILE_NODE(fo->initializer, ret_types, &init);
+            COMPILE_NODE(fo->initializer, &init);
 
             //condition
             int condition_start = compiler->function->chunk.count;
             struct Type* cond;
-            COMPILE_NODE(fo->condition, ret_types, &cond);
+            COMPILE_NODE(fo->condition, &cond);
             CHECK_TYPE(cond->type != TYPE_BOOL, fo->name, "Condition must evaluate to boolean.");
 
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
@@ -1022,7 +1022,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             int update_start = compiler->function->chunk.count;
             if (fo->update) {
                 struct Type* up;
-                COMPILE_NODE(fo->update, ret_types, &up);
+                COMPILE_NODE(fo->update, &up);
             }
             emit_jump_by(compiler, OP_JUMP_BACK, compiler->function->chunk.count + 3 - condition_start);
 
@@ -1030,7 +1030,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             patch_jump(compiler, body_jump);
             emit_byte(compiler, OP_POP); //pop condition if true
             struct Type* then_type;
-            COMPILE_NODE(fo->then_block, ret_types, &then_type);
+            COMPILE_NODE(fo->then_block, &then_type);
             emit_jump_by(compiler, OP_JUMP_BACK, compiler->function->chunk.count + 3 - update_start);
 
             patch_jump(compiler, exit_jump);
@@ -1043,7 +1043,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_RETURN: {
             Return* ret = (Return*)node;
             struct Type* type;
-            COMPILE_NODE(ret->right, ret_types, &type);
+            COMPILE_NODE(ret->right, &type);
             int return_count = 0;
             if (type->type == TYPE_ARRAY) {
                 return_count = ((struct TypeArray*)type)->count; 
@@ -1053,7 +1053,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             //@need to take care of multiple returns later
 
-            add_type(ret_types, type);
+            add_type(compiler->return_types, type);
             *node_type = type;
             return RESULT_SUCCESS;
         }
@@ -1065,7 +1065,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_GET_PROP: {
             GetProp* gp = (GetProp*)node;
             struct Type* type_inst;
-            COMPILE_NODE(gp->inst, ret_types, &type_inst);
+            COMPILE_NODE(gp->inst, &type_inst);
 
             if (type_inst->type == TYPE_LIST) {
                 if (same_token_literal(gp->prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
@@ -1155,9 +1155,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_SET_PROP: {
             SetProp* sp = (SetProp*)node;
             struct Type* right_type;
-            COMPILE_NODE(sp->right, ret_types, &right_type);
+            COMPILE_NODE(sp->right, &right_type);
             struct Type* type_inst;
-            COMPILE_NODE(((GetProp*)(sp->inst))->inst, ret_types, &type_inst);
+            COMPILE_NODE(((GetProp*)(sp->inst))->inst, &type_inst);
             Token prop = ((GetProp*)sp->inst)->prop;
 
             int depth = 0;
@@ -1207,7 +1207,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             struct Type* right_type;
-            COMPILE_NODE(sv->right, ret_types, &right_type);
+            COMPILE_NODE(sv->right, &right_type);
 
             Token var = ((GetVar*)(sv->left))->name;
             struct Type* var_type = resolve_type(compiler, var);
@@ -1226,9 +1226,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_GET_ELEMENT: {
             GetElement* get_idx = (GetElement*)node;
             struct Type* left_type;
-            COMPILE_NODE(get_idx->left, ret_types, &left_type);
+            COMPILE_NODE(get_idx->left, &left_type);
             struct Type* idx_type;
-            COMPILE_NODE(get_idx->idx, ret_types, &idx_type);
+            COMPILE_NODE(get_idx->idx, &idx_type);
 
             if (left_type->type == TYPE_STRING) {
                 CHECK_TYPE(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
@@ -1262,11 +1262,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             GetElement* get_elem = (GetElement*)(set_elem->left);
 
             struct Type* right_type;
-            COMPILE_NODE(set_elem->right, ret_types, &right_type);
+            COMPILE_NODE(set_elem->right, &right_type);
             struct Type* left_type;
-            COMPILE_NODE(get_elem->left, ret_types, &left_type);
+            COMPILE_NODE(get_elem->left, &left_type);
             struct Type* idx_type;
-            COMPILE_NODE(get_elem->idx, ret_types, &idx_type);
+            COMPILE_NODE(get_elem->idx, &idx_type);
 
             int depth = 0;
             ResultCode result = compile_set_element(compiler, get_elem->name, left_type, idx_type, right_type, depth);
@@ -1294,7 +1294,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             Call* call = (Call*)node;
 
             struct Type* type;
-            COMPILE_NODE(call->left, ret_types, &type);
+            COMPILE_NODE(call->left, &type);
 
             if (type->type == TYPE_DECL) {
                 struct TypeDecl* td = (struct TypeDecl*)type;
@@ -1320,7 +1320,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 int min = call->arguments->count < params->count ? call->arguments->count : params->count; //Why is this needed?
                 for (int i = 0; i < min; i++) {
                     struct Type* arg_type;
-                    COMPILE_NODE(call->arguments->nodes[i], ret_types, &arg_type);
+                    COMPILE_NODE(call->arguments->nodes[i], &arg_type);
 
                     struct Type* param_type = params->types[i];
 
@@ -1352,7 +1352,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_CAST: {
             Cast* cast = (Cast*)node;
             struct Type* left;
-            COMPILE_NODE(cast->left, ret_types, &left);
+            COMPILE_NODE(cast->left, &left);
 
             if (is_primitive(left) && is_primitive(cast->type)) {
                 CHECK_TYPE(left->type == TYPE_NIL && cast->type->type != TYPE_STRING, cast->name, "'nil' types can only be cast to string.");
@@ -1408,6 +1408,7 @@ void init_compiler(struct Compiler* compiler, const char* start, int length, int
     init_table(&compiler->globals);
 
     compiler->enclosing = current_compiler;
+    compiler->return_types = NULL;
     current_compiler = compiler;
 
     pop_root();
@@ -1433,10 +1434,10 @@ void free_compiler(struct Compiler* compiler) {
 }
 
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array) {
-    struct TypeArray* ret_types = make_type_array();
+    compiler->return_types = make_type_array();
     for (int i = 0; i < nl->count; i++) {
         struct Type* type;
-        ResultCode result = compile_node(compiler, nl->nodes[i], ret_types, &type);
+        ResultCode result = compile_node(compiler, nl->nodes[i], &type);
         if (result == RESULT_FAILED) {
             add_error(compiler, make_dummy_token(), "Failed to compile function.");
             print_object((struct Obj*)(compiler->function->name));
@@ -1444,13 +1445,13 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
         }
     }
 
-    if ((ret_types)->count == 0) {
+    if (compiler->return_types->count == 0) {
         emit_byte(compiler, OP_NIL);
         emit_byte(compiler, OP_RETURN);
         emit_byte(compiler, 1);
     }
 
-    *type_array = ret_types;
+    *type_array = compiler->return_types;
 
     return RESULT_SUCCESS;
 }
@@ -1487,10 +1488,10 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     //this part is mostly the same as compile_function, except
     //that return opcodes for functions is emitted 
     ResultCode result;
-    struct TypeArray* ret_types = make_type_array();
+    compiler->return_types = make_type_array();
     for (int i = 0; i < nl->count; i++) {
         struct Type* type;
-        result = compile_node(compiler, nl->nodes[i], ret_types, &type);
+        result = compile_node(compiler, nl->nodes[i], &type);
         if (result == RESULT_FAILED) {
             add_error(compiler, make_dummy_token(), "Failed to compile script.");
             print_object((struct Obj*)(compiler->function->name));
