@@ -33,6 +33,10 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
     the same instance rather than different ones.  Need to fix this ... could try to instantiate using a different
     method rather than copying - how about running the struct creation code again?
 
+    Could try to have ObjStruct just hold ValueArrays instead of hash tables.  During compilation
+        just emit offset when getting/setting prop.  Then we could just copy the ValueArray
+        when instantiating a new struct - this would make it a little easier
+
 Stack overflow
     big stack allocations:
         NODE_WHEN  256 ints

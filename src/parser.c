@@ -14,8 +14,8 @@
 #define PARSE_WITHOUT_MSG(fun, var_name, node_ptr) \
     PARSE(fun, var_name, node_ptr, make_dummy_token(), "")
 
-#define PARSE_TYPE(var_name, type_ptr, token, ...) \
-    if (parse_type(var_name, type_ptr) == RESULT_FAILED) { \
+#define PARSE_TYPE(type_ptr, token, ...) \
+    if (parse_type(type_ptr) == RESULT_FAILED) { \
         ERROR(token, __VA_ARGS__); \
     }
 
@@ -44,7 +44,7 @@ Parser parser;
 
 static ResultCode declaration(struct Node** node);
 static ResultCode block(struct Node* prepend, struct Node** node);
-static ResultCode parse_type(Token var_name, struct Type** type);
+static ResultCode parse_type(struct Type** type);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode assignment(Token var_name, struct Node** node, int expected);
 static ResultCode parse_expression(Token var_name, struct Node** node);
@@ -155,7 +155,7 @@ static ResultCode parse_function_return_types(struct TypeArray* return_types) {
 
     do {
         struct Type* single_ret_type;
-        PARSE_TYPE(param_token, &single_ret_type, param_token, "Expect valid return type after function parameters.");
+        PARSE_TYPE(&single_ret_type, param_token, "Expect valid return type after function parameters.");
         add_type(return_types, single_ret_type);
     } while(match(TOKEN_COMMA));
     CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return type list.");
@@ -240,7 +240,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token identifier = parser.previous;
         CONSUME(TOKEN_LESS, identifier, "Expect '<' after 'List'.");
         struct Type* template_type;
-        PARSE_TYPE(var_name, &template_type, var_name, "List must be initialized with valid type: List<[type]>().");
+        PARSE_TYPE(&template_type, identifier, "List must be initialized with valid type: List<[type]>().");
         CONSUME(TOKEN_GREATER, identifier, "Expect '>' after type.");
         CONSUME(TOKEN_LEFT_PAREN, identifier, "Create container using '()'.");
         CONSUME(TOKEN_RIGHT_PAREN, identifier, "Create container using '()'.");
@@ -250,7 +250,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token identifier = parser.previous;
         CONSUME(TOKEN_LESS, identifier, "Expect '<' after 'Map'.");
         struct Type* template_type;
-        PARSE_TYPE(var_name, &template_type, var_name, "Map must be initialized with valid type: Map<[type]>().");
+        PARSE_TYPE(&template_type, identifier, "Map must be initialized with valid type: Map<[type]>().");
         CONSUME(TOKEN_GREATER, identifier, "Expect '>' after type.");
         CONSUME(TOKEN_LEFT_PAREN, identifier, "Create container using '()'.");
         CONSUME(TOKEN_RIGHT_PAREN, identifier, "Create container using '()'.");
@@ -260,7 +260,7 @@ static ResultCode primary(Token var_name, struct Node** node) {
         Token id = parser.previous;
         if (match(TOKEN_COLON)) {
             struct Type* type;
-            PARSE_TYPE(var_name, &type, var_name, "Expected valid type after ':'.");
+            PARSE_TYPE(&type, id, "Expected valid type after ':'.");
             *node = make_decl_var(id, type, NULL);
             return RESULT_SUCCESS;
         } 
@@ -363,7 +363,7 @@ static ResultCode cast(Token var_name, struct Node** node) {
     while (match(TOKEN_AS)) {
         Token name = parser.previous;
         struct Type* type;
-        PARSE_TYPE(var_name, &type, var_name, "Expect type to cast to after 'as'.");
+        PARSE_TYPE(&type, var_name, "Expect type to cast to after 'as'.");
         left = make_cast(name, left, type);
     }
 
@@ -550,13 +550,13 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
 }
 
 //Note: TOKEN_COLON is consume before if a variable declaration
-static ResultCode parse_type(Token var_name, struct Type** type) {
+static ResultCode parse_type(struct Type** type) {
     if (match(TOKEN_LEFT_PAREN)) {
         struct TypeArray* params = make_type_array();
         if (!match(TOKEN_RIGHT_PAREN)) {
             do {
                 struct Type* param_type;
-                PARSE_TYPE(var_name, &param_type, var_name, "Invalid parameter type for function declaration '%.*s'.", var_name.length, var_name.start);
+                PARSE_TYPE(&param_type, parser.previous, "Invalid parameter type for function declaration.");
                 add_type(params, param_type);
             } while(match(TOKEN_COMMA));
             CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after parameter types.");
@@ -569,7 +569,7 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
         } else {
             do {
                 struct Type* ret_type;
-                PARSE_TYPE(var_name, &ret_type, var_name, "Invalid return type for function declaration '%.*s'.", var_name.length, var_name.start);
+                PARSE_TYPE(&ret_type, parser.previous, "Invalid return type for function declaration.");
                 add_type(returns, ret_type);
             } while(match(TOKEN_COMMA));
             CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after return types.");
@@ -601,7 +601,7 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     if (match(TOKEN_LIST)) {
         CONSUME(TOKEN_LESS, parser.previous, "Expect '<' after 'List'.");
         struct Type* template_type;
-        PARSE_TYPE(var_name, &template_type, var_name, "List '%.*s' declaration type invalid. Specify type inside '<>'.",  var_name.length, var_name.start);
+        PARSE_TYPE(&template_type, parser.previous, "List declaration type invalid. Specify type inside '<>'.");
         CONSUME(TOKEN_GREATER, parser.previous, "Expect '>' after type.");
         *type = make_list_type(template_type);
         return RESULT_SUCCESS;
@@ -610,7 +610,7 @@ static ResultCode parse_type(Token var_name, struct Type** type) {
     if (match(TOKEN_MAP)) {
         CONSUME(TOKEN_LESS, parser.previous, "Expect '<' after 'Map'.");
         struct Type* template_type;
-        PARSE_TYPE(var_name, &template_type, var_name, "Map '%.*s' declaration type invalid. Specify value type inside '<>'.", var_name.length, var_name.start);
+        PARSE_TYPE(&template_type, parser.previous, "Map declaration type invalid. Specify value type inside '<>'.");
         CONSUME(TOKEN_GREATER, parser.previous, "Expect '>' after type.");
         *type = make_map_type(template_type);
         return RESULT_SUCCESS;
@@ -635,7 +635,7 @@ static ResultCode param_declaration(struct Node** node) {
     CONSUME(TOKEN_COLON, var_name, "Parameter identifier '%.*s' must be followed by ':'.", var_name.length, var_name.start);
 
     struct Type* type;
-    PARSE_TYPE(var_name, &type, var_name, "Parameter identifier '%.*s' type invalid.", var_name.length, var_name.start);
+    PARSE_TYPE(&type, var_name, "Parameter identifier '%.*s' type invalid.", var_name.length, var_name.start);
 
     *node = make_decl_var(var_name, type, NULL);
     return RESULT_SUCCESS;
