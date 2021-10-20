@@ -952,35 +952,9 @@ static ResultCode declaration(struct Node** node) {
     }
 
     struct Node* seq;
-    PARSE(parse_sequence, &seq, parser.previous, "YEEEEEP");
+    PARSE(parse_sequence, &seq, parser.previous, "Invalid statement.");
     *node = make_expr_stmt(seq);
     return RESULT_SUCCESS;
-
-    /*
-    struct Node* expr;
-    PARSE(parse_expression, parser.previous, &expr, parser.previous, "Invalid expressionss.");
-
-    //TODO: if a DeclVar, don't pop it (??what was this??)
-    if (expr->type == NODE_LIST) {
-        struct NodeList* list = (struct NodeList*)expr;
-        for (int i = 0; i < list->count; i++) {
-            if (list->nodes[i]->type != NODE_DECL_VAR) {
-                list->nodes[i] = make_expr_stmt(list->nodes[i]);
-            }
-        }
-        if (list->count == 1) {
-            *node = list->nodes[0];
-        } else {
-            *node = (struct Node*)list;
-        }
-        return RESULT_SUCCESS;
-    } else if (expr->type != NODE_DECL_VAR) {
-        *node = make_expr_stmt(expr);
-        return RESULT_SUCCESS;
-    }
-
-    *node = expr;
-    return RESULT_SUCCESS;*/
 }
 
 static void init_parser(const char* source, struct Table* globals) {

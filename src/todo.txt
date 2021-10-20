@@ -51,22 +51,14 @@ Stack overflow
 Implementation:
     Get website main page up and working
 
-    Need to reset state when REPL fails. 
-        compiler->globals (which parser also holds a reference to) needs to be reset if error is encountered when trying
-        to add to it (enums, structs, static functions)
-
-        copy globals table before parsing
-        if it encounters an error, reset table to copy
-
-        globals table in vm is empty after a mistake with syntax
-
-        FOUND THE PROBLEM: when print("hi") (valid code) is run first, then the globals are compiled to the vm
-            and everything works fine, BUT if the first line is invalid then all the library defines are discarded
-            when the vm... is reset?  How did I deal with this again?
-
     setting properties is not type checked properly
 
     Memory manager and vm relationship is complicated...
+        requiring client to alternate between the two when instantiating is confusing (and error prone)
+        Maybe just move memory manager responsibilities into vm itself.  Since their instantiations are so
+        intertwined, might as well make it a single entity.
+    
+        The memory manager is needed in a few places, but can just use the vm now since it's instantiated first anyway
 
     Allow sequences in struct fields... this may require changing some things since right now sequence declarations
         are immediatly added as locals.  Struct fields need to be pushed onto the stack along with the prop
@@ -86,6 +78,9 @@ Implementation:
         accurate messages
 
     Simplify code and make it fast - this is supposed to be a selling point
+        swap struct and enum tables for value arrays
+        structs and enums indices can be determined at compile time and index emitted after set/get prop
+        at runtime we just need to increment the pointer instead of a table lookup
 
     'with' statement?   Creates a shadow variable with casted type in new scope, but only does so if cast is valid (not nil)
         //this cuts out 1 indent, and 3 lines compared to using 'when/is' statements

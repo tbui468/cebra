@@ -31,12 +31,20 @@ void copy_table(struct Table* dest, struct Table* src) {
     for (int i = 0; i < src->capacity; i++) {
         struct Pair* pair = &src->pairs[i];
         if (pair->key == NULL) continue;
+        /*
         push_root(pair->value);
         Value copy = copy_value(&pair->value);
         push_root(copy);
         set_table(dest, pair->key, copy);
         pop_root();
-        pop_root();
+        pop_root();*/
+        if (pair->value.type == VAL_LIST) {
+            set_table(dest, pair->key, to_list(make_list())); 
+        } else if (pair->value.type == VAL_MAP) {
+            set_table(dest, pair->key, to_map(make_map())); 
+        } else {
+            set_table(dest, pair->key, pair->value);
+        }
     }
 }
 

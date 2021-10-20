@@ -1,7 +1,14 @@
 
-i := 5
 
-for _ , i > 0, _ 
-    i = i - 1
+Dog :: struct {
+    l := List<int>()
+}
 
-print(i)
+d0 := Dog()
+d1 := Dog()
+
+d0.l[0] = 2
+d1.l[0] = 99
+
+print(d0.l[0])
+print(d1.l[0])
