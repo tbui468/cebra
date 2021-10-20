@@ -182,13 +182,18 @@ ResultCode repl(VM* vm) {
     while(true) {
         printf(">>> ");
         fgets(&input_line[current], MAX_CHARS - current, stdin);
+        if (MAX_CHARS - current - (int)strlen(&input_line[current]) - 1 == 0) {
+            printf("Exceeding repl max buffer size.  Exiting Cebra repl...\n");
+            break;
+        }
+
         if (memcmp(&input_line[current], "quit()", 6) == 0) {
             break;
         }
 
 
         run_source(vm, &script_comp, &input_line[current]);
-        current += 100;
+        current += (int)strlen(&input_line[current]) + 1;
 
         script_comp.function->chunk.count = 0;
     }
@@ -219,7 +224,7 @@ int main(int argc, char** argv) {
     }
 
     //prevents GC from marking table so
-    //that keys/values can be collected
+    //that keys/values can be freed
     vm.initialized = false;
 
 //#ifdef DEBUG_STRESS_GC

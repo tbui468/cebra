@@ -1489,6 +1489,9 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     //that return opcodes for functions is emitted 
     ResultCode result;
     compiler->return_types = make_type_array();
+
+    int start_locals_count = compiler->locals_count;
+
     for (int i = 0; i < nl->count; i++) {
         struct Type* type;
         result = compile_node(compiler, nl->nodes[i], &type);
@@ -1508,6 +1511,11 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
         for (int i = 0; i < compiler->error_count; i++) {
             printf("[line %d] %s\n", compiler->errors[i].token.line, compiler->errors[i].message);
         }
+
+        //reset errors/locals count
+        compiler->locals_count = start_locals_count;
+        compiler->error_count = 0;
+
         return RESULT_FAILED;
     }
 

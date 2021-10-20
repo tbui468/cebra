@@ -37,6 +37,8 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
         just emit offset when getting/setting prop.  Then we could just copy the ValueArray
         when instantiating a new struct - this would make it a little easier
 
+    Or if right side is a call
+
 Stack overflow
     big stack allocations:
         NODE_WHEN  256 ints
@@ -47,13 +49,18 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    Move ret_types into compiler so that we don't need to pass it into every compile_node call
-
     Get website main page up and working
 
     Need to reset state when REPL fails. 
-        when a struct is defined, if it fails partway through the compilation, the name will still be in the globals
-        table.  This then prevents the user from trying it again.
+        compiler->globals (which parser also holds a reference to) needs to be reset if error is encountered when trying
+        to add to it (enums, structs, static functions)
+
+        copy globals table before parsing
+        if encounter an error, reset table to copy
+
+    setting properties is not type checked properly
+
+    Memory manager and vm relationship is complicated...
 
     Allow sequences in struct fields... this may require changing some things since right now sequence declarations
         are immediatly added as locals.  Struct fields need to be pushed onto the stack along with the prop

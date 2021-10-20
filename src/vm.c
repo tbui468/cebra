@@ -692,6 +692,9 @@ ResultCode run(VM* vm, struct ObjFunction* script) {
             printf("Runtime Error: ");
             printf("%s\n", vm->errors[i].message);
         }
+
+        //reset
+        vm->error_count = 0;
         pop_stack(vm);
 
         return RESULT_FAILED;
