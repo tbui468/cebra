@@ -39,6 +39,22 @@ Bugs: commented out copy_value() - major bug with memory being collected by GC a
 
     Or if right side is a call
 
+    This is the offending code
+    Animal :: struct {
+        class := "mammal"
+    }
+
+    Dog :: struct < Animal {
+        name := "Mittens"
+        age := 3
+        length := 23.23
+        friend: Dog = nil
+        list: List<int> = List<int>()
+        map: Map<int> = Map<int>()
+    }
+
+    dog := Dog()
+
 Stack overflow
     big stack allocations:
         NODE_WHEN  256 ints

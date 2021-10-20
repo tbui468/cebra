@@ -409,7 +409,6 @@ struct Obj* get_object(Value* value) {
 
 Value copy_value(Value* value) {
     switch (value->type) {
-        /*
         case VAL_MAP: {
             struct ObjMap* orig_map = value->as.map_type;
             struct ObjMap* map = make_map();
@@ -421,7 +420,6 @@ Value copy_value(Value* value) {
         }
         case VAL_LIST: {
             struct ObjList* orig_list = value->as.list_type;
-            return to_list(copy_list(orig_list));
             
             struct ObjList* list = make_list();
             push_root(to_list(list));
@@ -436,7 +434,7 @@ Value copy_value(Value* value) {
             struct ObjString* str = make_string(orig_str->chars, orig_str->length);
             pop_root();
             return to_string(str);
-        }*/
+        }
         default:
             return *value;
     }

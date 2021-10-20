@@ -38,30 +38,22 @@ void copy_table(struct Table* dest, struct Table* src) {
         set_table(dest, pair->key, copy);
         pop_root();
         pop_root();
-        /*
-        if (pair->value.type == VAL_LIST) {
-            set_table(dest, pair->key, to_list(make_list())); 
-        } else if (pair->value.type == VAL_MAP) {
-            set_table(dest, pair->key, to_map(make_map())); 
-        } else {
-            set_table(dest, pair->key, pair->value);
-        }*/
     }
 }
 
 static void grow_table(struct Table* table) {
+    struct Table temp;
+    init_table(&temp);
+    copy_table(&temp, table);
     int pushed_count = 0;
-    for (int i = 0; i < table->capacity; i++) {
-        struct Pair* pair = &table->pairs[i];
+    for (int i = 0; i < temp.capacity; i++) {
+        struct Pair* pair = &temp.pairs[i];
         if (pair->key == NULL) continue;
         push_root(to_string(pair->key));
         push_root(pair->value);
         pushed_count += 2;
     }
 
-    struct Table temp;
-    init_table(&temp);
-    copy_table(&temp, table);
 
     int new_capacity = table->capacity == 0 ? 8 : table->capacity * 2;
     reset_table_capacity(table, new_capacity);
