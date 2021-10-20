@@ -3,16 +3,16 @@
 #include "lexer.h"
 #include "memory.h"
 
-#define PARSE(fun, var_name, node_ptr, token, ...) \
-    if (fun(var_name, node_ptr) == RESULT_FAILED) { \
+#define PARSE(fun, node_ptr, token, ...) \
+    if (fun(node_ptr) == RESULT_FAILED) { \
         if (token.type != TOKEN_DUMMY) { \
             ERROR(token, __VA_ARGS__); \
         } \
         return RESULT_FAILED; \
     }
 
-#define PARSE_WITHOUT_MSG(fun, var_name, node_ptr) \
-    PARSE(fun, var_name, node_ptr, make_dummy_token(), "")
+#define PARSE_WITHOUT_MSG(fun, node_ptr) \
+    PARSE(fun, node_ptr, make_dummy_token(), "")
 
 #define PARSE_TYPE(type_ptr, token, ...) \
     if (parse_type(type_ptr) == RESULT_FAILED) { \
@@ -46,8 +46,8 @@ static ResultCode declaration(struct Node** node);
 static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode parse_type(struct Type** type);
 static ResultCode param_declaration(struct Node** node);
-static ResultCode assignment(Token var_name, struct Node** node, int expected);
-static ResultCode parse_expression(Token var_name, struct Node** node);
+static ResultCode assignment(struct Node** node, int expected);
+static ResultCode parse_expression(struct Node** node);
 
 static void print_all_tokens() {
     printf("******start**********\n");
@@ -230,7 +230,7 @@ static ResultCode parse_anonymous_function(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode primary(Token var_name, struct Node** node) {
+static ResultCode primary(struct Node** node) {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
             match(TOKEN_STRING) || match(TOKEN_TRUE) ||
             match(TOKEN_FALSE)) {
@@ -276,14 +276,14 @@ static ResultCode primary(Token var_name, struct Node** node) {
 
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
             if (parse_anonymous_function(node) == RESULT_FAILED) { 
-                ERROR(var_name, "Invalid anonymous function declaration."); 
+                ERROR(name, "Invalid anonymous function declaration."); 
             }
             return RESULT_SUCCESS;
         }
 
         //check for group (expression in parentheses)
         struct Node* expr;
-        PARSE(parse_expression, var_name, &expr, name, "Expect valid expression after '('.");
+        PARSE(parse_expression, &expr, name, "Expect valid expression after '('.");
 
         CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after expression.");
         *node = expr;
@@ -302,9 +302,9 @@ static ResultCode primary(Token var_name, struct Node** node) {
     return RESULT_FAILED;
 }
 
-static ResultCode call_dot(Token var_name, struct Node** node) {
+static ResultCode call_dot(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(primary, var_name, &left);
+    PARSE_WITHOUT_MSG(primary, &left);
 
     while ((match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
         switch(parser.previous.type) {
@@ -318,7 +318,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
                 if (!match(TOKEN_RIGHT_PAREN)) {
                     do {
                         struct Node* arg;
-                        PARSE(parse_expression, var_name, &arg, parser.previous, "Function call argument must be a valid expression.");
+                        PARSE(parse_expression, &arg, parser.previous, "Function call argument must be a valid expression.");
                         add_node(args, arg); 
                     } while (match(TOKEN_COMMA));
                     CONSUME(TOKEN_RIGHT_PAREN, parser.previous, "Expect ')' after arguments.");
@@ -330,7 +330,7 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
             case TOKEN_LEFT_BRACKET: {
                 Token left_bracket = parser.previous;
                 struct Node* idx;
-                PARSE(parse_expression, var_name, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
+                PARSE(parse_expression, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
                 left = make_get_element(parser.previous, left, idx);
                 CONSUME(TOKEN_RIGHT_BRACKET, left_bracket, "Expect ']' after index.");
                 break;
@@ -344,26 +344,26 @@ static ResultCode call_dot(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode unary(Token var_name, struct Node** node) {
+static ResultCode unary(struct Node** node) {
     if (match(TOKEN_MINUS) || match(TOKEN_BANG)) {
         Token op = parser.previous;
         struct Node* right;
-        PARSE(unary, var_name, &right, op, "Right side of '%.*s' must be a valid expression.", op.length, op.start);
+        PARSE(unary, &right, op, "Right side of '%.*s' must be a valid expression.", op.length, op.start);
         *node = make_unary(parser.previous, right);
         return RESULT_SUCCESS;
     }
 
-    return call_dot(var_name, node);
+    return call_dot(node);
 }
 
-static ResultCode cast(Token var_name, struct Node** node) {
+static ResultCode cast(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(unary, var_name, &left);
+    PARSE_WITHOUT_MSG(unary, &left);
 
     while (match(TOKEN_AS)) {
         Token name = parser.previous;
         struct Type* type;
-        PARSE_TYPE(&type, var_name, "Expect type to cast to after 'as'.");
+        PARSE_TYPE(&type, name, "Expect type to cast to after 'as'.");
         left = make_cast(name, left, type);
     }
 
@@ -371,14 +371,14 @@ static ResultCode cast(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode factor(Token var_name, struct Node** node) {
+static ResultCode factor(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(cast, var_name, &left);
+    PARSE_WITHOUT_MSG(cast, &left);
 
     while (match(TOKEN_STAR) || match(TOKEN_SLASH) || match(TOKEN_MOD)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(cast, var_name, &right, name, "Right hand side of '%.*s' must be valid expresion.", name.length, name.start);
+        PARSE(cast, &right, name, "Right hand side of '%.*s' must be valid expresion.", name.length, name.start);
         left = make_binary(name, left, right);
     }
 
@@ -386,14 +386,14 @@ static ResultCode factor(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode term(Token var_name, struct Node** node) {
+static ResultCode term(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(factor, var_name, &left);
+    PARSE_WITHOUT_MSG(factor, &left);
 
     while (match(TOKEN_PLUS) || match(TOKEN_MINUS)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(factor, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
+        PARSE(factor, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_binary(name, left, right);
     }
 
@@ -401,15 +401,15 @@ static ResultCode term(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode relation(Token var_name, struct Node** node) {
+static ResultCode relation(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(term, var_name, &left);
+    PARSE_WITHOUT_MSG(term, &left);
 
     while (match(TOKEN_LESS) || match(TOKEN_LESS_EQUAL) ||
             match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(term, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
+        PARSE(term, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_logical(name, left, right);
     }
 
@@ -417,17 +417,17 @@ static ResultCode relation(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode equality(Token var_name, struct Node** node) {
+static ResultCode equality(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(relation, var_name, &left);
+    PARSE_WITHOUT_MSG(relation, &left);
 
     while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL) || match(TOKEN_IN)) {
         Token name = parser.previous;
         struct Node* right;
         if (name.type == TOKEN_IN) {
-            PARSE(relation, var_name, &right, name, "Right hand side of '%.*s' must be a List.", name.length, name.start);
+            PARSE(relation, &right, name, "Right hand side of '%.*s' must be a List.", name.length, name.start);
         } else {
-            PARSE(relation, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
+            PARSE(relation, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         }
         left = make_logical(name, left, right);
     }
@@ -436,14 +436,14 @@ static ResultCode equality(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode and(Token var_name, struct Node** node) {
+static ResultCode and(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(equality, var_name, &left);
+    PARSE_WITHOUT_MSG(equality, &left);
 
     while (match(TOKEN_AND)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(equality, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
+        PARSE(equality, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_logical(name, left, right);
     }
 
@@ -451,14 +451,14 @@ static ResultCode and(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode or(Token var_name, struct Node** node) {
+static ResultCode or(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(and, var_name, &left);
+    PARSE_WITHOUT_MSG(and, &left);
 
     while (match(TOKEN_OR)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(and, var_name, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
+        PARSE(and, &right, name, "Right hand side of '%.*s' must be a valid expression.", name.length, name.start);
         left = make_logical(name, left, right);
     }
 
@@ -467,13 +467,13 @@ static ResultCode or(Token var_name, struct Node** node) {
 }
 
 
-static ResultCode parse_sequence(Token var_name, struct Node** node) {
+static ResultCode parse_sequence(struct Node** node) {
 
     struct NodeList* left = (struct NodeList*)make_node_list();
     Token name = make_dummy_token();
     do {
         struct Node* expr;
-        PARSE(or, var_name, &expr, var_name, "Invalid expression.");
+        PARSE(or, &expr, parser.previous, "Invalid expression.");
         name = parser.previous;
         add_node(left, expr);
     } while (match(TOKEN_COMMA));
@@ -482,7 +482,7 @@ static ResultCode parse_sequence(Token var_name, struct Node** node) {
     if (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) {
         name = parser.previous;
         struct Node* right;
-        if (parse_sequence(var_name, &right) == RESULT_FAILED) {
+        if (parse_sequence(&right) == RESULT_FAILED) {
             return RESULT_FAILED;
         }
         *node = make_sequence(name, left, right);
@@ -492,14 +492,14 @@ static ResultCode parse_sequence(Token var_name, struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode parse_expression(Token var_name, struct Node** node) {
+static ResultCode parse_expression(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(or, var_name, &left);
+    PARSE_WITHOUT_MSG(or, &left);
 
     while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
         Token name = parser.previous;
         struct Node* right;
-        PARSE(parse_expression, name, &right, var_name, "Invalid expression.");
+        PARSE(parse_expression, &right, name, "Invalid expression.");
 
         if (name.type == TOKEN_EQUAL) {
             if (left->type == NODE_GET_ELEMENT) {
@@ -743,7 +743,7 @@ static ResultCode declaration(struct Node** node) {
         struct NodeList* nl = (struct NodeList*)make_node_list();
         while (!match(TOKEN_RIGHT_BRACE)) {
             struct Node* field;
-            PARSE(parse_expression, struct_name, &field, struct_name, "Expected field declarations inside struct body.");
+            PARSE(parse_expression, &field, struct_name, "Expected field declarations inside struct body.");
             struct TypeStruct* tc = (struct TypeStruct*)struct_type;
             switch(field->type) {
                 case NODE_DECL_VAR: {
@@ -794,7 +794,7 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
 
         struct Node* condition;
-        PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect single boolean expression after 'if'.");
+        PARSE(parse_expression, &condition, name, "Expect single boolean expression after 'if'.");
 
         struct Node* then_block;
         if (declaration(&then_block) == RESULT_FAILED) {
@@ -816,7 +816,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHEN)) {
         Token name = parser.previous;
         struct Node* left;
-        PARSE(parse_expression, name, &left, name, "Expected a valid expression after 'when'.");
+        PARSE(parse_expression, &left, name, "Expected a valid expression after 'when'.");
         CONSUME(TOKEN_LEFT_BRACE, name, "Expect '{' after 'when' and variable.");
         struct NodeList* cases = (struct NodeList*)make_node_list();
 
@@ -824,7 +824,7 @@ static ResultCode declaration(struct Node** node) {
             Token is = parser.previous;
 
             struct Node* right;
-            PARSE(parse_expression, is, &right, is, "Expected expression to test equality with variable after 'when'.");
+            PARSE(parse_expression, &right, is, "Expected expression to test equality with variable after 'when'.");
             Token make_token(TokenType type, int line, const char* start, int length);
             Token equal = make_token(TOKEN_EQUAL_EQUAL, is.line, "==", 2);
             struct Node* condition = make_logical(equal, left, right);
@@ -857,7 +857,7 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_WHILE)) {
         Token name = parser.previous;
         struct Node* condition;
-        PARSE(parse_expression, name, &condition, name, "Expect condition after 'while'.");
+        PARSE(parse_expression, &condition, name, "Expect condition after 'while'.");
 
         /*
         CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
@@ -877,18 +877,18 @@ static ResultCode declaration(struct Node** node) {
         struct Node* initializer = NULL;
 
         if (!match(TOKEN_UNDER_SCORE)) {
-            PARSE(parse_expression, make_dummy_token(), &initializer, name, "Expected initializer or '_' for first item in 'for' loop.");
+            PARSE(parse_expression, &initializer, name, "Expected initializer or '_' for first item in 'for' loop.");
         }
         CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
 
         struct Node* condition = NULL;
-        PARSE(parse_expression, make_dummy_token(), &condition, name, "Expect update for second item in 'for' loop.");
+        PARSE(parse_expression, &condition, name, "Expect update for second item in 'for' loop.");
         CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop condition.");
 
         struct Node* update = NULL;
         if (!match(TOKEN_UNDER_SCORE)) {
             struct Node* update_expr;
-            PARSE(parse_expression, make_dummy_token(), &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
+            PARSE(parse_expression, &update_expr, name, "Expect update or empty space for third item in 'for' loop.");
             update = make_expr_stmt(update_expr);
         }
 
@@ -907,7 +907,7 @@ static ResultCode declaration(struct Node** node) {
         CONSUME(TOKEN_IN, name, "Expect 'in' after element declaration.");
 
         struct Node* list;
-        PARSE(parse_expression, make_dummy_token(), &list, name, "Expect List identifier after 'in' in foreach loop.");
+        PARSE(parse_expression, &list, name, "Expect List identifier after 'in' in foreach loop.");
 
         //initializer
         Token idx_token = make_token(TOKEN_IDENTIFIER, -1, "_idx_", 5);
@@ -946,13 +946,13 @@ static ResultCode declaration(struct Node** node) {
     } else if (match(TOKEN_RIGHT_ARROW)) {
         Token name = parser.previous;
         struct Node* right;
-        PARSE(parse_sequence, name, &right, name, "Return value must be and expression or 'nil'.");
+        PARSE(parse_sequence, &right, name, "Return value must be and expression or 'nil'.");
         *node = make_return(name, right);
         return RESULT_SUCCESS;
     }
 
     struct Node* seq;
-    PARSE(parse_sequence, parser.previous, &seq, parser.previous, "YEEEEEP");
+    PARSE(parse_sequence, &seq, parser.previous, "YEEEEEP");
     *node = make_expr_stmt(seq);
     return RESULT_SUCCESS;
 
