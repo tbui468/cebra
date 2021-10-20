@@ -168,12 +168,7 @@ ResultCode run_program(VM* vm) {
                 if (super_val.type != VAL_NIL) {
                     struct ObjStruct* klass = make_struct(struct_string, super_val.as.class_type);
                     push(vm, to_struct(klass));
-                    struct ObjStruct* super = super_val.as.class_type;
-                    for (int i = 0; i < super->props.capacity; i++) {
-                        struct Pair* pair = &super->props.pairs[i];
-                        if (pair->key == NULL) continue;
-                        set_table(&klass->props, pair->key, pair->value);
-                    } 
+                    copy_table(&klass->props, &super_val.as.class_type->props);
                 } else {
                     struct ObjStruct* klass = make_struct(struct_string, NULL);
                     push(vm, to_struct(klass));
