@@ -1291,6 +1291,11 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
 
     ResultCode result = RESULT_SUCCESS;
 
+    //copy globals table so it can be reset if error occurs in repl
+    struct Table copy;
+    init_table(&copy);
+    copy_table(&copy, globals);
+
     while(parser.current.type != TOKEN_EOF) {
         struct Node* decl;
         if (declaration(&decl) == RESULT_SUCCESS) {
@@ -1324,10 +1329,17 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
         if (parser.error_count == 256) {
             printf("Parsing error count exceeded maximum of 256.\n");
         }
+
+        //don't need to free errors since parser is freed anyway
+        copy_table(globals, &copy);
+        free_table(&copy);
+        
         free_parser();
         return RESULT_FAILED;
     }
 
+
+    free_table(&copy);
     return result;
 }
 

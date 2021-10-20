@@ -178,7 +178,13 @@ ResultCode repl(VM* vm) {
     define_print(&script_comp);
     define_input(&script_comp);
 
-    //TODO: reading all input into same buffer is temporary placeholder
+    //need to run once to add native functions to vm globals table, otherwise they won't be defined if user
+    //code fails - the ip is set back to 0 and the chunk is also reset to 0 after running each line.
+    struct NodeList* nl = (struct NodeList*)make_node_list();
+    compile_script(&script_comp, nl); //need to do this so that OP_HALT is emitted
+    run(vm, script_comp.function);
+    script_comp.function->chunk.count = 0;
+
     while(true) {
         printf(">>> ");
         fgets(&input_line[current], MAX_CHARS - current, stdin);
@@ -195,6 +201,7 @@ ResultCode repl(VM* vm) {
         run_source(vm, &script_comp, &input_line[current]);
         current += (int)strlen(&input_line[current]) + 1;
 
+        //this resets vm instructions chunk in compiler back to 0 for next read
         script_comp.function->chunk.count = 0;
     }
 

@@ -56,7 +56,13 @@ Implementation:
         to add to it (enums, structs, static functions)
 
         copy globals table before parsing
-        if encounter an error, reset table to copy
+        if it encounters an error, reset table to copy
+
+        globals table in vm is empty after a mistake with syntax
+
+        FOUND THE PROBLEM: when print("hi") (valid code) is run first, then the globals are compiled to the vm
+            and everything works fine, BUT if the first line is invalid then all the library defines are discarded
+            when the vm... is reset?  How did I deal with this again?
 
     setting properties is not type checked properly
 

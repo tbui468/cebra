@@ -643,7 +643,7 @@ ResultCode run_program(VM* vm) {
                 Value name = read_constant(frame, READ_TYPE(frame, uint16_t));
                 Value val;
                 if (!get_from_table(&vm->globals, name.as.string_type, &val)) {
-                    add_error(vm, "Global variable not found.");
+                    add_error(vm, "Global variable not found.\n");
                     return RESULT_FAILED;
                 }
                 push(vm, val);
@@ -663,6 +663,7 @@ ResultCode run_program(VM* vm) {
 }
 
 ResultCode run(VM* vm, struct ObjFunction* script) {
+    //first time script is run
     if (vm->stack == vm->stack_top) {
         push(vm, to_function(script));
         CallFrame frame;
@@ -673,6 +674,7 @@ ResultCode run(VM* vm, struct ObjFunction* script) {
 
         vm->frames[vm->frame_count] = frame;
         vm->frame_count++;
+    //subsequent script runs (repl)
     } else {
         vm->stack[0] = to_function(script);
         CallFrame frame;
