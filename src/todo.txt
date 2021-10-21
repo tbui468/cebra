@@ -41,40 +41,37 @@ Stack overflow
 
 Implementation:
 
-    To simplify the file system access, could store the path as a string in ObjFile, along
-    with the read/write mode, eg char 'r', 'w', 'a', etc
-    when a user tries to swap between read and write, just close and reopen the file.  This
-    also allows user to append a line and then read a line.  Although maybe tell the user
-    that swapping between reading and writing can be slow.
+    File system interaction
+        To simplify the file system access, could store the path as a string in ObjFile, along
+        with the read/write mode, eg char 'r', 'w', 'a', etc
+        when a user tries to swap between read and write, just close and reopen the file.  This
+        also allows user to append a line and then read a line.  Although maybe tell the user
+        that swapping between reading and writing can be slow.
 
-    how about an eof(file) function that returns a bool?  But then we would have to be 
-    able to peek head since we want to do this:
-    
-        f := open("test.txt")
-        while !eof(f) {
-            print(read_line(f))
-        }
-
-    This is a lot nicer than worrying about having to open a file in modes.  read_line
-    can also go back to returning one value now.
-
-        f := open("test.txt")
-        write(f, "This is a first line")
-        append(f, "This is a second line")
-
-        read_all(f)
-
-        while !eof(f) {
-            print(read_line(f))
-        }
+        how about an eof(file) function that returns a bool?  But then we would have to be 
+        able to peek head since we want to do this:
         
+            f := open("test.txt")
+            while !eof(f) {
+                print(read_line(f))
+            }
 
-        rewind(f)
-        read_line(f)
+        This is a lot nicer than worrying about having to open a file in modes.  read_line
+        can also go back to returning one value now.
 
-    ValueArray can probably be moved into Value.h and Value.c
+            f := open("test.txt")
+            write(f, "This is a first line")
+            append(f, "This is a second line")
 
-    What is TYPE_DECl being used for again?
+            read_all(f)
+
+            while !eof(f) {
+                print(read_line(f))
+            }
+            
+
+            rewind(f)
+            read_line(f)
 
     Get website main page up and working
 

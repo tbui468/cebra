@@ -18,7 +18,7 @@ typedef enum {
     TYPE_MAP,
     TYPE_INFER,
     TYPE_ENUM,
-    TYPE_DECL, //what's with this again?
+    TYPE_DECL, //User defined type to check for this invalid syntax: a := Dog (where Dog is a struct)
     TYPE_FILE
 } TypeType;
 
