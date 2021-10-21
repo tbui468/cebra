@@ -9,7 +9,6 @@ set(Sources
     lexer.c
     parser.c
     ast.c
-    value_array.c
     chunk.c
     compiler.c
     vm.c
@@ -27,7 +26,6 @@ set(Headers
     lexer.h
     parser.h
     ast.h
-    value_array.h
     chunk.h
     compiler.h
     vm.h

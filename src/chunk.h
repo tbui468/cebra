@@ -1,7 +1,7 @@
 #ifndef CEBRA_CHUNK_H
 #define CEBRA_CHUNK_H
 
-#include "value_array.h"
+#include "value.h"
 
 typedef enum {
     OP_CONSTANT,
