@@ -1377,6 +1377,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             return RESULT_SUCCESS;
         }
     } 
+    return RESULT_FAILED;
 }
 
 

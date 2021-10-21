@@ -663,6 +663,12 @@ static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
 }
 
 static ResultCode declaration(struct Node** node) {
+    while (peek_one(TOKEN_IMPORT)) {
+        match(TOKEN_IMPORT);
+        CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expected module name after 'import'.");
+        parser.imports[parser.import_count++] = parser.previous;
+    }
+
     if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
         match(TOKEN_IDENTIFIER);
         Token enum_name = parser.previous;
@@ -864,12 +870,6 @@ static ResultCode declaration(struct Node** node) {
         struct Node* condition;
         PARSE(parse_expression, &condition, name, "Expect condition after 'while'.");
 
-        /*
-        CONSUME(TOKEN_LEFT_BRACE, name, "Expect boolean expression and '{' after 'while'.");
-        struct Node* then_block;
-        if (block(NULL, &then_block) == RESULT_FAILED) {
-            ERROR(name, "Expect close '}' after 'while' body.");
-        }*/
         struct Node* then_block;
         if (declaration(&then_block) == RESULT_FAILED) {
             ERROR(name, "Expected body statement for 'while' loop.");
@@ -971,6 +971,7 @@ static void init_parser(const char* source, struct Table* globals) {
     parser.globals = globals;
     parser.first_pass_nl = (struct NodeList*)make_node_list();
     parser.resolve_id_list = (struct NodeList*)make_node_list();
+    parser.import_count = 0;
 }
 
 static void free_parser() {

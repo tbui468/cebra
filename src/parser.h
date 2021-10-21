@@ -23,6 +23,8 @@ typedef struct {
     struct Table* globals;
     struct NodeList* first_pass_nl;
     struct NodeList* resolve_id_list;
+    Token imports[256];
+    int import_count;
 } Parser;
 
 ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes);

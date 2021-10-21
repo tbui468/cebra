@@ -41,6 +41,44 @@ Stack overflow
 
 Implementation:
 
+    Added imports array and import count to parser, but will need to restructure some things.
+
+    Let 'parse' be the function used for parsing the entire project (the main source file).  Then
+    inside that, compile each module separately using a 'parse_module' function.  Should use the
+    same parser instance, but prep a new source file with a new lexer.
+
+    Move init_lexer() out of init_parser() into parse().  Create a new function called parse_module()
+        that calls init_lexer() with a new source file and resets any state necessary in the parser (such as current tokens)
+        Parse module is called on the main script first, then on any imports.  (if any imports are imported twice,
+        should emit error).  
+
+        Recall that for now non-static code will also run in modules - I'm not sure how this should be dealt with...
+            allow it or not?
+
+    'import' keyword
+        If we have in import node in the parser, just add it to a list of imports in parser.
+        Then when parser is done parsing current file, parse the imports (and any imports they may have)
+        Do this before all the statics are reordered and identifiers in them resolved.
+
+        read entire imported .cbr file and compile between native and client code
+        next step is to read in import .cbc bytcode and run that
+            will require option to compile to .cbc file that includes byte code + constants/globals table + types
+            compile time constants?  PI :: 3.14, MAX_LIST :: 64
+
+            import math
+            import base
+
+        need to consider namespaces too - consider prepending statics with module name.  For example,
+            if add is a function in math, add the function can be called as math.add(). 
+
+            import math
+
+            a: math.Vec2 = math.Vec2()
+            b := math.Vec2()
+            c := math.add_vec2(a, b)
+           
+    Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
+
     File system interaction
         To simplify the file system access, could store the path as a string in ObjFile, along
         with the read/write mode, eg char 'r', 'w', 'a', etc
@@ -57,7 +95,10 @@ Implementation:
             }
 
         This is a lot nicer than worrying about having to open a file in modes.  read_line
-        can also go back to returning one value now.
+        state can also be saved, so that the user can append, then continue reading from 
+        the place before.  But, if they use 'write', the read_line position is reset to
+        the beginning again.  Will need to figure out how to do the eof() function - this
+        might be tricky if we keep appending at the same time as checking.
 
             f := open("test.txt")
             write(f, "This is a first line")
@@ -75,22 +116,9 @@ Implementation:
 
     Get website main page up and working
 
-    Memory manager and vm relationship is complicated...
-        requiring client to alternate between the two when instantiating is confusing (and error prone)
-        Maybe just move memory manager responsibilities into vm itself.  Since their instantiations are so
-        intertwined, might as well make it a single entity.
-    
-        The memory manager is needed in a few places, but can just use the vm now since it's instantiated first anyway
-
     compile time constants (must be strings, ints, bools, or floats).  Cannot be modified (but client if free to copy and modify copy)
         PI :: 3.14
         MAX_SIZE :: 64
-
-    'import' keyword
-        read entire imported .cbr file and compile between native and client code
-        next step is to read in import .cbc bytcode and run that
-            will require option to compile to .cbc file that includes byte code + constants/globals table + types
-            compile time constants?  PI :: 3.14, MAX_LIST :: 64
 
     Allow sequences in struct fields... this may require changing some things since right now sequence declarations
         are immediatly added as locals.  Struct fields need to be pushed onto the stack along with the prop

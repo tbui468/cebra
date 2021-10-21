@@ -86,6 +86,7 @@ static Token read_keyword(char c) {
             if (match_string("nt")) return new_token(TOKEN_INT_TYPE);
             if (match_string("f")) return new_token(TOKEN_IF);
             if (match_string("s")) return new_token(TOKEN_IS);
+            if (match_string("mport")) return new_token(TOKEN_IMPORT);
             break;
         case 'L':
             if (match_string("ist")) return new_token(TOKEN_LIST);

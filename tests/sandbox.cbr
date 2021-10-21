@@ -1,8 +1,7 @@
+import math
+import dog
 
-    //f: File = open("C:\\dev\\cebra\\tests\\test.py")
-    //s := read_all(f)
-    //close(f)
-    //print(s)
+
     f := open("C:\\dev\\cebra\\tests\\test.py")
     eof := false
     line := 1

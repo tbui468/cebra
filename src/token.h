@@ -59,6 +59,7 @@ typedef enum {
     TOKEN_WHEN,
     TOKEN_IS,
     TOKEN_UNDER_SCORE,
+    TOKEN_IMPORT,
     TOKEN_EOF,
 } TokenType;
 
