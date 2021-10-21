@@ -1,8 +1,7 @@
 
-{
     f: File = open("C:\\dev\\cebra\\tests\\test.py")
 
-    s := read_all(f)
+    close(f)
+    s := read_line(f)
 
     print(s)
-}

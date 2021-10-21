@@ -40,11 +40,14 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    add 'close(f)' to close files
-        this just closes the C-file pointer - ObjFile* will get collected by the GC as usual
-        This is just a safer way of handling files rather than guessing if the file is already closed by the GC
+
+    Idea: have native functions return an error code, just like in the compiler.  The actual
+    values the function returns can passed through a pointer to a pointer since we need it
+    to be a ValueArray anyway.  Then the vm can destroy the ValueArray later
 
     add read_line option for files
+        native functions need to return a ValueArray if we want to support multiple returns
+        need to change function pointer type
 
     add overwrite for files
 

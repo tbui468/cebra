@@ -39,7 +39,9 @@ int free_object(struct Obj* obj) {
         }
         case OBJ_FILE: {
             struct ObjFile* file = (struct ObjFile*)obj;
-            free(file->fp);
+            if (file->fp != NULL)
+                fclose(file->fp);
+            file->fp = NULL;
             bytes_freed += FREE(file, struct ObjFile);
             break;
         }

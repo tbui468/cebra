@@ -10,8 +10,43 @@
 
 #define MAX_CHARS 256 * 256
 
-static Value read_native(int arg_count, Value* args) {
+/*
+static Value read_line_native(int arg_count, Value* args) {
+    struct ObjFile* file = args[0].as.file_type;
+    if (file->fp == NULL) {
+        return to_nil(); // how to return multiple values?
+    }
+}
+
+static ResultCode define_read_line(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_string_type());
+    add_type(returns, make_boolean_type());
+    return define_native(compiler, "read_line", read_line_native, make_fun_type(params, returns));
+}*/
+
+static Value close_native(int arg_count, Value* args) {
+    struct ObjFile* file = args[0].as.file_type;
+    if (file->fp != NULL) {
+        fclose(file->fp);
+        file->fp = NULL;
+    }
+
+    return to_nil();
+}
+
+static ResultCode define_close(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    struct TypeArray* returns = make_type_array();
+    return define_native(compiler, "close", close_native, make_fun_type(params, returns));
+}
+
+static Value read_all_native(int arg_count, Value* args) {
     FILE* fp = args[0].as.file_type->fp;
+    if (fp == NULL) return to_nil();
 
     fseek(fp, 0L, SEEK_END);
     size_t file_size = ftell(fp);
@@ -24,12 +59,14 @@ static Value read_native(int arg_count, Value* args) {
     return to_string(take_string(buffer, file_size));
 }
 
-static ResultCode define_read(struct Compiler* compiler) {
+static ResultCode define_read_all(struct Compiler* compiler) {
     struct TypeArray* params = make_type_array();
     add_type(params, make_file_type());
     struct TypeArray* returns = make_type_array();
-    add_type(returns, make_string_type());
-    return define_native(compiler, "read_all", read_native, make_fun_type(params, returns));
+    struct Type* s_type = make_string_type();
+    s_type->opt = make_nil_type();
+    add_type(returns, s_type);
+    return define_native(compiler, "read_all", read_all_native, make_fun_type(params, returns));
 }
 
 static Value open_native(int arg_count, Value* args) {
@@ -184,7 +221,8 @@ ResultCode run_script(VM* vm, const char* path) {
     define_print(&script_comp);
     define_input(&script_comp);
     define_open(&script_comp);
-    define_read(&script_comp);
+    define_read_all(&script_comp);
+    define_close(&script_comp);
 
     ResultCode result = run_source(vm, &script_comp, source);
 
@@ -212,7 +250,8 @@ ResultCode repl(VM* vm) {
     define_print(&script_comp);
     define_input(&script_comp);
     define_open(&script_comp);
-    define_read(&script_comp);
+    define_read_all(&script_comp);
+    define_close(&script_comp);
 
     //need to run once to add native functions to vm globals table, otherwise they won't be defined if user
     //code fails - the ip is set back to 0 and the chunk is also reset to 0 after running each line.
