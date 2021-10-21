@@ -10,12 +10,31 @@
 
 #define MAX_CHARS 256 * 256
 
-/*
-static Value read_line_native(int arg_count, Value* args) {
+//returns string, and is_eof boolean
+static ResultCode read_line_native(int arg_count, Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     if (file->fp == NULL) {
-        return to_nil(); // how to return multiple values?
+        add_value(returns, to_nil());
+        add_value(returns, to_nil());
+        return RESULT_FAILED;
     }
+
+    char input[256];
+    char* result = fgets(input, 256, file->fp);
+    if (result != NULL) {
+        struct ObjString* s = make_string(input, strlen(input) - 1);
+        push_root(to_string(s));
+        add_value(returns, to_string(s));
+        add_value(returns, to_boolean(false));
+        pop_root();
+    } else {
+        struct ObjString* s = make_string("", 0);
+        push_root(to_string(s));
+        add_value(returns, to_string(s));
+        add_value(returns, to_boolean(true));
+        pop_root();
+    }
+    return RESULT_SUCCESS;
 }
 
 static ResultCode define_read_line(struct Compiler* compiler) {
@@ -23,18 +42,22 @@ static ResultCode define_read_line(struct Compiler* compiler) {
     add_type(params, make_file_type());
     struct TypeArray* returns = make_type_array();
     add_type(returns, make_string_type());
-    add_type(returns, make_boolean_type());
+    add_type(returns, make_bool_type());
     return define_native(compiler, "read_line", read_line_native, make_fun_type(params, returns));
-}*/
+}
 
-static Value close_native(int arg_count, Value* args) {
+
+static ResultCode close_native(int arg_count, Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
+    add_value(returns, to_nil());
     if (file->fp != NULL) {
         fclose(file->fp);
         file->fp = NULL;
+        return RESULT_FAILED;
     }
 
-    return to_nil();
+    add_value(returns, to_nil());
+    return RESULT_SUCCESS;
 }
 
 static ResultCode define_close(struct Compiler* compiler) {
@@ -44,9 +67,12 @@ static ResultCode define_close(struct Compiler* compiler) {
     return define_native(compiler, "close", close_native, make_fun_type(params, returns));
 }
 
-static Value read_all_native(int arg_count, Value* args) {
+static ResultCode read_all_native(int arg_count, Value* args, struct ValueArray* returns) {
     FILE* fp = args[0].as.file_type->fp;
-    if (fp == NULL) return to_nil();
+    if (fp == NULL) {
+        add_value(returns, to_nil());
+        return RESULT_FAILED;
+    }
 
     fseek(fp, 0L, SEEK_END);
     size_t file_size = ftell(fp);
@@ -55,8 +81,12 @@ static Value read_all_native(int arg_count, Value* args) {
     buffer = GROW_ARRAY(buffer, char, file_size + 1, 0);
     size_t bytes_read = fread(buffer, sizeof(char), file_size, fp);
     buffer[bytes_read] = '\0';
-    
-    return to_string(take_string(buffer, file_size));
+   
+    struct ObjString* s = take_string(buffer, file_size);
+    push_root(to_string(s)); 
+    add_value(returns, to_string(s));
+    pop_root();
+    return RESULT_SUCCESS;
 }
 
 static ResultCode define_read_all(struct Compiler* compiler) {
@@ -69,15 +99,20 @@ static ResultCode define_read_all(struct Compiler* compiler) {
     return define_native(compiler, "read_all", read_all_native, make_fun_type(params, returns));
 }
 
-static Value open_native(int arg_count, Value* args) {
+static ResultCode open_native(int arg_count, Value* args, struct ValueArray* returns) {
     FILE* fp;
     //TODO: opening in read mode only for now
     fp = fopen(args[0].as.string_type->chars, "r");
     if (fp == NULL) {
-        return to_nil();
+        add_value(returns, to_nil());
+        return RESULT_FAILED;
     }
 
-    return to_file(make_file(fp));
+    struct ObjFile* file = make_file(fp);
+    push_root(to_file(file));
+    add_value(returns, to_file(file));
+    pop_root();
+    return RESULT_SUCCESS;
 }
 
 
@@ -89,11 +124,35 @@ static ResultCode define_open(struct Compiler* compiler) {
     return define_native(compiler, "open", open_native, make_fun_type(params, returns));
 }
 
-static Value clock_native(int arg_count, Value* args) {
-    return to_float((double)clock() / CLOCKS_PER_SEC);
+
+static ResultCode input_native(int arg_count, Value* args, struct ValueArray* returns) {
+    char input[256];
+    fgets(input, 256, stdin);
+    struct ObjString* s = make_string(input, strlen(input) - 1);
+    push_root(to_string(s));
+    add_value(returns, to_string(s));
+    pop_root();
+    return RESULT_SUCCESS;
 }
 
-static Value print_native(int arg_count, Value* args) {
+static ResultCode define_input(struct Compiler* compiler) {
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_string_type());
+    return define_native(compiler, "input", input_native, make_fun_type(make_type_array(), returns));
+}
+
+static ResultCode clock_native(int arg_count, Value* args, struct ValueArray* returns) {
+    add_value(returns, to_float((double)clock() / CLOCKS_PER_SEC));
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_clock(struct Compiler* compiler) {
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_float_type());
+    return define_native(compiler, "clock", clock_native, make_fun_type(make_type_array(), returns));
+}
+
+static ResultCode print_native(int arg_count, Value* args, struct ValueArray* returns) {
     Value value = args[0];
     switch(value.type) {
         case VAL_STRING: {
@@ -111,25 +170,8 @@ static Value print_native(int arg_count, Value* args) {
             printf("nil\n");
             break;
     }
-    return to_nil();
-}
-
-static Value input_native(int arg_count, Value* args) {
-    char input[100];
-    fgets(input, 100, stdin);
-    return to_string(make_string(input, strlen(input) - 1));
-}
-
-static ResultCode define_input(struct Compiler* compiler) {
-    struct TypeArray* returns = make_type_array();
-    add_type(returns, make_string_type());
-    return define_native(compiler, "input", input_native, make_fun_type(make_type_array(), returns));
-}
-
-static ResultCode define_clock(struct Compiler* compiler) {
-    struct TypeArray* returns = make_type_array();
-    add_type(returns, make_float_type());
-    return define_native(compiler, "clock", clock_native, make_fun_type(make_type_array(), returns));
+    add_value(returns, to_nil());
+    return RESULT_SUCCESS;
 }
 
 static ResultCode define_print(struct Compiler* compiler) {
@@ -217,12 +259,13 @@ ResultCode run_script(VM* vm, const char* path) {
     //before Types can be created
     struct Compiler script_comp;
     init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
-    define_clock(&script_comp);
     define_print(&script_comp);
+    define_clock(&script_comp);
     define_input(&script_comp);
     define_open(&script_comp);
     define_read_all(&script_comp);
     define_close(&script_comp);
+    define_read_line(&script_comp);
 
     ResultCode result = run_source(vm, &script_comp, source);
 
@@ -246,12 +289,13 @@ ResultCode repl(VM* vm) {
 
     struct Compiler script_comp;
     init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
-    define_clock(&script_comp);
     define_print(&script_comp);
+    define_clock(&script_comp);
     define_input(&script_comp);
     define_open(&script_comp);
     define_read_all(&script_comp);
     define_close(&script_comp);
+    define_read_line(&script_comp);
 
     //need to run once to add native functions to vm globals table, otherwise they won't be defined if user
     //code fails - the ip is set back to 0 and the chunk is also reset to 0 after running each line.

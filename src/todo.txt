@@ -41,14 +41,6 @@ Stack overflow
 
 Implementation:
 
-    Idea: have native functions return an error code, just like in the compiler.  The actual
-    values the function returns can passed through a pointer to a pointer since we need it
-    to be a ValueArray anyway.  Then the vm can destroy the ValueArray later
-
-    add read_line option for files
-        native functions need to return a ValueArray if we want to support multiple returns
-        need to change function pointer type
-
     add overwrite for files
 
     add append for files

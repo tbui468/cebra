@@ -7,6 +7,7 @@
 #include "chunk.h"
 #include "obj.h"
 #include "table.h"
+#include "result_code.h"
 
 typedef enum {
     OBJ_STRING,
@@ -77,7 +78,7 @@ struct ObjFunction {
 struct ObjNative {
     struct Obj base;
     struct ObjString* name;
-    Value (*function)(int, Value*);
+    ResultCode (*function)(int, Value*, struct ValueArray*);
 };
 
 struct ObjList {
@@ -103,7 +104,7 @@ struct ObjInstance* make_instance(struct Table table, struct ObjStruct* klass);
 struct ObjStruct* make_struct(struct ObjString* name, struct ObjStruct* super);
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
-struct ObjNative* make_native(struct ObjString* name, Value (*function)(int, Value*));
+struct ObjNative* make_native(struct ObjString* name, ResultCode (*function)(int, Value*, struct ValueArray*));
 struct ObjList* make_list();
 struct ObjList* copy_list(struct ObjList* l);
 struct ObjMap* make_map();

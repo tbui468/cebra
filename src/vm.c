@@ -364,12 +364,19 @@ ResultCode run_program(VM* vm) {
                     call(vm, value.as.function_type);
                 }
                 if (value.type == VAL_NATIVE) {
-                    Value (*native)(int, Value*) = value.as.native_type->function;
-                    Value result = native(arity, vm->stack_top - arity);
+                    ResultCode (*native)(int, Value*, struct ValueArray*) = value.as.native_type->function;
+
+                    //setting size to before calling native function so that 
+                    struct ValueArray va;
+                    init_value_array(&va);
+                    ResultCode result = native(arity, vm->stack_top - arity, &va);
                     for (int i = 0; i < arity + 1; i++) {
                         pop(vm);
                     }
-                    push(vm, result);
+                    for (int i = 0; i < va.count; i++) {
+                        push(vm, va.values[i]);
+                    }
+                    free_value_array(&va);
                 }
                 frame = &vm->frames[vm->frame_count - 1];
                 break;
