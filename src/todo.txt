@@ -40,11 +40,19 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    Get website main page up and working
+    add 'close(f)' to close files
+        this just closes the C-file pointer - ObjFile* will get collected by the GC as usual
+        This is just a safer way of handling files rather than guessing if the file is already closed by the GC
 
-    setting properties is not type checked properly
-        problem is that we allow nil types on the right for everything now to make sequences work
-        but this is causing the type checker to fail
+    add read_line option for files
+
+    add overwrite for files
+
+    add append for files
+
+    What is TYPE_DECl being used for again?
+
+    Get website main page up and working
 
     Memory manager and vm relationship is complicated...
         requiring client to alternate between the two when instantiating is confusing (and error prone)
@@ -52,6 +60,16 @@ Implementation:
         intertwined, might as well make it a single entity.
     
         The memory manager is needed in a few places, but can just use the vm now since it's instantiated first anyway
+
+    compile time constants (must be strings, ints, bools, or floats).  Cannot be modified (but client if free to copy and modify copy)
+        PI :: 3.14
+        MAX_SIZE :: 64
+
+    'import' keyword
+        read entire imported .cbr file and compile between native and client code
+        next step is to read in import .cbc bytcode and run that
+            will require option to compile to .cbc file that includes byte code + constants/globals table + types
+            compile time constants?  PI :: 3.14, MAX_LIST :: 64
 
     Allow sequences in struct fields... this may require changing some things since right now sequence declarations
         are immediatly added as locals.  Struct fields need to be pushed onto the stack along with the prop

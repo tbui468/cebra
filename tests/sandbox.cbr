@@ -1,50 +1,8 @@
-l := List<int>()
 
-for i := 0, i < 10, i = i + 1
-    l[i] = 10 - i
+{
+    f: File = open("C:\\dev\\cebra\\tests\\test.py")
 
+    s := read_all(f)
 
-
-foreach i: int in l
-    print(i)
-
-Token :: enum
-    one
-    two
-    three
-    four
-
-fib :: (n: int) -> (int)
-
-    if n < 2
-        -> n
-
-    -> fib(n - 1) + fib(n - 2)
-
-Dog :: struct < Animal
-    name := "Mittens"
-    age := 23
-
-Animal :: struct 
-    class := "Mammal"
-
-f := (n: int) -> (int)
-    if n < 2
-        -> n
-
-    -> f(n - 1) + f(n - 2)    
-
-
-x, y := return_two()
-
-when a 
-    is "1"
-        print(1)
-    is "2"
-        print(2)
-    else
-        print(3)
-
-
-
-
+    print(s)
+}

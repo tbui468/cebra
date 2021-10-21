@@ -76,6 +76,13 @@ Value to_enum(struct ObjEnum* obj) {
     return value;
 }
 
+Value to_file(struct ObjFile* obj) {
+    Value value;
+    value.type = VAL_FILE;
+    value.as.file_type = obj;
+    return value;
+}
+
 Value to_nil() {
     Value value;
     value.type = VAL_NIL;
@@ -337,6 +344,9 @@ void print_value(Value a) {
         case VAL_MAP:
             printf("%s", "<map>");
             break;
+        case VAL_FILE:
+            printf("%s", "<file>");
+            break;
         default:
             printf("Invalid value");
             break;
@@ -358,6 +368,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_LIST: return "VAL_LIST";
         case VAL_MAP: return "VAL_MAP";
         case VAL_ENUM: return "VAL_ENUM";
+        case VAL_FILE: return "VAL_FILE";
         default: return "Unrecognized VAL_TYPE";
     }
 }
@@ -394,6 +405,10 @@ struct Obj* get_object(Value* value) {
         }
         case VAL_MAP: {
             struct ObjMap* obj = value->as.map_type;
+            return (struct Obj*)obj;
+        }
+        case VAL_FILE: {
+            struct ObjFile* obj = value->as.file_type;
             return (struct Obj*)obj;
         }
         //Values with stack allocated data

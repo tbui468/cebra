@@ -30,6 +30,15 @@ struct Type* make_decl_type(struct Type* custom_type) {
     return (struct Type*)td;
 }
 
+struct Type* make_file_type() {
+    struct TypeFile* tf = ALLOCATE(struct TypeFile);
+
+    tf->base.type = TYPE_FILE;
+
+    insert_type((struct Type*)tf);
+    return (struct Type*)tf;
+}
+
 struct Type* make_infer_type() {
     struct TypeInfer* sd = ALLOCATE(struct TypeInfer);
 
@@ -254,6 +263,10 @@ void print_type(struct Type* type) {
             printf("TypeDecl");
             break;
         }
+        case TYPE_FILE: {
+            printf("TypeFile");
+            break;
+        }
         case TYPE_ARRAY: {
             struct TypeArray* sl = (struct TypeArray*)type;
             printf("(TypeArray: ");
@@ -338,6 +351,11 @@ void free_type(struct Type* type) {
         case TYPE_DECL: {
             struct TypeDecl* sd = (struct TypeDecl*)type;
             FREE(sd, struct TypeDecl);
+            break;
+        }
+        case TYPE_FILE: {
+            struct TypeFile* tf = (struct TypeFile*)type;
+            FREE(tf, struct TypeFile);
             break;
         }
         case TYPE_ARRAY: {

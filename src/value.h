@@ -24,6 +24,7 @@ struct ObjNative;
 struct ObjList;
 struct ObjMap;
 struct ObjEnum;
+struct ObjFile;
 
 typedef enum {
     VAL_INT,
@@ -38,7 +39,8 @@ typedef enum {
     VAL_NATIVE,
     VAL_LIST,
     VAL_MAP,
-    VAL_ENUM
+    VAL_ENUM,
+    VAL_FILE
 } ValueType;
 
 typedef struct {
@@ -56,6 +58,7 @@ typedef struct {
         struct ObjList* list_type;
         struct ObjMap* map_type;
         struct ObjEnum* enum_type;
+        struct ObjFile* file_type;
     } as;
 } Value;
 
@@ -72,6 +75,7 @@ Value to_native(struct ObjNative* obj);
 Value to_list(struct ObjList* obj);
 Value to_map(struct ObjMap* obj);
 Value to_enum(struct ObjEnum* obj);
+Value to_file(struct ObjFile* obj);
 Value to_nil();
 Value negate_value(Value value);
 Value add_values(Value a, Value b);

@@ -37,6 +37,12 @@ int free_object(struct Obj* obj) {
             bytes_freed += FREE(oc, struct ObjStruct);
             break;
         }
+        case OBJ_FILE: {
+            struct ObjFile* file = (struct ObjFile*)obj;
+            free(file->fp);
+            bytes_freed += FREE(file, struct ObjFile);
+            break;
+        }
         case OBJ_INSTANCE: {
             struct ObjInstance* oi = (struct ObjInstance*)obj;
             bytes_freed += free_table(&oi->props);
@@ -94,6 +100,10 @@ void print_object(struct Obj* obj) {
             print_object((struct Obj*)(c->name));
             break;
         }
+        case OBJ_FILE: {
+            printf("OBJ_FILE");
+            break;
+        }
         case OBJ_INSTANCE:
             printf("OBJ_INSTANCE: ");
             break;
@@ -130,6 +140,19 @@ void print_object(struct Obj* obj) {
 void mark_object(struct Obj* obj) {
     if (obj == NULL) return;
     obj->is_marked = true;
+}
+
+
+struct ObjFile* make_file(FILE* fp) {
+    struct ObjFile* obj = ALLOCATE(struct ObjFile);
+    obj->fp = fp;
+
+    obj->base.type = OBJ_FILE;
+    obj->base.next = NULL;
+    obj->base.is_marked = false;
+    insert_object((struct Obj*)obj);
+
+    return obj;
 }
 
 struct ObjStruct* make_struct(struct ObjString* name, struct ObjStruct* super) {

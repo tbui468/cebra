@@ -78,6 +78,9 @@ static Token read_keyword(char c) {
             if (match_string("loat")) return new_token(TOKEN_FLOAT_TYPE);
             if (match_string("alse")) return new_token(TOKEN_FALSE);
             break;
+        case 'F':
+            if (match_string("ile")) return new_token(TOKEN_FILE_TYPE);
+            break;
         case 'i':
             if (match_string("n")) return new_token(TOKEN_IN);
             if (match_string("nt")) return new_token(TOKEN_INT_TYPE);

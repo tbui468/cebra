@@ -578,6 +578,11 @@ static ResultCode parse_type(struct Type** type) {
         return RESULT_SUCCESS;
     }
 
+    if (match(TOKEN_FILE_TYPE)) {
+        *type = make_file_type();
+        return RESULT_SUCCESS;
+    }
+
     if (match(TOKEN_INT_TYPE)) {
         *type = make_int_type();
         return RESULT_SUCCESS;

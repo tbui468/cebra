@@ -10,15 +10,47 @@
 
 #define MAX_CHARS 256 * 256
 
+static Value read_native(int arg_count, Value* args) {
+    FILE* fp = args[0].as.file_type->fp;
+
+    fseek(fp, 0L, SEEK_END);
+    size_t file_size = ftell(fp);
+    rewind(fp);
+    char* buffer = ALLOCATE_ARRAY(char);
+    buffer = GROW_ARRAY(buffer, char, file_size + 1, 0);
+    size_t bytes_read = fread(buffer, sizeof(char), file_size, fp);
+    buffer[bytes_read] = '\0';
+    
+    return to_string(take_string(buffer, file_size));
+}
+
+static ResultCode define_read(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_string_type());
+    return define_native(compiler, "read_all", read_native, make_fun_type(params, returns));
+}
+
+static Value open_native(int arg_count, Value* args) {
+    FILE* fp;
+    //TODO: opening in read mode only for now
+    fp = fopen(args[0].as.string_type->chars, "r");
+    if (fp == NULL) {
+        return to_nil();
+    }
+
+    return to_file(make_file(fp));
+}
 
 
-/*
 static ResultCode define_open(struct Compiler* compiler) {
-    struct Type* str_type = make_string_type();
-    struct Type* params = make_type_array();
-    add_type((struct TypeArray*)params, str_type);
-    return define_native(compiler, "open", open_native, make_fun_type(params, make_file_type()));
-}*/
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_string_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_file_type());
+    return define_native(compiler, "open", open_native, make_fun_type(params, returns));
+}
 
 static Value clock_native(int arg_count, Value* args) {
     return to_float((double)clock() / CLOCKS_PER_SEC);
@@ -151,6 +183,8 @@ ResultCode run_script(VM* vm, const char* path) {
     define_clock(&script_comp);
     define_print(&script_comp);
     define_input(&script_comp);
+    define_open(&script_comp);
+    define_read(&script_comp);
 
     ResultCode result = run_source(vm, &script_comp, source);
 
@@ -177,6 +211,8 @@ ResultCode repl(VM* vm) {
     define_clock(&script_comp);
     define_print(&script_comp);
     define_input(&script_comp);
+    define_open(&script_comp);
+    define_read(&script_comp);
 
     //need to run once to add native functions to vm globals table, otherwise they won't be defined if user
     //code fails - the ip is set back to 0 and the chunk is also reset to 0 after running each line.

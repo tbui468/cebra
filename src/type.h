@@ -18,7 +18,8 @@ typedef enum {
     TYPE_MAP,
     TYPE_INFER,
     TYPE_ENUM,
-    TYPE_DECL
+    TYPE_DECL, //what's with this again?
+    TYPE_FILE
 } TypeType;
 
 struct Type {
@@ -34,6 +35,10 @@ struct TypeInfer {
 struct TypeDecl {
     struct Type base;
     struct Type* custom_type;
+};
+
+struct TypeFile {
+    struct Type base;
 };
 
 struct TypeArray {
@@ -115,6 +120,7 @@ struct Type* make_map_type(struct Type* type);
 struct Type* make_infer_type();
 struct Type* make_enum_type(Token name);
 struct Type* make_decl_type(struct Type* custom_type);
+struct Type* make_file_type();
 
 bool is_substruct(struct TypeStruct* substruct, struct TypeStruct* superstruct);
 bool same_type(struct Type* type1, struct Type* type2);

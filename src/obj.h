@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "chunk.h"
 #include "obj.h"
 #include "table.h"
@@ -17,12 +18,18 @@ typedef enum {
     OBJ_LIST,
     OBJ_MAP,
     OBJ_ENUM,
+    OBJ_FILE
 } ObjType;
 
 struct Obj {
     ObjType type;
     struct Obj* next;
     bool is_marked;
+};
+
+struct ObjFile {
+    struct Obj base;
+    FILE* fp;
 };
 
 struct ObjString {
@@ -101,6 +108,7 @@ struct ObjList* make_list();
 struct ObjList* copy_list(struct ObjList* l);
 struct ObjMap* make_map();
 struct ObjEnum* make_enum(Token name);
+struct ObjFile* make_file(FILE* fp);
 
 
 #endif// CEBRA_OBJ_H
