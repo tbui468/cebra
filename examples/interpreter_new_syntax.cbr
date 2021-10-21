@@ -1,0 +1,251 @@
+//Mini interpreter for evaluating mathematical expressions
+//input expression can include intgers, +, -, *, / and parentheses
+//output is a double precision floating point
+
+//************Driver***************
+DEBUG, continue := false, true
+
+
+while (continue) 
+    print("Enter expression to evaluate:")
+    src_code := input()
+
+    if src_code != "quit"
+        tokens := scan_source(src_code)
+
+        if DEBUG == true
+            print("Tokens:")
+            for i: int = 0, i < tokens.size, i = i + 1
+                print(tokens[i].literal)
+            
+
+        root := parse_tokens(tokens)
+
+        if DEBUG == true
+            print("AST:")
+            print(string_expr(root))
+
+        answer, result := evaluate_expr(root)
+        if result   
+            print("Answer: " + answer as string)
+        else        
+            print("Invalid input")
+
+        print("")
+    else
+        continue = false
+
+scan_source :: (src: string) -> (List<Token>) 
+    lexer := Lexer()
+    lexer.src = src
+    t: Token = nil
+    tokens := List<Token>()
+    while (t = next_token(lexer)).type != TokenType.eof 
+        tokens[tokens.size] = t
+    
+    tokens[tokens.size] = t
+    -> tokens
+
+
+parse_tokens :: (tokens: List<Token>) -> (Expr)
+    parser := Parser()
+    parser.tokens = tokens
+    parser.current_token = parser.tokens[parser.index]
+    -> parse_expression(parser)
+
+//************Lexer************
+
+Lexer :: struct
+    src := ""
+    current_char := ""
+    index := 0
+
+TokenType :: enum
+    default
+    number
+    plus
+    minus
+    star
+    slash
+    left_paren
+    right_paren
+    eof
+
+Token :: struct
+    type := TokenType.default
+    literal := ""
+
+
+is_digit :: (char: string) -> (bool)
+    -> char == "0" or
+       char == "1" or
+       char == "2" or
+       char == "3" or
+       char == "4" or
+       char == "5" or
+       char == "6" or
+       char == "7" or
+       char == "8" or
+       char == "9"
+
+is_whitespace :: (char: string) -> (bool) 
+    -> char == " "
+
+
+peek :: (lexer: Lexer, fun: (string) -> (bool)) -> (bool) 
+    if lexer.index >= lexer.src.size 
+        -> false
+    
+    -> fun(lexer.src[lexer.index])
+
+
+next_char :: (lexer: Lexer) -> (bool) 
+    if lexer.index >= lexer.src.size 
+        -> false
+    
+    lexer.current_char = lexer.src[lexer.index]
+    lexer.index = lexer.index + 1
+    -> true
+
+
+next_token :: (lexer: Lexer) -> (Token) 
+
+    while peek(lexer, is_whitespace) 
+        next_char(lexer)
+
+    if next_char(lexer) 
+        token := Token()
+        token.literal = lexer.current_char
+
+        when lexer.current_char 
+            is "+" token.type = TokenType.plus
+            is "-" token.type = TokenType.minus
+            is "*" token.type = TokenType.star
+            is "/" token.type = TokenType.slash
+            is "(" token.type = TokenType.left_paren
+            is ")" token.type = TokenType.right_paren
+            else 
+                //scanning a number
+                num_string := lexer.current_char
+                while peek(lexer, is_digit) 
+                    next_char(lexer)
+                    num_string = num_string + lexer.current_char 
+                
+
+                token.type = TokenType.number
+                token.literal = num_string
+            
+        
+
+        -> token
+    else
+        token := Token()
+        token.type = TokenType.eof
+        -> token
+    
+
+
+//**********Parser***************
+Parser :: struct 
+    tokens: List<Token> = List<Token>()
+    index := 0
+    previous_token: Token = nil
+    current_token: Token = nil 
+
+
+advance :: (parser: Parser) -> () 
+    parser.previous_token = parser.current_token
+    parser.index = parser.index + 1
+    parser.current_token = parser.tokens[parser.index]
+
+
+match :: (parser: Parser, type: TokenType) -> (bool) 
+    if type == parser.current_token.type 
+        advance(parser)
+        -> true
+    
+    -> false
+
+
+Expr :: struct 
+    token: Token = nil
+
+
+PrimaryExpr :: struct < Expr 
+
+
+BinaryExpr :: struct < Expr 
+    left: Expr = nil
+    right: Expr = nil
+
+
+make_primary_expr :: (token: Token) -> (Expr) 
+    primary := PrimaryExpr()
+    primary.token = token
+    -> primary as Expr
+
+
+make_binary_expr :: (token: Token, left: Expr, right: Expr) -> (Expr) 
+    binary := BinaryExpr()
+    binary.token = token
+    binary.left = left
+    binary.right = right
+    -> binary as Expr
+
+
+parse_primary :: (parser: Parser) -> (Expr) 
+    if match(parser, TokenType.number) 
+        -> make_primary_expr(parser.previous_token)
+    
+
+    if match(parser, TokenType.left_paren) 
+        expr := parse_expression(parser)
+        match(parser, TokenType.right_paren)
+        -> expr
+
+parse_factor :: (parser: Parser) -> (Expr) 
+    left := parse_primary(parser)
+
+    while match(parser, TokenType.star) or match(parser, TokenType.slash) 
+        left = make_binary_expr(parser.previous_token, left, parse_primary(parser))
+
+    -> left
+
+parse_term :: (parser: Parser) -> (Expr) 
+    left := parse_factor(parser)
+
+    while match(parser, TokenType.plus) or match(parser, TokenType.minus) 
+        left = make_binary_expr(parser.previous_token, left, parse_factor(parser))
+
+    -> left
+
+parse_expression :: (parser: Parser) -> (Expr) 
+    -> parse_term(parser)
+
+string_expr :: (expr: Expr) -> (string) 
+    if expr as PrimaryExpr != nil 
+        -> " " + expr.token.literal + " "
+
+    if expr as BinaryExpr != nil 
+        b := expr as BinaryExpr
+        -> "( " + expr.token.literal + " " + string_expr(b.left) + string_expr(b.right) + " )"
+
+
+//**********Evaluator***********
+evaluate_expr :: (expr: Expr) -> (float, bool) 
+    when true 
+        is expr as PrimaryExpr != nil 
+            -> (expr as PrimaryExpr).token.literal as float, true
+
+        is expr as BinaryExpr != nil 
+            b := expr as BinaryExpr
+            left, result1 := evaluate_expr(b.left)
+            right, result2 := evaluate_expr(b.right)
+            when b.token.literal 
+                is "+" -> left + right, true
+                is "-" -> left - right, true
+                is "*" -> left * right, true
+                is "/" -> left / right, true
+
+    -> 0.0, false
+}

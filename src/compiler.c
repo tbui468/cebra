@@ -21,8 +21,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array);
 
 static bool struct_or_function_to_nil(struct Type* var_type, struct Type* right_type) {
-    //TODO: allowing nil declarations for now to make sequences work
-    return true;
     if (right_type->type != TYPE_NIL) return false;
     if (var_type->type != TYPE_FUN && var_type->type != TYPE_STRUCT) return false;
     return true;
@@ -480,17 +478,7 @@ static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct
         pop_root();
 
         Value type_val = to_nil();
-        struct Type* current = inst_type;
-        while (current != NULL) {
-            struct TypeStruct* tc = (struct TypeStruct*)current;
-            if (get_from_table(&tc->props, name, &type_val)) break;
-            current = tc->super;
-        }
-
-        if (current == NULL) {
-            add_error(compiler, prop, "Property not found in instance.");
-            return RESULT_FAILED;
-        }
+        get_from_table(&((struct TypeStruct*)inst_type)->props, name, &type_val);
 
         CHECK_TYPE(!same_type(type_val.as.type_type, right_type) && 
                    !struct_or_function_to_nil(type_val.as.type_type, right_type), 
@@ -643,7 +631,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             }
 
             if (!same_type((struct Type*)left_seq_type, (struct Type*)right_seq_type)) {
-                add_error(compiler, seq->op, "Sequence types must all match.");
+                add_error(compiler, seq->op, "All variable types and their assignment types must match.");
                 return RESULT_FAILED;
             }
             *node_type = (struct Type*)left_seq_type;

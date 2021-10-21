@@ -1,3 +1,5 @@
+cmake --build . --config Release cl /O2 ...
+
 Syntax highlighter:
     Push update to the marketplace - fixed typo with function colors not showing
 
@@ -28,33 +30,6 @@ Documentation:
     Look at Odin-lang for reference for docs
         could just have sample code user can look at rather than an actual interactive panel
 
-Bugs: commented out copy_value() - major bug with memory being collected by GC and program trying to use freed memory.  
-    Because it's off, Lists and Maps (and probably structs) instantiated inside a struct body will all reference 
-    the same instance rather than different ones.  Need to fix this ... could try to instantiate using a different
-    method rather than copying - how about running the struct creation code again?
-
-    Could try to have ObjStruct just hold ValueArrays instead of hash tables.  During compilation
-        just emit offset when getting/setting prop.  Then we could just copy the ValueArray
-        when instantiating a new struct - this would make it a little easier
-
-    Or if right side is a call
-
-    This is the offending code
-    Animal :: struct {
-        class := "mammal"
-    }
-
-    Dog :: struct < Animal {
-        name := "Mittens"
-        age := 3
-        length := 23.23
-        friend: Dog = nil
-        list: List<int> = List<int>()
-        map: Map<int> = Map<int>()
-    }
-
-    dog := Dog()
-
 Stack overflow
     big stack allocations:
         NODE_WHEN  256 ints
@@ -68,6 +43,8 @@ Implementation:
     Get website main page up and working
 
     setting properties is not type checked properly
+        problem is that we allow nil types on the right for everything now to make sequences work
+        but this is causing the type checker to fail
 
     Memory manager and vm relationship is complicated...
         requiring client to alternate between the two when instantiating is confusing (and error prone)
@@ -88,11 +65,6 @@ Implementation:
     Integrate Sequences into function arguments to allow this:
         takes_three(returns_two(), third_arg())
 
-    Fix the memory bug with Maps/Lists as properties in structs - see 'Bugs' above
-
-    Error messages need to point to correct line (how about when inside {}?) and give
-        accurate messages
-
     Simplify code and make it fast - this is supposed to be a selling point
         swap struct and enum tables for value arrays
         structs and enums indices can be determined at compile time and index emitted after set/get prop
@@ -100,18 +72,17 @@ Implementation:
 
     'with' statement?   Creates a shadow variable with casted type in new scope, but only does so if cast is valid (not nil)
         //this cuts out 1 indent, and 3 lines compared to using 'when/is' statements
-        with expr as PrimaryExpr {
+        with expr as PrimaryExpr
             -> expr.token.literal as float
-        }
 
         with expr as BinaryExpr {
             left := evaluate_expr(expr.left)
             right := evaluate_expr(expr.right)
             when expr.token.literal {
-                is "+" { -> left + right }
-                is "-" { -> left - right }
-                is "*" { -> left * right }
-                is "/" { -> left / right }
+                is "+" -> left + right
+                is "-" -> left - right
+                is "*" -> left * right
+                is "/" -> left / right
             }
         }
 

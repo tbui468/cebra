@@ -1,14 +1,50 @@
+l := List<int>()
+
+for i := 0, i < 10, i = i + 1
+    l[i] = 10 - i
 
 
-Dog :: struct {
-    l := List<int>()
-}
 
-d0 := Dog()
-d1 := Dog()
+foreach i: int in l
+    print(i)
 
-d0.l[0] = 2
-d1.l[0] = 99
+Token :: enum
+    one
+    two
+    three
+    four
 
-print(d0.l[0])
-print(d1.l[0])
+fib :: (n: int) -> (int)
+
+    if n < 2
+        -> n
+
+    -> fib(n - 1) + fib(n - 2)
+
+Dog :: struct < Animal
+    name := "Mittens"
+    age := 23
+
+Animal :: struct 
+    class := "Mammal"
+
+f := (n: int) -> (int)
+    if n < 2
+        -> n
+
+    -> f(n - 1) + f(n - 2)    
+
+
+x, y := return_two()
+
+when a 
+    is "1"
+        print(1)
+    is "2"
+        print(2)
+    else
+        print(3)
+
+
+
+
