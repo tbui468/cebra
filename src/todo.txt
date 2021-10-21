@@ -4,12 +4,12 @@ Syntax highlighter:
     Push update to the marketplace - fixed typo with function colors not showing
 
 Documentation:
-    Update build/download instructions
 
-    Mention current status
-        instantiation of structs/list/maps in struct definitions don't work
-        invalid syntax handling is still being worked on, and may crash program
-        error messages and line numbers may not be accurate
+    Make a smaler gif for main page - this one is too big and takes too long to load
+
+    Fill in some basic info for topics on main page
+
+    FInishing formating docs with right side 'aside' boxes
 
     Look at GifTuna website for simple but effective layout
 
@@ -41,9 +41,38 @@ Stack overflow
 
 Implementation:
 
-    add overwrite for files
+    To simplify the file system access, could store the path as a string in ObjFile, along
+    with the read/write mode, eg char 'r', 'w', 'a', etc
+    when a user tries to swap between read and write, just close and reopen the file.  This
+    also allows user to append a line and then read a line.  Although maybe tell the user
+    that swapping between reading and writing can be slow.
 
-    add append for files
+    how about an eof(file) function that returns a bool?  But then we would have to be 
+    able to peek head since we want to do this:
+    
+        f := open("test.txt")
+        while !eof(f) {
+            print(read_line(f))
+        }
+
+    This is a lot nicer than worrying about having to open a file in modes.  read_line
+    can also go back to returning one value now.
+
+        f := open("test.txt")
+        write(f, "This is a first line")
+        append(f, "This is a second line")
+
+        read_all(f)
+
+        while !eof(f) {
+            print(read_line(f))
+        }
+        
+
+        rewind(f)
+        read_line(f)
+
+    ValueArray can probably be moved into Value.h and Value.c
 
     What is TYPE_DECl being used for again?
 

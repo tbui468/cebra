@@ -31,6 +31,7 @@ set(Headers
     chunk.h
     compiler.h
     vm.h
+    native.h
     )
 
 add_executable(
