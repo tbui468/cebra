@@ -40,9 +40,11 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    Need to handle crashes for when imports don't exist
-
     need to handle directory paths with imports.  Currently it looks in cebra.exe directory for imports
+
+    ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
+        needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
+        manually return if necessary
            
     Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
 

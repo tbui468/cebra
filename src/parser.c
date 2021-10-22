@@ -1299,7 +1299,7 @@ ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes, stru
 }
 
 //this is in main.c
-const char* read_file(const char* path);
+ResultCode read_file(const char* path, const char** source);
 
 ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* globals, struct Node** all_nodes) {
     //copy globals table so it can be reset if error occurs in repl
@@ -1317,7 +1317,11 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
         char* path = (char*)malloc(import_name.length + 5); //'.cbr' extension and null terminator
         memcpy(path, import_name.start, import_name.length);
         memcpy(path + import_name.length, ".cbr\0", 5);
-        const char* module_source = read_file(path);
+        const char* module_source;
+        if (read_file(path, &module_source) == RESULT_FAILED) {
+            printf("[Cebra Error] Module not found.\n");
+            result = RESULT_FAILED;
+        }
         if (result != RESULT_FAILED)
             result = parse_module(module_source, script_nl, globals);
         free(path);

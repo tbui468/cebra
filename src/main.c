@@ -54,8 +54,11 @@ static ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* s
     return RESULT_SUCCESS;
 }
 
-const char* read_file(const char* path) {
+ResultCode read_file(const char* path, const char** source) {
     FILE* file = fopen(path, "rb");
+    if (file == NULL) {
+        return RESULT_FAILED;
+    }
     fseek(file, 0L, SEEK_END);
     size_t file_size = ftell(file);
     rewind(file);
@@ -63,12 +66,17 @@ const char* read_file(const char* path) {
     size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
     buffer[bytes_read] = '\0';
     fclose(file);
-    return buffer;
+    *source = buffer;
+    return RESULT_SUCCESS;
 }
 
 static ResultCode run_script(VM* vm, const char* path) {
 
-    const char* source = read_file(path);
+    const char* source;
+    if (read_file(path, &source) == RESULT_FAILED) {
+        printf("[Cebra Error] File not found.\n");
+        return RESULT_FAILED;
+    }
 
     //passing in NULL for struct Type* bc compiler needs to be initialized
     //before Types can be created
