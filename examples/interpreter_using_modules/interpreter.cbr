@@ -1,0 +1,41 @@
+//Mini interpreter for evaluating mathematical expressions
+//input expression can include intgers, +, -, *, / and parentheses
+//output is a double precision floating point
+
+import lexer
+import parser
+import evaluator
+
+DEBUG, continue := false, true
+
+while (continue) {
+    print("Enter expression to evaluate:")
+    src_code := input()
+
+    if src_code != "quit" {
+        tokens := scan_source(src_code)
+
+        if DEBUG == true {
+            print("Tokens:")
+            for i: int = 0, i < tokens.size, i = i + 1 {
+                print(tokens[i].literal)
+            }
+        }
+
+        root := parse_tokens(tokens)
+
+        if DEBUG == true {
+            print("AST:")
+            print(string_expr(root))
+        }
+
+        answer, result := evaluate_expr(root)
+        if result   print("Answer: " + answer as string)
+        else        print("Invalid input")
+
+        print("")
+    } else {
+        continue = false
+    }
+
+}

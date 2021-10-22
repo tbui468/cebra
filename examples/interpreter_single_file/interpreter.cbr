@@ -2,9 +2,9 @@
 //input expression can include intgers, +, -, *, / and parentheses
 //output is a double precision floating point
 
-//************Driver***************
-DEBUG, continue := false, true
+//driver
 
+DEBUG, continue := false, true
 
 while (continue) {
     print("Enter expression to evaluate:")
@@ -38,6 +38,9 @@ while (continue) {
 
 }
 
+
+//Lexer
+
 scan_source :: (src: string) -> (List<Token>) {
     lexer := Lexer()
     lexer.src = src
@@ -49,15 +52,6 @@ scan_source :: (src: string) -> (List<Token>) {
     tokens[tokens.size] = t
     -> tokens
 }
-
-parse_tokens :: (tokens: List<Token>) -> (Expr) {
-    parser := Parser()
-    parser.tokens = tokens
-    parser.current_token = parser.tokens[parser.index]
-    -> parse_expression(parser)
-}
-
-//************Lexer************
 
 Lexer :: struct {
     src := ""
@@ -153,7 +147,16 @@ next_token :: (lexer: Lexer) -> (Token) {
     }
 }
 
-//**********Parser***************
+
+//Parser
+
+parse_tokens :: (tokens: List<Token>) -> (Expr) {
+    parser := Parser()
+    parser.tokens = tokens
+    parser.current_token = parser.tokens[parser.index]
+    -> parse_expression(parser)
+}
+
 Parser :: struct {
     tokens: List<Token> = List<Token>()
     index := 0
@@ -249,7 +252,9 @@ string_expr :: (expr: Expr) -> (string) {
     }
 }
 
-//**********Evaluator***********
+
+//Evaluator
+
 evaluate_expr :: (expr: Expr) -> (float, bool) {
     when true {
         is expr as PrimaryExpr != nil {

@@ -1,0 +1,108 @@
+//Lexer
+
+scan_source :: (src: string) -> (List<Token>) {
+    lexer := Lexer()
+    lexer.src = src
+    t: Token = nil
+    tokens := List<Token>()
+    while (t = next_token(lexer)).type != TokenType.eof {
+        tokens[tokens.size] = t
+    }
+    tokens[tokens.size] = t
+    -> tokens
+}
+
+Lexer :: struct {
+    src := ""
+    current_char := ""
+    index := 0
+}
+
+TokenType :: enum {
+    default
+    number
+    plus
+    minus
+    star
+    slash
+    left_paren
+    right_paren
+    eof
+}
+
+Token :: struct {
+    type := TokenType.default
+    literal := ""
+}
+
+is_digit :: (char: string) -> (bool) {
+    -> char == "0" or
+       char == "1" or
+       char == "2" or
+       char == "3" or
+       char == "4" or
+       char == "5" or
+       char == "6" or
+       char == "7" or
+       char == "8" or
+       char == "9"
+}
+
+is_whitespace :: (char: string) -> (bool) {
+    -> char == " "
+}
+
+peek:: (lexer: Lexer, fun: (string) -> (bool)) -> (bool) {
+    if lexer.index >= lexer.src.size {
+        -> false
+    } 
+    -> fun(lexer.src[lexer.index])
+}
+
+next_char :: (lexer: Lexer) -> (bool) {
+    if lexer.index >= lexer.src.size {
+        -> false
+    }
+    lexer.current_char = lexer.src[lexer.index]
+    lexer.index = lexer.index + 1
+    -> true
+}
+
+next_token :: (lexer: Lexer) -> (Token) {
+
+    while peek(lexer, is_whitespace) {
+        next_char(lexer)
+    }
+
+    if next_char(lexer) {
+        token := Token()
+        token.literal = lexer.current_char
+
+        when lexer.current_char {
+            is "+" token.type = TokenType.plus
+            is "-" token.type = TokenType.minus
+            is "*" token.type = TokenType.star
+            is "/" token.type = TokenType.slash
+            is "(" token.type = TokenType.left_paren
+            is ")" token.type = TokenType.right_paren
+            else {
+                //scanning a number
+                num_string := lexer.current_char
+                while peek(lexer, is_digit) {
+                    next_char(lexer)
+                    num_string = num_string + lexer.current_char 
+                }
+
+                token.type = TokenType.number
+                token.literal = num_string
+            }
+        }
+
+        -> token
+    } else {
+        token := Token()
+        token.type = TokenType.eof
+        -> token
+    }
+}
+

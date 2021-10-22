@@ -1,0 +1,22 @@
+//Evaluator
+
+evaluate_expr :: (expr: Expr) -> (float, bool) {
+    when true {
+        is expr as PrimaryExpr != nil {
+            -> (expr as PrimaryExpr).token.literal as float, true
+        }
+
+        is expr as BinaryExpr != nil {
+            b := expr as BinaryExpr
+            left, result1 := evaluate_expr(b.left)
+            right, result2 := evaluate_expr(b.right)
+            when b.token.literal {
+                is "+" -> left + right, true
+                is "-" -> left - right, true
+                is "*" -> left * right, true
+                is "/" -> left / right, true
+            }
+        }
+    }
+    -> 0.0, false
+}
