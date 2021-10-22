@@ -16,7 +16,7 @@ static ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* s
     //passing globals and nodes in here feels messy - couldn't we have parse CREATE them?
     //Note: script_comp.nodes are ALL nodes, whereas nl only contains top statement nodes
     //printf("before parsing\n");
-    ResultCode parse_result = parse(source, &final_ast, &script_comp->globals, &script_comp->nodes);
+    ResultCode parse_result = parse(source, &final_ast, &script_comp->globals, &script_comp->nodes, script_comp->function->name);
 
     if (parse_result == RESULT_FAILED) {
         return RESULT_FAILED;
@@ -81,7 +81,7 @@ static ResultCode run_script(VM* vm, const char* path) {
     //passing in NULL for struct Type* bc compiler needs to be initialized
     //before Types can be created
     struct Compiler script_comp;
-    init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
+    init_compiler(&script_comp, path, strlen(path), 0, make_dummy_token(), NULL);
     define_native_functions(&script_comp);
 
     ResultCode result = run_source(vm, &script_comp, source);
@@ -105,7 +105,7 @@ static ResultCode repl(VM* vm) {
     int current = 0;
 
     struct Compiler script_comp;
-    init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
+    init_compiler(&script_comp, "repl", 4, 0, make_dummy_token(), NULL);
     define_native_functions(&script_comp);
 
     //need to run once to add native functions to vm globals table, otherwise they won't be defined if user

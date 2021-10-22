@@ -1301,7 +1301,7 @@ ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes, stru
 //this is in main.c
 ResultCode read_file(const char* path, const char** source);
 
-ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* globals, struct Node** all_nodes) {
+ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* globals, struct Node** all_nodes, struct ObjString* script_path) {
     //copy globals table so it can be reset if error occurs in repl
     struct Table copy;
     init_table(&copy);
@@ -1312,11 +1312,16 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
     struct NodeList* script_nl = (struct NodeList*)make_node_list();
     ResultCode result = parse_module(source, script_nl, globals);
 
+    //get path of script
+    char* last_slash = strrchr(script_path->chars, '\\');
+    int dir_len = last_slash == NULL ? 0 : last_slash - script_path->chars + 1;
+
     for (int i = 0; i < parser.import_count; i++) {
         Token import_name = parser.imports[i];
-        char* path = (char*)malloc(import_name.length + 5); //'.cbr' extension and null terminator
-        memcpy(path, import_name.start, import_name.length);
-        memcpy(path + import_name.length, ".cbr\0", 5);
+        char* path = (char*)malloc(dir_len + import_name.length + 5); //current script directory + module name + '.cbr' extension and null terminator
+        memcpy(path, script_path->chars, dir_len);
+        memcpy(path + dir_len, import_name.start, import_name.length);
+        memcpy(path + dir_len + import_name.length, ".cbr\0", 5);
         const char* module_source;
         if (read_file(path, &module_source) == RESULT_FAILED) {
             printf("[Cebra Error] Module not found.\n");
@@ -1324,6 +1329,7 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
         }
         if (result != RESULT_FAILED)
             result = parse_module(module_source, script_nl, globals);
+
         free(path);
     }
 

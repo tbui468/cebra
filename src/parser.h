@@ -27,7 +27,7 @@ typedef struct {
     int import_count;
 } Parser;
 
-ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes);
+ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** nodes, struct ObjString* script_path);
 void print_token(Token token);
 
 #endif// CEBRA_PARSER_H

@@ -40,7 +40,6 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    need to handle directory paths with imports.  Currently it looks in cebra.exe directory for imports
 
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
@@ -90,6 +89,12 @@ Implementation:
             read_line(f)
 
     parser.first_pass_nl should be renamed to parser.static_nodes, and then script_nl to dynamic_nl
+
+    Need namespaces for modules so that there isn't any collision
+        import math
+        add :: () -> () { -> 3 }
+        a: int = math::add()
+        b: math::Vec2 = math::Vec2()
 
     Get website main page up and working
 
