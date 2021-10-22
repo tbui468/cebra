@@ -1314,7 +1314,7 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
 
     //get path of script
     //TODO: need to make this work for '/' too
-    char* last_slash = strrchr(script_path->chars, '\\');
+    char* last_slash = strrchr(script_path->chars, DIR_SEPARATOR);
     int dir_len = last_slash == NULL ? 0 : last_slash - script_path->chars + 1;
 
     for (int i = 0; i < parser.import_count; i++) {

@@ -41,6 +41,8 @@ Stack overflow
 
 Implementation:
 
+    file paths in unix-like systems need a '/' rather than '\', AND './' needs to be prepended for current directory
+
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
         manually return if necessary
