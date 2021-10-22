@@ -1,13 +1,17 @@
 import math
 import dog
 
+print("Hello")
 
-    f := open("C:\\dev\\cebra\\tests\\test.py")
-    eof := false
-    line := 1
-    while !eof {
-        s: string, eof = read_line(f)
-        print("[line " + line as string + "]    " + s) 
-        line = line + 1
-    }
-    close(f)
+f := open("C:\\dev\\cebra\\tests\\test.py")
+eof := false
+line := 1
+while !eof {
+    s: string, eof = read_line(f)
+    print("[line " + line as string + "]    " + s) 
+    line = line + 1
+}
+close(f)
+
+print(add())
+bark()

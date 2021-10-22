@@ -40,44 +40,17 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
+    Need to handle crashes for when imports don't exist
 
-    Added imports array and import count to parser, but will need to restructure some things.
-
-    Let 'parse' be the function used for parsing the entire project (the main source file).  Then
-    inside that, compile each module separately using a 'parse_module' function.  Should use the
-    same parser instance, but prep a new source file with a new lexer.
-
-    Move init_lexer() out of init_parser() into parse().  Create a new function called parse_module()
-        that calls init_lexer() with a new source file and resets any state necessary in the parser (such as current tokens)
-        Parse module is called on the main script first, then on any imports.  (if any imports are imported twice,
-        should emit error).  
-
-        Recall that for now non-static code will also run in modules - I'm not sure how this should be dealt with...
-            allow it or not?
-
-    'import' keyword
-        If we have in import node in the parser, just add it to a list of imports in parser.
-        Then when parser is done parsing current file, parse the imports (and any imports they may have)
-        Do this before all the statics are reordered and identifiers in them resolved.
-
-        read entire imported .cbr file and compile between native and client code
-        next step is to read in import .cbc bytcode and run that
-            will require option to compile to .cbc file that includes byte code + constants/globals table + types
-            compile time constants?  PI :: 3.14, MAX_LIST :: 64
-
-            import math
-            import base
-
-        need to consider namespaces too - consider prepending statics with module name.  For example,
-            if add is a function in math, add the function can be called as math.add(). 
-
-            import math
-
-            a: math.Vec2 = math.Vec2()
-            b := math.Vec2()
-            c := math.add_vec2(a, b)
+    need to handle directory paths with imports.  Currently it looks in cebra.exe directory for imports
            
     Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
+
+    Why does the script compiler keep a list of ALL AST nodes again?  It's passed into the parser since the parser
+        resolves identifiers now, and I just wanted to resolve remaining identifiers in the same place.  
+        It's the compiler's job to track ALL AST nodes so they can be freed.  
+        This is a some coupling between the
+        parser and compiler - can we do without it?
 
     File system interaction
         To simplify the file system access, could store the path as a string in ObjFile, along
@@ -113,6 +86,8 @@ Implementation:
 
             rewind(f)
             read_line(f)
+
+    parser.first_pass_nl should be renamed to parser.static_nodes, and then script_nl to dynamic_nl
 
     Get website main page up and working
 

@@ -10,24 +10,24 @@
 
 #define MAX_CHARS 256 * 256
 
-ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) {
+static ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) {
 
-    struct NodeList* nl;
+    struct NodeList* final_ast;
     //passing globals and nodes in here feels messy - couldn't we have parse CREATE them?
     //Note: script_comp.nodes are ALL nodes, whereas nl only contains top statement nodes
     //printf("before parsing\n");
-    ResultCode parse_result = parse(source, &nl, &script_comp->globals, &script_comp->nodes);
+    ResultCode parse_result = parse(source, &final_ast, &script_comp->globals, &script_comp->nodes);
 
     if (parse_result == RESULT_FAILED) {
         return RESULT_FAILED;
     }
 
 #ifdef DEBUG_AST
-    print_node(nl);
+    print_node(final_ast);
 #endif
 
     //printf("before compiling\n");
-    ResultCode compile_result = compile_script(script_comp, nl);
+    ResultCode compile_result = compile_script(script_comp, final_ast);
 
     if (compile_result == RESULT_FAILED) {
         return RESULT_FAILED; 
@@ -54,8 +54,6 @@ ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) 
     return RESULT_SUCCESS;
 }
 
-
-
 const char* read_file(const char* path) {
     FILE* file = fopen(path, "rb");
     fseek(file, 0L, SEEK_END);
@@ -68,7 +66,7 @@ const char* read_file(const char* path) {
     return buffer;
 }
 
-ResultCode run_script(VM* vm, const char* path) {
+static ResultCode run_script(VM* vm, const char* path) {
 
     const char* source = read_file(path);
 
@@ -91,7 +89,7 @@ ResultCode run_script(VM* vm, const char* path) {
     return result;
 }
 
-ResultCode repl(VM* vm) {
+static ResultCode repl(VM* vm) {
     printf("Cebra 0.0.1\nType 'quit()' to exit the repl.\n");
 
     char input_line[MAX_CHARS];
@@ -100,13 +98,7 @@ ResultCode repl(VM* vm) {
 
     struct Compiler script_comp;
     init_compiler(&script_comp, "script", 6, 0, make_dummy_token(), NULL);
-    define_print(&script_comp);
-    define_clock(&script_comp);
-    define_input(&script_comp);
-    define_open(&script_comp);
-    define_read_all(&script_comp);
-    define_close(&script_comp);
-    define_read_line(&script_comp);
+    define_native_functions(&script_comp);
 
     //need to run once to add native functions to vm globals table, otherwise they won't be defined if user
     //code fails - the ip is set back to 0 and the chunk is also reset to 0 after running each line.

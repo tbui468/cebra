@@ -538,6 +538,10 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
         if (peek_one(TOKEN_EOF)) {
             return RESULT_FAILED;
         }
+        if (peek_one(TOKEN_IMPORT)) {
+            ERROR(parser.previous, "'import' can only be used in top script level.");
+            return RESULT_FAILED;
+        }
         struct Node* decl;
         if (declaration(&decl) == RESULT_SUCCESS) {
             add_to_compile_pass(decl, parser.first_pass_nl, body);
@@ -662,13 +666,13 @@ static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode declaration(struct Node** node) {
-    while (peek_one(TOKEN_IMPORT)) {
-        match(TOKEN_IMPORT);
-        CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expected module name after 'import'.");
-        parser.imports[parser.import_count++] = parser.previous;
-    }
+static ResultCode parse_import() {
+    match(TOKEN_IMPORT);
+    CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expected module name after 'import'.");
+    parser.imports[parser.import_count++] = parser.previous;
+}
 
+static ResultCode declaration(struct Node** node) {
     if (peek_three(TOKEN_IDENTIFIER, TOKEN_COLON_COLON, TOKEN_ENUM)) {
         match(TOKEN_IDENTIFIER);
         Token enum_name = parser.previous;
@@ -962,16 +966,19 @@ static ResultCode declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static void init_parser(const char* source, struct Table* globals) {
-    init_lexer(source);
-    parser.current = next_token();
-    parser.next = next_token();
-    parser.next_next = next_token();
+static void init_parser(struct Table* globals) {
     parser.error_count = 0;
     parser.globals = globals;
     parser.first_pass_nl = (struct NodeList*)make_node_list();
     parser.resolve_id_list = (struct NodeList*)make_node_list();
     parser.import_count = 0;
+}
+
+static void prime_lexer(const char* source) {
+    init_lexer(source);
+    parser.current = next_token();
+    parser.next = next_token();
+    parser.next_next = next_token();
 }
 
 static void free_parser() {
@@ -1220,6 +1227,8 @@ static ResultCode order_nodes_by_enums_structs_functions(struct NodeList* origin
     return RESULT_SUCCESS;
 }
 
+//script compiler keeps a linked list of all AST nodes to delete when it's freed
+//we're using it here to resolve any identifiers for user defined types in the entire list
 static ResultCode resolve_remaining_identifiers(struct Table* globals, struct Node* node) {
     while (node != NULL) {
         switch(node->type) {
@@ -1265,25 +1274,53 @@ static ResultCode resolve_remaining_identifiers(struct Table* globals, struct No
     return RESULT_SUCCESS;
 }
 
-ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals, struct Node** all_nodes) {
-    init_parser(source, globals);
-    struct NodeList* script_nl = (struct NodeList*)make_node_list();
-
+ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes, struct Table* globals) {
+    prime_lexer(source);
     ResultCode result = RESULT_SUCCESS;
 
+    while(parser.current.type != TOKEN_EOF) {
+        struct Node* decl;
+        if (peek_one(TOKEN_IMPORT)) {
+            if (parse_import() == RESULT_FAILED) {
+                result = RESULT_FAILED;
+                synchronize();
+            }
+        } else {
+            if ((result = declaration(&decl)) == RESULT_SUCCESS) {
+                add_to_compile_pass(decl, parser.first_pass_nl, dynamic_nodes);
+            } else {
+                result = RESULT_FAILED;
+                synchronize();
+            }
+        }
+    }
+
+    return result;
+}
+
+//this is in main.c
+const char* read_file(const char* path);
+
+ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* globals, struct Node** all_nodes) {
     //copy globals table so it can be reset if error occurs in repl
     struct Table copy;
     init_table(&copy);
     copy_table(&copy, globals);
 
-    while(parser.current.type != TOKEN_EOF) {
-        struct Node* decl;
-        if (declaration(&decl) == RESULT_SUCCESS) {
-            add_to_compile_pass(decl, parser.first_pass_nl, script_nl);
-        } else {
-            synchronize();
-            result = RESULT_FAILED;
-        }
+    init_parser(globals);
+
+    struct NodeList* script_nl = (struct NodeList*)make_node_list();
+    ResultCode result = parse_module(source, script_nl, globals);
+
+    for (int i = 0; i < parser.import_count; i++) {
+        Token import_name = parser.imports[i];
+        char* path = (char*)malloc(import_name.length + 5); //'.cbr' extension and null terminator
+        memcpy(path, import_name.start, import_name.length);
+        memcpy(path + import_name.length, ".cbr\0", 5);
+        const char* module_source = read_file(path);
+        if (result != RESULT_FAILED)
+            result = parse_module(module_source, script_nl, globals);
+        free(path);
     }
 
     if (result != RESULT_FAILED) result = resolve_global_struct_identifiers(parser.globals);
@@ -1298,7 +1335,7 @@ ResultCode parse(const char* source, struct NodeList** nl, struct Table* globals
     for (int i = 0; i < script_nl->count; i++) {
         add_node(ordered_nl, script_nl->nodes[i]);
     }
-    *nl = ordered_nl;
+    *final_ast = ordered_nl;
 
     if (parser.error_count > 0) {
         quick_sort(parser.errors, 0, parser.error_count - 1);
