@@ -230,6 +230,7 @@ static void trace_references() {
             }
             case OBJ_FILE: {
                 struct ObjFile* of = (struct ObjFile*)obj;
+                mark_and_push((struct Obj*)(of->file_path));
                 mark_and_push((struct Obj*)(of->next_line));
             }
             default: {

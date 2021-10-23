@@ -3,11 +3,33 @@
 
 #include <time.h>
 
+static ResultCode append_native(int arg_count, Value* args, struct ValueArray* returns) {
+    struct ObjFile* file = args[0].as.file_type;
+    struct ObjString* s = args[1].as.string_type;
+    fseek(file->fp, 0, SEEK_END);
+    if (fprintf(file->fp, "%s\n", s->chars) < 0) return RESULT_FAILED;
+    fflush(file->fp);
+    file->next_line = make_string("", 0);
+    file->is_eof = true;
+    add_value(returns, to_nil()); 
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_append(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    add_type(params, make_string_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_nil_type());
+    return define_native(compiler, "append", append_native, make_fun_type(params, returns));
+}
+
 static ResultCode process_next_line(struct ObjFile* file) {
     char input[256];
     char* result = fgets(input, 256, file->fp);
     if (result != NULL) {
-        file->next_line = make_string(input, strlen(input) - 1);
+        int len = input[strlen(input) - 1] == '\n' ? strlen(input) - 1 : strlen(input);
+        file->next_line = make_string(input, len);
         file->is_eof = false;
     } else {
         file->next_line = make_string("", 0);
@@ -80,11 +102,10 @@ static ResultCode close_native(int arg_count, Value* args, struct ValueArray* re
     if (file->fp != NULL) {
         fclose(file->fp);
         file->fp = NULL;
-        return RESULT_FAILED;
+        return RESULT_SUCCESS;
     }
 
-    add_value(returns, to_nil());
-    return RESULT_SUCCESS;
+    return RESULT_FAILED;
 }
 
 static ResultCode define_close(struct Compiler* compiler) {
@@ -126,16 +147,38 @@ static ResultCode define_read_all(struct Compiler* compiler) {
     return define_native(compiler, "read_all", read_all_native, make_fun_type(params, returns));
 }
 
+static ResultCode clear_native(int arg_count, Value* args, struct ValueArray* returns) {
+    struct ObjFile* file = args[0].as.file_type;
+    fclose(file->fp);
+    
+    file->fp = fopen(file->file_path->chars, "w");
+    fclose(file->fp);
+    file->fp = fopen(file->file_path->chars, "a+");
+    if (file->fp == NULL) {
+        return RESULT_FAILED;
+    }
+    process_next_line(file);
+    add_value(returns, to_nil());
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_clear(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_nil_type());
+    return define_native(compiler, "clear", clear_native, make_fun_type(params, returns));
+}
+
+
 static ResultCode open_native(int arg_count, Value* args, struct ValueArray* returns) {
     FILE* fp;
-    //TODO: opening in read mode only for now
-    fp = fopen(args[0].as.string_type->chars, "r");
+    fp = fopen(args[0].as.string_type->chars, "a+");
     if (fp == NULL) {
-        add_value(returns, to_nil());
         return RESULT_FAILED;
     }
 
-    struct ObjFile* file = make_file(fp);
+    struct ObjFile* file = make_file(fp, args[0].as.string_type);
     push_root(to_file(file));
     process_next_line(file);
     add_value(returns, to_file(file));
@@ -231,6 +274,8 @@ void define_native_functions(struct Compiler* compiler) {
     define_read_line(compiler);
     define_eof(compiler);
     define_rewind(compiler);
+    define_append(compiler);
+    define_clear(compiler);
 }
 
 

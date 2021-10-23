@@ -8,6 +8,10 @@ Syntax highlighter:
 
 Documentation:
 
+    A new line char is added at end of 'print' and 'append' now, but '\n' not read as new line 
+        if inside a string.  Should we allow this? Or should print() and append() be doing
+        the new lines like now?
+
     Update syntax and usage details
         pass by ref for structs, lists and maps
         update about section
@@ -46,6 +50,10 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
+
+    append(f, string) is the standard way of writing to a file
+        should set is_eof to true, and the string to ""
+    discard(f) clears a file of contents
 
     File system interaction
         To simplify the file system access, could store the path as a string in ObjFile, along

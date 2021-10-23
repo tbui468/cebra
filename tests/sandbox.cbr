@@ -1,19 +1,11 @@
 
 f := open("C:\\dev\\cebra\\tests\\test.py")
 
-read_by_line(f)
+//clear(f)
+append(f, "This is a test 2322.")
 
-//rewind(f)
-
-read_by_line(f)
+print(read_all(f))
 
 close(f)
 
-
-read_by_line :: (f: File) -> () {
-    line := 1
-    while !eof(f) {
-        print("[line " + line as string + "]    " + read_line(f)) 
-        line = line + 1
-    }
-}
+print("done")

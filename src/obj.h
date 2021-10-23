@@ -31,6 +31,7 @@ struct Obj {
 struct ObjFile {
     struct Obj base;
     FILE* fp;
+    struct ObjString* file_path;
     struct ObjString* next_line;
     bool is_eof;
 };
@@ -111,7 +112,7 @@ struct ObjList* make_list();
 struct ObjList* copy_list(struct ObjList* l);
 struct ObjMap* make_map();
 struct ObjEnum* make_enum(Token name);
-struct ObjFile* make_file(FILE* fp);
+struct ObjFile* make_file(FILE* fp, struct ObjString* file_path);
 
 
 #endif// CEBRA_OBJ_H

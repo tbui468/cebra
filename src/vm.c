@@ -370,6 +370,10 @@ ResultCode run_program(VM* vm) {
                     struct ValueArray va;
                     init_value_array(&va);
                     ResultCode result = native(arity, vm->stack_top - arity, &va);
+                    if (result == RESULT_FAILED) {
+                        add_error(vm, "Native function failed.");
+                        return RESULT_FAILED;
+                    }
                     for (int i = 0; i < arity + 1; i++) {
                         pop(vm);
                     }

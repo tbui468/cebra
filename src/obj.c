@@ -145,9 +145,10 @@ void mark_object(struct Obj* obj) {
 }
 
 
-struct ObjFile* make_file(FILE* fp) {
+struct ObjFile* make_file(FILE* fp, struct ObjString* file_path) {
     struct ObjFile* obj = ALLOCATE(struct ObjFile);
     obj->fp = fp;
+    obj->file_path = file_path;
     obj->next_line = NULL;
     obj->is_eof = false;
 
