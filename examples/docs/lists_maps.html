@@ -1,0 +1,72 @@
+<div id="lists-maps" class="container">
+    <h1>Lists and Maps</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>List</h2>
+            <p>
+            Lists can contain data of the same type.  The type must be specified in < > when
+            creating the list. [] notation can be used to access and set the elements in a List.
+            Lists also have the 'size' property which can be used to 
+            Like struct instances and Maps, Lists are passed by reference.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    my_list: List<int> = List<int>()
+
+    print(my_list.size) //0
+
+    my_list[0] = 2
+    my_list[1] = 11
+    my_list[2] = -9
+
+    for i: int in my_list {
+        print(my_list[i])
+    }
+
+    //2
+    //11
+    //-9
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Map</h2>
+            <p>
+            Each entry in a Map is a key-value pair.  The key is a string type
+            and the value type is specified at creation of the Map using < >.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    my_map: Map<float> = Map<float>()
+
+    print(my_map.size) //0
+
+    my_map["dog"] = 32.2
+    my_map["cat"] = -2.6
+
+    foreach k: string in my_map.keys {
+        print(k + " " + my_map[k])
+    }
+
+    //dog 32.2
+    //cat -2.6
+    //Note: order of key/value pairs may vary
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>

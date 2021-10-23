@@ -1,0 +1,125 @@
+<div id="getting-started" class="container">
+    <h1>Getting Started</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Building From Source</h2>
+            <p>The source code is available on Github at https://github.com/tbui468/cebra.  I'm not distributing executables at the time, so you'll
+            have to build it for your machine. 
+            You'll need a c compiler (such as gcc or clang), a build tool (make, ninja, etc), and a build system generator (we'll use CMake).</br></br>
+
+            If you're on any Linux distribution, I'll assume you already know what to do. </br></br>
+
+            On Windows, installing Visual Studio will include a compiler and build tool.  Then community edition is free to use.  
+            Then install CMake and be sure to include it in the command line path.</br></br>
+
+            On MacOS, CMake (and the compiler + build tool) can easily be installed using Homebrew.  For more detailed instructions, 
+            follow steps 1 and 2 here https://cse.engineering.nyu.edu/cs653/OpenGLCompilationMacLinux8.pdf to get CMake.
+            Homebrew should also recognize any missing dependencies required for CMake (c compiler and build tool) and tell 
+            you what you need to install.</br></br>
+            </p>
+            <p> The following commands will use the default configurations, build tool and compiler.  Consult the CMake docs for more build options.
+            Once built, the executable should be in cebra/build/src/Debug if using Windows and cebra/build/src on Linux/MacOS (probably).</p>
+        </section>
+        <section class="col-1-4">
+            <p>
+                GCC is a C and C++ compiler, which can be called by Make.  Make is a build tool that helps the user configure compiling, 
+                linking and other configuration options when using a compiler.  And CMake is a build generator that can create 
+                configuration files for build tools like Make, so that it can call the compiler to create executables.  Yeah, I was confused at first too.
+            </p>
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    git clone https://github.com/tbui468/cebra
+    cd cebra
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+        <h2>Syntax Highlighter</h2>
+        <p>An VSCode extension that provides basic highlighting is avaiable for Cebra.  Search for 'Cebra' in the VSCode extension marketplace.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Running .cbr Files</h2>
+            <p>A script can be interpreted if used as the first argument. There is an example program writte in cebra called
+            'interpreter.cbr' in the 'examples' directory.  For example, if the executable is name 'Cebra' and is in cebra/build/src, then the
+            following will run the executable with the script in the examples directory.  The ./ in front of the executable 
+            can be omitted on Windows.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+    <code>
+    ./Cebra ../../examples/interpreter.cbr
+    </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>REPL</h2>
+            <p>Running the 'cebra' command without a script argument will open the repl.  Here's a sample Hello world and variable declarations.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+        <code>
+    ./Cebra
+
+    >>> print("Hello world")
+    Hello world
+    >>> a := 2
+    >>> b := 3
+    >>> print(a + b)
+    5
+        </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Code Example</h2>
+            <p>Here's some example code to get you started on the syntax.  See 'interpreter.cbr' in the examples directory
+            for a more extensive example.</p>
+        </section>
+        <pre class="code-box col-3-4">
+    <code>
+    //Define a function to compute the nth number in the fibonacci sequence
+    fib :: (n: int) -> (int) {
+        if n < 2 {
+            -> n
+        } else {
+            -> fib(n - 1) + fib(n - 2)
+        }
+    }
+
+
+    print(fib(10))     //55
+    a: int = fib(10) + 5 //declare a new variable and explicitly declare the type
+    print(a) //60
+    b := 2.2  //declare a new variable and infer the type based on the assignment
+    print(b) //2.20000
+    </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>

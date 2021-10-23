@@ -8,10 +8,6 @@ Syntax highlighter:
 
 Documentation:
 
-    A new line char is added at end of 'print' and 'append' now, but '\n' not read as new line 
-        if inside a string.  Should we allow this? Or should print() and append() be doing
-        the new lines like now?
-
     Update syntax and usage details
         pass by ref for structs, lists and maps
         update about section
@@ -50,47 +46,10 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
+    Read in cebra_docs.html and copy lines into cebra_docs_compiled.html
+        until <<about.html>> 
 
-    append(f, string) is the standard way of writing to a file
-        should set is_eof to true, and the string to ""
-    discard(f) clears a file of contents
-
-    File system interaction
-        To simplify the file system access, could store the path as a string in ObjFile, along
-        with the read/write mode, eg char 'r', 'w', 'a', etc
-        when a user tries to swap between read and write, just close and reopen the file.  This
-        also allows user to append a line and then read a line.  Although maybe tell the user
-        that swapping between reading and writing can be slow.
-
-        how about an eof(file) function that returns a bool?  But then we would have to be 
-        able to peek head since we want to do this:
-        
-            f := open("test.txt")
-            while !eof(f) {
-                print(read_line(f))
-            }
-
-        This is a lot nicer than worrying about having to open a file in modes.  read_line
-        state can also be saved, so that the user can append, then continue reading from 
-        the place before.  But, if they use 'write', the read_line position is reset to
-        the beginning again.  Will need to figure out how to do the eof() function - this
-        might be tricky if we keep appending at the same time as checking.
-
-            f := open("test.txt")
-            read_all(f)
-
-            while !eof(f) {
-                print(read_line(f))
-            }
-            
-            rewind(f)
-            read_line(f)
-
-            write(f, "This is a first line")
-            append(f, "This is a second line")
-
-
-    Goal: get file system working well enough to use Cebra to create a basic html/css template program.
+    Use Cebra to create a basic html/css template program.
         to combine html sub-files into a larger file - essentially copying html into a template header/footer.
         For example, template.html, primitive_types.html, functions.html.  The program creates output.html, which
         copies template.html and then when reaching <<, appends the contents of the html file inside <<>> into output.html.

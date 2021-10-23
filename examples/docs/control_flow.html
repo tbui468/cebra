@@ -1,0 +1,138 @@
+<div id="control-flow" class="container">
+    <h1>Control Flow</h1>
+    <div class="row">
+        <h2>If / Else</h2>
+        <section class="col-3-4">
+            <p>All control flow statement bodies with more than one statement must be surrounding by {}.  {} are optional for 
+            single statement bodies.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    a: bool = true
+    if a {
+        print("This will print.")
+        print("This will print too.")
+    }
+
+    b: int = 11
+    if b < 10 
+        print("This will not print")
+    else 
+        print("This will print")
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <section class="col-3-4">
+            <h2>For Loops</h2>
+            <p>For loops take three parameters: initializer, condition and update.  The initializer and update statements can be omitted by using '_'.
+            The 'break' keyword is not implemented, so be careful with infinite loops.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    for i: int = 0, i < 3, i = i + 1 
+        print(i)
+
+    //omitting intializer and update
+    j: int = 5
+    for _ , j >= 0, _ {
+        print(i)
+        j = j - 2
+    }
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <h2>While Loops</h2>
+        <pre class="code-box col-3-4">
+        <code>
+    i: int = 0
+    while i <= 5 {
+        if i % 2 == 1 {
+            print(i)
+        }
+        i = i + 1
+    }
+
+    //This will print:
+    //1
+    //3
+    //5
+        </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <section class="col-3-4">
+            <h2>When / Is</h2>
+            <p>
+            When / Is statements are similar to switch statements in C.  When a single 'is' statement is run,
+            the remaining will be skipped over.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+        <code>
+    i: int = 1
+
+    when i {
+        is 1 { print("one") }
+        is 2 { print("two") }
+        is 3 { print("three") }
+        is 4 { print("four") }
+        else { print("other") }
+    }
+
+    //Will print "one"
+        </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Foreach / In</h2>
+            <p>
+                The foreach loop iterates through every element in a given List.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    my_list: List<string> = List<string>()
+    my_list[0] = "first"
+    my_list[1] = "second"
+    my_list[2] = "third"
+
+    foreach word: string in my_list {
+        print(word)
+    }
+
+    //first
+    //second
+    //third
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>

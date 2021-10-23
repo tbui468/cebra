@@ -1,0 +1,125 @@
+<div id="structs" class="container">
+    <h1>Structs</h1>
+    <div class="row">
+        <section class="col-3-4">
+        <h2>Declaration</h2>
+        </p>To declare a new struct, follow the name with double colons and 
+        then the body.  All fields must be set to a default value except for
+        fields using a custom struct type - those can be set to 'nil' and assigned
+        later.  Function pointers can also be set to 'nil'.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Person :: struct {
+        name: string        = "John"
+        age: int            = 35
+        hair_color: string  = "Brown"
+        height: float       = 175.1
+        friends             := List&#60Person&#62()
+        best_friend: Person = nil
+        talk: () -> (string) = nil
+    }
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Instantiating and Assignment</h2>
+            <p>
+                A new struct of a given type can be instantiated using '()', similar to calling
+                a function.  
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Dog :: struct {
+        name: string = "Mittens"
+        age: int = 3
+    }
+
+    d: Dog = Dog()
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Accessing and Setting Fields</h2>
+            <p>Properties on structs can be accessed and set using dot notation.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Car :: struct {
+        color: string = "red"
+        age: int = 20
+        description: (car: Car) -> (string) = nil
+    }
+
+    to_string :: (car: Car) -> (string) {
+        print("This " + car.age as string + " year-old car is " + car.color)
+    }
+
+    my_car: Car = Car()
+    my_car.description = to_string
+
+    my_car.description(my_car) //This 20 year-old car is red
+
+    my_car.color = "green"
+    my_car.description(my_car) //This 20 year-old car is green
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Inheritance</h2>
+            <p>
+            Single inheritance is supported.  Base structs fields can be
+            overwritten by the derived struct.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Animal :: struct {
+        classification: string = "mammalia" 
+    }
+
+    Deer :: struct < Animal {
+    }
+
+    Shark :: struct < Animal {
+        classification: string = "chondrichthyes"
+    }
+
+    my_deer: Deer = Deer()
+    my_shark: Shark = Shark()
+
+    print(my_deer.classification) //"mammalia"
+    print(my_shark.classification) //"chondrichthyes"
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+
