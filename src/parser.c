@@ -1313,7 +1313,6 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
     ResultCode result = parse_module(source, script_nl, globals);
 
     //get path of script
-    //TODO: need to make this work for '/' too
     char* last_slash = strrchr(script_path->chars, DIR_SEPARATOR);
     int dir_len = last_slash == NULL ? 0 : last_slash - script_path->chars + 1;
 

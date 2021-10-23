@@ -46,22 +46,25 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    Read in cebra_docs.html and copy lines into cebra_docs_compiled.html
-        until <<about.html>> 
 
-    Use Cebra to create a basic html/css template program.
-        to combine html sub-files into a larger file - essentially copying html into a template header/footer.
-        For example, template.html, primitive_types.html, functions.html.  The program creates output.html, which
-        copies template.html and then when reaching <<, appends the contents of the html file inside <<>> into output.html.
+    Seems like there's no way to print escape sequences in C using %s and printf
+    would need to manually search for \n or \" in a char*
+    and printf('\n') or printf('\"')
+        for the native function 'print', have it call a helper function
+        that takes care of escape sequences (just start with \n and \" for now)
 
-        <body>
-            <<primitive_types.html>>
-            <<functions.html>>
-        </body>
+    Use Cebra to highlight code snippets
+        read in compiled_docs.html into a buffer
+        write out each line back into compiled_docs.html
+            if there is a code block, add css tags to keywords
+            make a table of keywords to highlight blue
+            highlight constants  and comments green
+            highlight strings red
 
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
-        manually return if necessary
+        manually return if necessary.  Or at least call it RETURN_ERROR for clarity.  Should be able to add
+        error without return too.
            
     Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
 

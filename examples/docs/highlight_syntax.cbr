@@ -1,0 +1,40 @@
+//compile code to include span tags to highlight text
+//let's just highlight 'for' keyword word for now
+//need to insert <span class="br">for</span> to make 'for' blue...
+//clear white space
+
+//dir := "C:\\dev\\cebra\\examples\\docs\\"
+//f := open("compiled_docs.html")
+
+print((highlight_comments("//test")))
+print((highlight_comments("         //test")))
+print((highlight_comments(" /  /test")))
+
+highlight_comments :: (s: string) -> (string) {
+    s = remove_starting_whitespace(s)
+    if s.size > 1 and s[0] == "/" and s[1] == "/" {
+        ret := "<span class=gr>" + s + "</span>"
+        -> ret
+    }
+    -> s
+}
+
+
+
+remove_starting_whitespace :: (s: string) -> (string) {
+    i := 0
+    ret := ""
+    beginning := true
+    while i < s.size {
+        if !beginning {
+            ret = ret + s[i]
+        } else {
+            if s[i] != " " {
+                ret = ret + s[i]
+                beginning = false 
+            }
+        }
+        i = i + 1
+    }
+    -> ret
+}
