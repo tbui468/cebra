@@ -3,13 +3,10 @@
 
 #ifdef _WIN64
     #define DIR_SEPARATOR '\\'
-    #define CURRENT_DIR ""
 #elif _WIN32
     #define DIR_SEPARATOR '\\'
-    #define CURRENT_DIR ""
 #else
     #define DIR_SEPARATOR '/'
-    #define CURRENT_DIR "./"
 #endif
 
 

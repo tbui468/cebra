@@ -148,6 +148,8 @@ void mark_object(struct Obj* obj) {
 struct ObjFile* make_file(FILE* fp) {
     struct ObjFile* obj = ALLOCATE(struct ObjFile);
     obj->fp = fp;
+    obj->next_line = NULL;
+    obj->is_eof = false;
 
     obj->base.type = OBJ_FILE;
     obj->base.next = NULL;

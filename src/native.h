@@ -1,10 +1,54 @@
 #ifndef NATIVE_H
 #define NATIVE_H
 
-
 #include <time.h>
 
-//returns string, and is_eof boolean
+static ResultCode process_next_line(struct ObjFile* file) {
+    char input[256];
+    char* result = fgets(input, 256, file->fp);
+    if (result != NULL) {
+        file->next_line = make_string(input, strlen(input) - 1);
+        file->is_eof = false;
+    } else {
+        file->next_line = make_string("", 0);
+        file->is_eof = true;
+    }
+
+    return RESULT_SUCCESS;
+}
+
+static ResultCode rewind_native(int arg_count, Value* args, struct ValueArray* returns) {
+    struct ObjFile* file = args[0].as.file_type;
+    rewind(file->fp);
+    file->is_eof = false;
+    process_next_line(file);
+    add_value(returns, to_nil()); 
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_rewind(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_nil_type());
+    return define_native(compiler, "rewind", rewind_native, make_fun_type(params, returns));
+}
+
+static ResultCode eof_native(int arg_count, Value* args, struct ValueArray* returns) {
+    struct ObjFile* file = args[0].as.file_type;
+    add_value(returns, to_boolean(file->is_eof)); 
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_eof(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_bool_type());
+    return define_native(compiler, "eof", eof_native, make_fun_type(params, returns));
+}
+
+
 static ResultCode read_line_native(int arg_count, Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     if (file->fp == NULL) {
@@ -13,21 +57,11 @@ static ResultCode read_line_native(int arg_count, Value* args, struct ValueArray
         return RESULT_FAILED;
     }
 
-    char input[256];
-    char* result = fgets(input, 256, file->fp);
-    if (result != NULL) {
-        struct ObjString* s = make_string(input, strlen(input) - 1);
-        push_root(to_string(s));
-        add_value(returns, to_string(s));
-        add_value(returns, to_boolean(false));
-        pop_root();
-    } else {
-        struct ObjString* s = make_string("", 0);
-        push_root(to_string(s));
-        add_value(returns, to_string(s));
-        add_value(returns, to_boolean(true));
-        pop_root();
-    }
+    push_root(to_string(file->next_line));
+    process_next_line(file);
+
+    add_value(returns, pop_root());
+
     return RESULT_SUCCESS;
 }
 
@@ -36,7 +70,6 @@ static ResultCode define_read_line(struct Compiler* compiler) {
     add_type(params, make_file_type());
     struct TypeArray* returns = make_type_array();
     add_type(returns, make_string_type());
-    add_type(returns, make_bool_type());
     return define_native(compiler, "read_line", read_line_native, make_fun_type(params, returns));
 }
 
@@ -104,6 +137,7 @@ static ResultCode open_native(int arg_count, Value* args, struct ValueArray* ret
 
     struct ObjFile* file = make_file(fp);
     push_root(to_file(file));
+    process_next_line(file);
     add_value(returns, to_file(file));
     pop_root();
     return RESULT_SUCCESS;
@@ -195,6 +229,8 @@ void define_native_functions(struct Compiler* compiler) {
     define_read_all(compiler);
     define_close(compiler);
     define_read_line(compiler);
+    define_eof(compiler);
+    define_rewind(compiler);
 }
 
 

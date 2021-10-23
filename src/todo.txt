@@ -1,15 +1,21 @@
 cmake --build . --config Release cl /O2 ...
 
+Learn:
+    Read Lua implementation paper
+
 Syntax highlighter:
     Push update to the marketplace - fixed typo with function colors not showing
 
 Documentation:
 
+    Update syntax and usage details
+        pass by ref for structs, lists and maps
+        update about section
+        fill in parser, compiler, vm section with details and image of connections 
+
     Make a smaler gif for main page - this one is too big and takes too long to load
 
     Fill in some basic info for topics on main page
-
-    FInishing formating docs with right side 'aside' boxes
 
     Look at GifTuna website for simple but effective layout
 
@@ -41,20 +47,6 @@ Stack overflow
 
 Implementation:
 
-    file paths in unix-like systems need a '/' rather than '\', AND './' needs to be prepended for current directory
-
-    ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
-        needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
-        manually return if necessary
-           
-    Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
-
-    Why does the script compiler keep a list of ALL AST nodes again?  It's passed into the parser since the parser
-        resolves identifiers now, and I just wanted to resolve remaining identifiers in the same place.  
-        It's the compiler's job to track ALL AST nodes so they can be freed.  
-        This is a some coupling between the
-        parser and compiler - can we do without it?
-
     File system interaction
         To simplify the file system access, could store the path as a string in ObjFile, along
         with the read/write mode, eg char 'r', 'w', 'a', etc
@@ -77,18 +69,40 @@ Implementation:
         might be tricky if we keep appending at the same time as checking.
 
             f := open("test.txt")
-            write(f, "This is a first line")
-            append(f, "This is a second line")
-
             read_all(f)
 
             while !eof(f) {
                 print(read_line(f))
             }
             
-
             rewind(f)
             read_line(f)
+
+            write(f, "This is a first line")
+            append(f, "This is a second line")
+
+
+    Goal: get file system working well enough to use Cebra to create a basic html/css template program.
+        to combine html sub-files into a larger file - essentially copying html into a template header/footer.
+        For example, template.html, primitive_types.html, functions.html.  The program creates output.html, which
+        copies template.html and then when reaching <<, appends the contents of the html file inside <<>> into output.html.
+
+        <body>
+            <<primitive_types.html>>
+            <<functions.html>>
+        </body>
+
+    ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
+        needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
+        manually return if necessary
+           
+    Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
+
+    Why does the script compiler keep a list of ALL AST nodes again?  It's passed into the parser since the parser
+        resolves identifiers now, and I just wanted to resolve remaining identifiers in the same place.  
+        It's the compiler's job to track ALL AST nodes so they can be freed.  
+        This is a some coupling between the
+        parser and compiler - can we do without it?
 
     parser.first_pass_nl should be renamed to parser.static_nodes, and then script_nl to dynamic_nl
 
@@ -97,8 +111,6 @@ Implementation:
         add :: () -> () { -> 3 }
         a: int = math::add()
         b: math::Vec2 = math::Vec2()
-
-    Get website main page up and working
 
     compile time constants (must be strings, ints, bools, or floats).  Cannot be modified (but client if free to copy and modify copy)
         PI :: 3.14

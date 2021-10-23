@@ -11,5 +11,3 @@ def Fib(n):
 t = time.time()
 Fib(35)
 print(time.time() - t)
-
-

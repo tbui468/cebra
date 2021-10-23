@@ -31,6 +31,8 @@ struct Obj {
 struct ObjFile {
     struct Obj base;
     FILE* fp;
+    struct ObjString* next_line;
+    bool is_eof;
 };
 
 struct ObjString {

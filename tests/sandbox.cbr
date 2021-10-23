@@ -1,17 +1,19 @@
-import math
-import dog
-
-print("Hello")
 
 f := open("C:\\dev\\cebra\\tests\\test.py")
-eof := false
-line := 1
-while !eof {
-    s: string, eof = read_line(f)
-    print("[line " + line as string + "]    " + s) 
-    line = line + 1
-}
+
+read_by_line(f)
+
+//rewind(f)
+
+read_by_line(f)
+
 close(f)
 
-print(add())
-bark()
+
+read_by_line :: (f: File) -> () {
+    line := 1
+    while !eof(f) {
+        print("[line " + line as string + "]    " + read_line(f)) 
+        line = line + 1
+    }
+}

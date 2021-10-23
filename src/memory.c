@@ -228,6 +228,10 @@ static void trace_references() {
                 mark_and_push(val_obj);
                 break;
             }
+            case OBJ_FILE: {
+                struct ObjFile* of = (struct ObjFile*)obj;
+                mark_and_push((struct Obj*)(of->next_line));
+            }
             default: {
             }
         }
