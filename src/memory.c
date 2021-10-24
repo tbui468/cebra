@@ -47,8 +47,7 @@ void* realloc_mem(void* ptr, size_t new_size, size_t old_size) {
 
     void* result = realloc(ptr, new_size);
     if (result == NULL && new_size != 0) {
-        printf("Memory allocation failed. ");
-        printf("Attempting to allocate %zu bytes\n", new_size);
+        printf("[Error] Memory allocation failed. Attempting to allocate %zu bytes\n", new_size);
         exit(1);
     }
     return result;

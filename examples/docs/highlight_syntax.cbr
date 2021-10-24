@@ -19,9 +19,7 @@ i := 0
 while i < 200 {
     i = i + 1
     line := read_line(f)
-    print("0\n")
     s := highlight_comments(line)
-    print("1\n")
     append(out, s)
     print(i as string + "\n")
 }
@@ -30,9 +28,7 @@ close(f)
 close(out)
 
 highlight_comments :: (s: string) -> (string) {
-    print("x\n")
     s = remove_starting_whitespace(s)
-    print("y\n")
     if s.size > 1 and s[0] == "/" and s[1] == "/" {
         ret := "<span class=\"gr\">" + s + "</span>"
         -> ret

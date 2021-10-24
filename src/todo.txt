@@ -47,12 +47,10 @@ Stack overflow
 
 Implementation:
 
-    highlighter silently fails to print out more than 25 lines of compiled/highlighted html when runnging highlight_syntax.cbr
-        Not a memory allocation problem - only allocating 133kb
-        Not the GC - disabling it still doesn't fix the problem
-        Not VM stack size - it's less than 20 when we crash.
-        C stack?  Could try running in valgrind.
-
+    Stack size is limiting highlight_syntax.cbr from running - what am I pushing onto the stack?
+        printing out stack when is crashes - it's [text][nil]... repeating.  Why is that?  Shouldn't the
+        stack be clearing temporaries?
+        
     GC needs to collect interned strings when no longer referenced.
         Stop marking interned strings table
         During collection, after tracing references but before sweeping, delete ptrs that are still unmarked
