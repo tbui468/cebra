@@ -223,12 +223,38 @@ static ResultCode define_clock(struct Compiler* compiler) {
     return define_native(compiler, "clock", clock_native, make_fun_type(make_type_array(), returns));
 }
 
+static ResultCode print_string_with_escape_sequences(char* s) {
+    char* start = s;
+    char* back_slash = strchr(start, '\\');
+    while (back_slash != NULL) {
+        printf("%.*s", (int)(back_slash-start), start);
+        switch(*(back_slash + 1)) {
+            case 'a': printf("\a"); break;
+            case 'b': printf("\b"); break;
+            case 'e': printf("\e"); break;
+            case 'f': printf("\f"); break;
+            case 'n': printf("\n"); break;
+            case 'r': printf("\r"); break;
+            case 't': printf("\t"); break;
+            case 'v': printf("\v"); break;
+            case '\\': printf("\\"); break;
+            case '\'': printf("\'"); break;
+            case '"': printf("\""); break;
+            case '?': printf("\?"); break;
+        }
+        start = back_slash + 2;
+        back_slash = strchr(start, '\\');
+    }
+
+    printf("%s", start);
+}
+
 static ResultCode print_native(int arg_count, Value* args, struct ValueArray* returns) {
     Value value = args[0];
     switch(value.type) {
         case VAL_STRING: {
-            struct ObjString* str = value.as.string_type;
-            printf("%.*s\n", str->length, str->chars);
+            struct ObjString* s = value.as.string_type;
+            print_string_with_escape_sequences(s->chars);
             break;
         }
         case VAL_INT:
