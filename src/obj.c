@@ -321,7 +321,6 @@ struct ObjString* take_string(char* chars, int length) {
 
     struct ObjString* obj = ALLOCATE(struct ObjString);
 
-
     obj->base.type = OBJ_STRING;
     obj->base.next = NULL;
     obj->base.is_marked = false;

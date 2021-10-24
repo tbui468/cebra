@@ -47,11 +47,21 @@ Stack overflow
 
 Implementation:
 
-    Seems like there's no way to print escape sequences in C using %s and printf
-    would need to manually search for \n or \" in a char*
-    and printf('\n') or printf('\"')
-        for the native function 'print', have it call a helper function
-        that takes care of escape sequences (just start with \n and \" for now)
+    highlighter silently fails to print out more than 25 lines of compiled/highlighted html when runnging highlight_syntax.cbr
+        Not a memory allocation problem - only allocating 133kb
+        Not the GC - disabling it still doesn't fix the problem
+        Not VM stack size - it's less than 20 when we crash.
+        C stack?  Could try running in valgrind.
+
+    GC needs to collect interned strings when no longer referenced.
+        Stop marking interned strings table
+        During collection, after tracing references but before sweeping, delete ptrs that are still unmarked
+            just delete the ptr in the table - the GC will take care of the string
+        add delete function for hash tables (tombstones and stuff) to delete entries
+
+    need string splicing (compiling highlighting for 23 lines of html is creating 700+ strings) since we 
+        are concatenating single chars at a time - this is blowing up the string count.
+        s[0:4] creates a new string.  identifier [ expression : expression ]
 
     Use Cebra to highlight code snippets
         read in compiled_docs.html into a buffer
