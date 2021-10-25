@@ -47,7 +47,10 @@ Stack overflow
 
 Implementation:
 
-    interned strings are overflowing vm stack now even with slicing
+    interned strings are overflowing vm stack now even with slicing when running
+        'highlight_syntax.cbr'.  Disabled for now to allow script to run.
+
+    Implement deleting of hash table entries 
         
     GC needs to collect interned strings when no longer referenced.
         Stop marking interned strings table

@@ -10,10 +10,10 @@ while !eof(f) {
     if s.size > 0 and s[0] == "$"{
         about_f := open(dir + s[1, s.size])
         about_s := read_all(about_f)
-        append(out, about_s)
+        append(out, about_s + "\n")
         close(about_f)
     } else {
-        append(out, s)
+        append(out, s + "\n")
     } 
 }
 

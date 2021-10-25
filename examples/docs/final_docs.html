@@ -1,68 +1,1063 @@
-<!DOCTYPE html><html>    <head>        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>        <link rel="stylesheet" href="cebra_styles.css">        <title>Cebra Programming Language</title>    </head>    <body>        <div cla
-ss="navbar">            <a href="https://github.com/tbui468/cebra" target="_blank">GitHub</a>            <a href="cebra_docs.html">Docs</a>            <a class="active" href="cebra.html">Home</a>        </div>        <section class="sidenav">            <
-img src="">            <a href="#about">About</a>            <a href="#getting-started">Getting Started</a>            <a href="#underneath-the-hood">The Parser, Compiler and VM</a>            <a href="#built-in-types">Primitive Types</a>            <a hr
-ef="#control-flow">Control Flow</a>            <a href="#functions">Functions</a>            <a href="#structs">Structs</a>            <a href="#enums">Enumerations</a>            <a href="#lists-maps">Lists and Maps</a>            <a href="#modules">Modu
-les</a>            <a href="#libraries">Standard Library</a>            <a href="#extending-cebra">Extending Cebra with C or C++</a>        </section>        <section class="main"><div id="about" class="container">
-<div class="row">
-<section class="col-3-4">
-<h1>About</h1>
-<p>
-Cebra is a strongly typed scripting language. Kind of like Python, but with non-optional strong/static/inferred typing.  
-Cebra was used to compile the html in this documentation.
-</p>
-</section>
-<section class="col-1-4">
-</section>
-</div>
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <link rel="stylesheet" href="cebra_styles.css">
+        <title>Cebra Programming Language</title>
+    </head>
+    <body>
+        <div class="navbar">
+            <a href="https://github.com/tbui468/cebra" target="_blank">GitHub</a>
+            <a href="cebra_docs.html">Docs</a>
+            <a class="active" href="cebra.html">Home</a>
+        </div>
+        <section class="sidenav">
+            <img src="">
+            <a href="#about">About</a>
+            <a href="#getting-started">Getting Started</a>
+            <a href="#underneath-the-hood">The Parser, Compiler and VM</a>
+            <a href="#built-in-types">Primitive Types</a>
+            <a href="#control-flow">Control Flow</a>
+            <a href="#functions">Functions</a>
+            <a href="#structs">Structs</a>
+            <a href="#enums">Enumerations</a>
+            <a href="#lists-maps">Lists and Maps</a>
+            <a href="#modules">Modules</a>
+            <a href="#libraries">Standard Library</a>
+            <a href="#extending-cebra">Extending Cebra with C or C++</a>
+        </section>
+        <section class="main">
+
+<div id="about" class="container">
+    <div class="row">
+        <section class="col-3-4">
+            <h1>About</h1>
+            <p>
+            Cebra is a strongly typed scripting language. Kind of like Python, but with non-optional strong/static/inferred typing.  
+            Cebra was used to compile the html in this documentation.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
 </div>
 <div id="getting-started" class="container">
-<h1>Getting Started</h1>
-<div class="row">
-<section class="col-3-4">
-<h2>Building From Source</h2>
-<p>The source code is available on Github at https://github.com/tbui468/cebra.  I'm not distributing executables at the time, so you'll
-have to build it for your machine. 
-You'll need a c compiler (such as gcc or clang), a build tool (make, ninja, etc), and a build system generator (we'll use CMake).</br></br>
+    <h1>Getting Started</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Building From Source</h2>
+            <p>The source code is available on Github at https://github.com/tbui468/cebra.  I'm not distributing executables at the time, so you'll
+            have to build it for your machine. 
+            You'll need a c compiler (such as gcc or clang), a build tool (make, ninja, etc), and a build system generator (we'll use CMake).</br></br>
 
-If you're on any Linux distribution, I'll assume you already know what to do. </br></br>
+            If you're on any Linux distribution, I'll assume you already know what to do. </br></br>
 
-On Windows, installing Visual Studio will include a compiler and build tool.  Then community edition is free to use.  
-Then install CMake and be sure to include it in the command line path.</br></br>
+            On Windows, installing Visual Studio will include a compiler and build tool.  Then community edition is free to use.  
+            Then install CMake and be sure to include it in the command line path.</br></br>
 
-On MacOS, CMake (and the compiler + build tool) can easily be installed using Homebrew.  For more detailed instructions, 
-follow steps 1 and 2 here https://cse.engineering.nyu.edu/cs653/OpenGLCompilationMacLinux8.pdf to get CMake.
-Homebrew should also recognize any missing dependencies required for CMake (c compiler and build tool) and tell 
-you what you need to install.</br></br>
-</p>
-<p> The following commands will use the default configurations, build tool and compiler.  Consult the CMake docs for more build options.
-Once built, the executable should be in cebra/build/src/Debug if using Windows and cebra/build/src on Linux/MacOS (probably).</p>
-</section>
-<section class="col-1-4">
-<p>
-GCC is a C and C++ compiler, which can be called by Make.  Make is a build tool that helps the user configure compiling, 
-linking and other configuration options when using a compiler.  And CMake is a build generator that can create 
-configuration files for build tools like Make, so that it can call the compiler to create executables.  Yeah, I was confused at first too.
-</p>
-</section>
+            On MacOS, CMake (and the compiler + build tool) can easily be installed using Homebrew.  For more detailed instructions, 
+            follow steps 1 and 2 here https://cse.engineering.nyu.edu/cs653/OpenGLCompilationMacLinux8.pdf to get CMake.
+            Homebrew should also recognize any missing dependencies required for CMake (c compiler and build tool) and tell 
+            you what you need to install.</br></br>
+            </p>
+            <p> The following commands will use the default configurations, build tool and compiler.  Consult the CMake docs for more build options.
+            Once built, the executable should be in cebra/build/src/Debug if using Windows and cebra/build/src on Linux/MacOS (probably).</p>
+        </section>
+        <section class="col-1-4">
+            <p>
+                GCC is a C and C++ compiler, which can be called by Make.  Make is a build tool that helps the user configure compiling, 
+                linking and other configuration options when using a compiler.  And CMake is a build generator that can create 
+                configuration files for build tools like Make, so that it can call the compiler to create executables.  Yeah, I was confused at first too.
+            </p>
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    git clone https://github.com/tbui468/cebra
+    cd cebra
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+        <h2>Syntax Highlighter</h2>
+        <p>An VSCode extension that provides basic highlighting is avaiable for Cebra.  Search for 'Cebra' in the VSCode extension marketplace.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Running .cbr Files</h2>
+            <p>A script can be interpreted if used as the first argument. There is an example program writte in cebra called
+            'interpreter.cbr' in the 'examples' directory.  For example, if the executable is name 'Cebra' and is in cebra/build/src, then the
+            following will run the executable with the script in the examples directory.  The ./ in front of the executable 
+            can be omitted on Windows.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+    <code>
+    ./Cebra ../../examples/interpreter.cbr
+    </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>REPL</h2>
+            <p>Running the 'cebra' command without a script argument will open the repl.  Here's a sample Hello world and variable declarations.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+        <code>
+    ./Cebra
+
+    >>> print("Hello world")
+    Hello world
+    >>> a := 2
+    >>> b := 3
+    >>> print(a + b)
+    5
+        </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Code Example</h2>
+            <p>Here's some example code to get you started on the syntax.  See 'interpreter.cbr' in the examples directory
+            for a more extensive example.</p>
+        </section>
+        <pre class="code-box col-3-4">
+    <code>
+    <span class="gr">//Define a function to compute the nth number in the fibonacci sequence</span>
+    fib :: (n: int) -> (int) {
+        if n < 2 {
+            -> n
+        } else {
+            -> fib(n - 1) + fib(n - 2)
+        }
+    }
+
+
+    print(fib(10))     //55
+    a: int = fib(10) + 5 //declare a new variable and explicitly declare the type
+    print(a) //60
+    b := 2.2  //declare a new variable and infer the type based on the assignment
+    print(b) //2.20000
+    </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
 </div>
-<div class="row">
-<pre class="code-box col-3-4">
-<code>
-git clone https://github.com/tbui468/cebra
-cd cebra
-mkdir build
-cd build
-cmake ..
-cmake --build .
-</code>
-</pre>
-<section class="col-1-4">
-</section>
+<div id="underneath-the-hood" class="container">
+    <h1>The Parser, Compiler and VM</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <p>
+                Three main components make up Cebra - the parser, compiler and virtual machine.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>The Parser</h2>
+            <p>
+                The tokenized source code is parsed using vanilla recursive descent - see the source code for
+                implementation details.  One point of note is that the abstract syntax tree (AST) nodes are reordered
+                before being passed to the compiler.</br></br>
+                Enumerations, structs and statically defined functions are all reordered so that they are compiled
+                first.  Any circular dependencies are also resolved at this time.  The reordering of the AST nodes
+                was done in order to remove the need for header files or foward declarations that plague C and C++.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>The Compiler</h2>
+            <p>
+                The compiler has two main responsibilities: compiling the AST nodes into Cebra bytecode for the 
+                virtual machine, and to perform static type-checking.  
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>The Virtual Machine</h2>
+            <p>
+                Cebra uses a stack-based virtual machine during runtime, and has a tracing gargabe collector for automatic
+                memory management.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
 </div>
-<div class="row">
-<section class="col-3-4">
-<h2>Syntax Highlighter</h2>
-<p>An VSCode extension that provides basic highlighting is avaiable for Cebra.  Search for 'Cebra' in the VSCode extension marketplace.</p>
-</section>
-<section class="col-1-4">
-</section>
+<div id="built-in-types" class="container">
+    <h1>Primitive Types</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Integers</h2>
+            <p>
+                Variable types must be explicitly declared, or inferred from the assignment.
+                Declarations and assignments can done in sequence on one line, separated by commas.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    a: int = 1
+    a = 2
+    b: int, c: int = 2, 4
+    b, c = 9, 31
+    d := 23
+    e, f := 2, 4
+    h := g % 2
+    x, y := compute_xy_coords()
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Floats</h2>
+            <p>
+                Floats in Cebra are represented in a double-precision floating-point format.  Including a decimal point
+                anywhere in a number will make it a Float.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    a: float = 1.12
+    b := 23.232
+    g := a + b
+    k := a - b
+    i, j := a * b, a / b
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Booleans</h2>
+            <p>
+                The unary operator ! can be used to negate booleans.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    a: bool = true
+    b := false
+    c := !b
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Strings</h2>
+            <p>
+                Strings can be concatenated using the + operator.  There is no character data type.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    a: string = "Hello"
+    b := "World"
+    c := a + b
+    c = c + c
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+<div id="control-flow" class="container">
+    <h1>Control Flow</h1>
+    <div class="row">
+        <h2>If / Else</h2>
+        <section class="col-3-4">
+            <p>All control flow statement bodies with more than one statement must be surrounding by {}.  {} are optional for 
+            single statement bodies.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    a: bool = true
+    if a {
+        print("This will print.")
+        print("This will print too.")
+    }
+
+    b: int = 11
+    if b < 10 
+        print("This will not print")
+    else 
+        print("This will print")
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <section class="col-3-4">
+            <h2>For Loops</h2>
+            <p>For loops take three parameters: initializer, condition and update.  The initializer and update statements can be omitted by using '_'.
+            The 'break' keyword is not implemented, so be careful with infinite loops.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    for i: int = 0, i < 3, i = i + 1 
+        print(i)
+
+    <span class="gr">//omitting intializer and update</span>
+    j: int = 5
+    for _ , j >= 0, _ {
+        print(i)
+        j = j - 2
+    }
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <h2>While Loops</h2>
+        <pre class="code-box col-3-4">
+        <code>
+    i: int = 0
+    while i <= 5 {
+        if i % 2 == 1 {
+            print(i)
+        }
+        i = i + 1
+    }
+
+    <span class="gr">//This will print:</span>
+    <span class="gr">//1</span>
+    <span class="gr">//3</span>
+    <span class="gr">//5</span>
+        </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <section class="col-3-4">
+            <h2>When / Is</h2>
+            <p>
+            When / Is statements are similar to switch statements in C.  When a single 'is' statement is run,
+            the remaining will be skipped over.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+        <code>
+    i: int = 1
+
+    when i {
+        is 1 { print("one") }
+        is 2 { print("two") }
+        is 3 { print("three") }
+        is 4 { print("four") }
+        else { print("other") }
+    }
+
+    <span class="gr">//Will print "one"</span>
+        </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div> 
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Foreach / In</h2>
+            <p>
+                The foreach loop iterates through every element in a given List.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    my_list: List<string> = List<string>()
+    my_list[0] = "first"
+    my_list[1] = "second"
+    my_list[2] = "third"
+
+    foreach word: string in my_list {
+        print(word)
+    }
+
+    <span class="gr">//first</span>
+    <span class="gr">//second</span>
+    <span class="gr">//third</span>
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+<div id="functions" class="container">
+    <div class="row">
+        <section class="col-3-4">
+        <h1>Functions</h1>
+            <h2>Declarations</h2>
+            <p>The following snippet declares a function called 'double'.  'double' has one integer paramter 'n'.
+            The return type is also an integer.  The function body returns 2 multiplied by n. <br><br>
+            Function 'print_double' has the same parameter, but does not return a value (indicated by leaving
+            the return type blank).  The return arrow inside the body of a function with no return is optional.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+        <code>
+    <span class="gr">//takes one integer as a parameters, and returns an integer</span>
+    double :: (n: int) -> (int) {
+        -> 2 * n
+    }
+
+    <span class="gr">//takes in one integer as a parameter, and has no return value.</span>
+    print_double :: (n: int) -> () {
+        print(2 * n)
+        -> //optional return statement
+    }
+
+    <span class="gr">//takes in two floats as parameters, and has no return value.  </span>
+    early_return :: (n: float, m: float) -> () {
+        if n < 5.0 {
+            ->       //will return from function, and skip calling 'print(n * m)' below
+        }
+
+        print(n * m)
+    }
+        </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Calls</h2>
+            <p>
+            Functions are called using the keyword followed by any arguments surrounded by parenthesese.  Functions
+            can return more than one value.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    greeting :: (name: string) -> (string) {
+        -> "Hello, " + name + "."
+    }
+
+    print(greeting("Tim"))  //"Hello, Tim."
+    print(greeting("Mittens")) //"Hello, Mittens."
+
+    returns_two :: () -> (int, int) {
+        -> 1, 5
+    }
+
+    x, y := returns_two()
+    print(x) //1
+    print(y) //5
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Anonymous Functions</h2>
+            <p>
+            Functions can be declared and immediately passed in as parameters.  The function 'sum'
+            takes in an anonymous function as a third parameter and applies it to the first two parameters.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    op :: (a: int, b: int, fun: (int, int) -> (int)) -> (int) {
+        -> fun(a, b)   
+    }    
+
+    result := op(1, 2, (a: int, b: int) -> (int) { -> a + b })
+    print(result) //3
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+<div id="structs" class="container">
+    <h1>Structs</h1>
+    <div class="row">
+        <section class="col-3-4">
+        <h2>Declaration</h2>
+        </p>To declare a new struct, follow the name with double colons and 
+        then the body.  All fields must be set to a default value except for
+        fields using a custom struct type - those can be set to 'nil' and assigned
+        later.  Function pointers can also be set to 'nil'.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Person :: struct {
+        name: string        = "John"
+        age: int            = 35
+        hair_color: string  = "Brown"
+        height: float       = 175.1
+        friends             := List&#60Person&#62()
+        best_friend: Person = nil
+        talk: () -> (string) = nil
+    }
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Instantiating and Assignment</h2>
+            <p>
+                A new struct of a given type can be instantiated using '()', similar to calling
+                a function.  
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Dog :: struct {
+        name: string = "Mittens"
+        age: int = 3
+    }
+
+    d: Dog = Dog()
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Accessing and Setting Fields</h2>
+            <p>Properties on structs can be accessed and set using dot notation.</p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Car :: struct {
+        color: string = "red"
+        age: int = 20
+        description: (car: Car) -> (string) = nil
+    }
+
+    to_string :: (car: Car) -> (string) {
+        print("This " + car.age as string + " year-old car is " + car.color)
+    }
+
+    my_car: Car = Car()
+    my_car.description = to_string
+
+    my_car.description(my_car) //This 20 year-old car is red
+
+    my_car.color = "green"
+    my_car.description(my_car) //This 20 year-old car is green
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Inheritance</h2>
+            <p>
+            Single inheritance is supported.  Base structs fields can be
+            overwritten by the derived struct.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Animal :: struct {
+        classification: string = "mammalia" 
+    }
+
+    Deer :: struct < Animal {
+    }
+
+    Shark :: struct < Animal {
+        classification: string = "chondrichthyes"
+    }
+
+    my_deer: Deer = Deer()
+    my_shark: Shark = Shark()
+
+    print(my_deer.classification) //"mammalia"
+    print(my_shark.classification) //"chondrichthyes"
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+
+<div id="enums" class="container">
+    <h1>Enumerations</h1>
+    <div class="row">
+        <section class="col-3-4">
+            Enumerations can be created using the following syntax.  Assignment is done using dot notation.
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    Token :: enum {
+        plus
+        minus
+        star
+        slash
+    }
+
+    token_1: Token = Token.plus
+    token_2 := Token.star
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+<div id="lists-maps" class="container">
+    <h1>Lists and Maps</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>List</h2>
+            <p>
+            Lists can contain data of the same type.  The type must be specified in < > when
+            creating the list. [] notation can be used to access and set the elements in a List.
+            Lists also have the 'size' property which can be used to 
+            Like struct instances and Maps, Lists are passed by reference.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    my_list: List<int> = List<int>()
+
+    print(my_list.size) //0
+
+    my_list[0] = 2
+    my_list[1] = 11
+    my_list[2] = -9
+
+    for i: int in my_list {
+        print(my_list[i])
+    }
+
+    <span class="gr">//2</span>
+    <span class="gr">//11</span>
+    <span class="gr">//-9</span>
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>Map</h2>
+            <p>
+            Each entry in a Map is a key-value pair.  The key is a string type
+            and the value type is specified at creation of the Map using < >.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    my_map: Map<float> = Map<float>()
+
+    print(my_map.size) //0
+
+    my_map["dog"] = 32.2
+    my_map["cat"] = -2.6
+
+    foreach k: string in my_map.keys {
+        print(k + " " + my_map[k])
+    }
+
+    <span class="gr">//dog 32.2</span>
+    <span class="gr">//cat -2.6</span>
+    <span class="gr">//Note: order of key/value pairs may vary</span>
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+<div id="modules" class="container">
+    <h1>Modules</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <p>
+            Modules can be imported into the current script using the 'import' keyword.  Cebra will look
+            for .cbr files in the same directory as the running script.  The following example imports a module
+            name vec.cbr and calls a function 'vec3'.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+        <pre class="code-box col-3-4">
+            <code>
+    import vec //do not include the .cbr extension
+
+    x, y, z := vec3() 
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+<div id="libraries" class="container">
+    <h1>Standard Library</h1>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>clock() &rarr; (float)</h2>
+            <p>
+            Returns the processor time consumed by the program in seconds.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    <span class="gr">//prints time elapsed during 'test_function' call</span>
+    start_time: float = clock()
+    test_function()
+    print(clock() - start_time)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>print(s: string) &rarr; ()</h2>
+            <p>
+                Print out string s to the screen and also appends a newline character.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    print("Hello world")
+    print("Hello" + " world")
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>input() &rarr; (string)</h2>
+            <p>
+                Reads input from the keyboard and returns it as a string.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    <span class="gr">//store keyboard input into string s, and then print it to the screen.</span>
+    s: string = input()
+    print(s)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>open(s: string) &rarr; (File)</h2>
+            <p>
+                Returns a File object for the given file path s.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    f: File = open("sample.txt")
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>close(f: File) &rarr; ()</h2>
+            <p>
+            Closes the File object f.  The Cebra garbage collector will eventually close f if it's no longer referenced in the script, but
+                    it's good practice to close any files when done with them rather than waiting for the garbage collector to do it.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    f: File = open("sample.txt")
+    close(f)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>read_all(f: File) &rarr; (string)</h2>
+            <p>
+                Returns a string containing the contents of the entire file.  read_all(f) will automatically move the File read pointer back 
+                to the beginning of the file, so calling rewind(f) is not necessary.  After reading the entire contents, the File read pointer will be 
+                at the end of the file.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    f: File = open("sample.txt")
+    print(read_all(f))
+    close(f)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>read_line(f: File) &rarr; (string)</h2>
+            <p>
+                Returns the next line in File f.  It will return an empty string if at the end of the file.  Use eof(f) to differentiate
+                between an end of file "" and simply an empty line in the file.  
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    f: File = open("sample.txt")
+    while !eof(f) {
+        print(read_line(f))
+    }
+    close(f)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>eof(f: File) &rarr; (bool)</h2>
+            <p>
+                Returns true if the at the end of file.  A read_line(f) call will return an empty string at this point.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    f: File = open("sample.txt")
+    while !eof(f) {
+        print(read_line(f))
+    }
+    close(f)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>rewind(f: File) &rarr; ()</h2>
+            <p>
+                Will return the File read pointer to the beginning of the file.  A call to read_line(f) will start back at the beginning of
+                the file.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    <span class="gr">//prints the first line in the file 3 times</span>
+    f: File = open("sample.txt")
+    for i := 1, i < 3, i = i + 1 {
+        print(read_line(f))
+        rewind(f)
+    }
+    close(f)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>clear(f: File) &rarr; ()</h2>
+            <p>
+                Clear the given file of any contents.  Any call to append(f) after calling clear(f) will add a new line to the beginning of
+                the file.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    <span class="gr">//clears the file of any contents</span>
+    f: File = open("sample.txt")
+    clear(f)
+    close(f)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <section class="col-3-4">
+            <h2>append(f: File, s: string) &rarr; ()</h2>
+            <p>
+                Append string s to the end of the file.  Note that if append(f, s) is called the read pointer will be
+                moved to the end of the file - calling read_line(f) immedately aftewards will return an empty string, and eof(f) will return true.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    <span class="gr">//clears the file of any contents, and appends a single line.</span>
+    f: File = open("sample.txt")
+    clear(f)
+    append(f, "This is the first line")
+    close(f)
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+
+<div id="extending-cebra" class="container">
+    <h1>Extending Cebra with C or C++</h1>
+    <div class="row">
+        <section class="col-3-4">
+            Coming soon.
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+</div>
+
+        </section>
+    </body>
+</html>
