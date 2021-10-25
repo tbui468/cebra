@@ -331,15 +331,14 @@ static ResultCode call_dot(struct Node** node) {
                 Token left_bracket = parser.previous;
                 struct Node* idx;
                 PARSE(parse_expression, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
-                /* //TODO: uncomment to add string slicing
-                if (match(TOKEN_COLON)) {
+                if (match(TOKEN_COMMA)) {
                     struct Node* end_idx;
                     PARSE(parse_expression, &end_idx, left_bracket, "Expect end index for array slicing.");
                     left = make_slice_string(left_bracket, left, idx, end_idx);
                 } else {
                     left = make_get_element(parser.previous, left, idx);
-                }*/
-                left = make_get_element(parser.previous, left, idx); //TODO: delete this when addin string slicing
+                }
+                //left = make_get_element(parser.previous, left, idx); //TODO: delete this when addin string slicing
                 CONSUME(TOKEN_RIGHT_BRACKET, left_bracket, "Expect ']' after index.");
                 break;
             }

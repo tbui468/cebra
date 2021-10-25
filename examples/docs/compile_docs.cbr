@@ -8,7 +8,7 @@ clear(out)
 while !eof(f) {
     s := read_line(f)
     if s.size > 0 and s[0] == "$"{
-        about_f := open(dir + get_html_file(s))
+        about_f := open(dir + s[1, s.size])
         about_s := read_all(about_f)
         append(out, about_s)
         close(about_f)
@@ -19,12 +19,3 @@ while !eof(f) {
 
 close(f)
 close(out)
-
-
-get_html_file :: (s: string) -> (string) {
-    ret := ""
-    for i := 1, i < s.size, i = i + 1 {
-        ret = ret + s[i] 
-    }
-    -> ret
-}

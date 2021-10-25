@@ -47,18 +47,7 @@ Stack overflow
 
 Implementation:
 
-    string interning on is crashing stack for highlight, but not having it on is crashing tests
-
-    need string splicing (compiling highlighting for 23 lines of html is creating 700+ strings) since we 
-        are concatenating single chars at a time - this is blowing up the string count.
-        s[0:4] creates a new string.  identifier [ expression : expression ]
-
-    parse the code and highlight - look for <code></code>
-        all text inside should just be indented properly
-        parse text for keywords (blue), constants and comments (green), strings (red)
-
-    Interned strings are disabled now since the GC doesn't collect them, and they grow out of
-        control causing the vm stack to overflow.
+    interned strings are overflowing vm stack now even with slicing
         
     GC needs to collect interned strings when no longer referenced.
         Stop marking interned strings table
@@ -66,8 +55,8 @@ Implementation:
             just delete the ptr in the table - the GC will take care of the string
         add delete function for hash tables (tombstones and stuff) to delete entries
 
-    Turn back on string interning. ObjString comparisons can just compare pointer addresses now
-        since we never have duplicates strings.
+        Turn back on string interning. ObjString comparisons can just compare pointer addresses now
+            since we never have duplicates strings.
 
     Use Cebra to highlight code snippets
         read in compiled_docs.html into a buffer
@@ -76,6 +65,14 @@ Implementation:
             make a table of keywords to highlight blue
             highlight constants  and comments green
             highlight strings red
+        
+            parse the code and highlight - look for <code></code>
+                all text inside should just be indented properly
+                parse text for keywords (blue), constants and comments (green), strings (red)
+
+    string slicing is using ',' to separate start/end indices since ':' is used for declaring types
+    and this is causing problems with the parsing.  Could try to change it to ':' to conform with 
+    other languages' syntax, but this will requiring reworking some of the parser.
 
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
