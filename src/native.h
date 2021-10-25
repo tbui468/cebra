@@ -3,11 +3,41 @@
 
 #include <time.h>
 
+static ResultCode append_string_with_escape_sequences(FILE* fp, char* s) {
+    char* start = s;
+    char* back_slash = strchr(start, '\\');
+    while (back_slash != NULL) {
+        fprintf(fp, "%.*s", (int)(back_slash-start), start);
+        switch(*(back_slash + 1)) {
+            case 'a': fprintf(fp, "\a"); break;
+            case 'b': fprintf(fp, "\b"); break;
+            case 'e': fprintf(fp, "\e"); break;
+            case 'f': fprintf(fp, "\f"); break;
+            case 'n': fprintf(fp, "\n"); break;
+            case 'r': fprintf(fp, "\r"); break;
+            case 't': fprintf(fp, "\t"); break;
+            case 'v': fprintf(fp, "\v"); break;
+            case '\\': fprintf(fp, "\\"); break;
+            case '\'': fprintf(fp, "\'"); break;
+            case '\"': fprintf(fp, "\""); break;
+            case '?': fprintf(fp, "\?"); break;
+        }
+        start = back_slash + 2;
+        back_slash = strchr(start, '\\');
+    }
+
+    fprintf(fp, "%s", start);
+
+    return RESULT_SUCCESS;
+}
+
 static ResultCode append_native(int arg_count, Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     struct ObjString* s = args[1].as.string_type;
     fseek(file->fp, 0, SEEK_END);
-    if (fprintf(file->fp, "%s\n", s->chars) < 0) return RESULT_FAILED;
+    //if (fprintf(file->fp, "%s\n", s->chars) < 0) return RESULT_FAILED;
+    append_string_with_escape_sequences(file->fp, s->chars);
+
     fflush(file->fp);
     file->next_line = make_string("", 0);
     file->is_eof = true;
@@ -79,10 +109,13 @@ static ResultCode read_line_native(int arg_count, Value* args, struct ValueArray
         return RESULT_FAILED;
     }
 
-    push_root(to_string(file->next_line));
+    struct ObjString* line = file->next_line;
+    push_root(to_string(line));
+
     process_next_line(file);
 
-    add_value(returns, pop_root());
+    add_value(returns, to_string(line));
+    pop_root();
 
     return RESULT_SUCCESS;
 }
@@ -240,7 +273,7 @@ static ResultCode print_string_with_escape_sequences(char* s) {
             case 'v': printf("\v"); break;
             case '\\': printf("\\"); break;
             case '\'': printf("\'"); break;
-            case '"': printf("\""); break;
+            case '\"': printf("\""); break;
             case '?': printf("\?"); break;
         }
         start = back_slash + 2;

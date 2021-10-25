@@ -240,8 +240,10 @@ static void trace_references() {
                 struct ObjFile* of = (struct ObjFile*)obj;
                 mark_and_push((struct Obj*)(of->file_path));
                 mark_and_push((struct Obj*)(of->next_line));
+                break;
             }
             default: {
+                break;
             }
         }
     }

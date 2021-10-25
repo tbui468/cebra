@@ -1,7 +1,3 @@
-//compile code to include span tags to highlight text
-//let's just highlight 'for' keyword word for now
-//need to insert <span class="br">for</span> to make 'for' blue...
-//clear white space
 
 dir := "C:\\dev\\cebra\\examples\\docs\\"
 f := open(dir + "compiled_docs.html")
@@ -9,31 +5,52 @@ f := open(dir + "compiled_docs.html")
 out := open(dir + "final_docs.html")
 clear(out)
 
-//while !eof(f) {
-//    s := highlight_comments(read_line(f))
-//    append(out, s)
-//    //append(out, read_line(f))
-//}
+code_block := false
 
-i := 0
 while !eof(f) {
-    i = i + 1
-    //line := read_line(f)
-    //s := highlight_comments(line)
-    append(out, read_line(f))
-    print(i as string + "\n")
+    line := read_line(f)
+    if !code_block {    
+        line = highlight_comments(line)
+    }
+
+    if start_code(line)    code_block = true
+    if end_code(line)      code_block = false
+
+    append(out, line + "\n")
 }
 
 close(f)
 close(out)
 
+start_code :: (s: string) -> (bool) {
+//  -> s.size >= 6 and s[0:6] == "<code>"
+    -> s.size >= 6 and 
+       s[0] == "<" and 
+       s[1] == "c" and
+       s[2] == "o" and
+       s[3] == "d" and
+       s[4] == "e" and
+       s[5] == ">"
+}
+
+end_code :: (s: string) -> (bool) {
+//  -> s.size >= 7 and s[0:7] == "</code>"
+    -> s.size >= 7 and 
+       s[0] == "<" and 
+       s[1] == "/" and
+       s[2] == "c" and
+       s[3] == "o" and
+       s[4] == "d" and
+       s[5] == "e" and
+       s[6] == ">"
+}
 
 highlight_comments :: (s: string) -> (string) {
-//    s = remove_starting_whitespace(s)
-//    if s.size > 1 and s[0] == "/" and s[1] == "/" {
-//        ret := "<span class=\"gr\">" + s + "</span>"
-//        -> ret
-//    }
+    s = remove_starting_whitespace(s)
+    if s.size > 1 and s[0] == "/" and s[1] == "/" {
+        ret := "<span class=\"gr\">" + s + "</span>"
+        -> ret
+    }
     -> s
 }
 

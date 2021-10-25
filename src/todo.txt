@@ -47,30 +47,16 @@ Stack overflow
 
 Implementation:
 
-    Why is the stack growing so much from push_root sometimes?  Up to hundreds of them and then they all
-    disappear back down to a dozen or so...
+    need string splicing (compiling highlighting for 23 lines of html is creating 700+ strings) since we 
+        are concatenating single chars at a time - this is blowing up the string count.
+        s[0:4] creates a new string.  identifier [ expression : expression ]
 
-        dir := "C:\\dev\\cebra\\examples\\docs\\"
-        f := open(dir + "compiled_docs.html")
+    parse the code and highlight - look for <code></code>
+        all text inside should just be indented properly
+        parse text for keywords (blue), constants and comments (green), strings (red)
 
-        out := open(dir + "final_docs.html")
-        clear(out)
-
-        i := 0
-        while !eof(f) {
-            i = i + 1
-            append(out, read_line(f))
-            print(i as string) //commenting this out makes it work, but still have strange stack explosion into the hundreds
-        }
-
-        close(f)
-        close(out)
-
-    Stack size is limiting highlight_syntax.cbr from running - what am I pushing onto the stack?
-        printing out stack when is crashes - it's [text][nil]... repeating.  Why is that?  Shouldn't the
-        stack be clearing temporaries?
-
-        'print' leaves a nil on the stack for some reason.
+    Interned strings are disabled now since the GC doesn't collect them, and they grow out of
+        control causing the vm stack to overflow.
         
     GC needs to collect interned strings when no longer referenced.
         Stop marking interned strings table
@@ -78,9 +64,8 @@ Implementation:
             just delete the ptr in the table - the GC will take care of the string
         add delete function for hash tables (tombstones and stuff) to delete entries
 
-    need string splicing (compiling highlighting for 23 lines of html is creating 700+ strings) since we 
-        are concatenating single chars at a time - this is blowing up the string count.
-        s[0:4] creates a new string.  identifier [ expression : expression ]
+    Turn back on string interning. ObjString comparisons can just compare pointer addresses now
+        since we never have duplicates strings.
 
     Use Cebra to highlight code snippets
         read in compiled_docs.html into a buffer

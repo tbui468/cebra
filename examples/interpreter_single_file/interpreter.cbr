@@ -1,8 +1,8 @@
 //Mini interpreter for evaluating mathematical expressions
 //input expression can include intgers, +, -, *, / and parentheses
-//output is a double precision floating point
-
-//driver
+//output is a double precision floating point.  
+//Mini-interpreter
+//  written in Cebra
 
 DEBUG, continue := false, true
 

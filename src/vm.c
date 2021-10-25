@@ -367,8 +367,8 @@ ResultCode run_program(VM* vm) {
                 Value value = peek(vm, arity);
                 if (value.type == VAL_FUNCTION) {
                     call(vm, value.as.function_type);
-                }
-                if (value.type == VAL_NATIVE) {
+                    frame = &vm->frames[vm->frame_count - 1];
+                } else if (value.type == VAL_NATIVE) {
                     ResultCode (*native)(int, Value*, struct ValueArray*) = value.as.native_type->function;
 
                     //setting size to before calling native function so that 
@@ -387,7 +387,6 @@ ResultCode run_program(VM* vm) {
                     }
                     free_value_array(&va);
                 }
-                frame = &vm->frames[vm->frame_count - 1];
                 break;
             }
             case OP_RETURN: {
