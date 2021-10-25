@@ -292,13 +292,13 @@ static ResultCode print_native(int arg_count, Value* args, struct ValueArray* re
             break;
         }
         case VAL_INT:
-            printf("%d\n", value.as.integer_type);
+            printf("%d", value.as.integer_type);
             break;
         case VAL_FLOAT:
-            printf("%f\n", value.as.float_type);
+            printf("%f", value.as.float_type);
             break; 
         case VAL_NIL:
-            printf("nil\n");
+            printf("nil");
             break;
     }
     add_value(returns, to_nil());

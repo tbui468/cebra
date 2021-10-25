@@ -1,5 +1,7 @@
 dir := "C:\\dev\\cebra\\examples\\docs\\"
 
+//combine html files
+
 f := open(dir + "cebra_docs.html")
 
 out := open(dir + "compiled_docs.html")
@@ -19,3 +21,104 @@ while !eof(f) {
 
 close(f)
 close(out)
+
+//highlight compiled_docs.html
+
+f = open(dir + "compiled_docs.html")
+out = open(dir + "final_docs.html")
+clear(out)
+
+code_block := false
+while !eof(f) {
+    line := read_line(f)
+
+    if start_code(line)    code_block = true
+    if end_code(line)      code_block = false
+
+    if code_block {
+        line = highlight_string(line)
+    }
+
+    append(out, line + "\n")
+}
+
+close(f)
+close(out)
+
+Pair :: struct {
+    start := -1
+    end := -1
+}
+
+highlight_string :: (s: string) -> (string) {
+    //comments
+    if s.size < 2 -> s
+    for i := 1, i < s.size, i = i + 1 {
+        if s[i-1] == "/" and s[i] == "/" {
+            -> s[0, i-1] + "<span class=\"gr\">" + s[i-1, s.size] + "</span>"
+        }
+    }
+
+    //strings
+    strings := List<Pair>()
+    count := 0
+    start := -1
+    end := -1
+    double_quote := "\""
+    dq := "\""[1, 2]
+    found_this_iteration := false
+    for i := 0, i < s.size, i = i + 1 {
+        if s[i] == dq and start != -1 and end == -1 {
+            strings[count] = Pair()
+            strings[count].start = start
+            strings[count].end = i
+            count = count + 1
+            start = -1
+            end = -1
+            found_this_iteration = true
+        }
+        if s[i] == dq and start == -1 and !found_this_iteration {
+            start = i
+        }
+        found_this_iteration = false
+    }
+
+
+    if strings.size > 0 {
+        result := ""
+        start := 0
+        for i := 0, i < strings.size, i = i + 1 {
+            result = result + s[start, strings[i].start] + "<span class=\"re\">" + s[strings[i].start, strings[i].end + 1] + "</span>"
+            start = strings[i].end + 1
+        }
+        -> result + s[start, s.size]
+    }
+
+    //constants - ints, floats, true, false, nil
+        //loop through and find start/end pair for each constant
+
+    //keywords - [type], struct, enum, List, Map
+        //loop through and find start/end pair for each keyword
+
+    -> s
+}
+
+//functions
+
+start_code :: (s: string) -> (bool) {
+  trimmed := remove_starting_whitespace(s)
+  -> trimmed.size >= 6 and trimmed[0, 6] == "<code>"
+}
+
+end_code :: (s: string) -> (bool) {
+  trimmed := remove_starting_whitespace(s)
+  -> trimmed.size >= 7 and trimmed[0, 7] == "</code>"
+}
+
+remove_starting_whitespace :: (s: string) -> (string) {
+    i := 0
+    while i < s.size - 1 and s[i] == " " {
+        i = i + 1
+    }
+    -> s[i,s.size]
+}

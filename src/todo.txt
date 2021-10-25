@@ -51,6 +51,14 @@ Implementation:
         'highlight_syntax.cbr'.  Disabled for now to allow script to run.
 
     Implement deleting of hash table entries 
+        Write some code in main to test deleting of entries and to see what API works well.
+        when deleting an entry, replace it with a tombstone (such as NULL key and true value to differentiate from a default NULL/nil)
+        when searching/inserting a new entry, if we pass any tombstones, cache the first one.  If we
+            end up on a NULL entry with nil value, the just go back and use the cached tombstone
+            as the new location for the entry
+        treat the count of a table as the total of tombstones + entries.
+        when growing the table, skip inserting the tombstones and only increment the count if
+            the entry is a non-tombstone entry.  
         
     GC needs to collect interned strings when no longer referenced.
         Stop marking interned strings table
@@ -76,6 +84,8 @@ Implementation:
     string slicing is using ',' to separate start/end indices since ':' is used for declaring types
     and this is causing problems with the parsing.  Could try to change it to ':' to conform with 
     other languages' syntax, but this will requiring reworking some of the parser.
+
+    slicing arrays?  a[0:3][0:3] either return a new 2x2 matrix.  a[0:3][0:3] = b (will check if b is correct dimensions)
 
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then

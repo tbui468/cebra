@@ -74,7 +74,7 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    git clone https://github.com/tbui468/cebra
+    git clone https:<span class="gr">//github.com/tbui468/cebra</span>
     cd cebra
     mkdir build
     cd build
@@ -126,7 +126,7 @@
         <code>
     ./Cebra
 
-    >>> print("Hello world")
+    >>> print(<span class="re">"Hello world"</span>)
     Hello world
     >>> a := 2
     >>> b := 3
@@ -155,11 +155,11 @@
     }
 
 
-    print(fib(10))     //55
-    a: int = fib(10) + 5 //declare a new variable and explicitly declare the type
-    print(a) //60
-    b := 2.2  //declare a new variable and infer the type based on the assignment
-    print(b) //2.20000
+    print(fib(10))     <span class="gr">//55</span>
+    a: int = fib(10) + 5 <span class="gr">//declare a new variable and explicitly declare the type</span>
+    print(a) <span class="gr">//60</span>
+    b := 2.2  <span class="gr">//declare a new variable and infer the type based on the assignment</span>
+    print(b) <span class="gr">//2.20000</span>
     </code>
         </pre>
         <section class="col-1-4">
@@ -302,8 +302,8 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    a: string = "Hello"
-    b := "World"
+    a: string = <span class="re">"Hello"</span>
+    b := <span class="re">"World"</span>
     c := a + b
     c = c + c
             </code>
@@ -328,15 +328,15 @@
             <code>
     a: bool = true
     if a {
-        print("This will print.")
-        print("This will print too.")
+        print(<span class="re">"This will print."</span>)
+        print(<span class="re">"This will print too."</span>)
     }
 
     b: int = 11
     if b < 10 
-        print("This will not print")
+        print(<span class="re">"This will not print"</span>)
     else 
-        print("This will print")
+        print(<span class="re">"This will print"</span>)
             </code>
         </pre>
         <section class="col-1-4">
@@ -406,11 +406,11 @@
     i: int = 1
 
     when i {
-        is 1 { print("one") }
-        is 2 { print("two") }
-        is 3 { print("three") }
-        is 4 { print("four") }
-        else { print("other") }
+        is 1 { print(<span class="re">"one"</span>) }
+        is 2 { print(<span class="re">"two"</span>) }
+        is 3 { print(<span class="re">"three"</span>) }
+        is 4 { print(<span class="re">"four"</span>) }
+        else { print(<span class="re">"other"</span>) }
     }
 
     <span class="gr">//Will print "one"</span>
@@ -433,9 +433,9 @@
         <pre class="code-box col-3-4">
             <code>
     my_list: List<string> = List<string>()
-    my_list[0] = "first"
-    my_list[1] = "second"
-    my_list[2] = "third"
+    my_list[0] = <span class="re">"first"</span>
+    my_list[1] = <span class="re">"second"</span>
+    my_list[2] = <span class="re">"third"</span>
 
     foreach word: string in my_list {
         print(word)
@@ -475,13 +475,13 @@
     <span class="gr">//takes in one integer as a parameter, and has no return value.</span>
     print_double :: (n: int) -> () {
         print(2 * n)
-        -> //optional return statement
+        -> <span class="gr">//optional return statement</span>
     }
 
     <span class="gr">//takes in two floats as parameters, and has no return value.  </span>
     early_return :: (n: float, m: float) -> () {
         if n < 5.0 {
-            ->       //will return from function, and skip calling 'print(n * m)' below
+            ->       <span class="gr">//will return from function, and skip calling 'print(n * m)' below</span>
         }
 
         print(n * m)
@@ -506,19 +506,19 @@
         <pre class="code-box col-3-4">
             <code>
     greeting :: (name: string) -> (string) {
-        -> "Hello, " + name + "."
+        -> <span class="re">"Hello, "</span> + name + <span class="re">"."</span>
     }
 
-    print(greeting("Tim"))  //"Hello, Tim."
-    print(greeting("Mittens")) //"Hello, Mittens."
+    print(greeting("Tim"))  <span class="gr">//"Hello, Tim."</span>
+    print(greeting("Mittens")) <span class="gr">//"Hello, Mittens."</span>
 
     returns_two :: () -> (int, int) {
         -> 1, 5
     }
 
     x, y := returns_two()
-    print(x) //1
-    print(y) //5
+    print(x) <span class="gr">//1</span>
+    print(y) <span class="gr">//5</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -543,7 +543,7 @@
     }    
 
     result := op(1, 2, (a: int, b: int) -> (int) { -> a + b })
-    print(result) //3
+    print(result) <span class="gr">//3</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -567,9 +567,9 @@
         <pre class="code-box col-3-4">
             <code>
     Person :: struct {
-        name: string        = "John"
+        name: string        = <span class="re">"John"</span>
         age: int            = 35
-        hair_color: string  = "Brown"
+        hair_color: string  = <span class="re">"Brown"</span>
         height: float       = 175.1
         friends             := List&#60Person&#62()
         best_friend: Person = nil
@@ -595,7 +595,7 @@
         <pre class="code-box col-3-4">
             <code>
     Dog :: struct {
-        name: string = "Mittens"
+        name: string = <span class="re">"Mittens"</span>
         age: int = 3
     }
 
@@ -617,22 +617,22 @@
         <pre class="code-box col-3-4">
             <code>
     Car :: struct {
-        color: string = "red"
+        color: string = <span class="re">"red"</span>
         age: int = 20
         description: (car: Car) -> (string) = nil
     }
 
     to_string :: (car: Car) -> (string) {
-        print("This " + car.age as string + " year-old car is " + car.color)
+        print(<span class="re">"This "</span> + car.age as string + <span class="re">" year-old car is "</span> + car.color)
     }
 
     my_car: Car = Car()
     my_car.description = to_string
 
-    my_car.description(my_car) //This 20 year-old car is red
+    my_car.description(my_car) <span class="gr">//This 20 year-old car is red</span>
 
-    my_car.color = "green"
-    my_car.description(my_car) //This 20 year-old car is green
+    my_car.color = <span class="re">"green"</span>
+    my_car.description(my_car) <span class="gr">//This 20 year-old car is green</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -653,21 +653,21 @@
         <pre class="code-box col-3-4">
             <code>
     Animal :: struct {
-        classification: string = "mammalia" 
+        classification: string = <span class="re">"mammalia"</span> 
     }
 
     Deer :: struct < Animal {
     }
 
     Shark :: struct < Animal {
-        classification: string = "chondrichthyes"
+        classification: string = <span class="re">"chondrichthyes"</span>
     }
 
     my_deer: Deer = Deer()
     my_shark: Shark = Shark()
 
-    print(my_deer.classification) //"mammalia"
-    print(my_shark.classification) //"chondrichthyes"
+    print(my_deer.classification) <span class="gr">//"mammalia"</span>
+    print(my_shark.classification) <span class="gr">//"chondrichthyes"</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -722,7 +722,7 @@
             <code>
     my_list: List<int> = List<int>()
 
-    print(my_list.size) //0
+    print(my_list.size) <span class="gr">//0</span>
 
     my_list[0] = 2
     my_list[1] = 11
@@ -756,13 +756,13 @@
             <code>
     my_map: Map<float> = Map<float>()
 
-    print(my_map.size) //0
+    print(my_map.size) <span class="gr">//0</span>
 
-    my_map["dog"] = 32.2
-    my_map["cat"] = -2.6
+    my_map[<span class="re">"dog"</span>] = 32.2
+    my_map[<span class="re">"cat"</span>] = -2.6
 
     foreach k: string in my_map.keys {
-        print(k + " " + my_map[k])
+        print(k + <span class="re">" "</span> + my_map[k])
     }
 
     <span class="gr">//dog 32.2</span>
@@ -788,7 +788,7 @@
         </section>
         <pre class="code-box col-3-4">
             <code>
-    import vec //do not include the .cbr extension
+    import vec <span class="gr">//do not include the .cbr extension</span>
 
     x, y, z := vec3() 
             </code>
@@ -834,8 +834,8 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    print("Hello world")
-    print("Hello" + " world")
+    print(<span class="re">"Hello world"</span>)
+    print(<span class="re">"Hello"</span> + <span class="re">" world"</span>)
             </code>
         </pre>
         <section class="col-1-4">
@@ -875,7 +875,7 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
             </code>
         </pre>
         <section class="col-1-4">
@@ -895,7 +895,7 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
     close(f)
             </code>
         </pre>
@@ -917,7 +917,7 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
     print(read_all(f))
     close(f)
             </code>
@@ -939,7 +939,7 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
     while !eof(f) {
         print(read_line(f))
     }
@@ -962,7 +962,7 @@
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
     while !eof(f) {
         print(read_line(f))
     }
@@ -987,7 +987,7 @@
         <pre class="code-box col-3-4">
             <code>
     <span class="gr">//prints the first line in the file 3 times</span>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
     for i := 1, i < 3, i = i + 1 {
         print(read_line(f))
         rewind(f)
@@ -1013,7 +1013,7 @@
         <pre class="code-box col-3-4">
             <code>
     <span class="gr">//clears the file of any contents</span>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
     clear(f)
     close(f)
             </code>
@@ -1036,9 +1036,9 @@
         <pre class="code-box col-3-4">
             <code>
     <span class="gr">//clears the file of any contents, and appends a single line.</span>
-    f: File = open("sample.txt")
+    f: File = open(<span class="re">"sample.txt"</span>)
     clear(f)
-    append(f, "This is the first line")
+    append(f, <span class="re">"This is the first line"</span>)
     close(f)
             </code>
         </pre>
