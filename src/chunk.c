@@ -67,6 +67,7 @@ const char* op_to_string(OpCode op) {
         case OP_CAST: return "OP_CAST";
         case OP_ADD_GLOBAL: return "OP_ADD_GLOBAL";
         case OP_GET_GLOBAL: return "OP_GET_GLOBAL";
+        case OP_SLICE: return "OP_SLICE";
         default: return "Unrecognized op";
     }
 }

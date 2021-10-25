@@ -469,6 +469,17 @@ ResultCode run_program(VM* vm) {
                     break;
                 }
             }
+            case OP_SLICE: {
+                //[string][start idx][end idx - exclusive]
+                int end_idx = pop(vm).as.integer_type;
+                int start_idx = pop(vm).as.integer_type;
+                struct ObjString* s = peek(vm, 0).as.string_type;
+                //TODO: add index checks
+                struct ObjString* sub = make_string(s->chars + start_idx, end_idx - start_idx);
+                pop(vm);
+                push(vm, to_string(sub));
+                break;
+            }
             case OP_GET_ELEMENT: {
                 //[list | map | string][idx]
                 Value left = peek(vm, 1);

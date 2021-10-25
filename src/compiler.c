@@ -1211,6 +1211,26 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             return RESULT_SUCCESS;
         }
+        case NODE_SLICE_STRING: {
+            SliceString* ss = (SliceString*)node;
+            struct Type* left_type;
+            COMPILE_NODE(ss->left, &left_type);
+            struct Type* start_idx_type;
+            COMPILE_NODE(ss->start_idx, &start_idx_type);
+            struct Type* end_idx_type;
+            COMPILE_NODE(ss->end_idx, &end_idx_type);
+            if (left_type->type != TYPE_STRING) {
+                add_error(compiler, ss->name, "Slicing can only be used on strings.");
+                return RESULT_FAILED;
+            }
+            if (start_idx_type->type != TYPE_INT || end_idx_type->type != TYPE_INT) {
+                add_error(compiler, ss->name, "Indices for string slicing must be integer types.");
+                return RESULT_FAILED;
+            }
+            emit_byte(compiler, OP_SLICE);
+            *node_type = left_type;
+            return RESULT_SUCCESS;
+        }
         case NODE_GET_ELEMENT: {
             GetElement* get_idx = (GetElement*)node;
             struct Type* left_type;

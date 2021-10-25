@@ -258,6 +258,18 @@ struct Node* make_set_var(struct Node* left, struct Node* right) {
     return insert_node((struct Node*)set_var);
 }
 
+
+struct Node* make_slice_string(Token name, struct Node* left, struct Node* start_idx, struct Node* end_idx) {
+    SliceString* ss = ALLOCATE(SliceString);
+    ss->name = name;
+    ss->left = left;
+    ss->start_idx = start_idx;
+    ss->end_idx = end_idx;
+    ss->base.type = NODE_SLICE_STRING;
+
+    return insert_node((struct Node*)ss);
+}
+
 struct Node* make_get_element(Token name, struct Node* left, struct Node* idx) {
     GetElement* get_ele = ALLOCATE(GetElement);
     get_ele->name = name;
@@ -460,6 +472,10 @@ void print_node(struct Node* node) {
             printf("SetVar stub");
             break;
         }
+        case NODE_SLICE_STRING: {
+            printf("Slice String");
+            break;
+        }
         case NODE_GET_ELEMENT: {
             GetElement* gi = (GetElement*)node;
             printf("( GetElement ");
@@ -608,6 +624,11 @@ void free_node(struct Node* node) {
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
             FREE(sv, SetVar);
+            break;
+        }
+        case NODE_SLICE_STRING: {
+            SliceString* ss = (SliceString*)node;
+            FREE(ss, SliceString);
             break;
         }
         case NODE_GET_ELEMENT: {

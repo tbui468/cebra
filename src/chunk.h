@@ -49,7 +49,8 @@ typedef enum {
     OP_ENUM,
     OP_ADD_GLOBAL,
     OP_GET_GLOBAL,
-    OP_HALT
+    OP_HALT,
+    OP_SLICE
 } OpCode;
 
 typedef struct {

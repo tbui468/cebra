@@ -47,6 +47,8 @@ Stack overflow
 
 Implementation:
 
+    string interning on is crashing stack for highlight, but not having it on is crashing tests
+
     need string splicing (compiling highlighting for 23 lines of html is creating 700+ strings) since we 
         are concatenating single chars at a time - this is blowing up the string count.
         s[0:4] creates a new string.  identifier [ expression : expression ]
