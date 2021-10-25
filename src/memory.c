@@ -26,6 +26,9 @@ struct Obj* pop_gray() {
 }
 
 void push_root(Value value) {
+//    printf("pushing root ");
+//    print_value(value);
+//    printf("stack size: %d\n", (int)(mm.vm->stack_top - mm.vm->stack));
     push(mm.vm, value);
 }
 

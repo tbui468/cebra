@@ -310,11 +310,11 @@ void print_value(Value a) {
             printf("%s", a.as.boolean_type ? "true" : "false");
             break;
         case VAL_STRING:
-            printf("%s", a.as.string_type->chars);
+            printf("<string %s >", a.as.string_type->chars);
             break;
         case VAL_FUNCTION:
             printf("%s", "<fun: ");
-            printf("%s", a.as.function_type->name->chars);
+            //printf("%s", a.as.function_type->name->chars);
             printf(">");
             break;
         case VAL_STRUCT:

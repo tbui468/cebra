@@ -47,9 +47,30 @@ Stack overflow
 
 Implementation:
 
+    Why is the stack growing so much from push_root sometimes?  Up to hundreds of them and then they all
+    disappear back down to a dozen or so...
+
+        dir := "C:\\dev\\cebra\\examples\\docs\\"
+        f := open(dir + "compiled_docs.html")
+
+        out := open(dir + "final_docs.html")
+        clear(out)
+
+        i := 0
+        while !eof(f) {
+            i = i + 1
+            append(out, read_line(f))
+            print(i as string) //commenting this out makes it work, but still have strange stack explosion into the hundreds
+        }
+
+        close(f)
+        close(out)
+
     Stack size is limiting highlight_syntax.cbr from running - what am I pushing onto the stack?
         printing out stack when is crashes - it's [text][nil]... repeating.  Why is that?  Shouldn't the
         stack be clearing temporaries?
+
+        'print' leaves a nil on the stack for some reason.
         
     GC needs to collect interned strings when no longer referenced.
         Stop marking interned strings table

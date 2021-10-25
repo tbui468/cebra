@@ -28,15 +28,18 @@ int free_table(struct Table* table) {
 
 void copy_table(struct Table* dest, struct Table* src) {
     reset_table_capacity(dest, src->capacity); 
+    int pushed = 0;
     for (int i = 0; i < src->capacity; i++) {
         struct Pair* pair = &src->pairs[i];
         if (pair->key == NULL) continue;
 
-        push_root(pair->value);
         Value copy = copy_value(&pair->value);
         push_root(copy);
+        pushed++;
         set_table(dest, pair->key, copy);
-        pop_root();
+    }
+
+    for (int i = 0; i < pushed; i++) {
         pop_root();
     }
 }

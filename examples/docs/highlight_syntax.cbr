@@ -16,23 +16,24 @@ clear(out)
 //}
 
 i := 0
-while i < 200 {
+while !eof(f) {
     i = i + 1
-    line := read_line(f)
-    s := highlight_comments(line)
-    append(out, s)
+    //line := read_line(f)
+    //s := highlight_comments(line)
+    append(out, read_line(f))
     print(i as string + "\n")
 }
 
 close(f)
 close(out)
 
+
 highlight_comments :: (s: string) -> (string) {
-    s = remove_starting_whitespace(s)
-    if s.size > 1 and s[0] == "/" and s[1] == "/" {
-        ret := "<span class=\"gr\">" + s + "</span>"
-        -> ret
-    }
+//    s = remove_starting_whitespace(s)
+//    if s.size > 1 and s[0] == "/" and s[1] == "/" {
+//        ret := "<span class=\"gr\">" + s + "</span>"
+//        -> ret
+//    }
     -> s
 }
 

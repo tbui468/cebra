@@ -112,6 +112,7 @@ static ResultCode define_close(struct Compiler* compiler) {
     struct TypeArray* params = make_type_array();
     add_type(params, make_file_type());
     struct TypeArray* returns = make_type_array();
+    add_type(returns, make_nil_type());
     return define_native(compiler, "close", close_native, make_fun_type(params, returns));
 }
 

@@ -1,1 +1,21 @@
-print("\"HI\"\nHI\n")
+Token :: enum {
+    plus
+    minus
+    star
+    slash
+}
+
+Animal :: struct {
+    class: string = "Mammal"
+}
+
+Dog :: struct < Animal {
+    name: string = "Mittens"
+    age: int = 3
+    length: float = 100.2
+    friend: Dog = nil
+    list: List<int> = List<int>()
+    map: Map<int> = Map<int>()
+}
+
+dog2: Dog, i: int = Dog(), 32
