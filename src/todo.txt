@@ -47,30 +47,6 @@ Stack overflow
 
 Implementation:
 
-    interned strings are overflowing vm stack now even with slicing when running
-        'highlight_syntax.cbr'.  Disabled for now to allow script to run.
-
-    Implement deleting of hash table entries 
-        Write some code in main to test deleting of entries and to see what API works well.
-        when deleting an entry, replace it with a tombstone (such as NULL key and true value to differentiate from a default NULL/nil)
-        when searching/inserting a new entry, if we pass any tombstones, cache the first one.  If we
-            end up on a NULL entry with nil value, the just go back and use the cached tombstone
-            as the new location for the entry
-        treat the count of a table as the total of tombstones + entries.
-        when growing the table, skip inserting the tombstones and only increment the count if
-            the entry is a non-tombstone entry.  
-
-        delete_entry(struct Table*, struct ObjString*)
-        
-    GC needs to collect interned strings when no longer referenced.
-        Stop marking interned strings table
-        During collection, after tracing references but before sweeping, delete ptrs that are still unmarked
-            just delete the ptr in the table - the GC will take care of the string
-        add delete function for hash tables (tombstones and stuff) to delete entries
-
-        Turn back on string interning. ObjString comparisons can just compare pointer addresses now
-            since we never have duplicates strings.
-
     Use Cebra to highlight code snippets
         read in compiled_docs.html into a buffer
         write out each line back into compiled_docs.html

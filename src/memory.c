@@ -315,7 +315,9 @@ void collect_garbage() {
     mark_vm_roots();
     mark_compiler_roots();
     trace_references();
-    delete_unmarked_strings();
+    if (mm.vm->initialized) {
+        delete_unmarked_strings();
+    }
 #ifdef DEBUG_LOG_GC
     print_objects();
 #endif 
