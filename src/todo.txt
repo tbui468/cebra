@@ -47,6 +47,21 @@ Stack overflow
 
 Implementation:
 
+    making a function with 52 or'd equalities crashes - why?
+
+    Having List size auto-increment when setting a value is super confusing - should
+        not do it and force user to increment himself.
+
+        Or add an append(List, item) that automatically increments size.  Then we could
+        also make the list size read-only.
+
+    Table could use a rewrite, and include renaming 'Pair' to 'Entry'
+        and change name of some functions too ('get_from_table' -> 'get_entry', etc)
+
+        Places where strings are compared can just be done with pointer equality now 
+        since the same string will share the same address, and there won't be duplicates
+        due to interning.
+
     Use Cebra to highlight code snippets
         read in compiled_docs.html into a buffer
         write out each line back into compiled_docs.html

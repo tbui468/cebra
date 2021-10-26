@@ -45,65 +45,122 @@ while !eof(f) {
 close(f)
 close(out)
 
-Pair :: struct {
+Mode :: enum {
+    STRING
+    COMMENT
+    IDENTIFIER
+    NONE
+}
+
+Highlight :: struct {
     start := -1
     end := -1
+    color := ""
+}
+
+keywords := Map<bool>()
+keywords["for"] = true
+keywords["if"] = true
+
+is_alpha :: (s: string) -> (bool) {
+    -> s == "a" or s == "A" or 
+       s == "b" or s == "B" or 
+       s == "c" or s == "C" or 
+       s == "d" or s == "D" or 
+       s == "e" or s == "E" or 
+       s == "f" or s == "F" or 
+       s == "g" or s == "G" or 
+       s == "h" or s == "H" or 
+       s == "i" or s == "I" or 
+       s == "j" or s == "J" or 
+       s == "k" or s == "K" or 
+       s == "l" or s == "L" or 
+       s == "m" or s == "M" or 
+       s == "n" or s == "N" or 
+       s == "o" or s == "O" or 
+       s == "p" or s == "P" or 
+       s == "q" or s == "Q" or 
+       s == "r" or s == "R" or 
+       s == "s" or s == "S" or 
+       s == "t" or s == "T" or 
+       s == "u" or s == "U" or 
+       s == "v" or s == "V" or 
+       s == "w" or s == "W" or 
+       s == "x" or s == "X" or 
+       s == "y" or s == "Y" or 
+       s == "z" or s == "Z"
 }
 
 highlight_string :: (s: string) -> (string) {
-    //comments
-    if s.size < 2 -> s
-    for i := 1, i < s.size, i = i + 1 {
-        if s[i-1] == "/" and s[i] == "/" {
-            -> s[0, i-1] + "<span class=\"gr\">" + s[i-1, s.size] + "</span>"
-        }
-    }
-
-    //strings
-    strings := List<Pair>()
-    count := 0
+    //loop through string once and create Highlight objects and put it into a
+    //list.  At the end, loop through the list and apply the css tags
+    mode := Mode.NONE
     start := -1
     end := -1
-    double_quote := "\""
     dq := "\""[1, 2]
-    found_this_iteration := false
-    for i := 0, i < s.size, i = i + 1 {
-        if s[i] == dq and start != -1 and end == -1 {
-            strings[count] = Pair()
-            strings[count].start = start
-            strings[count].end = i
-            count = count + 1
-            start = -1
-            end = -1
-            found_this_iteration = true
+
+    highlights := List<Highlight>()
+    highlights.size = 0
+
+    i := 0
+    while i < s.size {
+        when mode {
+            is Mode.NONE {
+                if i > 0 and s[i-1] == "/" and s[i] == "/" {
+                    h := Highlight()
+                    h.start = i - 1
+                    h.end = s.size - 1
+                    h.color = "gr"
+                    highlights[highlights.size] = h
+                    //highlights.size = highlights.size + 1
+                    i = s.size - 1 //skipping remainder of string
+                }
+                if s[i] == dq {
+                    mode = Mode.STRING
+                    start = i
+                }
+                //if is_alpha(s[i]) {
+                    //mode = Mode.IDENTIFIER
+                    //start = i
+               // }
+            }
+            is Mode.STRING {
+                if s[i] == dq {
+                    mode = Mode.NONE
+                    h := Highlight()
+                    h.start = start
+                    h.end = i
+                    h.color = "re"
+                    highlights[highlights.size] = h
+                    //highlights.size = highlights.size + 1
+                } 
+            }
+            is Mode.IDENTIFIER {
+                //if s[i] == " " or i == s.size - 1 {
+                //    mode = Mode.NONE
+                 //   h := Highlight()
+                 //   h.start = start
+                 //   h.end = i - 1
+                 //   h.color = "bl"
+                 //   highlights[highlights.size] = h
+               // }
+            }
         }
-        if s[i] == dq and start == -1 and !found_this_iteration {
-            start = i
-        }
-        found_this_iteration = false
+        i = i + 1
     }
 
 
-    if strings.size > 0 {
+    {
         result := ""
         start := 0
-        for i := 0, i < strings.size, i = i + 1 {
-            result = result + s[start, strings[i].start] + "<span class=\"re\">" + s[strings[i].start, strings[i].end + 1] + "</span>"
-            start = strings[i].end + 1
+        for i := 0, i < highlights.size, i = i + 1 {
+            result = result + s[start, highlights[i].start] + "<span class=\"" + highlights[i].color + "\">" + s[highlights[i].start, highlights[i].end + 1] + "</span>"
+            start = highlights[i].end + 1
         }
         -> result + s[start, s.size]
     }
-
-    //constants - ints, floats, true, false, nil
-        //loop through and find start/end pair for each constant
-
-    //keywords - [type], struct, enum, List, Map
-        //loop through and find start/end pair for each keyword
-
-    -> s
 }
 
-//functions
 
 start_code :: (s: string) -> (bool) {
   trimmed := remove_starting_whitespace(s)
