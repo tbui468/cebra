@@ -36,7 +36,7 @@ while !eof(f) {
     if end_code(line)      code_block = false
 
     if code_block {
-        line = highlight_string(line)
+        line = highlight_line(line)
     }
 
     append(out, line + "\n")
@@ -49,6 +49,7 @@ Mode :: enum {
     STRING
     COMMENT
     IDENTIFIER
+    NUMBER
     NONE
 }
 
@@ -58,40 +59,52 @@ Highlight :: struct {
     color := ""
 }
 
-keywords := Map<bool>()
-keywords["for"] = true
-keywords["if"] = true
-
-is_alpha :: (s: string) -> (bool) {
-    -> s == "a" or s == "A" or 
-       s == "b" or s == "B" or 
-       s == "c" or s == "C" or 
-       s == "d" or s == "D" or 
-       s == "e" or s == "E" or 
-       s == "f" or s == "F" or 
-       s == "g" or s == "G" or 
-       s == "h" or s == "H" or 
-       s == "i" or s == "I" or 
-       s == "j" or s == "J" or 
-       s == "k" or s == "K" or 
-       s == "l" or s == "L" or 
-       s == "m" or s == "M" or 
-       s == "n" or s == "N" or 
-       s == "o" or s == "O" or 
-       s == "p" or s == "P" or 
-       s == "q" or s == "Q" or 
-       s == "r" or s == "R" or 
-       s == "s" or s == "S" or 
-       s == "t" or s == "T" or 
-       s == "u" or s == "U" or 
-       s == "v" or s == "V" or 
-       s == "w" or s == "W" or 
-       s == "x" or s == "X" or 
-       s == "y" or s == "Y" or 
-       s == "z" or s == "Z"
+is_alpha_numeric :: (s: string) -> (bool) {
+    -> is_alpha(s) or is_digit(s) or s == "_"
 }
 
-highlight_string :: (s: string) -> (string) {
+highlight_line :: (s: string) -> (string) {
+
+    keywords := Map<bool>()
+    keywords["for"] = true
+    keywords["foreach"] = true
+    keywords["if"] = true
+    keywords["while"] = true
+    keywords["else"] = true
+    keywords["when"] = true
+    keywords["is"] = true
+    keywords["struct"] = true
+    keywords["enum"] = true
+    keywords["import"] = true
+    keywords["as"] = true
+    keywords["in"] = true
+
+    keywords["int"] = true
+    keywords["float"] = true
+    keywords["string"] = true
+    keywords["bool"] = true
+    keywords["File"] = true
+    keywords["List"] = true
+    keywords["Map"] = true
+
+    keywords["clock"] = true
+    keywords["print"] = true
+    keywords["open"] = true
+    keywords["close"] = true
+    keywords["read_all"] = true
+    keywords["read_line"] = true
+    keywords["rewind"] = true
+    keywords["clear"] = true
+    keywords["eof"] = true
+    keywords["append"] = true
+    keywords["write"] = true
+    keywords["input"] = true
+
+    constants := Map<bool>()
+    constants["true"] = true
+    constants["false"] = true
+    constants["nil"] = true
+
     //loop through string once and create Highlight objects and put it into a
     //list.  At the end, loop through the list and apply the css tags
     mode := Mode.NONE
@@ -106,7 +119,8 @@ highlight_string :: (s: string) -> (string) {
     while i < s.size {
         when mode {
             is Mode.NONE {
-                if i > 0 and s[i-1] == "/" and s[i] == "/" {
+                //checking for ':' to avoid highlighting github address
+                if i > 0 and s[i-1] == "/" and s[i] == "/" and i > 1 and s[i-2] != ":" {
                     h := Highlight()
                     h.start = i - 1
                     h.end = s.size - 1
@@ -119,10 +133,14 @@ highlight_string :: (s: string) -> (string) {
                     mode = Mode.STRING
                     start = i
                 }
-                //if is_alpha(s[i]) {
-                    //mode = Mode.IDENTIFIER
-                    //start = i
-               // }
+                if is_alpha(s[i]) {
+                    mode = Mode.IDENTIFIER
+                    start = i
+                }
+                if is_digit(s[i]) {
+                    mode = Mode.NUMBER
+                    start = i
+                }
             }
             is Mode.STRING {
                 if s[i] == dq {
@@ -136,14 +154,34 @@ highlight_string :: (s: string) -> (string) {
                 } 
             }
             is Mode.IDENTIFIER {
-                //if s[i] == " " or i == s.size - 1 {
-                //    mode = Mode.NONE
-                 //   h := Highlight()
-                 //   h.start = start
-                 //   h.end = i - 1
-                 //   h.color = "bl"
-                 //   highlights[highlights.size] = h
-               // }
+                if i == s.size - 1 or s[i + 1] == " " or !is_alpha_numeric(s[i + 1]) {
+                    mode = Mode.NONE
+                    if s[start, i + 1] in keywords.keys {
+                        h := Highlight()
+                        h.start = start
+                        h.end = i
+                        h.color = "bl"
+                        highlights[highlights.size] = h
+                    }
+
+                    if s[start, i + 1] in constants.keys {
+                        h := Highlight()
+                        h.start = start
+                        h.end = i
+                        h.color = "gr"
+                        highlights[highlights.size] = h
+                    }
+                }
+            }
+            is Mode.NUMBER {
+                if i == s.size - 1 or s[i + 1] == " " or !(is_digit(s[i + 1]) or s[i+1] == ".") {
+                    mode = Mode.NONE
+                    h := Highlight()
+                    h.start = start
+                    h.end = i
+                    h.color = "gr"
+                    highlights[highlights.size] = h
+                }
             }
         }
         i = i + 1

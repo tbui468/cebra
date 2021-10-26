@@ -47,7 +47,12 @@ Stack overflow
 
 Implementation:
 
-    making a function with 52 or'd equalities crashes - why?
+    For syntax highlighter, 'end' should always be one position past where we want to highlight -
+        currently it's the last index to highlight, BUT this doesn't work with 'when' statments
+        (which skip all other 'is' statements after one is triggered)
+        since it won't allow single character keywords or numbers.  Shift all 'end' values to be
+        one past the string we want to highlight, and then adjust the processing of Highlight List
+        by decrementing the 'end's by one.
 
     Having List size auto-increment when setting a value is super confusing - should
         not do it and force user to increment himself.

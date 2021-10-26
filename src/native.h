@@ -2,6 +2,50 @@
 #define NATIVE_H
 
 #include <time.h>
+#include <ctype.h>
+
+static ResultCode is_digit_native(int arg_count, Value* args, struct ValueArray* returns) {
+    struct ObjString* s = args[0].as.string_type;
+    for (int i = 0; i < s->length; i++) {
+        if (!isdigit(s->chars[i])) {
+            add_value(returns, to_boolean(false));
+            return RESULT_SUCCESS;
+        }
+    }
+
+    add_value(returns, to_boolean(true));
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_is_digit(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_string_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_bool_type());
+    return define_native(compiler, "is_digit", is_digit_native, make_fun_type(params, returns));
+}
+
+static ResultCode is_alpha_native(int arg_count, Value* args, struct ValueArray* returns) {
+    struct ObjString* s = args[0].as.string_type;
+    for (int i = 0; i < s->length; i++) {
+        if (!isalpha(s->chars[i])) {
+            add_value(returns, to_boolean(false));
+            return RESULT_SUCCESS;
+        }
+    }
+
+    add_value(returns, to_boolean(true));
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_is_alpha(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_string_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_bool_type());
+    return define_native(compiler, "is_alpha", is_alpha_native, make_fun_type(params, returns));
+}
+
 
 static ResultCode append_string_with_escape_sequences(FILE* fp, char* s) {
     char* start = s;
@@ -336,6 +380,8 @@ void define_native_functions(struct Compiler* compiler) {
     define_rewind(compiler);
     define_append(compiler);
     define_clear(compiler);
+    define_is_alpha(compiler);
+    define_is_digit(compiler);
 }
 
 
