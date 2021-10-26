@@ -87,18 +87,29 @@ void set_table(struct Table* table, struct ObjString* key, Value value) {
         grow_table(table);
     }
 
+    int first_tombstone = -1;
+
     int idx = key->hash % table->capacity;
     for (;;) {
         struct Pair* pair = &table->pairs[idx];
 
-        if (pair->key == NULL) {
-            table->pairs[idx].key = key;
-            table->pairs[idx].value = value;
+        if (pair->key == NULL && pair->value.type == VAL_NIL) {
+            if (first_tombstone != -1) {
+                table->pairs[first_tombstone].key = key;
+                table->pairs[first_tombstone].value = value;
+            } else {
+                table->pairs[idx].key = key;
+                table->pairs[idx].value = value;
+            }
             table->count++;
             return;
         }
 
-        if (same_keys(pair->key, key)) {
+        if (pair->key == NULL && pair->value.type == VAL_BOOL && pair->value.as.boolean_type && first_tombstone == -1) {
+            first_tombstone = idx;
+        }
+
+        if (pair->key != NULL && same_keys(pair->key, key)) {
             pair->value = value;
             return;
         }
@@ -114,11 +125,12 @@ bool get_from_table(struct Table* table, struct ObjString* key, Value* value) {
     int idx = key->hash % table->capacity;
     for (;;) {
         struct Pair* pair = &table->pairs[idx];
-        if (pair->key == NULL) {
+        if (pair->key == NULL && pair->value.type == VAL_NIL) {
             return false;
         }
 
-        if (same_keys(pair->key, key)) {
+        //check if pair->key is NULL to skip tombstones
+        if (pair->key != NULL && same_keys(pair->key, key)) {
             *value = pair->value;
             return true;
         }
@@ -134,15 +146,37 @@ struct ObjString* find_interned_string(struct Table* table, const char* chars, i
     int idx = hash % table->capacity;
     for (;;) {
         struct Pair* pair = &table->pairs[idx];
-        if (pair->key == NULL) {
+        if (pair->key == NULL && pair->value.type == VAL_NIL) {
             return NULL;
         }
 
-
-        if (pair->key->hash == hash &&
+        if (pair->key != NULL &&
+            pair->key->hash == hash &&
             pair->key->length == length &&
             memcmp(pair->key->chars, chars, length) == 0) {
             return pair->key;
+        }
+
+        idx = (idx + 1) % table->capacity;
+    }
+
+}
+
+
+void delete_entry(struct Table* table, struct ObjString* key) {
+    int idx = key->hash % table->capacity;
+    for (;;) {
+        struct Pair* pair = &table->pairs[idx];
+        if (pair->key == NULL && pair->value.type == VAL_NIL) {
+            return;
+        }
+
+
+        if (pair->key != NULL && same_keys(pair->key, key)) {
+            //tombstone is 'NULL' key and 'true' value
+            table->pairs[idx].key = NULL;
+            table->pairs[idx].value = to_boolean(true);
+            return;
         }
 
         idx = (idx + 1) % table->capacity;
@@ -154,12 +188,17 @@ void print_table(struct Table* table) {
     printf("Table count: %d, Table capacity: %d \n", table->count, table->capacity);
     for (int i = 0; i < table->capacity; i++) {
         struct Pair* pair = &table->pairs[i];
+        printf("[%d] ", i);
         if (pair->key != NULL) {
-            printf("[%d] Key: %.*s, Value: ", i, pair->key->length, pair->key->chars);
+            printf("Key: %.*s, Value: ", pair->key->length, pair->key->chars);
             print_value(pair->value);
             printf("\n");
         } else {
-            printf("NULL\n");
+            if (pair->value.type == VAL_BOOL && pair->value.as.boolean_type) {
+                printf("tombstone\n");
+            } else {
+                printf("NULL\n");
+            }
         }
     }
 }

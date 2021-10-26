@@ -160,6 +160,7 @@ int main(int argc, char** argv) {
         result = run_script(&vm, argv[1]);
     }
 
+
     //prevents GC from marking table so
     //that keys/values can be freed
     vm.initialized = false;

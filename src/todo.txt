@@ -59,6 +59,8 @@ Implementation:
         treat the count of a table as the total of tombstones + entries.
         when growing the table, skip inserting the tombstones and only increment the count if
             the entry is a non-tombstone entry.  
+
+        delete_entry(struct Table*, struct ObjString*)
         
     GC needs to collect interned strings when no longer referenced.
         Stop marking interned strings table

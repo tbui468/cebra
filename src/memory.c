@@ -116,7 +116,7 @@ static void mark_vm_roots() {
 
     if (mm.vm->initialized) {
         mark_table(&mm.vm->globals);
-        mark_table(&mm.vm->strings);
+//        mark_table(&mm.vm->strings);
     }
 }
 
@@ -294,6 +294,17 @@ static void print_objects() {
     printf("Object count: %d\n", count);
 }
 
+static void delete_unmarked_strings() {
+    for (int i = 0; i < mm.vm->strings.capacity; i++) {
+        struct Pair* pair = &mm.vm->strings.pairs[i];
+        if (pair->key == NULL) continue;
+        struct ObjString* s = pair->key;
+        if (!((struct Obj*)s)->is_marked) {
+            delete_entry(&mm.vm->strings, s);
+        }
+    }
+}
+
 void collect_garbage() { 
 #ifdef DEBUG_LOG_GC
     printf("- Start GC\n");
@@ -304,6 +315,7 @@ void collect_garbage() {
     mark_vm_roots();
     mark_compiler_roots();
     trace_references();
+    delete_unmarked_strings();
 #ifdef DEBUG_LOG_GC
     print_objects();
 #endif 
