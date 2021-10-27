@@ -37,6 +37,7 @@ cast_to_bool := true
 cast_struct_instances := true
 when_statement := true
 sequences := true
+slicing := true
 
 passed := List<string>()
 failed := List<string>()
@@ -1280,6 +1281,29 @@ if sequences {
 
 }
 
+if slicing {
+    print("-Slicing")
+
+    a := "ABCDEFGH"
+    
+    if a[0:4] == "ABCD" {
+        add_passed("String Slicing Beginning: Passed")
+    } else {
+        add_failed("String Slicing Beginning: Failed")
+    }
+
+    if a[4:8] == "EFGH" {
+        add_passed("String Slicing End: Passed")
+    } else {
+        add_failed("String Slicing End: Failed")
+    }
+
+    if a[2:6] == "CDEF" {
+        add_passed("String Slicing Middle: Passed")
+    } else {
+        add_failed("String Slicing Middle: Failed")
+    }
+}
 
 print("----------------------------------")
 print("\nTotal Tests:")

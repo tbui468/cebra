@@ -21,9 +21,8 @@ Value pop(VM* vm) {
 }
 
 void push(VM* vm, Value value) {
-    if ((int)(vm->stack_top - vm->stack) >= 1024) {
+    if ((int)(vm->stack_top - vm->stack) >= VM_STACK_MAX) {
         printf("[Error] Exceeded VM stack size.\n");
-        print_stack(vm);
         exit(1);
     }
     *vm->stack_top = value;

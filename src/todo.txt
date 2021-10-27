@@ -46,7 +46,9 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-    Add tests for string slicing
+    Adding slicing tests is making the vm stack (512 right now) to overflow - setting it to around 800
+        is okay, but setting it to 1024 overflows the c stack...
+        need to start dynamically allocating the above stacks allocations
 
     CHECK_TYPE macro in compiler is just a simple 'if' statement.  Make it better or scrap it.
 
