@@ -46,15 +46,15 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
+    Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
+    Errors should all use the same struct - no need for different errors for each module
 
-    Macro use is messy, and error messages are all over the place.
+    Macro use is messy, and error message line info are all over the place.
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
         manually return if necessary.  Or at least call it RETURN_ERROR for clarity.  Should be able to add
         error without return too.
            
-    Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
-
     For syntax highlighter, 'end' should always be one position past where we want to highlight -
         currently it's the last index to highlight, BUT this doesn't work with 'when' statments
         (which skip all other 'is' statements after one is triggered)

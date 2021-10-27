@@ -8,8 +8,9 @@
     (frame->ip += (int)sizeof(type), (type)frame->function->chunk.codes[frame->ip - (int)sizeof(type)])
 
 static void add_error(VM* vm, const char* message) {
-    RuntimeError error;
+    struct Error error;
     error.message = message;
+    error.token = make_dummy_token();
     vm->errors[vm->error_count] = error;
     vm->error_count++;
 }

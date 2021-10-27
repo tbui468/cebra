@@ -5,11 +5,7 @@
 #include "ast.h"
 #include "chunk.h"
 #include "value.h"
-
-typedef struct {
-    Token token;
-    const char* message;
-} CompileError;
+#include "error.h"
 
 struct Upvalue {
     int index;
@@ -30,7 +26,7 @@ struct Compiler {
     int locals_count;
     struct Upvalue upvalues[256];
     int upvalue_count;
-    CompileError errors[256];
+    struct Error errors[256];
     int error_count;
     struct Compiler* enclosing;
     struct Type* types;

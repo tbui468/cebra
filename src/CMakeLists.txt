@@ -30,6 +30,7 @@ set(Headers
     compiler.h
     vm.h
     native.h
+    error.h
     )
 
 add_executable(

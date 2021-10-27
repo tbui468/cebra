@@ -3,15 +3,10 @@
 
 #include "common.h"
 #include "token.h"
+#include "error.h"
 #include "result_code.h"
 #include "ast.h"
 #include "table.h"
-
-
-struct Error {
-    Token token;
-    const char* message;
-};
 
 typedef struct {
     Token previous;

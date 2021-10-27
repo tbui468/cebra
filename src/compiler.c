@@ -27,7 +27,7 @@ static bool struct_or_function_to_nil(struct Type* var_type, struct Type* right_
 }
 
 static void add_error(struct Compiler* compiler, Token token, const char* message) {
-    CompileError error;
+    struct Error error;
     error.token = token;
     error.message = message;
     compiler->errors[compiler->error_count] = error;

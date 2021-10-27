@@ -4,10 +4,7 @@
 #include "result_code.h"
 #include "value.h"
 #include "compiler.h"
-
-typedef struct {
-    const char* message;
-} RuntimeError;
+#include "error.h"
 
 typedef struct {
     struct ObjFunction* function;
@@ -17,12 +14,12 @@ typedef struct {
 } CallFrame;
 
 typedef struct {
-    Value stack[512]; //don't want to use my realloc to allocate memory since this is GC safeplace 
+    Value stack[512]; //don't want to use my realloc bc stack needs to be fast, and also this is GC safeplace
     Value* stack_top;
     CallFrame frames[128];
     int frame_count;
     struct ObjUpvalue* open_upvalues;
-    RuntimeError errors[128];
+    struct Error errors[128];
     int error_count;
     struct Table globals;
     struct Table strings;

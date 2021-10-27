@@ -116,7 +116,6 @@ static void mark_vm_roots() {
 
     if (mm.vm->initialized) {
         mark_table(&mm.vm->globals);
-//        mark_table(&mm.vm->strings);
     }
 }
 
