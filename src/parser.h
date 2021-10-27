@@ -16,8 +16,7 @@ typedef struct {
     struct Error errors[256];
     int error_count;
     struct Table* globals;
-    struct NodeList* first_pass_nl;
-    struct NodeList* resolve_id_list;
+    struct NodeList* statics_nl;
     Token imports[256];
     int import_count;
 } Parser;

@@ -551,7 +551,7 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
         }
         struct Node* decl;
         if (declaration(&decl) == RESULT_SUCCESS) {
-            add_to_compile_pass(decl, parser.first_pass_nl, body);
+            add_to_compile_pass(decl, parser.statics_nl, body);
         } else {
             synchronize();
         }
@@ -976,8 +976,7 @@ static ResultCode declaration(struct Node** node) {
 static void init_parser(struct Table* globals) {
     parser.error_count = 0;
     parser.globals = globals;
-    parser.first_pass_nl = (struct NodeList*)make_node_list();
-    parser.resolve_id_list = (struct NodeList*)make_node_list();
+    parser.statics_nl = (struct NodeList*)make_node_list();
     parser.import_count = 0;
 }
 
@@ -1105,16 +1104,16 @@ static ResultCode copy_global_inherited_props(struct Table* globals) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, struct DeclStruct* dc, struct NodeList* first_pass_nl) {
+static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, struct DeclStruct* dc, struct NodeList* statics_nl) {
     if (dc->super != NULL) {
         GetVar* gv = (GetVar*)(dc->super);
-        //iterate through first_pass_nl to find correct struct DeclStruct
-        for (int i = 0; i < first_pass_nl->count; i++) {
-            struct Node* n = first_pass_nl->nodes[i];
+        //iterate through statics_nl to find correct struct DeclStruct
+        for (int i = 0; i < statics_nl->count; i++) {
+            struct Node* n = statics_nl->nodes[i];
             if (n->type != NODE_STRUCT) continue;
             struct DeclStruct* super = (struct DeclStruct*)n;
             if (same_token_literal(gv->name, super->name)) {
-                add_struct_by_order(nl, struct_set, super, first_pass_nl);
+                add_struct_by_order(nl, struct_set, super, statics_nl);
                 break;
             }
         }
@@ -1294,7 +1293,7 @@ ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes, stru
             }
         } else {
             if ((result = declaration(&decl)) == RESULT_SUCCESS) {
-                add_to_compile_pass(decl, parser.first_pass_nl, dynamic_nodes);
+                add_to_compile_pass(decl, parser.statics_nl, dynamic_nodes);
             } else {
                 result = RESULT_FAILED;
                 synchronize();
@@ -1347,7 +1346,7 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
     if (result != RESULT_FAILED) result = resolve_remaining_identifiers(parser.globals, *all_nodes);
 
     struct NodeList* ordered_nl = (struct NodeList*)make_node_list();
-    if (result != RESULT_FAILED) result = order_nodes_by_enums_structs_functions(parser.first_pass_nl, ordered_nl);
+    if (result != RESULT_FAILED) result = order_nodes_by_enums_structs_functions(parser.statics_nl, ordered_nl);
 
     for (int i = 0; i < script_nl->count; i++) {
         add_node(ordered_nl, script_nl->nodes[i]);

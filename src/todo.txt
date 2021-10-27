@@ -38,22 +38,32 @@ Documentation:
 
 Stack overflow
     big stack allocations:
-        NODE_WHEN  256 ints
-        NODE_SEQUENCE 256 ints
-        OP_RETURN 256 Values
+        NODE_WHEN  256 ints - allocate then clear memory
+        NODE_SEQUENCE 256 ints - allocate then clear memory
+        OP_RETURN 256 Values - could try to NaN-box halve the Value size from 16 to 8 bytes
         Parser - errors
         Compiler - locals, upvalues, errors
         VM - stack, callframes, errors
 
 Implementation:
+    CHECK_TYPE macro in compiler is just a simple 'if' statement.  Make it better or scrap it.
+
     Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
-    Errors should all use the same struct - no need for different errors for each module
 
     Macro use is messy, and error message line info are all over the place.
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
         manually return if necessary.  Or at least call it RETURN_ERROR for clarity.  Should be able to add
         error without return too.
+
+    Structs and Enums can be defined at compile-time - no need to have all the props filled in a runtime
+        AND the props at runtime should just be an array.  Compile time can compute the offset
+
+    Static functions and anonymous functions are split using an 'if/else'.  Could we pull out shared
+        code OR make it a different AST node for clarity?
+
+    Resolving identifers in parser can all be one function, surely?  Just use a switch to check between them
+        all.
            
     For syntax highlighter, 'end' should always be one position past where we want to highlight -
         currently it's the last index to highlight, BUT this doesn't work with 'when' statments
