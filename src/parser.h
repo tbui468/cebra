@@ -13,11 +13,11 @@ typedef struct {
     Token current;
     Token next;
     Token next_next;
-    struct Error errors[256];
+    struct Error errors[64];
     int error_count;
     struct Table* globals;
     struct NodeList* statics_nl;
-    Token imports[256];
+    Token imports[64];
     int import_count;
 } Parser;
 

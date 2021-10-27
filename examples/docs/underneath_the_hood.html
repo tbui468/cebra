@@ -1,5 +1,5 @@
 <div id="underneath-the-hood" class="container">
-    <h1>The Parser, Compiler and VM</h1>
+    <h2>The Parser, Compiler and VM</h2>
     <div class="row">
         <section class="col-3-4">
             <p>
@@ -11,7 +11,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>The Parser</h2>
+            <h3>The Parser</h3>
             <p>
                 The tokenized source code is parsed using vanilla recursive descent - see the source code for
                 implementation details.  One point of note is that the abstract syntax tree (AST) nodes are reordered
@@ -26,7 +26,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>The Compiler</h2>
+            <h3>The Compiler</h3>
             <p>
                 The compiler has two main responsibilities: compiling the AST nodes into Cebra bytecode for the 
                 virtual machine, and to perform static type-checking.  
@@ -37,7 +37,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>The Virtual Machine</h2>
+            <h3>The Virtual Machine</h3>
             <p>
                 Cebra uses a stack-based virtual machine during runtime, and has a tracing gargabe collector for automatic
                 memory management.

@@ -26,7 +26,7 @@ struct Compiler {
     int locals_count;
     struct Upvalue upvalues[256];
     int upvalue_count;
-    struct Error errors[256];
+    struct Error errors[64];
     int error_count;
     struct Compiler* enclosing;
     struct Type* types;

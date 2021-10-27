@@ -1,8 +1,8 @@
 <div id="libraries" class="container">
-    <h1>Standard Library</h1>
+    <h2>Standard Library</h2>
     <div class="row">
         <section class="col-3-4">
-            <h2>clock() &rarr; (float)</h2>
+            <h3>clock() &rarr; (float)</h3>
             <p>
             Returns the processor time consumed by the program in seconds.
             </p>
@@ -24,7 +24,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>print(s: string) &rarr; ()</h2>
+            <h3>print(s: string) &rarr; ()</h3>
             <p>
                 Print out string s to the screen and also appends a newline character.
             </p>
@@ -44,7 +44,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>input() &rarr; (string)</h2>
+            <h3>input() &rarr; (string)</h3>
             <p>
                 Reads input from the keyboard and returns it as a string.
             </p>
@@ -65,7 +65,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>open(s: string) &rarr; (File)</h2>
+            <h3>open(s: string) &rarr; (File)</h3>
             <p>
                 Returns a File object for the given file path s.
             </p>
@@ -84,7 +84,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>close(f: File) &rarr; ()</h2>
+            <h3>close(f: File) &rarr; ()</h3>
             <p>
             Closes the File object f.  The Cebra garbage collector will eventually close f if it's no longer referenced in the script, but
                     it's good practice to close any files when done with them rather than waiting for the garbage collector to do it.
@@ -105,7 +105,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>read_all(f: File) &rarr; (string)</h2>
+            <h3>read_all(f: File) &rarr; (string)</h3>
             <p>
                 Returns a string containing the contents of the entire file.  read_all(f) will automatically move the File read pointer back 
                 to the beginning of the file, so calling rewind(f) is not necessary.  After reading the entire contents, the File read pointer will be 
@@ -128,7 +128,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>read_line(f: File) &rarr; (string)</h2>
+            <h3>read_line(f: File) &rarr; (string)</h3>
             <p>
                 Returns the next line in File f.  It will return an empty string if at the end of the file.  Use eof(f) to differentiate
                 between an end of file "" and simply an empty line in the file.  
@@ -152,7 +152,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>eof(f: File) &rarr; (bool)</h2>
+            <h3>eof(f: File) &rarr; (bool)</h3>
             <p>
                 Returns true if the at the end of file.  A read_line(f) call will return an empty string at this point.
             </p>
@@ -175,7 +175,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>rewind(f: File) &rarr; ()</h2>
+            <h3>rewind(f: File) &rarr; ()</h3>
             <p>
                 Will return the File read pointer to the beginning of the file.  A call to read_line(f) will start back at the beginning of
                 the file.
@@ -201,7 +201,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>clear(f: File) &rarr; ()</h2>
+            <h3>clear(f: File) &rarr; ()</h3>
             <p>
                 Clear the given file of any contents.  Any call to append(f) after calling clear(f) will add a new line to the beginning of
                 the file.
@@ -224,7 +224,7 @@
     </div>
     <div class="row">
         <section class="col-3-4">
-            <h2>append(f: File, s: string) &rarr; ()</h2>
+            <h3>append(f: File, s: string) &rarr; ()</h3>
             <p>
                 Append string s to the end of the file.  Note that if append(f, s) is called the read pointer will be
                 moved to the end of the file - calling read_line(f) immedately aftewards will return an empty string, and eof(f) will return true.

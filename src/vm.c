@@ -62,6 +62,10 @@ ResultCode free_vm(VM* vm) {
 }
 
 void call(VM* vm, struct ObjFunction* function) {
+    if (vm->frame_count >= VM_FRAMES_MAX - 1) {
+        printf("[Error] Exceeded VM max call frames.\n");
+        exit(1);
+    }
     CallFrame frame;
     frame.function = function;
     frame.locals = vm->stack_top - function->arity - 1;

@@ -10,7 +10,7 @@ h1, h2, h3, h4, h5, h6, p, blockquote,
 a, abbr, acronym, address, big, cite,
 del, dfn, em, img, ins, kbd, q, s, samp,
 small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
+u, i, center,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td,
@@ -52,18 +52,29 @@ table {
 /* Fonts */
 
 h1 {
+    font-size: 50px;
+    font-family: Helvetica, Arial, sans-serif;
+    padding-bottom: 8px;
+    color: #ffe;
+}
+
+h2 {
     font-size: 30px;
     font-weight: bold;
     font-family: Helvetica, Arial, sans-serif;
     padding-bottom: 8px;
 }
 
-h2 {
+h3 {
     font-size: 18px;
     font-family: Helvetica, Arial, sans-serif;
     padding-bottom: 8px;
 }
 
+p {
+    font-size: 15px;
+    font-family: sans-serif;
+}
 
 span.bl {
     color: blue;
@@ -84,7 +95,7 @@ span.re {
     /*z-index: 1; /* Stay on top */
     top: 15px; 
     left: 0;
-    background-color: #ccc; /* Black */
+    background-color: #eed; /* Black */
     overflow-x: hidden; /* Disable horizontal scroll */
     padding-top: 20px;
 }
@@ -108,7 +119,7 @@ span.re {
 .navbar {
     z-index: 1;
     overflow: hidden;
-    background-color: #333;
+    background-color: #899;
     position: fixed; /* Set the navbar to fixed position */
     top: 0; /* Position the navbar at the top of the page */
     width: 100%; /* Full width */
@@ -145,9 +156,11 @@ span.re {
     left: 0;
     bottom: 0;
     width: 100%;
-    background-color: #333;
+    background-color: #899;
     color: white;
-    text-align: center;
+    text-align: left;
+    padding-top: 16px;
+    padding-bottom: 16px;
 }
 
 /* Style page content */
@@ -174,16 +187,29 @@ span.re {
 
 .container {
     margin: 0 0 0 40px;
-    width: 1080px;
+    width: 960px;
     padding-left: 0px;
     padding-right: 0px;
-    padding-top: 80px;
+    padding-top: 60px;
+    padding-bottom: 40px;
+    margin: 0 auto;
 }
 
 .row {
     padding-bottom: 0;
 }
 
+.row-alt {
+    background-color: #899;
+    width: 100%;
+    padding-bottom: 50px;
+    padding-top: 60px;
+}
+
+.row-alt2 {
+    background-color: #28d;
+    width: 100%;
+}
 .col-3-4 {
     width: 70%;
     display: inline-block;
@@ -195,6 +221,10 @@ span.re {
     padding-left: 10px;
     padding-right: 10px;
     padding-top: 5px;
+}
+.col-1-3 {
+    width: 32%;
+    display: inline-block;
 }
 
 .aside {

@@ -2,7 +2,7 @@ dir := "C:\\dev\\cebra\\examples\\docs\\"
 
 //combine html files
 
-f := open(dir + "cebra_docs.html")
+f := open(dir + "cebra_docs_template.html")
 
 out := open(dir + "compiled_docs.html")
 clear(out)
@@ -25,7 +25,7 @@ close(out)
 //highlight compiled_docs.html
 
 f = open(dir + "compiled_docs.html")
-out = open(dir + "final_docs.html")
+out = open(dir + "cebra_docs.html")
 clear(out)
 
 code_block := false

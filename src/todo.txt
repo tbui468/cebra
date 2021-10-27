@@ -1,21 +1,41 @@
 cmake --build . --config Release cl /O2 ...
 
-Learn:
-    Read Lua implementation paper
-
 Syntax highlighter:
-    Push update to the marketplace - fixed typo with function colors not showing
+    nothing at this time
 
 Documentation:
+    Fill in main page content sections and format them:
+        contribute on github
+        three pillars
+        Cebra in use (used to generate syntax highlighting in docs)
 
-    Update syntax and usage details
-        pass by ref for structs, lists and maps
-        update about section
-        fill in parser, compiler, vm section with details and image of connections 
+        will need to add more header types
 
-    Make a smaler gif for main page - this one is too big and takes too long to load
+    Change main page gif to simple image (or shorter gif) so that the load
+        times are improved.  Consider making it use solarized light theme too.
 
-    Fill in some basic info for topics on main page
+    Fill in 'underneath the hood' section 
+        base it on Lua paper - include instructions of vm
+
+    Add is_digit() and is_alpha() to docs
+
+    Footer (copyright is for the website)
+        c. 2021 Thomas Bui
+           
+    For syntax highlighter, 'end' should always be one position past where we want to highlight -
+        currently it's the last index to highlight, BUT this doesn't work with 'when' statments
+        (which skip all other 'is' statements after one is triggered)
+        since it won't allow single character keywords or numbers.  Shift all 'end' values to be
+        one past the string we want to highlight, and then adjust the processing of Highlight List
+        by decrementing the 'end's by one.  BUT we need to be careful since the 'while' loop
+        we use to scan the line doesn't go through the 'when/is' statments when i = s.size...
+        (which is a valid index IF we decide to make 'end' one past highlighting position)
+        would need to do one last call on the 'when/is' to close all highlighting positions open 
+        at the time.
+
+        Also, to avoid highlighting special html characters eg, &#64;,
+        we need to make sure that only numbers that start at index 0 OR that are preceded by a white
+        space are highlighted as numbers
 
     Look at GifTuna website for simple but effective layout
 
@@ -50,7 +70,16 @@ Implementation:
         is okay, but setting it to 1024 overflows the c stack...
         need to start dynamically allocating the above stacks allocations
 
-    CHECK_TYPE macro in compiler is just a simple 'if' statement.  Make it better or scrap it.
+        clox is using 64 frames and ~16,000 stack spaces - there is a lot of room here
+       
+        Fix 1: make parser, compiler, and vm errors array dynamically allocated
+        Fix 2: make NODE_WHEN/NODE_SEQUENCE arrays dynamically allocated - need to free them even if error is encountered
+        Fix 3: change locals/upvalues dynamically allocated (can we do this?)
+
+    Use minGW to build executable for Windows - look up vscode tutorial
+        ask Cory, Sam or others with Windows to test it
+
+    CHECK_TYPE macro in compiler is just a simple 'if' statement.  Make it better or scrap it and replace with 'if' statements
 
     Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
 
@@ -69,22 +98,7 @@ Implementation:
     Resolving identifers in parser can all be one function, surely?  Just use a switch to check between them
         all.
 
-    Currently not allow sequences for declaring struct fields - should allow it
-           
-    For syntax highlighter, 'end' should always be one position past where we want to highlight -
-        currently it's the last index to highlight, BUT this doesn't work with 'when' statments
-        (which skip all other 'is' statements after one is triggered)
-        since it won't allow single character keywords or numbers.  Shift all 'end' values to be
-        one past the string we want to highlight, and then adjust the processing of Highlight List
-        by decrementing the 'end's by one.  BUT we need to be careful since the 'while' loop
-        we use to scan the line doesn't go through the 'when/is' statments when i = s.size...
-        (which is a valid index IF we decide to make 'end' one past highlighting position)
-        would need to do one last call on the 'when/is' to close all highlighting positions open 
-        at the time.
-
-        Also, to avoid highlighting special html characters eg, &#64;,
-        we need to make sure that only numbers that start at index 0 OR that are preceded by a white
-        space are highlighted as numbers
+    Currently not allow sequences for declaring struct fields - should allow it for consistency
 
     Having List size auto-increment when setting a value is super confusing - should
         not do it and force user to increment himself.
