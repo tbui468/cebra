@@ -189,7 +189,7 @@ ResultCode run_program(VM* vm) {
                 //current stack: [script]...[class][value]
                 struct ObjString* prop = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                 struct ObjStruct* klass = peek(vm, 1).as.class_type;
-                set_table(&klass->props, prop, peek(vm, 0));
+                set_entry(&klass->props, prop, peek(vm, 0));
                 break;
             }
             case OP_INSTANCE: {
@@ -268,7 +268,7 @@ ResultCode run_program(VM* vm) {
                     struct ObjInstance* inst = peek(vm, 0).as.instance_type;
                     struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                     Value prop_val = to_nil();
-                    get_from_table(&inst->props, prop_name, &prop_val);
+                    get_entry(&inst->props, prop_name, &prop_val);
                     pop(vm);
                     push(vm, prop_val);
                     break;
@@ -278,7 +278,7 @@ ResultCode run_program(VM* vm) {
                     struct ObjEnum* inst = peek(vm, 0).as.enum_type;
                     struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                     Value prop_val = to_nil();
-                    get_from_table(&inst->props, prop_name, &prop_val);
+                    get_entry(&inst->props, prop_name, &prop_val);
                     pop(vm);
                     push(vm, prop_val);
                     break;
@@ -296,7 +296,7 @@ ResultCode run_program(VM* vm) {
                 struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                 int depth = READ_TYPE(frame, uint8_t);
                 Value value = peek(vm, depth);
-                set_table(&inst->props, prop_name, value);
+                set_entry(&inst->props, prop_name, value);
                 break;
             }
             case OP_GET_LOCAL: {
@@ -510,7 +510,7 @@ ResultCode run_program(VM* vm) {
                     struct ObjString* key = pop(vm).as.string_type;
                     struct ObjMap* map = left.as.map_type;
                     Value value = to_nil();
-                    get_from_table(&map->table, key, &value);
+                    get_entry(&map->table, key, &value);
                     if (value.type == VAL_NIL) {
                         value = map->default_value;
                     }
@@ -547,7 +547,7 @@ ResultCode run_program(VM* vm) {
                 if (left.type == VAL_MAP) {
                     struct ObjMap* map = left.as.map_type;
                     struct ObjString* key = peek(vm, 0).as.string_type;
-                    set_table(&map->table, key, value);
+                    set_entry(&map->table, key, value);
                 }
                 pop(vm);
                 pop(vm);
@@ -575,9 +575,9 @@ ResultCode run_program(VM* vm) {
                 struct ObjList* list = make_list(to_string(default_string));
                 push(vm, to_list(list));
                 for (int i = 0; i < map->table.capacity; i++) {
-                    struct Pair* pair = &map->table.pairs[i];
-                    if (pair->key != NULL) {
-                        add_value(&list->values, to_string(pair->key));
+                    struct Entry* entry = &map->table.entries[i];
+                    if (entry->key != NULL) {
+                        add_value(&list->values, to_string(entry->key));
                     }
                 }
                 break;
@@ -588,9 +588,9 @@ ResultCode run_program(VM* vm) {
                 struct ObjList* list = make_list(to_string(default_string));
                 push(vm, to_list(list));
                 for (int i = 0; i < map->table.capacity; i++) {
-                    struct Pair* pair = &map->table.pairs[i];
-                    if (pair->key != NULL) {
-                        add_value(&list->values, pair->value);
+                    struct Entry* entry = &map->table.entries[i];
+                    if (entry->key != NULL) {
+                        add_value(&list->values, entry->value);
                     }
                 }
                 break;
@@ -602,7 +602,7 @@ ResultCode run_program(VM* vm) {
                     struct ObjInstance* inst = value.as.instance_type;
                     struct ObjString* type = read_constant(frame, to_type).as.string_type;
                     Value val;
-                    if (!get_from_table(&vm->globals, type, &val)) {
+                    if (!get_entry(&vm->globals, type, &val)) {
                         add_error(vm, "Attempting to cast to undeclared type.");
                         return RESULT_FAILED;
                     }
@@ -656,14 +656,14 @@ ResultCode run_program(VM* vm) {
                         add_error(vm, "Invalid type - cannot add global.");
                         return RESULT_FAILED;
                 }
-                set_table(&vm->globals, name, val);
+                set_entry(&vm->globals, name, val);
                 pop(vm);
                 break;
             }
             case OP_GET_GLOBAL: {
                 Value name = read_constant(frame, READ_TYPE(frame, uint16_t));
                 Value val;
-                if (!get_from_table(&vm->globals, name.as.string_type, &val)) {
+                if (!get_entry(&vm->globals, name.as.string_type, &val)) {
                     add_error(vm, "Global variable not found.\n");
                     return RESULT_FAILED;
                 }

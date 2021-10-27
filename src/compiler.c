@@ -285,7 +285,7 @@ static struct Type* resolve_type(struct Compiler* compiler, Token name) {
     //check globals
     struct ObjString* str = make_string(name.start, name.length);
     Value val;
-    if (get_from_table(&script_compiler->globals, str, &val)) {
+    if (get_entry(&script_compiler->globals, str, &val)) {
         return val.as.type_type;
     }
 
@@ -478,7 +478,7 @@ static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct
         pop_root();
 
         Value type_val = to_nil();
-        get_from_table(&((struct TypeStruct*)inst_type)->props, name, &type_val);
+        get_entry(&((struct TypeStruct*)inst_type)->props, name, &type_val);
 
         CHECK_TYPE(!same_type(type_val.as.type_type, right_type) && 
                    !struct_or_function_to_nil(type_val.as.type_type, right_type), 
@@ -798,7 +798,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             //Get type already completely defined in parser
             Value v;
-            get_from_table(&compiler->globals, struct_string, &v);
+            get_entry(&compiler->globals, struct_string, &v);
             pop_root(); //struct_string
             struct TypeStruct* klass_type = (struct TypeStruct*)(v.as.type_type);
 
@@ -820,13 +820,13 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 //update types in TypeStruct if property type is inferred
                 Value v;
-                get_from_table(&klass_type->props, prop_name, &v);
+                get_entry(&klass_type->props, prop_name, &v);
                 if (v.as.type_type->type == TYPE_INFER) {
-                    set_table(&klass_type->props, prop_name, to_type(right_type));
+                    set_entry(&klass_type->props, prop_name, to_type(right_type));
                 }
 
                 Value left_val_type;
-                get_from_table(&klass_type->props, prop_name, &left_val_type);
+                get_entry(&klass_type->props, prop_name, &left_val_type);
                 CHECK_TYPE(!same_type(left_val_type.as.type_type, right_type) && 
                            !struct_or_function_to_nil(left_val_type.as.type_type, right_type), 
                            dv->name, "Property type must match right hand side.");
@@ -858,7 +858,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 DeclVar* dv = (DeclVar*)(de->decls->nodes[i]);
                 struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
                 push_root(to_string(prop_name));
-                set_table(&obj_enum->props, prop_name, to_integer(i));
+                set_entry(&obj_enum->props, prop_name, to_integer(i));
                 pop_root();
             }
 
@@ -870,7 +870,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             //Get type already completely defined in parser
             Value v;
-            get_from_table(&compiler->globals, obj_enum->name, &v);
+            get_entry(&compiler->globals, obj_enum->name, &v);
             *node_type = v.as.type_type;
 
             pop_root(); //struct ObjEnum* 'obj_enum'
@@ -1077,7 +1077,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     pop_root();
 
                     Value type_val;
-                    if (!get_from_table(&te->props, name, &type_val)) {
+                    if (!get_entry(&te->props, name, &type_val)) {
                         add_error(compiler, gp->prop, "Constant doesn't exist in enum.");
                         return RESULT_FAILED;
                     }
@@ -1124,7 +1124,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct Type* current = type_inst;
                 while (current != NULL) {
                     struct TypeStruct* tc = (struct TypeStruct*)current;
-                    if (get_from_table(&tc->props, name, &type_val)) break;
+                    if (get_entry(&tc->props, name, &type_val)) break;
                     current = tc->super;
                 }
 
@@ -1176,7 +1176,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct ObjString* name = make_string(gv->name.start, gv->name.length);
             push_root(to_string(name));
             Value v;
-            if (get_from_table(&script_compiler->globals, name, &v)) {
+            if (get_entry(&script_compiler->globals, name, &v)) {
                 emit_byte(compiler, OP_GET_GLOBAL);
                 emit_short(compiler, add_constant(compiler, to_string(name)));
                 pop_root();
@@ -1471,12 +1471,12 @@ ResultCode define_native(struct Compiler* compiler, const char* name, ResultCode
     struct ObjString* native_string = make_string(name, strlen(name));
     push_root(to_string(native_string));
     Value v;
-    if (get_from_table(&compiler->globals, native_string, &v)) {
+    if (get_entry(&compiler->globals, native_string, &v)) {
         pop_root();
         add_error(compiler, make_dummy_token(), "The identifier for this function is already used.");
         return RESULT_FAILED;
     }
-    set_table(&compiler->globals, native_string, to_type(type));
+    set_entry(&compiler->globals, native_string, to_type(type));
     pop_root();
 
     emit_byte(compiler, OP_NATIVE);

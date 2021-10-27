@@ -5,21 +5,20 @@
 
 struct ObjString;
 
-struct Pair {
+struct Entry {
     struct ObjString* key;
     Value value;
 };
 
 struct Table {
-    struct Pair* pairs;
+    struct Entry* entries;
     int count;
     int capacity;
 };
 
 void init_table(struct Table* table);
-void set_table(struct Table* table, struct ObjString* key, Value value);
-bool get_from_table(struct Table* table, struct ObjString* key, Value* value);
-bool same_keys(struct ObjString* key1, struct ObjString* key2);
+void set_entry(struct Table* table, struct ObjString* key, Value value);
+bool get_entry(struct Table* table, struct ObjString* key, Value* value);
 void delete_entry(struct Table* table, struct ObjString* key);
 void copy_table(struct Table* dest, struct Table* src);
 int free_table(struct Table* table);

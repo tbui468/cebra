@@ -91,10 +91,10 @@ static void mark_and_push(struct Obj* obj) {
 
 static void mark_table(struct Table* table) {
     for (int i = 0; i < table->capacity; i++) {
-        struct Pair* pair = &table->pairs[i];
-        if (pair->key == NULL) continue;
-        mark_and_push((struct Obj*)(pair->key));
-        struct Obj* obj = get_object(&pair->value);
+        struct Entry* entry = &table->entries[i];
+        if (entry->key == NULL) continue;
+        mark_and_push((struct Obj*)(entry->key));
+        struct Obj* obj = get_object(&entry->value);
         mark_and_push(obj);
     }
 }
@@ -296,9 +296,9 @@ static void print_objects() {
 
 static void delete_unmarked_strings() {
     for (int i = 0; i < mm.vm->strings.capacity; i++) {
-        struct Pair* pair = &mm.vm->strings.pairs[i];
-        if (pair->key == NULL) continue;
-        struct ObjString* s = pair->key;
+        struct Entry* entry = &mm.vm->strings.entries[i];
+        if (entry->key == NULL) continue;
+        struct ObjString* s = entry->key;
         if (!((struct Obj*)s)->is_marked) {
             delete_entry(&mm.vm->strings, s);
         }

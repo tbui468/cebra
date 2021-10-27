@@ -181,13 +181,13 @@ static ResultCode parse_static_function(Token name, struct Node** node) {
     struct ObjString* fun_string = make_string(name.start, name.length);
     push_root(to_string(fun_string));
     Value v;
-    if (get_from_table(parser.globals, fun_string, &v)) {
+    if (get_entry(parser.globals, fun_string, &v)) {
         pop_root();
         ERROR(name, "The identifier for this function is already used.");
     }
 
     //set globals in parser (which compiler uses)
-    set_table(parser.globals, fun_string, to_type(fun_type));
+    set_entry(parser.globals, fun_string, to_type(fun_type));
     pop_root();
 
     CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
@@ -663,12 +663,12 @@ static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
     push_root(to_string(prop_string));
 
     Value v;
-    if (get_from_table(&tc->props, prop_string, &v)) {
+    if (get_entry(&tc->props, prop_string, &v)) {
         pop_root();
         ERROR(prop_name, "Field name already used once in this struct.");
     }
 
-    set_table(&tc->props, prop_string, to_type(dv->type));
+    set_entry(&tc->props, prop_string, to_type(dv->type));
     pop_root();
     return RESULT_SUCCESS;
 }
@@ -694,13 +694,13 @@ static ResultCode declaration(struct Node** node) {
 
         //check for global name collision
         Value v;
-        if (get_from_table(parser.globals, enum_string, &v)) {
+        if (get_entry(parser.globals, enum_string, &v)) {
             pop_root();
             ERROR(enum_name, "The identifier for this enum is already used.");
         }
 
         //set globals in parser (which compiler uses for type checking)
-        set_table(parser.globals, enum_string, to_type((struct Type*)type));
+        set_entry(parser.globals, enum_string, to_type((struct Type*)type));
         pop_root();
 
         //fill in enum type props
@@ -713,12 +713,12 @@ static ResultCode declaration(struct Node** node) {
             push_root(to_string(prop_name));
 
             Value v;
-            if (get_from_table(&type->props, prop_name, &v)) {
+            if (get_entry(&type->props, prop_name, &v)) {
                 pop_root();
                 ERROR(dv_name, "Element name already used once in this enum.");
             }
 
-            set_table(&type->props, prop_name, to_type(make_int_type()));
+            set_entry(&type->props, prop_name, to_type(make_int_type()));
             pop_root();
             add_node(nl, dv);
         }
@@ -747,13 +747,13 @@ static ResultCode declaration(struct Node** node) {
 
         //check for global name collision
         Value v;
-        if (get_from_table(parser.globals, struct_string, &v)) {
+        if (get_entry(parser.globals, struct_string, &v)) {
             pop_root();
             ERROR(struct_name, "The identifier for this struct is already used.");
         }
 
         //set globals in parser (which compiler uses)
-        set_table(parser.globals, struct_string, to_type(struct_type));
+        set_entry(parser.globals, struct_string, to_type(struct_type));
         pop_root();
 
         struct Node* super = parser.previous.type == TOKEN_IDENTIFIER ? 
@@ -1025,7 +1025,7 @@ static ResultCode resolve_identifier(struct TypeIdentifier* ti, struct Table* gl
     struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
     push_root(to_string(identifier));
     Value val;
-    if (!get_from_table(globals, identifier, &val)) {
+    if (!get_entry(globals, identifier, &val)) {
         pop_root();
         ERROR(ti->identifier, "Identifier for type not declared.");
     }
@@ -1056,10 +1056,10 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
 
 static ResultCode check_global_circular_inheritance(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
-        struct Pair* pair = &globals->pairs[i];
-        if (pair->value.type != VAL_TYPE) continue;
-        if (pair->value.as.type_type->type != TYPE_STRUCT) continue;
-        struct Type* type = pair->value.as.type_type;
+        struct Entry* entry = &globals->entries[i];
+        if (entry->value.type != VAL_TYPE) continue;
+        if (entry->value.as.type_type->type != TYPE_STRUCT) continue;
+        struct Type* type = entry->value.as.type_type;
         struct TypeStruct* klass = (struct TypeStruct*)type;
         Token struct_name = klass->name;
         struct Type* current = klass->super;
@@ -1077,26 +1077,26 @@ static ResultCode check_global_circular_inheritance(struct Table* globals) {
 
 static ResultCode copy_global_inherited_props(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
-        struct Pair* pair = &globals->pairs[i];
-        if (pair->value.type != VAL_TYPE) continue;
-        if (pair->value.as.type_type->type != TYPE_STRUCT) continue;
-        struct Type* type = pair->value.as.type_type;
+        struct Entry* entry = &globals->entries[i];
+        if (entry->value.type != VAL_TYPE) continue;
+        if (entry->value.as.type_type->type != TYPE_STRUCT) continue;
+        struct Type* type = entry->value.as.type_type;
         struct TypeStruct* klass = (struct TypeStruct*)type; //this is the substruct we want to copy all props into
         struct Type* super_type = klass->super;
         while (super_type != NULL) {
             struct TypeStruct* super = (struct TypeStruct*)super_type;
             for (int j = 0; j < super->props.capacity; j++) {
-                struct Pair* pair = &super->props.pairs[j];
-                if (pair->key == NULL) continue;
+                struct Entry* entry = &super->props.entries[j];
+                if (entry->key == NULL) continue;
                 Value val;
-                if (get_from_table(&klass->props, pair->key, &val)) {
+                if (get_entry(&klass->props, entry->key, &val)) {
                     if (val.as.type_type->type != TYPE_INFER && 
-                        pair->value.as.type_type->type != TYPE_INFER && 
-                        !same_type(val.as.type_type, pair->value.as.type_type)) {
+                        entry->value.as.type_type->type != TYPE_INFER && 
+                        !same_type(val.as.type_type, entry->value.as.type_type)) {
                         ERROR(make_dummy_token(), "Overwritten properties must share same type.");
                     }
                 } else {
-                    set_table(&klass->props, pair->key, pair->value);
+                    set_entry(&klass->props, entry->key, entry->value);
                 }
             }
             super_type = super->super;
@@ -1123,9 +1123,9 @@ static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_
     struct ObjString* klass_name = make_string(dc->name.start, dc->name.length);
     push_root(to_string(klass_name)); //calling pop_root() to clear strings in parse() after root call on add_struct_by_order
     Value val;
-    if (!get_from_table(struct_set, klass_name, &val)) {
+    if (!get_entry(struct_set, klass_name, &val)) {
         add_node(nl, (struct Node*)dc);
-        set_table(struct_set, klass_name, to_nil());
+        set_entry(struct_set, klass_name, to_nil());
     }
     pop_root();
     return RESULT_SUCCESS;
@@ -1166,10 +1166,10 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
 
 static ResultCode resolve_global_function_identifiers(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
-        struct Pair* pair = &globals->pairs[i];
-        if (pair->value.type != VAL_TYPE) continue;
-        if (pair->value.as.type_type->type != TYPE_FUN) continue;
-        struct TypeFun* fun_type = (struct TypeFun*)(pair->value.as.type_type);
+        struct Entry* entry = &globals->entries[i];
+        if (entry->value.type != VAL_TYPE) continue;
+        if (entry->value.as.type_type->type != TYPE_FUN) continue;
+        struct TypeFun* fun_type = (struct TypeFun*)(entry->value.as.type_type);
         if (resolve_function_identifiers(fun_type, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
     }
     return RESULT_SUCCESS;
@@ -1177,19 +1177,19 @@ static ResultCode resolve_global_function_identifiers(struct Table* globals) {
 
 static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
-        struct Pair* pair = &globals->pairs[i];
-        if (pair->value.type != VAL_TYPE || pair->value.as.type_type->type != TYPE_STRUCT) continue;
-        struct TypeStruct* tc = (struct TypeStruct*)(pair->value.as.type_type);
+        struct Entry* entry = &globals->entries[i];
+        if (entry->value.type != VAL_TYPE || entry->value.as.type_type->type != TYPE_STRUCT) continue;
+        struct TypeStruct* tc = (struct TypeStruct*)(entry->value.as.type_type);
         //resolve properties
         for (int j = 0; j < tc->props.capacity; j++) {
-            struct Pair* inner_pair = &tc->props.pairs[j];
-            if (inner_pair->value.type != VAL_TYPE) continue;
-            if (inner_pair->value.as.type_type->type == TYPE_IDENTIFIER) {
+            struct Entry* inner_entry = &tc->props.entries[j];
+            if (inner_entry->value.type != VAL_TYPE) continue;
+            if (inner_entry->value.as.type_type->type == TYPE_IDENTIFIER) {
                 struct Type* result;
-                if (resolve_identifier((struct TypeIdentifier*)(inner_pair->value.as.type_type), globals, &result) == RESULT_FAILED) return RESULT_FAILED;
-                set_table(&tc->props, inner_pair->key, to_type(result));
-            } else if (inner_pair->value.as.type_type->type == TYPE_FUN) {
-                if (resolve_function_identifiers((struct TypeFun*)(inner_pair->value.as.type_type), globals) == RESULT_FAILED) return RESULT_FAILED;
+                if (resolve_identifier((struct TypeIdentifier*)(inner_entry->value.as.type_type), globals, &result) == RESULT_FAILED) return RESULT_FAILED;
+                set_entry(&tc->props, inner_entry->key, to_type(result));
+            } else if (inner_entry->value.as.type_type->type == TYPE_FUN) {
+                if (resolve_function_identifiers((struct TypeFun*)(inner_entry->value.as.type_type), globals) == RESULT_FAILED) return RESULT_FAILED;
             }
         }
         //resolve structs inherited from

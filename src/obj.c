@@ -332,7 +332,7 @@ struct ObjString* take_string(char* chars, int length) {
     insert_object((struct Obj*)obj);
 
     push_root(to_string(obj));
-    set_table(&mm.vm->strings, obj, to_nil());  //TODO uncomment this (along with the find_interned_strings checks) to intern strings
+    set_entry(&mm.vm->strings, obj, to_nil());  //TODO uncomment this (along with the find_interned_strings checks) to intern strings
     pop_root();
     return obj;
 }
