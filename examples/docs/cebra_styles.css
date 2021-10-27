@@ -76,16 +76,24 @@ p {
     font-family: sans-serif;
 }
 
-span.bl {
-    color: blue;
+span.type {
+    color: #28d;
 }
-span.gr {
-    color: green;
+span.keyword {
+    color: #890;
 }
-span.re {
-    color: brown; /*less harsh than red*/
+span.constant {
+    color: #d38;
 }
-
+span.comment {
+    color: #9aa;
+}
+span.string {
+    color: #2a9;
+}
+span.code {
+    color: #567;
+}
 
 /* The sidebar menu */
 .sidenav {
@@ -181,7 +189,7 @@ span.re {
     padding-left: 0px;
     padding-right: 0px;
     margin-bottom: 40px;
-    background-color: #eed;
+    background-color: #ffe;
     border: 2px solid #aaa;
 }
 

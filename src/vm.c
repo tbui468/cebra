@@ -478,10 +478,20 @@ ResultCode run_program(VM* vm) {
                 int end_idx = pop(vm).as.integer_type;
                 int start_idx = pop(vm).as.integer_type;
                 struct ObjString* s = peek(vm, 0).as.string_type;
-                //TODO: add index checks
-                struct ObjString* sub = make_string(s->chars + start_idx, end_idx - start_idx);
-                pop(vm);
-                push(vm, to_string(sub));
+                if (end_idx - start_idx < 0) {
+                    add_error(vm, "End index must be greater or equal to the start index when slicing strings.");
+                    return RESULT_FAILED;
+                }
+
+                if (end_idx - start_idx == 0) {
+                    struct ObjString* sub = make_string("", 0);
+                    pop(vm);
+                    push(vm, to_string(sub));
+                } else {
+                    struct ObjString* sub = make_string(s->chars + start_idx, end_idx - start_idx);
+                    pop(vm);
+                    push(vm, to_string(sub));
+                }
                 break;
             }
             case OP_GET_ELEMENT: {

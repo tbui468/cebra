@@ -74,13 +74,13 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    git clone https://github.com/tbui468/cebra
-    cd cebra
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
+<span class="code">            <code></span>
+<span class="code">    git clone https://github.com/tbui468/cebra</span>
+<span class="code">    cd cebra</span>
+<span class="code">    mkdir build</span>
+<span class="code">    cd build</span>
+<span class="code">    cmake ..</span>
+<span class="code">    cmake --build .</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -107,8 +107,8 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-    <code>
-    ./Cebra ../../examples/interpreter.cbr
+<span class="code">    <code></span>
+<span class="code">    ./Cebra ../../examples/interpreter.cbr</span>
     </code>
         </pre>
         <section class="col-1-4">
@@ -124,15 +124,15 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-        <code>
-    ./Cebra
-
-    >>> <span class="bl">print</span>(<span class="re">"Hello world"</span>)
-    Hello world
-    >>> a := 2
-    >>> b := 3
-    >>> <span class="bl">print</span>(a + b)
-    5
+<span class="code">        <code></span>
+<span class="code">    ./Cebra</span>
+<span class="code"></span>
+<span class="code">    >>> <span class="keyword">print</span>(<span class="string">"Hello world"</span>)</span>
+<span class="code">    Hello world</span>
+<span class="code">    >>> a := <span class="constant">2</span></span>
+<span class="code">    >>> b := <span class="constant">3</span></span>
+<span class="code">    >>> <span class="keyword">print</span>(a + b)</span>
+<span class="code">    <span class="constant">5</span></span>
         </code>
         </pre>
         <section class="col-1-4">
@@ -145,22 +145,22 @@
             for a more extensive example.</p>
         </section>
         <pre class="code-box col-3-4">
-    <code>
-    <span class="gr">//Define a function to compute the nth number in the fibonacci sequence</span>
-    fib :: (n: <span class="bl">int</span>) -> (<span class="bl">int</span>) {
-        <span class="bl">if</span> n < <span class="gr">2 </span>{
-            -> n
-        } <span class="bl">else</span> {
-            -> fib(n - <span class="gr">1)</span> + fib(n - <span class="gr">2)</span>
-        }
-    }
-
-
-    <span class="bl">print</span>(fib(<span class="gr">10</span>))     <span class="gr">//55</span>
-    a: <span class="bl">int</span> = fib(<span class="gr">10</span>) + <span class="gr">5 </span><span class="gr">//declare a new variable and explicitly declare the type</span>
-    <span class="bl">print</span>(a) <span class="gr">//60</span>
-    b := <span class="gr">2.2</span>  <span class="gr">//declare a new variable and infer the type based on the assignment</span>
-    <span class="bl">print</span>(b) <span class="gr">//2.20000</span>
+<span class="code">    <code></span>
+<span class="code">    <span class="comment">//Define a function to compute the nth number in the fibonacci sequence</span></span>
+<span class="code">    fib :: (n: <span class="type">int</span>) -> (<span class="type">int</span>) {</span>
+<span class="code">        <span class="keyword">if</span> n < <span class="constant">2</span> {</span>
+<span class="code">            -> n</span>
+<span class="code">        } <span class="keyword">else</span> {</span>
+<span class="code">            -> fib(n - <span class="constant">1</span>) + fib(n - <span class="constant">2</span>)</span>
+<span class="code">        }</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">print</span>(fib(<span class="constant">10</span>))     <span class="comment">//55</span></span>
+<span class="code">    a: <span class="type">int</span> = fib(<span class="constant">10</span>) + <span class="constant">5</span> <span class="comment">//declare a new variable and explicitly declare the type</span></span>
+<span class="code">    <span class="keyword">print</span>(a) <span class="comment">//60</span></span>
+<span class="code">    b := <span class="constant">2.2</span>  <span class="comment">//declare a new variable and infer the type based on the assignment</span></span>
+<span class="code">    <span class="keyword">print</span>(b) <span class="comment">//2.20000</span></span>
     </code>
         </pre>
         <section class="col-1-4">
@@ -231,15 +231,15 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    a: <span class="bl">int</span> = 1
-    a = 2
-    b: <span class="bl">int</span>, c: <span class="bl">int</span> = <span class="gr">2,</span> 4
-    b, c = <span class="gr">9,</span> <span class="gr">31</span>
-    d := <span class="gr">23</span>
-    e, f := <span class="gr">2,</span> 4
-    h := g % 2
-    x, y := compute_xy_coords()
+<span class="code">            <code></span>
+<span class="code">    a: <span class="type">int</span> = <span class="constant">1</span></span>
+<span class="code">    a = <span class="constant">2</span></span>
+<span class="code">    b: <span class="type">int</span>, c: <span class="type">int</span> = <span class="constant">2</span>, <span class="constant">4</span></span>
+<span class="code">    b, c = <span class="constant">9</span>, <span class="constant">31</span></span>
+<span class="code">    d := <span class="constant">23</span></span>
+<span class="code">    e, f := <span class="constant">2</span>, <span class="constant">4</span></span>
+<span class="code">    h := g % <span class="constant">2</span></span>
+<span class="code">    x, y := compute_xy_coords()</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -258,12 +258,12 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    a: <span class="bl">float</span> = <span class="gr">1.12</span>
-    b := <span class="gr">23.232</span>
-    g := a + b
-    k := a - b
-    i, j := a * b, a / b
+<span class="code">            <code></span>
+<span class="code">    a: <span class="type">float</span> = <span class="constant">1.12</span></span>
+<span class="code">    b := <span class="constant">23.232</span></span>
+<span class="code">    g := a + b</span>
+<span class="code">    k := a - b</span>
+<span class="code">    i, j := a * b, a / b</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -281,10 +281,10 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    a: <span class="bl">bool</span> = <span class="gr">true</span>
-    b := <span class="gr">false</span>
-    c := !b
+<span class="code">            <code></span>
+<span class="code">    a: <span class="type">bool</span> = <span class="constant">true</span></span>
+<span class="code">    b := <span class="constant">false</span></span>
+<span class="code">    c := !b</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -302,11 +302,11 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    a: <span class="bl">string</span> = <span class="re">"Hello"</span>
-    b := <span class="re">"World"</span>
-    c := a + b
-    c = c + c
+<span class="code">            <code></span>
+<span class="code">    a: <span class="type">string</span> = <span class="string">"Hello"</span></span>
+<span class="code">    b := <span class="string">"World"</span></span>
+<span class="code">    c := a + b</span>
+<span class="code">    c = c + c</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -326,18 +326,18 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    a: <span class="bl">bool</span> = <span class="gr">true</span>
-    <span class="bl">if</span> a {
-        <span class="bl">print</span>(<span class="re">"This will print."</span>)
-        <span class="bl">print</span>(<span class="re">"This will print too."</span>)
-    }
-
-    b: <span class="bl">int</span> = <span class="gr">11</span>
-    <span class="bl">if</span> b < <span class="gr">10</span> 
-        <span class="bl">print</span>(<span class="re">"This will not print"</span>)
-    <span class="bl">else</span> 
-        <span class="bl">print</span>(<span class="re">"This will print"</span>)
+<span class="code">            <code></span>
+<span class="code">    a: <span class="type">bool</span> = <span class="constant">true</span></span>
+<span class="code">    <span class="keyword">if</span> a {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="string">"This will print."</span>)</span>
+<span class="code">        <span class="keyword">print</span>(<span class="string">"This will print too."</span>)</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    b: <span class="type">int</span> = <span class="constant">11</span></span>
+<span class="code">    <span class="keyword">if</span> b < <span class="constant">10</span> </span>
+<span class="code">        <span class="keyword">print</span>(<span class="string">"This will not print"</span>)</span>
+<span class="code">    <span class="keyword">else</span> </span>
+<span class="code">        <span class="keyword">print</span>(<span class="string">"This will print"</span>)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -354,16 +354,16 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    <span class="bl">for</span> i: <span class="bl">int</span> = <span class="gr">0,</span> i < <span class="gr">3,</span> i = i + <span class="gr">1 </span>
-        <span class="bl">print</span>(i)
-
-    <span class="gr">//omitting intializer and update</span>
-    j: <span class="bl">int</span> = 5
-    <span class="bl">for</span> _ , j >= <span class="gr">0,</span> _ {
-        <span class="bl">print</span>(i)
-        j = j - 2
-    }
+<span class="code">            <code></span>
+<span class="code">    <span class="keyword">for</span> i: <span class="type">int</span> = <span class="constant">0</span>, i < <span class="constant">3</span>, i = i + <span class="constant">1</span> </span>
+<span class="code">        <span class="keyword">print</span>(i)</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//omitting intializer and update</span></span>
+<span class="code">    j: <span class="type">int</span> = <span class="constant">5</span></span>
+<span class="code">    <span class="keyword">for</span> _ , j >= <span class="constant">0</span>, _ {</span>
+<span class="code">        <span class="keyword">print</span>(i)</span>
+<span class="code">        j = j - <span class="constant">2</span></span>
+<span class="code">    }</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -372,19 +372,19 @@
     <div class="row">
         <h3>While Loops</h3>
         <pre class="code-box col-3-4">
-        <code>
-    i: <span class="bl">int</span> = 0
-    <span class="bl">while</span> i <= <span class="gr">5 </span>{
-        <span class="bl">if</span> i % <span class="gr">2 </span>== <span class="gr">1 </span>{
-            <span class="bl">print</span>(i)
-        }
-        i = i + 1
-    }
-
-    <span class="gr">//This will print:</span>
-    <span class="gr">//1</span>
-    <span class="gr">//3</span>
-    <span class="gr">//5</span>
+<span class="code">        <code></span>
+<span class="code">    i: <span class="type">int</span> = <span class="constant">0</span></span>
+<span class="code">    <span class="keyword">while</span> i <= <span class="constant">5</span> {</span>
+<span class="code">        <span class="keyword">if</span> i % <span class="constant">2</span> == <span class="constant">1</span> {</span>
+<span class="code">            <span class="keyword">print</span>(i)</span>
+<span class="code">        }</span>
+<span class="code">        i = i + <span class="constant">1</span></span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//This will print:</span></span>
+<span class="code">    <span class="comment">//1</span></span>
+<span class="code">    <span class="comment">//3</span></span>
+<span class="code">    <span class="comment">//5</span></span>
         </code>
         </pre>
         <section class="col-1-4">
@@ -403,18 +403,18 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-        <code>
-    i: <span class="bl">int</span> = 1
-
-    <span class="bl">when</span> i {
-        <span class="bl">is</span> <span class="gr">1 </span>{ <span class="bl">print</span>(<span class="re">"one"</span>) }
-        <span class="bl">is</span> <span class="gr">2 </span>{ <span class="bl">print</span>(<span class="re">"two"</span>) }
-        <span class="bl">is</span> <span class="gr">3 </span>{ <span class="bl">print</span>(<span class="re">"three"</span>) }
-        <span class="bl">is</span> <span class="gr">4 </span>{ <span class="bl">print</span>(<span class="re">"four"</span>) }
-        <span class="bl">else</span> { <span class="bl">print</span>(<span class="re">"other"</span>) }
-    }
-
-    <span class="gr">//Will print "one"</span>
+<span class="code">        <code></span>
+<span class="code">    i: <span class="type">int</span> = <span class="constant">1</span></span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">when</span> i {</span>
+<span class="code">        <span class="keyword">is</span> <span class="constant">1</span> { <span class="keyword">print</span>(<span class="string">"one"</span>) }</span>
+<span class="code">        <span class="keyword">is</span> <span class="constant">2</span> { <span class="keyword">print</span>(<span class="string">"two"</span>) }</span>
+<span class="code">        <span class="keyword">is</span> <span class="constant">3</span> { <span class="keyword">print</span>(<span class="string">"three"</span>) }</span>
+<span class="code">        <span class="keyword">is</span> <span class="constant">4</span> { <span class="keyword">print</span>(<span class="string">"four"</span>) }</span>
+<span class="code">        <span class="keyword">else</span> { <span class="keyword">print</span>(<span class="string">"other"</span>) }</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//Will print "one"</span></span>
         </code>
         </pre>
         <section class="col-1-4">
@@ -432,19 +432,19 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    my_list: <span class="bl">List</span><<span class="bl">string</span>> = <span class="bl">List</span><<span class="bl">string</span>>()
-    my_list[<span class="gr">0]</span> = <span class="re">"first"</span>
-    my_list[<span class="gr">1]</span> = <span class="re">"second"</span>
-    my_list[<span class="gr">2]</span> = <span class="re">"third"</span>
-
-    <span class="bl">foreach</span> word: <span class="bl">string</span> <span class="bl">in</span> my_list {
-        <span class="bl">print</span>(word)
-    }
-
-    <span class="gr">//first</span>
-    <span class="gr">//second</span>
-    <span class="gr">//third</span>
+<span class="code">            <code></span>
+<span class="code">    my_list: <span class="type">List</span><<span class="type">string</span>> = <span class="type">List</span><<span class="type">string</span>>()</span>
+<span class="code">    my_list[<span class="constant">0</span>] = <span class="string">"first"</span></span>
+<span class="code">    my_list[<span class="constant">1</span>] = <span class="string">"second"</span></span>
+<span class="code">    my_list[<span class="constant">2</span>] = <span class="string">"third"</span></span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">foreach</span> word: <span class="type">string</span> <span class="keyword">in</span> my_list {</span>
+<span class="code">        <span class="keyword">print</span>(word)</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//first</span></span>
+<span class="code">    <span class="comment">//second</span></span>
+<span class="code">    <span class="comment">//third</span></span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -467,26 +467,26 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-        <code>
-    <span class="gr">//takes one integer as a parameters, and returns an integer</span>
-    double :: (n: <span class="bl">int</span>) -> (<span class="bl">int</span>) {
-        -> <span class="gr">2 </span>* n
-    }
-
-    <span class="gr">//takes in one integer as a parameter, and has no return value.</span>
-    print_double :: (n: <span class="bl">int</span>) -> () {
-        <span class="bl">print</span>(<span class="gr">2 </span>* n)
-        -> <span class="gr">//optional return statement</span>
-    }
-
-    <span class="gr">//takes in two floats as parameters, and has no return value.  </span>
-    early_return :: (n: <span class="bl">float</span>, m: <span class="bl">float</span>) -> () {
-        <span class="bl">if</span> n < <span class="gr">5.0</span> {
-            ->       <span class="gr">//will return from function, and skip calling 'print(n * m)' below</span>
-        }
-
-        <span class="bl">print</span>(n * m)
-    }
+<span class="code">        <code></span>
+<span class="code">    <span class="comment">//takes one integer as a parameters, and returns an integer</span></span>
+<span class="code">    double :: (n: <span class="type">int</span>) -> (<span class="type">int</span>) {</span>
+<span class="code">        -> <span class="constant">2</span> * n</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//takes in one integer as a parameter, and has no return value.</span></span>
+<span class="code">    print_double :: (n: <span class="type">int</span>) -> () {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="constant">2</span> * n)</span>
+<span class="code">        -> <span class="comment">//optional return statement</span></span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//takes in two floats as parameters, and has no return value.  </span></span>
+<span class="code">    early_return :: (n: <span class="type">float</span>, m: <span class="type">float</span>) -> () {</span>
+<span class="code">        <span class="keyword">if</span> n < <span class="constant">5.0</span> {</span>
+<span class="code">            ->       <span class="comment">//will return from function, and skip calling 'print(n * m)' below</span></span>
+<span class="code">        }</span>
+<span class="code"></span>
+<span class="code">        <span class="keyword">print</span>(n * m)</span>
+<span class="code">    }</span>
         </code>
         </pre>
         <section class="col-1-4">
@@ -505,21 +505,21 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    greeting :: (name: <span class="bl">string</span>) -> (<span class="bl">string</span>) {
-        -> <span class="re">"Hello, "</span> + name + <span class="re">"."</span>
-    }
-
-    <span class="bl">print</span>(greeting(<span class="re">"Tim"</span>))  <span class="gr">//"Hello, Tim."</span>
-    <span class="bl">print</span>(greeting(<span class="re">"Mittens"</span>)) <span class="gr">//"Hello, Mittens."</span>
-
-    returns_two :: () -> (<span class="bl">int</span>, <span class="bl">int</span>) {
-        -> <span class="gr">1,</span> 5
-    }
-
-    x, y := returns_two()
-    <span class="bl">print</span>(x) <span class="gr">//1</span>
-    <span class="bl">print</span>(y) <span class="gr">//5</span>
+<span class="code">            <code></span>
+<span class="code">    greeting :: (name: <span class="type">string</span>) -> (<span class="type">string</span>) {</span>
+<span class="code">        -> <span class="string">"Hello, "</span> + name + <span class="string">"."</span></span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">print</span>(greeting(<span class="string">"Tim"</span>))  <span class="comment">//"Hello, Tim."</span></span>
+<span class="code">    <span class="keyword">print</span>(greeting(<span class="string">"Mittens"</span>)) <span class="comment">//"Hello, Mittens."</span></span>
+<span class="code"></span>
+<span class="code">    returns_two :: () -> (<span class="type">int</span>, <span class="type">int</span>) {</span>
+<span class="code">        -> <span class="constant">1</span>, <span class="constant">5</span></span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    x, y := returns_two()</span>
+<span class="code">    <span class="keyword">print</span>(x) <span class="comment">//1</span></span>
+<span class="code">    <span class="keyword">print</span>(y) <span class="comment">//5</span></span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -538,13 +538,13 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    op :: (a: <span class="bl">int</span>, b: <span class="bl">int</span>, fun: (<span class="bl">int</span>, <span class="bl">int</span>) -> (<span class="bl">int</span>)) -> (<span class="bl">int</span>) {
-        -> fun(a, b)   
-    }    
-
-    result := op(<span class="gr">1,</span> <span class="gr">2,</span> (a: <span class="bl">int</span>, b: <span class="bl">int</span>) -> (<span class="bl">int</span>) { -> a + b })
-    <span class="bl">print</span>(result) <span class="gr">//3</span>
+<span class="code">            <code></span>
+<span class="code">    op :: (a: <span class="type">int</span>, b: <span class="type">int</span>, fun: (<span class="type">int</span>, <span class="type">int</span>) -> (<span class="type">int</span>)) -> (<span class="type">int</span>) {</span>
+<span class="code">        -> fun(a, b)   </span>
+<span class="code">    }    </span>
+<span class="code"></span>
+<span class="code">    result := op(<span class="constant">1</span>, <span class="constant">2</span>, (a: <span class="type">int</span>, b: <span class="type">int</span>) -> (<span class="type">int</span>) { -> a + b })</span>
+<span class="code">    <span class="keyword">print</span>(result) <span class="comment">//3</span></span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -566,16 +566,16 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    Person :: <span class="bl">struct</span> {
-        name: <span class="bl">string</span>        = <span class="re">"John"</span>
-        age: <span class="bl">int</span>            = <span class="gr">35</span>
-        hair_color: <span class="bl">string</span>  = <span class="re">"Brown"</span>
-        height: <span class="bl">float</span>       = <span class="gr">175.1</span>
-        friends             := <span class="bl">List</span>&#<span class="gr">60</span>Person&#<span class="gr">62</span>()
-        best_friend: Person = <span class="gr">nil</span>
-        talk: () -> (<span class="bl">string</span>) = <span class="gr">nil</span>
-    }
+<span class="code">            <code></span>
+<span class="code">    Person :: <span class="keyword">struct</span> {</span>
+<span class="code">        name: <span class="type">string</span>        = <span class="string">"John"</span></span>
+<span class="code">        age: <span class="type">int</span>            = <span class="constant">35</span></span>
+<span class="code">        hair_color: <span class="type">string</span>  = <span class="string">"Brown"</span></span>
+<span class="code">        height: <span class="type">float</span>       = <span class="constant">175.1</span></span>
+<span class="code">        friends             := <span class="type">List</span>&lt;Person&gt;()</span>
+<span class="code">        best_friend: Person = <span class="constant">nil</span></span>
+<span class="code">        talk: () -> (<span class="type">string</span>) = <span class="constant">nil</span></span>
+<span class="code">    }</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -594,13 +594,13 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    Dog :: <span class="bl">struct</span> {
-        name: <span class="bl">string</span> = <span class="re">"Mittens"</span>
-        age: <span class="bl">int</span> = 3
-    }
-
-    d: Dog = Dog()
+<span class="code">            <code></span>
+<span class="code">    Dog :: <span class="keyword">struct</span> {</span>
+<span class="code">        name: <span class="type">string</span> = <span class="string">"Mittens"</span></span>
+<span class="code">        age: <span class="type">int</span> = <span class="constant">3</span></span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    d: Dog = Dog()</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -616,24 +616,24 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    Car :: <span class="bl">struct</span> {
-        color: <span class="bl">string</span> = <span class="re">"red"</span>
-        age: <span class="bl">int</span> = <span class="gr">20</span>
-        description: (car: Car) -> (<span class="bl">string</span>) = <span class="gr">nil</span>
-    }
-
-    to_string :: (car: Car) -> (<span class="bl">string</span>) {
-        <span class="bl">print</span>(<span class="re">"This "</span> + car.age <span class="bl">as</span> <span class="bl">string</span> + <span class="re">" year-old car is "</span> + car.color)
-    }
-
-    my_car: Car = Car()
-    my_car.description = to_string
-
-    my_car.description(my_car) <span class="gr">//This 20 year-old car is red</span>
-
-    my_car.color = <span class="re">"green"</span>
-    my_car.description(my_car) <span class="gr">//This 20 year-old car is green</span>
+<span class="code">            <code></span>
+<span class="code">    Car :: <span class="keyword">struct</span> {</span>
+<span class="code">        color: <span class="type">string</span> = <span class="string">"red"</span></span>
+<span class="code">        age: <span class="type">int</span> = <span class="constant">20</span></span>
+<span class="code">        description: (car: Car) -> (<span class="type">string</span>) = <span class="constant">nil</span></span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    to_string :: (car: Car) -> (<span class="type">string</span>) {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="string">"This "</span> + car.age <span class="keyword">as</span> <span class="type">string</span> + <span class="string">" year-old car is "</span> + car.color)</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    my_car: Car = Car()</span>
+<span class="code">    my_car.description = to_string</span>
+<span class="code"></span>
+<span class="code">    my_car.description(my_car) <span class="comment">//This 20 year-old car is red</span></span>
+<span class="code"></span>
+<span class="code">    my_car.color = <span class="string">"green"</span></span>
+<span class="code">    my_car.description(my_car) <span class="comment">//This 20 year-old car is green</span></span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -652,23 +652,23 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    Animal :: <span class="bl">struct</span> {
-        classification: <span class="bl">string</span> = <span class="re">"mammalia"</span> 
-    }
-
-    Deer :: <span class="bl">struct</span> < Animal {
-    }
-
-    Shark :: <span class="bl">struct</span> < Animal {
-        classification: <span class="bl">string</span> = <span class="re">"chondrichthyes"</span>
-    }
-
-    my_deer: Deer = Deer()
-    my_shark: Shark = Shark()
-
-    <span class="bl">print</span>(my_deer.classification) <span class="gr">//"mammalia"</span>
-    <span class="bl">print</span>(my_shark.classification) <span class="gr">//"chondrichthyes"</span>
+<span class="code">            <code></span>
+<span class="code">    Animal :: <span class="keyword">struct</span> {</span>
+<span class="code">        classification: <span class="type">string</span> = <span class="string">"mammalia"</span> </span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    Deer :: <span class="keyword">struct</span> < Animal {</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    Shark :: <span class="keyword">struct</span> < Animal {</span>
+<span class="code">        classification: <span class="type">string</span> = <span class="string">"chondrichthyes"</span></span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    my_deer: Deer = Deer()</span>
+<span class="code">    my_shark: Shark = Shark()</span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">print</span>(my_deer.classification) <span class="comment">//"mammalia"</span></span>
+<span class="code">    <span class="keyword">print</span>(my_shark.classification) <span class="comment">//"chondrichthyes"</span></span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -687,16 +687,16 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    Token :: <span class="bl">enum</span> {
-        plus
-        minus
-        star
-        slash
-    }
-
-    token_1: Token = Token.plus
-    token_2 := Token.star
+<span class="code">            <code></span>
+<span class="code">    Token :: <span class="keyword">enum</span> {</span>
+<span class="code">        plus</span>
+<span class="code">        minus</span>
+<span class="code">        star</span>
+<span class="code">        slash</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    token_1: Token = Token.plus</span>
+<span class="code">    token_2 := Token.star</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -720,22 +720,22 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    my_list: <span class="bl">List</span><<span class="bl">int</span>> = <span class="bl">List</span><<span class="bl">int</span>>()
-
-    <span class="bl">print</span>(my_list.size) <span class="gr">//0</span>
-
-    my_list[<span class="gr">0]</span> = 2
-    my_list[<span class="gr">1]</span> = <span class="gr">11</span>
-    my_list[<span class="gr">2]</span> = -9
-
-    <span class="bl">for</span> i: <span class="bl">int</span> <span class="bl">in</span> my_list {
-        <span class="bl">print</span>(my_list[i])
-    }
-
-    <span class="gr">//2</span>
-    <span class="gr">//11</span>
-    <span class="gr">//-9</span>
+<span class="code">            <code></span>
+<span class="code">    my_list: <span class="type">List</span><<span class="type">int</span>> = <span class="type">List</span><<span class="type">int</span>>()</span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">print</span>(my_list.size) <span class="comment">//0</span></span>
+<span class="code"></span>
+<span class="code">    my_list[<span class="constant">0</span>] = <span class="constant">2</span></span>
+<span class="code">    my_list[<span class="constant">1</span>] = <span class="constant">11</span></span>
+<span class="code">    my_list[<span class="constant">2</span>] = -<span class="constant">9</span></span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">for</span> i: <span class="type">int</span> <span class="keyword">in</span> my_list {</span>
+<span class="code">        <span class="keyword">print</span>(my_list[i])</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//2</span></span>
+<span class="code">    <span class="comment">//11</span></span>
+<span class="code">    <span class="comment">//-9</span></span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -754,21 +754,21 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    my_map: <span class="bl">Map</span><<span class="bl">float</span>> = <span class="bl">Map</span><<span class="bl">float</span>>()
-
-    <span class="bl">print</span>(my_map.size) <span class="gr">//0</span>
-
-    my_map[<span class="re">"dog"</span>] = <span class="gr">32.2</span>
-    my_map[<span class="re">"cat"</span>] = -<span class="gr">2.6</span>
-
-    <span class="bl">foreach</span> k: <span class="bl">string</span> <span class="bl">in</span> my_map.keys {
-        <span class="bl">print</span>(k + <span class="re">" "</span> + my_map[k])
-    }
-
-    <span class="gr">//dog 32.2</span>
-    <span class="gr">//cat -2.6</span>
-    <span class="gr">//Note: order of key/value pairs may vary</span>
+<span class="code">            <code></span>
+<span class="code">    my_map: <span class="type">Map</span><<span class="type">float</span>> = <span class="type">Map</span><<span class="type">float</span>>()</span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">print</span>(my_map.size) <span class="comment">//0</span></span>
+<span class="code"></span>
+<span class="code">    my_map[<span class="string">"dog"</span>] = <span class="constant">32.2</span></span>
+<span class="code">    my_map[<span class="string">"cat"</span>] = -<span class="constant">2.6</span></span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">foreach</span> k: <span class="type">string</span> <span class="keyword">in</span> my_map.keys {</span>
+<span class="code">        <span class="keyword">print</span>(k + <span class="string">" "</span> + my_map[k])</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="comment">//dog 32.2</span></span>
+<span class="code">    <span class="comment">//cat -2.6</span></span>
+<span class="code">    <span class="comment">//Note: order of key/value pairs may vary</span></span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -788,10 +788,10 @@
         <section class="col-1-4">
         </section>
         <pre class="code-box col-3-4">
-            <code>
-    <span class="bl">import</span> vec <span class="gr">//do not include the .cbr extension</span>
-
-    x, y, z := vec3() 
+<span class="code">            <code></span>
+<span class="code">    <span class="keyword">import</span> vec <span class="comment">//do not include the .cbr extension</span></span>
+<span class="code"></span>
+<span class="code">    x, y, z := vec3() </span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -824,11 +824,11 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    <span class="gr">//prints time elapsed during 'test_function' call</span>
-    start_time: <span class="bl">float</span> = <span class="bl">clock</span>()
-    test_function()
-    <span class="bl">print</span>(<span class="bl">clock</span>() - start_time)
+<span class="code">            <code></span>
+<span class="code">    <span class="comment">//prints time elapsed during 'test_function' call</span></span>
+<span class="code">    start_time: <span class="type">float</span> = <span class="keyword">clock</span>()</span>
+<span class="code">    test_function()</span>
+<span class="code">    <span class="keyword">print</span>(<span class="keyword">clock</span>() - start_time)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -846,9 +846,9 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    <span class="bl">print</span>(<span class="re">"Hello world"</span>)
-    <span class="bl">print</span>(<span class="re">"Hello"</span> + <span class="re">" world"</span>)
+<span class="code">            <code></span>
+<span class="code">    <span class="keyword">print</span>(<span class="string">"Hello world"</span>)</span>
+<span class="code">    <span class="keyword">print</span>(<span class="string">"Hello"</span> + <span class="string">" world"</span>)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -866,10 +866,10 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    <span class="gr">//store keyboard input into string s, and then print it to the screen.</span>
-    s: <span class="bl">string</span> = <span class="bl">input</span>()
-    <span class="bl">print</span>(s)
+<span class="code">            <code></span>
+<span class="code">    <span class="comment">//store keyboard input into string s, and then print it to the screen.</span></span>
+<span class="code">    s: <span class="type">string</span> = <span class="keyword">input</span>()</span>
+<span class="code">    <span class="keyword">print</span>(s)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -887,8 +887,8 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
+<span class="code">            <code></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -907,9 +907,9 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
-    <span class="bl">close</span>(f)
+<span class="code">            <code></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
+<span class="code">    <span class="keyword">close</span>(f)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -929,10 +929,10 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
-    <span class="bl">print</span>(<span class="bl">read_all</span>(f))
-    <span class="bl">close</span>(f)
+<span class="code">            <code></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
+<span class="code">    <span class="keyword">print</span>(<span class="keyword">read_all</span>(f))</span>
+<span class="code">    <span class="keyword">close</span>(f)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -951,12 +951,12 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
-    <span class="bl">while</span> !<span class="bl">eof</span>(f) {
-        <span class="bl">print</span>(<span class="bl">read_line</span>(f))
-    }
-    <span class="bl">close</span>(f)
+<span class="code">            <code></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
+<span class="code">    <span class="keyword">while</span> !<span class="keyword">eof</span>(f) {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="keyword">read_line</span>(f))</span>
+<span class="code">    }</span>
+<span class="code">    <span class="keyword">close</span>(f)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -974,12 +974,12 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
-    <span class="bl">while</span> !<span class="bl">eof</span>(f) {
-        <span class="bl">print</span>(<span class="bl">read_line</span>(f))
-    }
-    <span class="bl">close</span>(f)
+<span class="code">            <code></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
+<span class="code">    <span class="keyword">while</span> !<span class="keyword">eof</span>(f) {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="keyword">read_line</span>(f))</span>
+<span class="code">    }</span>
+<span class="code">    <span class="keyword">close</span>(f)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -998,14 +998,14 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    <span class="gr">//prints the first line in the file 3 times</span>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
-    <span class="bl">for</span> i := <span class="gr">1,</span> i < <span class="gr">3,</span> i = i + <span class="gr">1 </span>{
-        <span class="bl">print</span>(<span class="bl">read_line</span>(f))
-        <span class="bl">rewind</span>(f)
-    }
-    <span class="bl">close</span>(f)
+<span class="code">            <code></span>
+<span class="code">    <span class="comment">//prints the first line in the file 3 times</span></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
+<span class="code">    <span class="keyword">for</span> i := <span class="constant">1</span>, i < <span class="constant">3</span>, i = i + <span class="constant">1</span> {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="keyword">read_line</span>(f))</span>
+<span class="code">        <span class="keyword">rewind</span>(f)</span>
+<span class="code">    }</span>
+<span class="code">    <span class="keyword">close</span>(f)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -1024,11 +1024,11 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    <span class="gr">//clears the file of any contents</span>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
-    <span class="bl">clear</span>(f)
-    <span class="bl">close</span>(f)
+<span class="code">            <code></span>
+<span class="code">    <span class="comment">//clears the file of any contents</span></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
+<span class="code">    <span class="keyword">clear</span>(f)</span>
+<span class="code">    <span class="keyword">close</span>(f)</span>
             </code>
         </pre>
         <section class="col-1-4">
@@ -1047,12 +1047,12 @@
     </div>
     <div class="row">
         <pre class="code-box col-3-4">
-            <code>
-    <span class="gr">//clears the file of any contents, and appends a single line.</span>
-    f: <span class="bl">File</span> = <span class="bl">open</span>(<span class="re">"sample.txt"</span>)
-    <span class="bl">clear</span>(f)
-    <span class="bl">append</span>(f, <span class="re">"This is the first line"</span>)
-    <span class="bl">close</span>(f)
+<span class="code">            <code></span>
+<span class="code">    <span class="comment">//clears the file of any contents, and appends a single line.</span></span>
+<span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
+<span class="code">    <span class="keyword">clear</span>(f)</span>
+<span class="code">    <span class="keyword">append</span>(f, <span class="string">"This is the first line"</span>)</span>
+<span class="code">    <span class="keyword">close</span>(f)</span>
             </code>
         </pre>
         <section class="col-1-4">
