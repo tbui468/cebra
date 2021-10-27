@@ -46,6 +46,8 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
+    Add tests for string slicing
+
     CHECK_TYPE macro in compiler is just a simple 'if' statement.  Make it better or scrap it.
 
     Errors could be moved to heap for more stack space - we aren't accessing them much in runnable code anyway. 
@@ -64,6 +66,8 @@ Implementation:
 
     Resolving identifers in parser can all be one function, surely?  Just use a switch to check between them
         all.
+
+    Currently not allow sequences for declaring struct fields - should allow it
            
     For syntax highlighter, 'end' should always be one position past where we want to highlight -
         currently it's the last index to highlight, BUT this doesn't work with 'when' statments
@@ -97,10 +101,6 @@ Implementation:
             parse the code and highlight - look for <code></code>
                 all text inside should just be indented properly
                 parse text for keywords (blue), constants and comments (green), strings (red)
-
-    string slicing is using ',' to separate start/end indices since ':' is used for declaring types
-    and this is causing problems with the parsing.  Could try to change it to ':' to conform with 
-    other languages' syntax, but this will requiring reworking some of the parser.
 
     slicing arrays?  a[0:3][0:3] either return a new 2x2 matrix.  a[0:3][0:3] = b (will check if b is correct dimensions)
 

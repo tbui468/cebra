@@ -258,12 +258,7 @@ static ResultCode primary(struct Node** node) {
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IDENTIFIER)) {
         Token id = parser.previous;
-        if (match(TOKEN_COLON)) {
-            struct Type* type;
-            PARSE_TYPE(&type, id, "Expected valid type after ':'.");
-            *node = make_decl_var(id, type, NULL);
-            return RESULT_SUCCESS;
-        } 
+        //checking for TOKEN_IDENTIFIER + TOKEN_COLON before getting to this function
         *node = make_get_var(id);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_STRING_TYPE)) {
@@ -331,7 +326,7 @@ static ResultCode call_dot(struct Node** node) {
                 Token left_bracket = parser.previous;
                 struct Node* idx;
                 PARSE(parse_expression, &idx, left_bracket, "Expect string after '[' for Map access, or int for List access.");
-                if (match(TOKEN_COMMA)) {
+                if (match(TOKEN_COLON)) {
                     struct Node* end_idx;
                     PARSE(parse_expression, &end_idx, left_bracket, "Expect end index for array slicing.");
                     left = make_slice_string(left_bracket, left, idx, end_idx);
@@ -479,10 +474,20 @@ static ResultCode parse_sequence(struct Node** node) {
     struct NodeList* left = (struct NodeList*)make_node_list();
     Token name = make_dummy_token();
     do {
-        struct Node* expr;
-        PARSE(or, &expr, parser.previous, "Invalid expression.");
-        name = parser.previous;
-        add_node(left, expr);
+        //check for declarations with explicit types (to avoid problems with string slicing syntax and colons)
+        if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON)) {
+            match(TOKEN_IDENTIFIER);
+            name = parser.previous;
+            match(TOKEN_COLON);
+            struct Type* type;
+            PARSE_TYPE(&type, name, "Expected valid type after ':'.");
+            add_node(left, make_decl_var(name, type, NULL));
+        } else {
+            struct Node* expr;
+            PARSE(or, &expr, parser.previous, "Invalid expression.");
+            name = parser.previous;
+            add_node(left, expr);
+        }
     } while (match(TOKEN_COMMA));
 
 
@@ -677,6 +682,23 @@ static ResultCode parse_import() {
     match(TOKEN_IMPORT);
     CONSUME(TOKEN_IDENTIFIER, parser.previous, "Expected module name after 'import'.");
     parser.imports[parser.import_count++] = parser.previous;
+    return RESULT_SUCCESS;
+}
+
+static ResultCode parse_var_declaration(struct Node** node) {
+    match(TOKEN_IDENTIFIER);
+    Token name = parser.previous;
+    struct Type* type = make_infer_type();
+    if (match(TOKEN_COLON)) {
+        PARSE_TYPE(&type, name, "Invalid type for variable declaration.");
+        match(TOKEN_EQUAL); 
+    } else {
+        match(TOKEN_COLON_EQUAL);
+    }
+    struct Node* right;
+    PARSE(parse_expression, &right, name, "Expected valid right side expression for assignment.");
+    *node = make_decl_var(name, type, right);
+    return RESULT_SUCCESS;
 }
 
 static ResultCode declaration(struct Node** node) {
@@ -763,34 +785,12 @@ static ResultCode declaration(struct Node** node) {
         CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before class body.");
 
         struct NodeList* nl = (struct NodeList*)make_node_list();
+        struct TypeStruct* tc = (struct TypeStruct*)struct_type;
         while (!match(TOKEN_RIGHT_BRACE)) {
-            struct Node* field;
-            PARSE(parse_expression, &field, struct_name, "Expected field declarations inside struct body.");
-            struct TypeStruct* tc = (struct TypeStruct*)struct_type;
-            switch(field->type) {
-                case NODE_DECL_VAR: {
-                    DeclVar* dv = (DeclVar*)field;
-                    if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
-                    add_node(nl, (struct Node*)dv);
-                    break;
-                }
-                case NODE_LIST: {
-                    struct NodeList* decls = (struct NodeList*)field;
-                    for (int i = 0; i < decls->count; i++) {
-                        if (decls->nodes[i]->type != NODE_DECL_VAR) {
-                            ERROR(struct_name, "Expecting field declarations and assignments.");
-                        }
-                        DeclVar* dv = (DeclVar*)(decls->nodes[i]);
-                        if (add_prop_to_struct_type(tc, dv) == RESULT_FAILED) return RESULT_FAILED;
-                        add_node(nl, (struct Node*)dv);
-                    }
-                    break;
-                }
-                default: {
-                    ERROR(parser.previous, "Shit broke - expecting a NODE_LIST or NODE_DECL_VAR ast node.");
-                    break;
-                }
-            }
+            struct Node* dv;
+            if (parse_var_declaration(&dv) == RESULT_FAILED) return RESULT_FAILED;
+            if (add_prop_to_struct_type(tc, (DeclVar*)dv) == RESULT_FAILED) return RESULT_FAILED;
+            add_node(nl, dv);
         }
 
         *node = make_decl_struct(struct_name, super, nl);
@@ -893,7 +893,7 @@ static ResultCode declaration(struct Node** node) {
         struct Node* initializer = NULL;
 
         if (!match(TOKEN_UNDER_SCORE)) {
-            PARSE(parse_expression, &initializer, name, "Expected initializer or '_' for first item in 'for' loop.");
+            if (parse_var_declaration(&initializer) == RESULT_FAILED) return RESULT_FAILED;
         }
         CONSUME(TOKEN_COMMA, name, "Expect ',' after for-loop initializer.");
 

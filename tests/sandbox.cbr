@@ -1,32 +1,10 @@
 print("Hello\n")
 
-is_alpha :: (s: string) -> (bool) {
-    -> s == "a" or s == "A" or 
-       s == "b" or s == "B" or 
-       s == "c" or s == "C" or 
-       s == "d" or s == "D" or 
-       s == "e" or s == "E" or 
-       s == "f" or s == "F" or 
-       s == "g" or s == "G" or 
-       s == "h" or s == "H" or 
-       s == "i" or s == "I" or 
-       s == "j" or s == "J" or 
-       s == "k" or s == "K" or 
-       s == "l" or s == "L" or 
-       s == "m" or s == "M" or 
-       s == "n" or s == "N" or 
-       s == "o" or s == "O" or 
-       s == "p" or s == "P" or 
-       s == "q" or s == "Q" or 
-       s == "r" or s == "R" or 
-       s == "s" or s == "S" or 
-       s == "t" or s == "T" or 
-       s == "u" or s == "U" or 
-       s == "v" or s == "V" or 
-       s == "w" or s == "W" or 
-       s == "x" or s == "X" or 
-       s == "y" or s == "Y" or 
-       s == "z" or s == "Z"
+for i: int = 0, i < 5, i = i + 1 {
+    print(i)
 }
 
-print("world\n")
+s := "hello world!"
+
+print(s[0 : 5])
+print(s[8: s.size])
