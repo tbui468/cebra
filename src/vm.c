@@ -618,7 +618,7 @@ ResultCode run_program(VM* vm) {
                     bool cast_down = false;
                     struct ObjStruct* current = sub;
                     while (current != NULL) {
-                        if (same_keys(to->name, current->name)) {
+                        if (to->name == current->name) {
                             cast_down = true;
                             break;
                         }

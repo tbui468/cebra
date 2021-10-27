@@ -75,12 +75,6 @@ static void grow_table(struct Table* table) {
 }
 
 
-bool same_keys(struct ObjString* key1, struct ObjString* key2) {
-    return  key1->hash == key2->hash &&
-            key1->length == key2->length &&
-            memcmp(key1->chars, key2->chars, key2->length) == 0;
-}
-
 void set_table(struct Table* table, struct ObjString* key, Value value) {
     Value v;
     if (!get_from_table(table, key, &v) && table->capacity * MAX_LOAD < table->count + 1) {
@@ -109,7 +103,7 @@ void set_table(struct Table* table, struct ObjString* key, Value value) {
             first_tombstone = idx;
         }
 
-        if (pair->key != NULL && same_keys(pair->key, key)) {
+        if (pair->key != NULL && pair->key == key) {
             pair->value = value;
             return;
         }
@@ -130,7 +124,7 @@ bool get_from_table(struct Table* table, struct ObjString* key, Value* value) {
         }
 
         //check if pair->key is NULL to skip tombstones
-        if (pair->key != NULL && same_keys(pair->key, key)) {
+        if (pair->key != NULL && pair->key == key) {
             *value = pair->value;
             return true;
         }
@@ -172,7 +166,7 @@ void delete_entry(struct Table* table, struct ObjString* key) {
         }
 
 
-        if (pair->key != NULL && same_keys(pair->key, key)) {
+        if (pair->key != NULL && pair->key == key) {
             //tombstone is 'NULL' key and 'true' value
             table->pairs[idx].key = NULL;
             table->pairs[idx].value = to_boolean(true);

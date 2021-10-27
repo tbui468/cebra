@@ -1282,15 +1282,16 @@ if sequences {
 
 
 print("----------------------------------")
-print("Total Tests:")
+print("\nTotal Tests:")
 print(passed.size + failed.size)
-print("Passed:")
+print("\nPassed:")
 print(passed.size)
-print("Failed:")
+print("\nFailed:")
 print(failed.size)
 for i := 0, i < failed.size, i = i + 1 {
     print(failed[i])
 }
 
-print("time:")
+print("\ntime:")
 print(clock() - start_time)
+print("\n")

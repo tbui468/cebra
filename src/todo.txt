@@ -46,26 +46,34 @@ Stack overflow
         VM - stack, callframes, errors
 
 Implementation:
-
-    For syntax highlighter, 'end' should always be one position past where we want to highlight -
-        currently it's the last index to highlight, BUT this doesn't work with 'when' statments
-        (which skip all other 'is' statements after one is triggered)
-        since it won't allow single character keywords or numbers.  Shift all 'end' values to be
-        one past the string we want to highlight, and then adjust the processing of Highlight List
-        by decrementing the 'end's by one.
-
-    Having List size auto-increment when setting a value is super confusing - should
-        not do it and force user to increment himself.
-
-        Or add an append(List, item) that automatically increments size.  Then we could
-        also make the list size read-only.
-
     Table could use a rewrite, and include renaming 'Pair' to 'Entry'
         and change name of some functions too ('get_from_table' -> 'get_entry', etc)
 
         Places where strings are compared can just be done with pointer equality now 
         since the same string will share the same address, and there won't be duplicates
         due to interning.
+
+
+    For syntax highlighter, 'end' should always be one position past where we want to highlight -
+        currently it's the last index to highlight, BUT this doesn't work with 'when' statments
+        (which skip all other 'is' statements after one is triggered)
+        since it won't allow single character keywords or numbers.  Shift all 'end' values to be
+        one past the string we want to highlight, and then adjust the processing of Highlight List
+        by decrementing the 'end's by one.  BUT we need to be careful since the 'while' loop
+        we use to scan the line doesn't go through the 'when/is' statments when i = s.size...
+        (which is a valid index IF we decide to make 'end' one past highlighting position)
+        would need to do one last call on the 'when/is' to close all highlighting positions open 
+        at the time.
+
+        Also, to avoid highlighting special html characters eg, &#64;,
+        we need to make sure that only numbers that start at index 0 OR that are preceded by a white
+        space are highlighted as numbers
+
+    Having List size auto-increment when setting a value is super confusing - should
+        not do it and force user to increment himself.
+
+        Or add an append(List, item) that automatically increments size.  Then we could
+        also make the list size read-only.
 
     Use Cebra to highlight code snippets
         read in compiled_docs.html into a buffer
