@@ -507,7 +507,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             if (seq->right != NULL) {
                 //tracking locals indices to update types if inferred
-                int decl_idx[256]; //TODO: this might be bad
+                int* decl_idx = (int*)malloc(256 * sizeof(int));
                 int decl_idx_count = 0;
 
                 //compile all variable declarations
@@ -624,6 +624,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     *node_type = (struct Type*)left_seq_type;
                 }
 
+                free(decl_idx);
             } else {
                 struct TypeArray* types = make_type_array();
                 for (int i = 0; i < seq->left->count; i++) {
