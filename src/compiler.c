@@ -971,10 +971,11 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 COMPILE_NODE(kase->then_block, &then_type);
                 int jump_end = emit_jump(compiler, OP_JUMP);
 
-                EMIT_ERROR_IF(je_count >= MAX_IS_STATEMENTS, when->name, "Limit of 256 'is' and 'else' cases in a 'when' statement.");
                 if (je_count < MAX_IS_STATEMENTS) {
                     jump_ends[je_count] = jump_end; 
                     je_count++;
+                } else {
+                    EMIT_ERROR_IF(true, when->name, "Limit of 256 'is' and 'else' cases in a 'when' statement.");
                 }
 
                 patch_jump(compiler, jump_then);
@@ -1141,6 +1142,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 EMIT_ERROR_IF(current == NULL, gp->prop, "Property not found on object.");
                 *node_type = type_val.as.type_type;
+            } else {
+                EMIT_ERROR_IF(true, gp->prop, "Object does not have properties that can be accessed.");
             }
 
             break;
@@ -1171,239 +1174,222 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 op = OP_GET_UPVALUE;
             }
 
+            //local or upvalue
             if (idx != -1) {
                 emit_byte(compiler, op);
                 emit_byte(compiler, idx);
                 *node_type = resolve_type(compiler, gv->name);
-                return RESULT_SUCCESS;
-            } 
-
-            //check if global -this needs to check enclosing compiler too
-            struct ObjString* name = make_string(gv->name.start, gv->name.length);
-            push_root(to_string(name));
-            Value v;
-            if (get_entry(&script_compiler->globals, name, &v)) {
-                emit_byte(compiler, OP_GET_GLOBAL);
-                emit_short(compiler, add_constant(compiler, to_string(name)));
-                pop_root();
-                if (v.as.type_type->type == TYPE_STRUCT || v.as.type_type->type == TYPE_ENUM) {
-                    *node_type = make_decl_type(v.as.type_type);
+            } else {
+                struct ObjString* name = make_string(gv->name.start, gv->name.length);
+                push_root(to_string(name));
+                Value v;
+                //global
+                if (get_entry(&script_compiler->globals, name, &v)) {
+                    emit_byte(compiler, OP_GET_GLOBAL);
+                    emit_short(compiler, add_constant(compiler, to_string(name)));
+                    if (v.as.type_type->type == TYPE_STRUCT || v.as.type_type->type == TYPE_ENUM) {
+                        *node_type = make_decl_type(v.as.type_type);
+                    } else {
+                        *node_type = v.as.type_type;
+                    }
                 } else {
-                    *node_type = v.as.type_type;
+                    EMIT_ERROR_IF(true, gv->name, "Attempting to access undeclared variable.");
                 }
-                return RESULT_SUCCESS;
+                pop_root();
             }
-            pop_root();
 
-            add_error(compiler, gv->name, "[GetVar] Attempting to access undeclared variable.");
-            return RESULT_FAILED;
+            break;
         }
         case NODE_SET_VAR: {
             SetVar* sv = (SetVar*)node;
-            struct Type* right_type;
-            COMPILE_NODE_OLD(sv->right, &right_type);
+            struct Type* right_type = NULL;
+            COMPILE_NODE(sv->right, &right_type);
 
             Token var = ((GetVar*)(sv->left))->name;
             struct Type* var_type = resolve_type(compiler, var);
             *node_type = var_type;
-            CHECK_TYPE(!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type), 
+
+            EMIT_ERROR_IF(right_type == NULL || (!same_type(var_type, right_type) && !struct_or_function_to_nil(var_type, right_type)), 
                        var, "Right side type must match variable type.");
 
             int depth = 0;
             if (set_var_to_stack_idx(compiler, var, depth) == RESULT_FAILED) {
-                add_error(compiler, var, "Local variable not declared.");
-                return RESULT_FAILED;
+                result = RESULT_FAILED;
+                EMIT_ERROR_IF(true, var, "Local variable not declared.");
             }
 
-            return RESULT_SUCCESS;
+            break;
         }
         case NODE_SLICE_STRING: {
             SliceString* ss = (SliceString*)node;
-            struct Type* left_type;
-            COMPILE_NODE_OLD(ss->left, &left_type);
-            struct Type* start_idx_type;
-            COMPILE_NODE_OLD(ss->start_idx, &start_idx_type);
-            struct Type* end_idx_type;
-            COMPILE_NODE_OLD(ss->end_idx, &end_idx_type);
-            if (left_type->type != TYPE_STRING) {
-                add_error(compiler, ss->name, "Slicing can only be used on strings.");
-                return RESULT_FAILED;
-            }
-            if (start_idx_type->type != TYPE_INT || end_idx_type->type != TYPE_INT) {
-                print_type(start_idx_type);
-                print_type(end_idx_type);
-                print_token(ss->name);
-                add_error(compiler, ss->name, "Indices for string slicing must be integer types.");
-                return RESULT_FAILED;
-            }
+            struct Type* left_type = NULL;
+            COMPILE_NODE(ss->left, &left_type);
+            struct Type* start_idx_type = NULL;
+            COMPILE_NODE(ss->start_idx, &start_idx_type);
+            struct Type* end_idx_type = NULL;
+            COMPILE_NODE(ss->end_idx, &end_idx_type);
+
+            EMIT_ERROR_IF(left_type == NULL || left_type->type != TYPE_STRING, ss->name, "Slicing can only be used on strings.");
+            EMIT_ERROR_IF(start_idx_type == NULL || start_idx_type->type != TYPE_INT, ss->name, "Start index when slicing must be an integer.");
+            EMIT_ERROR_IF(end_idx_type == NULL || end_idx_type->type != TYPE_INT, ss->name, "End index when slicing must be an integer.");
+
             emit_byte(compiler, OP_SLICE);
             *node_type = left_type;
-            return RESULT_SUCCESS;
+            break;
         }
         case NODE_GET_ELEMENT: {
             GetElement* get_idx = (GetElement*)node;
-            struct Type* left_type;
-            COMPILE_NODE_OLD(get_idx->left, &left_type);
-            struct Type* idx_type;
-            COMPILE_NODE_OLD(get_idx->idx, &idx_type);
+            struct Type* left_type = NULL;
+            COMPILE_NODE(get_idx->left, &left_type);
+            struct Type* idx_type = NULL;
+            COMPILE_NODE(get_idx->idx, &idx_type);
 
-            if (left_type->type == TYPE_STRING) {
-                CHECK_TYPE(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
+            if (left_type == NULL) {
+                EMIT_ERROR_IF(true, get_idx->name, "[] access must be used on a list or map type.");
+            } else if (left_type->type == TYPE_STRING) {
+                EMIT_ERROR_IF(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
 
                 emit_byte(compiler, OP_GET_ELEMENT);
                 *node_type = left_type;
-                return RESULT_SUCCESS;
-            }
-
-            if (left_type->type == TYPE_LIST) {
-                CHECK_TYPE(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
+            } else if (left_type->type == TYPE_LIST) {
+                EMIT_ERROR_IF(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
 
                 emit_byte(compiler, OP_GET_ELEMENT);
                 *node_type = ((struct TypeList*)left_type)->type;
-                return RESULT_SUCCESS;
-            }
-
-            if (left_type->type == TYPE_MAP) {
-                CHECK_TYPE(idx_type->type != TYPE_STRING, get_idx->name, "Key must be string type.");
+            } else if (left_type->type == TYPE_MAP) {
+                EMIT_ERROR_IF(idx_type->type != TYPE_STRING, get_idx->name, "Key must be string type.");
 
                 emit_byte(compiler, OP_GET_ELEMENT);
                 *node_type = ((struct TypeList*)left_type)->type;
-                return RESULT_SUCCESS;
+            } else {
+                EMIT_ERROR_IF(true, get_idx->name, "[] access must be used on a list or map type.");
             }
 
-            add_error(compiler, get_idx->name, "[] access must be used on a list or map type.");
-            return RESULT_FAILED;
+            break;
         }
         case NODE_SET_ELEMENT: {
             SetElement* set_elem = (SetElement*)node;
             GetElement* get_elem = (GetElement*)(set_elem->left);
 
-            struct Type* right_type;
-            COMPILE_NODE_OLD(set_elem->right, &right_type);
-            struct Type* left_type;
-            COMPILE_NODE_OLD(get_elem->left, &left_type);
-            struct Type* idx_type;
-            COMPILE_NODE_OLD(get_elem->idx, &idx_type);
+            struct Type* right_type = NULL;
+            COMPILE_NODE(set_elem->right, &right_type);
+            struct Type* left_type = NULL;
+            COMPILE_NODE(get_elem->left, &left_type);
+            struct Type* idx_type = NULL;
+            COMPILE_NODE(get_elem->idx, &idx_type);
 
             int depth = 0;
-            ResultCode result = compile_set_element(compiler, get_elem->name, left_type, idx_type, right_type, depth);
-            if (result == RESULT_FAILED) return RESULT_FAILED;
+            if (right_type != NULL && left_type != NULL && idx_type != NULL) {
+                if (compile_set_element(compiler, get_elem->name, left_type, idx_type, right_type, depth) == RESULT_FAILED)
+                    result = RESULT_FAILED;
+            }
 
             *node_type = right_type;
-            return RESULT_SUCCESS;
+            break;
         }
         case NODE_CONTAINER: {
             struct DeclContainer* dc = (struct DeclContainer*)node;
             if (dc->type->type == TYPE_LIST) {
                 emit_byte(compiler, OP_LIST);
                 *node_type = dc->type;
-                return RESULT_SUCCESS;
-            }
-            if (dc->type->type == TYPE_MAP) {
+            } else if (dc->type->type == TYPE_MAP) {
                 emit_byte(compiler, OP_MAP);
                 *node_type = dc->type;
-                return RESULT_SUCCESS;
+            } else {
+                EMIT_ERROR_IF(true, dc->name, "Invalid identifier for container.");
             }
-            add_error(compiler, dc->name, "Invalid identifier for container.");
-            return RESULT_FAILED;
+
+            break;
         }
         case NODE_CALL: {
             Call* call = (Call*)node;
 
-            struct Type* type;
-            COMPILE_NODE_OLD(call->left, &type);
+            struct Type* type = NULL;
+            COMPILE_NODE(call->left, &type);
 
-            if (type->type == TYPE_DECL) {
+            if (type == NULL) {
+                EMIT_ERROR_IF(true, call->name, "Calls can only be made on functions, structs, List and Map.");
+            } else if (type->type == TYPE_DECL) {
                 struct TypeDecl* td = (struct TypeDecl*)type;
                 if (td->custom_type->type == TYPE_STRUCT) {
                     struct TypeStruct* type_struct = (struct TypeStruct*)(td->custom_type);
                     emit_byte(compiler, OP_INSTANCE);
                     *node_type = (struct Type*)type_struct;
-                    return RESULT_SUCCESS;
+                } else {
+                    EMIT_ERROR_IF(true, call->name, "Calls can only be used on functions or to instantiate structs.");
                 }
-                add_error(compiler, call->name, "Calls can only be used on functions or to instantiate structs.");
-                return RESULT_FAILED;
-            }
-
-            if (type->type == TYPE_FUN) {
+            } else if (type->type == TYPE_FUN) {
                 struct TypeFun* type_fun = (struct TypeFun*)type;
                 struct TypeArray* params = (type_fun->params);
 
-                if (call->arguments->count != params->count) {
-                    add_error(compiler, call->name, "Argument count must match function parameter count.");
-                    return RESULT_FAILED;
-                }
+                if (call->arguments->count == params->count) {
+                    for (int i = 0; i < params->count; i++) {
+                        struct Type* arg_type = NULL;
+                        COMPILE_NODE(call->arguments->nodes[i], &arg_type);
 
-                int min = call->arguments->count < params->count ? call->arguments->count : params->count; //Why is this needed?
-                for (int i = 0; i < min; i++) {
-                    struct Type* arg_type;
-                    COMPILE_NODE_OLD(call->arguments->nodes[i], &arg_type);
+                        struct Type* param_type = params->types[i];
 
-                    struct Type* param_type = params->types[i];
+                        EMIT_ERROR_IF(arg_type != NULL && !same_type(param_type, arg_type), call->name, "Argument type must match parameter type.");
+                    }
 
-                    CHECK_TYPE(!same_type(param_type, arg_type), call->name, "Argument type must match parameter type.");
-                }
+                    emit_byte(compiler, OP_CALL);
+                    emit_byte(compiler, (uint8_t)(call->arguments->count));
 
-                emit_byte(compiler, OP_CALL);
-                emit_byte(compiler, (uint8_t)(call->arguments->count));
+                    if (type_fun->returns->count == 1) *node_type = type_fun->returns->types[0];
+                    else *node_type = (struct Type*)(type_fun->returns);
 
-                if (type_fun->returns->count == 1) {
-                    *node_type = type_fun->returns->types[0];
                 } else {
-                    *node_type = (struct Type*)(type_fun->returns);
+                    EMIT_ERROR_IF(true, call->name, "Argument count must match function parameter count.");
                 }
-                //@need to integrate multiple returns later - just grabbing return at index 0 for now
-                //*node_type = ((struct TypeArray*)(type_fun->returns))->types[0];
-                return RESULT_SUCCESS;
+
+            } else {
+                EMIT_ERROR_IF(true, call->name, "Calls can only be made on functions, structs, List and Map.");
             }
 
-            add_error(compiler, call->name, "Calls can only be made on functions, structs, List and Map.");
-            return RESULT_FAILED;
+            break;
         }
         case NODE_NIL: {
             Nil* nil = (Nil*)node;
             emit_byte(compiler, OP_NIL);
             *node_type =  make_nil_type();
-            return RESULT_SUCCESS;
+            break;
         }
         case NODE_CAST: {
             Cast* cast = (Cast*)node;
-            struct Type* left;
+            struct Type* left = NULL;
             COMPILE_NODE_OLD(cast->left, &left);
 
-            if (is_primitive(left) && is_primitive(cast->type)) {
-                CHECK_TYPE(left->type == TYPE_NIL && cast->type->type != TYPE_STRING, cast->name, "'nil' types can only be cast to string.");
-                CHECK_TYPE(cast->type->type == TYPE_NIL, cast->name, "Cannot cast to 'nil' type.");
-                CHECK_TYPE(left->type == cast->type->type, cast->name, "Cannot cast to same type.");
+            if (left != NULL && is_primitive(left) && is_primitive(cast->type)) {
+                EMIT_ERROR_IF(left->type == TYPE_NIL && cast->type->type != TYPE_STRING, cast->name, "'nil' types can only be cast to string.");
+                EMIT_ERROR_IF(cast->type->type == TYPE_NIL, cast->name, "Cannot cast to 'nil' type.");
+                EMIT_ERROR_IF(left->type == cast->type->type, cast->name, "Cannot cast to same type.");
                 emit_byte(compiler, OP_CAST);
                 emit_short(compiler, cast->type->type);
                 *node_type = cast->type;
-                return RESULT_SUCCESS;
+            } else if (left != NULL && left->type == TYPE_STRUCT && cast->type->type == TYPE_STRUCT) {
+                struct TypeStruct* from = (struct TypeStruct*)(left);
+                struct TypeStruct* to = (struct TypeStruct*)(cast->type);
+
+                EMIT_ERROR_IF(same_token_literal(from->name, to->name), cast->name, "Attempting to cast to own type.");
+
+                bool cast_up = is_substruct(from, to);
+                bool cast_down = is_substruct(to, from);
+                bool valid_cast = cast_up || cast_down;
+
+                EMIT_ERROR_IF(!(cast_up || cast_down), cast->name, "Struct instances must be cast only to superstructs or substructs.");
+
+                emit_byte(compiler, OP_CAST);
+                struct ObjString* to_struct = make_string(to->name.start, to->name.length);
+                push_root(to_string(to_struct));
+                emit_short(compiler, add_constant(compiler, to_string(to_struct)));
+                pop_root();
+
+                *node_type =  cast->type;
+            } else {
+                EMIT_ERROR_IF(true, cast->name, "Type casts with 'as' must be applied to structure types or primitive types.");
             }
 
-            CHECK_TYPE(left->type != TYPE_STRUCT || cast->type->type != TYPE_STRUCT,
-                    cast->name, "Type casts with 'as' must be applied to structure types or primitive types.");
-
-            struct TypeStruct* from = (struct TypeStruct*)(left);
-            struct TypeStruct* to = (struct TypeStruct*)(cast->type);
-
-            CHECK_TYPE(same_token_literal(from->name, to->name), 
-                       cast->name, "Attempting to cast to own type.");
-
-            bool cast_up = is_substruct(from, to);
-            bool cast_down = is_substruct(to, from);
-            bool valid_cast = cast_up || cast_down;
-
-            CHECK_TYPE(!(cast_up || cast_down), cast->name, "Struct instances must be cast only to superstructs or substructs.");
-
-            emit_byte(compiler, OP_CAST);
-            struct ObjString* to_struct = make_string(to->name.start, to->name.length);
-            push_root(to_string(to_struct));
-            emit_short(compiler, add_constant(compiler, to_string(to_struct)));
-            pop_root();
-
-            *node_type =  cast->type;
-            return RESULT_SUCCESS;
+            break;
         }
     } 
 

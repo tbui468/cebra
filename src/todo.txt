@@ -73,40 +73,13 @@ Implementation:
         Fix 2: make NODE_WHEN/NODE_SEQUENCE arrays dynamically allocated - need to free them even if error is encountered
         Fix 3: change locals/upvalues dynamically allocated (can we do this?)
 
-    compile_decl_var returns the type, BUT compile_node with a decl_var node returns a nil... this is super confusing.
+    NODE_SEQUENCE and NODE_FUN are giant messes - can they be simplified?
 
     Replace all macros in compiler with new COMPILE_NODE and EMIT_ERROR_IF where we just set a local variable 'result' to the outcome
         if failed, and then return it once at the end of the switch statement.
 
-            NODE_LITERAL, (done)
-            NODE_UNARY, (done)
-            NODE_BINARY, (done)
-            NODE_LOGICAL, (done)
-            NODE_DECL_VAR, (done)
-            NODE_STRUCT, (done)
-            NODE_GET_PROP, (done)
-            NODE_SET_PROP, (done)
-            NODE_GET_VAR,
-            NODE_SET_VAR,
-            NODE_GET_ELEMENT,
-            NODE_SET_ELEMENT,
-            NODE_BLOCK, (done)
-            NODE_IF_ELSE, (done)
-            NODE_WHILE, (done)
-            NODE_FOR, (done)
-            NODE_FOR_EACH,
             NODE_FUN,
-            NODE_RETURN, (done)
-            NODE_CALL,
-            NODE_EXPR_STMT, (done)
-            NODE_NIL,
-            NODE_LIST,
-            NODE_ENUM, (done)
-            NODE_CAST,
-            NODE_CONTAINER,
-            NODE_WHEN (done)
             NODE_SEQUENCE,
-            NODE_SLICE_STRING
 
     ERROR macro should be shared among all modules (parser, compiler, vm)
         errors are confusing now because they may cascade from lower nodes into higher nodes (eg, == Right/left side mismatch errors

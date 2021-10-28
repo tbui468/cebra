@@ -162,17 +162,6 @@ struct Node* make_for(Token name, struct Node* initializer, struct Node* conditi
     return insert_node((struct Node*)fo);
 }
 
-struct Node* make_for_each(Token name, struct Node* element, struct Node* var_list, struct Node* then_block) {
-    ForEach* fe = ALLOCATE(ForEach);
-    fe->name = name;
-    fe->element = element;
-    fe->var_list = var_list;
-    fe->then_block = then_block;
-    fe->base.type = NODE_FOR_EACH;
-
-    return insert_node((struct Node*)fe);
-}
-
 struct Node* make_return(Token name, struct Node* right) {
     Return* ret = ALLOCATE(Return);
     ret->name = name;
@@ -414,11 +403,6 @@ void print_node(struct Node* node) {
             printf("For");
             break;
         }
-        case NODE_FOR_EACH: {
-            //TODO: fill this in
-            printf("ForEach");
-            break;
-        }
         case NODE_RETURN: {
             //TODO: fill this in
             printf("Return");
@@ -573,11 +557,6 @@ void free_node(struct Node* node) {
         case NODE_FOR: {
             For* fo = (For*)node;
             FREE(fo, For);
-            break;
-        }
-        case NODE_FOR_EACH: {
-            ForEach* fe = (ForEach*)node;
-            FREE(fe, ForEach);
             break;
         }
         case NODE_RETURN: {
