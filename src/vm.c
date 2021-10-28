@@ -21,7 +21,7 @@ Value pop(VM* vm) {
 }
 
 void push(VM* vm, Value value) {
-    if ((int)(vm->stack_top - vm->stack) >= VM_STACK_MAX) {
+    if ((int)(vm->stack_top - vm->stack) >= MAX_STACK) {
         printf("[Error] Exceeded VM stack size.\n");
         exit(1);
     }
@@ -45,6 +45,7 @@ ResultCode init_vm(VM* vm) {
     vm->stack_top = &vm->stack[0];
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
+    vm->errors = (struct Error*)malloc(MAX_ERRORS * sizeof(struct Error));
     vm->error_count = 0;
     init_table(&vm->globals);
     init_table(&vm->strings);
@@ -57,12 +58,13 @@ ResultCode init_vm(VM* vm) {
 ResultCode free_vm(VM* vm) {
     free_table(&vm->globals);
     free_table(&vm->strings);
+    free(vm->errors);
     pop_stack(vm);
     return RESULT_SUCCESS;
 }
 
 void call(VM* vm, struct ObjFunction* function) {
-    if (vm->frame_count >= VM_FRAMES_MAX - 1) {
+    if (vm->frame_count >= MAX_FRAMES - 1) {
         printf("[Error] Exceeded VM max call frames.\n");
         exit(1);
     }

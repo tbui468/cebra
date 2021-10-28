@@ -69,12 +69,11 @@ Implementation:
     Adding slicing tests is making the vm stack (512 right now) to overflow - setting it to around 800
         is okay, but setting it to 1024 overflows the c stack...
         need to start dynamically allocating the above stacks allocations
-
-        clox is using 64 frames and ~16,000 stack spaces - there is a lot of room here
        
-        Fix 1: make parser, compiler, and vm errors array dynamically allocated
         Fix 2: make NODE_WHEN/NODE_SEQUENCE arrays dynamically allocated - need to free them even if error is encountered
         Fix 3: change locals/upvalues dynamically allocated (can we do this?)
+
+    ERROR macro should be shared among all modules (parser, compiler, vm)
 
     Use minGW to build executable for Windows - look up vscode tutorial
         ask Cory, Sam or others with Windows to test it

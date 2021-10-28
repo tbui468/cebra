@@ -1407,6 +1407,7 @@ void init_compiler(struct Compiler* compiler, const char* start, int length, int
     compiler->scope_depth = 0;
     compiler->locals_count = 0;
     add_local(compiler, name, type); //first slot is for function
+    compiler->errors = (struct Error*)malloc(MAX_ERRORS * sizeof(struct Error));
     compiler->error_count = 0;
     compiler->function = make_function(fun_name, parameter_count);
     push_root(to_function(compiler->function));
@@ -1428,6 +1429,7 @@ void free_compiler(struct Compiler* compiler) {
     if (compiler->enclosing != NULL) {
         copy_errors(compiler->enclosing, compiler);
     }
+    free(compiler->errors);
     while (compiler->types != NULL) {
         struct Type* previous = compiler->types;
         compiler->types = compiler->types->next;

@@ -8,12 +8,13 @@
 #include "ast.h"
 #include "table.h"
 
+
 typedef struct {
     Token previous;
     Token current;
     Token next;
     Token next_next;
-    struct Error errors[64];
+    struct Error* errors;
     int error_count;
     struct Table* globals;
     struct NodeList* statics_nl;

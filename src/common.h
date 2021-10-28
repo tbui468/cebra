@@ -24,4 +24,7 @@
 //#define DEBUG_LOG_GC
 
 
+#define MAX_ERRORS 128
+#define UINT8_COUNT (UINT8_MAX + 1)
+
 #endif// CEBRA_COMMON_H

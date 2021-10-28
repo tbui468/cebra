@@ -26,7 +26,7 @@
 
 #define ERROR(tkn, ...) \
 { \
-    if (parser.error_count < 256) { \
+    if (parser.error_count < MAX_ERRORS) { \
         char* buf = ALLOCATE_ARRAY(char); \
         buf = GROW_ARRAY(buf, char, 100, 0); \
         snprintf(buf, 99, __VA_ARGS__); \
@@ -974,10 +974,18 @@ static ResultCode declaration(struct Node** node) {
 }
 
 static void init_parser(struct Table* globals) {
+    parser.errors = (struct Error*)malloc(MAX_ERRORS * sizeof(struct Error));
     parser.error_count = 0;
     parser.globals = globals;
     parser.statics_nl = (struct NodeList*)make_node_list();
     parser.import_count = 0;
+}
+
+static void free_parser() {
+    for (int i = 0; i < parser.error_count; i++) {
+        FREE_ARRAY(parser.errors[i].message, char, 100);
+    }
+    free(parser.errors);
 }
 
 static void prime_lexer(const char* source) {
@@ -985,12 +993,6 @@ static void prime_lexer(const char* source) {
     parser.current = next_token();
     parser.next = next_token();
     parser.next_next = next_token();
-}
-
-static void free_parser() {
-    for (int i = 0; i < parser.error_count; i++) {
-        FREE_ARRAY(parser.errors[i].message, char, 100);
-    }
 }
 
 static int partition(struct Error* errors, int lo, int hi) {

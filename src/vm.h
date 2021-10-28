@@ -6,8 +6,8 @@
 #include "compiler.h"
 #include "error.h"
 
-#define VM_STACK_MAX 1024
-#define VM_FRAMES_MAX 64
+#define MAX_STACK (MAX_FRAMES * UINT8_COUNT)
+#define MAX_FRAMES 64
 
 typedef struct {
     struct ObjFunction* function;
@@ -17,12 +17,12 @@ typedef struct {
 } CallFrame;
 
 typedef struct {
-    Value stack[VM_STACK_MAX]; //don't want to use my realloc bc stack needs to be fast, and also this is GC safeplace
+    Value stack[MAX_STACK]; //don't want to use my realloc bc stack needs to be fast, and also this is GC safeplace
     Value* stack_top;
-    CallFrame frames[VM_FRAMES_MAX];
+    CallFrame frames[MAX_FRAMES];
     int frame_count;
     struct ObjUpvalue* open_upvalues;
-    struct Error errors[64];
+    struct Error* errors;
     int error_count;
     struct Table globals;
     struct Table strings;
