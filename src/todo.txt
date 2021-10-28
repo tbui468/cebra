@@ -58,20 +58,11 @@ Documentation:
 
 Stack overflow
     big stack allocations:
-        NODE_WHEN  256 ints - allocate then clear memory
-        NODE_SEQUENCE 256 ints - allocate then clear memory
         OP_RETURN 256 Values - could try to NaN-box halve the Value size from 16 to 8 bytes
-        Parser - errors
-        Compiler - locals, upvalues, errors
-        VM - stack, callframes, errors
+        Compiler - locals, upvalues
+        VM - stack, callframes
 
 Implementation:
-    Adding slicing tests is making the vm stack (512 right now) to overflow - setting it to around 800
-        is okay, but setting it to 1024 overflows the c stack...
-        need to start dynamically allocating the above stacks allocations
-       
-        Fix 2: make NODE_WHEN/NODE_SEQUENCE arrays dynamically allocated - need to free them even if error is encountered
-        Fix 3: change locals/upvalues dynamically allocated (can we do this?)
 
     ERROR macro should be shared among all modules (parser, compiler, vm)
         errors are confusing now because they may cascade from lower nodes into higher nodes (eg, == Right/left side mismatch errors
@@ -93,9 +84,6 @@ Implementation:
     Structs and Enums can be defined at compile-time - no need to have all the props filled in a runtime
         AND the props at runtime should just be an array.  Compile time can compute the offset
 
-    Static functions and anonymous functions are split using an 'if/else'.  Could we pull out shared
-        code OR make it a different AST node for clarity?
-
     Resolving identifers in parser can all be one function, surely?  Just use a switch to check between them
         all.
 
@@ -106,18 +94,6 @@ Implementation:
 
         Or add an append(List, item) that automatically increments size.  Then we could
         also make the list size read-only.
-
-    Use Cebra to highlight code snippets
-        read in compiled_docs.html into a buffer
-        write out each line back into compiled_docs.html
-            if there is a code block, add css tags to keywords
-            make a table of keywords to highlight blue
-            highlight constants  and comments green
-            highlight strings red
-        
-            parse the code and highlight - look for <code></code>
-                all text inside should just be indented properly
-                parse text for keywords (blue), constants and comments (green), strings (red)
 
     slicing arrays?  a[0:3][0:3] either return a new 2x2 matrix.  a[0:3][0:3] = b (will check if b is correct dimensions)
 
@@ -138,18 +114,6 @@ Implementation:
     compile time constants (must be strings, ints, bools, or floats).  Cannot be modified (but client if free to copy and modify copy)
         PI :: 3.14
         MAX_SIZE :: 64
-
-    Allow sequences in struct fields... this may require changing some things since right now sequence declarations
-        are immediatly added as locals.  Struct fields need to be pushed onto the stack along with the prop
-        name to store in struct definition
-
-        could generalize Sequences further: a sequence is kind of like a higher level data type that can
-        be type check as usual.  This would allow us to make function arguments be a Sequence so that
-        a return from a function (itself a sequence) can be passed directly into a different function.
-        If there are embedded sequences, they need to be unwrapped to form a single depth Sequence
-
-    Integrate Sequences into function arguments to allow this:
-        takes_three(returns_two(), third_arg())
 
     Simplify code and make it fast - this is supposed to be a selling point
         swap struct and enum tables for value arrays
@@ -204,68 +168,6 @@ Implementation:
         consider writing simple c program that reads in and tokenizes text
         then the program can count tokens to make sure it all adds up
             this would help us know if any changes to the lexer are breaking shit
-
-    Write tests for multi-variable assignment
-
-    Write code for multi-variable returns
-
-    Write code for using multi-variable returns as argument into multi-parameter function
-        fun_ret_two :: () -> (int, int) {
-        }
-        fun_two_params :: (a: int, b: int) -> {
-        }
-        fun_two_params(fun_ret_two())
-
-    //this is super messy, but paren grouping is necessary to avoid ambiguous return/function relationships
-    //a single return is NOT wrapped in parens
-        fun :: () -> int {}
-        fun :: () -> (int, string) {}
-        fun :: () -> (()-> (int, int), ()-> int) {
-
-        }
-
-    Get it parsing
-    Get it compiling
-    Get it running
-
-    For function types, no take in a TypeArray for returns too
-    ret_types during compilation now also need to return TypeArrays
-    while parsing, need to redo make_decl_fun to include multiple returns
-        and when parsing return statements do the same
-    May need to include more info for ObjFun too (right now we have arity, but
-        may require return count too)
-    
-    Need multiple returns for easy file reading
-        str, result := read(f) //where read returns a string and boolean where boolean is false if failed
-
-    Reading/Writing to files.  How does python do this?  (or look at other languages)
-        consider adding in \n for print() for more flexible ways to output data.
-
-        Maybe generalize reading/writing?
-       
-        f: file = open("test.txt") //will automatically close with GC?  If so, need to make a runtime representation (ObjFile)
-        src := read(f)
-
-        a := read(stdin)
-        b := read(file) //read entire file until end
-        c := readln(file) //read one line up to, and including, \n
-        write("Hello world", stdout)
-        write("Hello world", f)
-
-    'import' keyword and importing modules (do this once I have enough native functions to require it)
-        how does python, ruby and others do this?
-        what is a module?  Structs, Enums and Functions?  
-        how should namespaces work (if we decide to use them)
-        should native functions be imported?  Or are they always included?
-
-        import "Parser.cbr"
-        import "Lexer.cbr"
-        import "Evaluator.cbr"
-
-        src := "12 - 23 / 4"
-        tokens := scan_source(src)
-        ast := parser_tokens(tokens)
-        print(evaluate_ast(ast))
 
     Sockets for TCP and UDP connections - we just want a high level wrapper over the same
         functionality.  Allow the user to create sockets and send bytes (or strings, floats, ints)
@@ -408,10 +310,6 @@ Implementation:
         give user a useful message. Will require more careful handling of
         parse/compiler/runtime errors - including syncing so that multiple
         errors can be shown
-
-    Implement deleting from hash table - need to use tombstones
-
-    Intern strings - create a "strings" table in vm
 
     Write benchmarking code to use with chrome://tracing to find hotspots
 
