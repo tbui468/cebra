@@ -9,15 +9,6 @@
 #define MAX_IS_STATEMENTS 256
 #define MAX_INFERRED_SEQ_VARS 256
 
-#define COMPILE_NODE_OLD(node, node_type) \
-            if (compile_node(compiler, node, node_type) == RESULT_FAILED) return RESULT_FAILED
-
-#define CHECK_TYPE(fail_condition, token, msg) \
-                if (fail_condition) { \
-                    add_error(compiler, token, msg); \
-                    return RESULT_FAILED; \
-                }
-
 #define COMPILE_NODE(node, node_type) \
             if (compile_node(compiler, node, node_type) == RESULT_FAILED) result = RESULT_FAILED
 
@@ -100,6 +91,7 @@ static void emit_jump_by(struct Compiler* compiler, OpCode op, int index) {
 
 
 static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, struct Type** node_type) {
+    ResultCode result = RESULT_SUCCESS;
     Literal* literal = (Literal*)node;
     switch(literal->name.type) {
         case TOKEN_INT: {
@@ -107,14 +99,14 @@ static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, 
             emit_byte(compiler, OP_CONSTANT); 
             emit_short(compiler, add_constant(compiler, to_integer(integer)));
             *node_type = make_int_type();
-            return RESULT_SUCCESS;
+            break;
         }
         case TOKEN_FLOAT: {
             double f = strtod(literal->name.start, NULL);
             emit_byte(compiler, OP_CONSTANT);
             emit_short(compiler, add_constant(compiler, to_float(f)));
             *node_type = make_float_type();
-            return RESULT_SUCCESS;
+            break;
         }
         case TOKEN_STRING: {
             struct ObjString* str = make_string(literal->name.start, literal->name.length);
@@ -123,123 +115,123 @@ static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, 
             emit_short(compiler, add_constant(compiler, to_string(str)));
             pop_root();
             *node_type = make_string_type();
-            return RESULT_SUCCESS;
+            break;
         }
         case TOKEN_TRUE: {
             emit_byte(compiler, OP_TRUE);
             *node_type = make_bool_type();
-            return RESULT_SUCCESS;
+            break;
         }
         case TOKEN_FALSE: {
             emit_byte(compiler, OP_FALSE);
             *node_type = make_bool_type();
-            return RESULT_SUCCESS;
+            break;
+        }
+        default: {
+            EMIT_ERROR_IF(true, literal->name, "Literal type undefined.");
+            break;
         }
     }
-    add_error(compiler, literal->name, "Literal type undefined.");
-    return RESULT_FAILED;
+
+    return result;
 }
 
 static ResultCode compile_unary(struct Compiler* compiler, struct Node* node, struct Type** node_type) {
+    ResultCode result = RESULT_SUCCESS;
     Unary* unary = (Unary*)node;
-    struct Type* type;
-    COMPILE_NODE_OLD(unary->right, &type);
+    struct Type* type = NULL;
+    COMPILE_NODE(unary->right, &type);
     emit_byte(compiler, OP_NEGATE);
     *node_type = type;
-    return RESULT_SUCCESS;
+    return result;
 }
 
 static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, struct Type** node_type) {
+    ResultCode result = RESULT_SUCCESS;
     Logical* logical = (Logical*)node;
 
     if (logical->name.type == TOKEN_AND) {
-        struct Type* left_type;
-        COMPILE_NODE_OLD(logical->left, &left_type);
+        struct Type* left_type = NULL;
+        COMPILE_NODE(logical->left, &left_type);
         int false_jump = emit_jump(compiler, OP_JUMP_IF_FALSE);
         emit_byte(compiler, OP_POP);
-        struct Type* right_type;
-        COMPILE_NODE_OLD(logical->right, &right_type);
+        struct Type* right_type = NULL;
+        COMPILE_NODE(logical->right, &right_type);
         patch_jump(compiler, false_jump);
-        CHECK_TYPE(!same_type(left_type, right_type), logical->name, "Left and right types must match.");
-        *node_type = make_bool_type();
-        return RESULT_SUCCESS;
-    }
-
-    if (logical->name.type == TOKEN_OR) {
-        struct Type* left_type;
-        COMPILE_NODE_OLD(logical->left, &left_type);
+        EMIT_ERROR_IF(left_type != NULL && right_type != NULL && !same_type(left_type, right_type), logical->name, "Left and right types must match.");
+    } else if (logical->name.type == TOKEN_OR) {
+        struct Type* left_type = NULL;
+        COMPILE_NODE(logical->left, &left_type);
         int true_jump = emit_jump(compiler, OP_JUMP_IF_TRUE);
         emit_byte(compiler, OP_POP);
-        struct Type* right_type;
-        COMPILE_NODE_OLD(logical->right, &right_type);
+        struct Type* right_type = NULL;
+        COMPILE_NODE(logical->right, &right_type);
         patch_jump(compiler, true_jump);
-        CHECK_TYPE(!same_type(left_type, right_type), logical->name, "Left and right types must match.");
-        *node_type = make_bool_type();
-        return RESULT_SUCCESS;
-    }
+        EMIT_ERROR_IF(left_type != NULL && right_type != NULL && !same_type(left_type, right_type), logical->name, "Left and right types must match.");
+    } else if (logical->name.type == TOKEN_IN) {
+        struct Type* element_type = NULL;
+        COMPILE_NODE(logical->left, &element_type);
+        struct Type* list_type = NULL;
+        COMPILE_NODE(logical->right, &list_type);
 
-    if (logical->name.type == TOKEN_IN) {
-        struct Type* element_type;
-        COMPILE_NODE_OLD(logical->left, &element_type);
-        struct Type* list_type;
-        COMPILE_NODE_OLD(logical->right, &list_type);
+        EMIT_ERROR_IF(list_type != NULL && list_type->type != TYPE_LIST, logical->name, "Identifier after 'in' must reference a List.");
 
-        CHECK_TYPE(list_type->type != TYPE_LIST, logical->name, "Identifier after 'in' must reference a List.");
-
-        CHECK_TYPE(!same_type(element_type, ((struct TypeList*)list_type)->type), logical->name, "Type left of 'in' must match List element type.");
+        EMIT_ERROR_IF(list_type != NULL && element_type != NULL && !same_type(element_type, ((struct TypeList*)list_type)->type), 
+                      logical->name, "Type left of 'in' must match List element type.");
 
         emit_byte(compiler, OP_IN_LIST);
-        *node_type = make_bool_type();
-        return RESULT_SUCCESS;
+    } else {
+        struct Type* left_type = NULL;
+        COMPILE_NODE(logical->left, &left_type);
+        struct Type* right_type = NULL;
+        COMPILE_NODE(logical->right, &right_type);
+
+        EMIT_ERROR_IF(left_type != NULL && right_type != NULL && !same_type(left_type, right_type) && !struct_or_function_to_nil(left_type, right_type), 
+                      logical->name, "Left and right types must match.");
+        switch(logical->name.type) {
+            case TOKEN_LESS:
+                emit_byte(compiler, OP_LESS);
+                break;
+            case TOKEN_LESS_EQUAL:
+                emit_byte(compiler, OP_GREATER);
+                emit_byte(compiler, OP_NEGATE);
+                break;
+            case TOKEN_GREATER:
+                emit_byte(compiler, OP_GREATER);
+                break;
+            case TOKEN_GREATER_EQUAL:
+                emit_byte(compiler, OP_LESS);
+                emit_byte(compiler, OP_NEGATE);
+                break;
+            case TOKEN_EQUAL_EQUAL:
+                emit_byte(compiler, OP_EQUAL);
+                break;
+            case TOKEN_BANG_EQUAL:
+                emit_byte(compiler, OP_EQUAL);
+                emit_byte(compiler, OP_NEGATE);
+                break;
+        }
     }
 
-    struct Type* left_type;
-    COMPILE_NODE_OLD(logical->left, &left_type);
-    struct Type* right_type;
-    COMPILE_NODE_OLD(logical->right, &right_type);
-
-    CHECK_TYPE(!same_type(left_type, right_type) && !struct_or_function_to_nil(left_type, right_type), logical->name, "Left and right types must match.");
-    switch(logical->name.type) {
-        case TOKEN_LESS:
-            emit_byte(compiler, OP_LESS);
-            break;
-        case TOKEN_LESS_EQUAL:
-            emit_byte(compiler, OP_GREATER);
-            emit_byte(compiler, OP_NEGATE);
-            break;
-        case TOKEN_GREATER:
-            emit_byte(compiler, OP_GREATER);
-            break;
-        case TOKEN_GREATER_EQUAL:
-            emit_byte(compiler, OP_LESS);
-            emit_byte(compiler, OP_NEGATE);
-            break;
-        case TOKEN_EQUAL_EQUAL:
-            emit_byte(compiler, OP_EQUAL);
-            break;
-        case TOKEN_BANG_EQUAL:
-            emit_byte(compiler, OP_EQUAL);
-            emit_byte(compiler, OP_NEGATE);
-            break;
-    }
     *node_type = make_bool_type();
-    return RESULT_SUCCESS;
+    return result;
 }
 
 static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, struct Type** node_type) {
+    ResultCode result = RESULT_SUCCESS;
     Binary* binary = (Binary*)node;
 
-    struct Type* type1;
-    COMPILE_NODE_OLD(binary->left, &type1);
-    struct Type* type2;
-    COMPILE_NODE_OLD(binary->right, &type2);
-    CHECK_TYPE(!same_type(type1, type2), binary->name, "Left and right types must match.");
+    struct Type* type1 = NULL;
+    COMPILE_NODE(binary->left, &type1);
+    struct Type* type2 = NULL;
+    COMPILE_NODE(binary->right, &type2);
+    EMIT_ERROR_IF(type1 != NULL && type2 != NULL && !same_type(type1, type2), binary->name, "Left and right types must match.");
     switch(binary->name.type) {
         case TOKEN_PLUS: {
-            if (type1->type != TYPE_INT && type1->type != TYPE_FLOAT && type1->type != TYPE_STRING) {
-                add_error(compiler, binary->name, "'+' can only be used on ints, floats and strings");
-                return RESULT_FAILED;
-            }
+            //only checking type1 since an error should've been added if type1 != type2
+            EMIT_ERROR_IF(type1 != NULL && type1->type != TYPE_INT && type1->type != TYPE_FLOAT && type1->type != TYPE_STRING, 
+                          binary->name, "'+' can only be used on ints, floats and strings");
+
             emit_byte(compiler, OP_ADD);
             break;
         }
@@ -250,7 +242,7 @@ static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, s
     }
 
     *node_type = type1;
-    return RESULT_SUCCESS;
+    return result;
 }
 
 static void set_local(struct Compiler* compiler, Token name, struct Type* type, int index) {
@@ -379,56 +371,51 @@ static void end_scope(struct Compiler* compiler) {
 }
 
 static ResultCode compile_decl_var_and_get_type(struct Compiler* compiler, DeclVar* dv, struct Type** node_type) {
+    ResultCode result = RESULT_SUCCESS;
     struct Type* type = NULL;
 
-    if (declared_in_scope(compiler, dv->name)) {
-        add_error(compiler, dv->name, "Identifier already defined.");
-        return RESULT_FAILED;
-    }
+    EMIT_ERROR_IF(declared_in_scope(compiler, dv->name), dv->name, "Identifier already defined.");
 
     //inferred type, defined
     if (dv->type->type == TYPE_INFER) {
         int idx = add_local(compiler, dv->name, dv->type);
 
-        COMPILE_NODE_OLD(dv->right, &type);
-        CHECK_TYPE(type->type == TYPE_NIL , dv->name,
+        COMPILE_NODE(dv->right, &type);
+        EMIT_ERROR_IF(type != NULL && type->type == TYPE_NIL , dv->name,
                    "Inferred type cannot be assigned to 'nil.");
 
-        CHECK_TYPE(type->type == TYPE_DECL, dv->name, 
+        EMIT_ERROR_IF(type != NULL && type->type == TYPE_DECL, dv->name, 
                    "Variable cannot be assigned to a user declared type.");
 
         set_local(compiler, dv->name, type, idx);
-    }
-    
     //explicit type, defined and parameters
-    if (dv->type->type != TYPE_INFER) {
+    } else if (dv->type->type != TYPE_INFER) {
         int idx = add_local(compiler, dv->name, dv->type);
-        COMPILE_NODE_OLD(dv->right, &type);
+        COMPILE_NODE(dv->right, &type);
 
         if (type->type != TYPE_NIL) {
             set_local(compiler, dv->name, type, idx);
 
             if (dv->type->type == TYPE_LIST) {
                 struct TypeList* tl = (struct TypeList*)(dv->type);
-                CHECK_TYPE(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
-            }
-
-            if (dv->type->type == TYPE_MAP) {
+                EMIT_ERROR_IF(tl->type->type == TYPE_NIL, dv->name, "List value type cannot be 'nil'.");
+            } else if (dv->type->type == TYPE_MAP) {
                 struct TypeMap* tm = (struct TypeMap*)(dv->type);
-                CHECK_TYPE(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
+                EMIT_ERROR_IF(tm->type->type == TYPE_NIL, dv->name, "Map value type cannot be 'nil'.");
             }
 
-            CHECK_TYPE(!same_type(dv->type, type), dv->name,
+            EMIT_ERROR_IF(type != NULL && !same_type(dv->type, type), dv->name,
                        "Declaration type and right hand side type must match.");
         }
 
     }
 
     *node_type = type;
-    return RESULT_SUCCESS;
+    return result;
 }
 
 static ResultCode set_var_to_stack_idx(struct Compiler* compiler, Token var, int depth) {
+    ResultCode result = RESULT_SUCCESS;
     int idx = resolve_local(compiler, var);
     OpCode op = OP_SET_LOCAL;
     if (idx == -1) {
@@ -440,48 +427,45 @@ static ResultCode set_var_to_stack_idx(struct Compiler* compiler, Token var, int
         emit_byte(compiler, op);
         emit_byte(compiler, idx);
         emit_byte(compiler, depth);
-        return RESULT_SUCCESS;
+    } else {
+        EMIT_ERROR_IF(true, var, "Variable undefined.");
     }
 
-    return RESULT_FAILED;
+    return result;
 }
 
 static ResultCode compile_set_element(struct Compiler* compiler, Token name, struct Type* left_type, struct Type* idx_type, 
                                       struct Type* right_type, int depth) {
-    if (left_type->type != TYPE_LIST && left_type->type != TYPE_MAP) {
-        add_error(compiler, name, "[] access must be used on a list or map type.");
-        return RESULT_FAILED;
-    }
+
+    ResultCode result = RESULT_SUCCESS;
+
+    EMIT_ERROR_IF(left_type->type != TYPE_LIST && left_type->type != TYPE_MAP, name, "[] access must be used on a list or map type.");
 
     struct Type* template;
     if (left_type->type == TYPE_LIST) {
-        CHECK_TYPE(idx_type->type != TYPE_INT, name, "Index must be integer type.");
+        EMIT_ERROR_IF(idx_type->type != TYPE_INT, name, "Index must be integer type.");
         template = ((struct TypeList*)left_type)->type;
-        CHECK_TYPE(!same_type(template, right_type), name, "List type and right side type must match.");
-    }
-
-    if (left_type->type == TYPE_MAP) {
-        CHECK_TYPE(idx_type->type != TYPE_STRING, name, "Key must be string type.");
+        EMIT_ERROR_IF(!same_type(template, right_type), name, "List type and right side type must match.");
+    } else if (left_type->type == TYPE_MAP) {
+        EMIT_ERROR_IF(idx_type->type != TYPE_STRING, name, "Key must be string type.");
         template = ((struct TypeMap*)left_type)->type;
-        CHECK_TYPE(!same_type(template, right_type), name, "Map type and right side type must match.");
+        EMIT_ERROR_IF(!same_type(template, right_type), name, "Map type and right side type must match.");
     }
 
     emit_byte(compiler, OP_SET_ELEMENT);
     emit_byte(compiler, depth);
-    return RESULT_SUCCESS;
+    return result;
 }
 
 static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct Type* inst_type, struct Type* right_type, int depth) {
-    if (inst_type->type == TYPE_LIST) {
-        if (same_token_literal(prop, make_token(TOKEN_DUMMY, 0, "size", 4))) {
-            emit_byte(compiler, OP_SET_SIZE);
-            return RESULT_SUCCESS;
-        }
-        add_error(compiler, prop, "Property doesn't exist on Lists.");
-        return RESULT_FAILED;
-    }
+    ResultCode result = RESULT_SUCCESS;
 
-    if (inst_type->type == TYPE_STRUCT) {
+    if (inst_type->type == TYPE_LIST) {
+        EMIT_ERROR_IF(!same_token_literal(prop, make_token(TOKEN_DUMMY, 0, "size", 4)), 
+                      prop, "Property doesn't exist on Lists.");
+
+        emit_byte(compiler, OP_SET_SIZE);
+    } else if (inst_type->type == TYPE_STRUCT) {
         struct ObjString* name = make_string(prop.start, prop.length);
         push_root(to_string(name));
         emit_byte(compiler, OP_SET_PROP);
@@ -492,14 +476,15 @@ static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct
         Value type_val = to_nil();
         get_entry(&((struct TypeStruct*)inst_type)->props, name, &type_val);
 
-        CHECK_TYPE(!same_type(type_val.as.type_type, right_type) && 
+        EMIT_ERROR_IF(!same_type(type_val.as.type_type, right_type) && 
                    !struct_or_function_to_nil(type_val.as.type_type, right_type), 
                    prop, "Property and assignment types must match.");
 
-        return RESULT_SUCCESS;
+    } else {
+        EMIT_ERROR_IF(true, prop, "Property can only be set on struct instances or Lists.");
     }
-    add_error(compiler, prop, "Property cannot be set.");
-    return RESULT_FAILED;
+
+    return result;
 }
 
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct Type** node_type) {
@@ -1286,7 +1271,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_CAST: {
             Cast* cast = (Cast*)node;
             struct Type* left = NULL;
-            COMPILE_NODE_OLD(cast->left, &left);
+            COMPILE_NODE(cast->left, &left);
 
             if (left != NULL && is_primitive(left) && is_primitive(cast->type)) {
                 EMIT_ERROR_IF(left->type == TYPE_NIL && cast->type->type != TYPE_STRING, cast->name, "'nil' types can only be cast to string.");
