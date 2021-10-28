@@ -73,9 +73,9 @@ Implementation:
         Fix 2: make NODE_WHEN/NODE_SEQUENCE arrays dynamically allocated - need to free them even if error is encountered
         Fix 3: change locals/upvalues dynamically allocated (can we do this?)
 
-    Replace macros in NODE_SEQUENCE and NODE_FUN
-        NODE_SEQUENCE and NODE_FUN are giant messes - can they be simplified?
-        replacing the macros for these two is a good chance to clean them up too.
+    Replace macros in NODE_SEQUENCE
+        NODE_SEQUENCE is a mess - how can be simplified?
+        remove COMPILE_NODE_OLD and CHECK_TYPE
 
     ERROR macro should be shared among all modules (parser, compiler, vm)
         errors are confusing now because they may cascade from lower nodes into higher nodes (eg, == Right/left side mismatch errors

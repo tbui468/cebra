@@ -520,12 +520,132 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_SEQUENCE: {
             struct Sequence* seq = (struct Sequence*)node;
 
-            //if right is NULL, just compile left in order and return types in TypeArray
-            if (seq->right == NULL) {
+            if (seq->right != NULL) {
+                //tracking locals indices to update types if inferred
+                int decl_idx[256]; //TODO: this might be bad
+                int decl_idx_count = 0;
+
+                //compile all variable declarations
+                for (int i = 0; i < seq->left->count; i++) {
+                    if (seq->op.type == TOKEN_EQUAL && seq->left->nodes[i]->type == NODE_DECL_VAR) {
+                        DeclVar* dv = (DeclVar*)(seq->left->nodes[i]);
+                        struct Type* type = NULL;
+                        struct Node* decl_var = make_decl_var(dv->name, dv->type, make_nil(make_dummy_token()));
+                        COMPILE_NODE(decl_var, &type);
+                        int idx = resolve_local(compiler, dv->name);
+                        decl_idx[decl_idx_count++] = -1;
+                    } else if (seq->op.type == TOKEN_COLON_EQUAL && seq->left->nodes[i]->type == NODE_GET_VAR) {
+                        Token name = ((GetVar*)(seq->left->nodes[i]))->name;
+                        //Int Type is just a place holder and is replaced later
+                        struct Node* decl_var = make_decl_var(name, make_int_type(), make_nil(make_dummy_token()));
+                        DeclVar* dv = (DeclVar*)decl_var;
+                        struct Type* type = NULL;
+                        COMPILE_NODE(decl_var, &type);
+                        int idx = resolve_local(compiler, name);
+                        decl_idx[decl_idx_count++] = idx;
+                    } else {
+                        decl_idx[decl_idx_count++] = -1;
+                    }
+                }
+
+                //otherwise compile right side onto the stack
+                //so that left hand side can be assigned to them
+                struct Type* right_seq_type = NULL;
+                if (seq->right->type == NODE_SEQUENCE) {
+                    COMPILE_NODE(seq->right, &right_seq_type);
+                } else if (seq->right->type == NODE_LIST) {
+                    struct NodeList* nl = (struct NodeList*)(seq->right);
+                    struct TypeArray* ta = make_type_array();
+                    for (int i = 0; i < nl->count; i++) {
+                        struct Type* var_type = NULL;
+                        COMPILE_NODE(nl->nodes[i], &var_type);
+                        if (var_type != NULL) add_type(ta, var_type);
+                    }
+                    right_seq_type = (struct Type*)ta;
+                }
+
+                if (right_seq_type != NULL) {
+                    //update types for variable declarations here using compiled right hand side
+                    for (int i = 0; i < decl_idx_count; i++) {
+                        if (decl_idx[i] != -1) {
+                            compiler->locals[decl_idx[i]].type = ((struct TypeArray*)right_seq_type)->types[i];
+                        }
+                    }
+
+                    //x, y, z = 1, 2, 3
+                    //[1][2][3]
+                    //setting variables/props/elements in reverse order to match stack order
+                    struct TypeArray* left_seq_type = make_type_array();
+                    for (int i = 0; i < seq->left->count; i++) {
+                        switch (seq->left->nodes[i]->type) {
+                            case NODE_GET_ELEMENT: {
+                                GetElement* ge = (GetElement*)(seq->left->nodes[i]);
+
+                                struct Type* left_type = NULL;
+                                COMPILE_NODE(ge->left, &left_type);
+                                struct Type* idx_type = NULL;
+                                COMPILE_NODE(ge->idx, &idx_type);
+
+                                int depth = seq->left->count - 1 - i;
+                                struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
+                                
+                                if (left_type != NULL && idx_type != NULL) {
+                                    if (compile_set_element(compiler, ge->name, left_type, idx_type, right_type, depth) == RESULT_FAILED)
+                                        result = RESULT_FAILED;
+                                }
+
+                                add_type(left_seq_type, right_type);
+
+                                break;
+                            }
+                            case NODE_GET_PROP: {
+                                GetProp* gp = (GetProp*)(seq->left->nodes[i]);
+                                struct Type* type_inst = NULL;
+                                COMPILE_NODE(gp->inst, &type_inst);
+
+                                struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
+                                int depth = seq->left->count - 1 - i;
+
+                                if (type_inst != NULL) {
+                                    if (compile_set_prop(compiler, gp->prop, type_inst, right_type, depth) == RESULT_FAILED)
+                                        result = RESULT_FAILED;
+                                }
+
+                                add_type(left_seq_type, right_type);
+                                break;
+                            }
+                            case NODE_GET_VAR: {
+                                Token var = ((GetVar*)(seq->left->nodes[i]))->name;
+                                struct Type* var_type = resolve_type(compiler, var);
+                                add_type(left_seq_type, var_type);
+                                set_var_to_stack_idx(compiler, var, seq->left->count - 1 - i);
+                                break;
+                            }
+                            case NODE_DECL_VAR: {
+                                Token var = ((DeclVar*)(seq->left->nodes[i]))->name;
+                                struct Type* var_type = resolve_type(compiler, var);
+                                add_type(left_seq_type, var_type);
+                                set_var_to_stack_idx(compiler, var, seq->left->count - 1 - i);
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                    }
+
+                    EMIT_ERROR_IF(!same_type((struct Type*)left_seq_type, (struct Type*)right_seq_type),
+                                  seq->op, "All variable types and their assignment types must match.");
+
+                    *node_type = (struct Type*)left_seq_type;
+                }
+
+            } else {
                 struct TypeArray* types = make_type_array();
                 for (int i = 0; i < seq->left->count; i++) {
-                    struct Type* t;
-                    COMPILE_NODE_OLD(seq->left->nodes[i], &t);
+                    struct Type* t = NULL;
+                    COMPILE_NODE(seq->left->nodes[i], &t);
+                    if (t == NULL) continue;
+
                     //unwrap type array and insert 
                     if (t->type == TYPE_ARRAY) {
                         for (int i = 0; i < ((struct TypeArray*)t)->count; i++) {
@@ -536,121 +656,9 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                     }
                 }
                 *node_type = (struct Type*)types;
-                return RESULT_SUCCESS;
             }
 
-            //tracking locals indices to update types if inferred
-            int decl_idx[256]; //TODO: this might be bad
-            int decl_idx_count = 0;
-
-            //compile all variable declarations
-            for (int i = 0; i < seq->left->count; i++) {
-                if (seq->op.type == TOKEN_EQUAL && seq->left->nodes[i]->type == NODE_DECL_VAR) {
-                    DeclVar* dv = (DeclVar*)(seq->left->nodes[i]);
-                    struct Type* type;
-                    struct Node* decl_var = make_decl_var(dv->name, dv->type, make_nil(make_dummy_token()));
-                    COMPILE_NODE_OLD(decl_var, &type);
-                    int idx = resolve_local(compiler, dv->name);
-                    decl_idx[decl_idx_count++] = -1;
-                } else if (seq->op.type == TOKEN_COLON_EQUAL && seq->left->nodes[i]->type == NODE_GET_VAR) {
-                    Token name = ((GetVar*)(seq->left->nodes[i]))->name;
-                    //Int Type is just a place holder and is replaced later
-                    struct Node* decl_var = make_decl_var(name, make_int_type(), make_nil(make_dummy_token()));
-                    DeclVar* dv = (DeclVar*)decl_var;
-                    struct Type* type;
-                    COMPILE_NODE_OLD(decl_var, &type);
-                    int idx = resolve_local(compiler, name);
-                    decl_idx[decl_idx_count++] = idx;
-                } else {
-                    decl_idx[decl_idx_count++] = -1;
-                }
-            }
-
-            //otherwise compile right side onto the stack
-            //so that left hand side can be assigned to them
-            struct Type* right_seq_type;
-            if (seq->right->type == NODE_SEQUENCE) {
-                COMPILE_NODE_OLD(seq->right, &right_seq_type);
-            } else if (seq->right->type == NODE_LIST) {
-                struct NodeList* nl = (struct NodeList*)(seq->right);
-                struct TypeArray* ta = make_type_array();
-                for (int i = 0; i < nl->count; i++) {
-                    struct Type* var_type;
-                    COMPILE_NODE_OLD(nl->nodes[i], &var_type);
-                    add_type(ta, var_type);
-                }
-                right_seq_type = (struct Type*)ta;
-            }
-           
-            //update types for variable declarations here using compiled right hand side
-            for (int i = 0; i < decl_idx_count; i++) {
-                if (decl_idx[i] != -1) {
-                    compiler->locals[decl_idx[i]].type = ((struct TypeArray*)right_seq_type)->types[i];
-                }
-            }
-
-
-            //x, y, z = 1, 2, 3
-            //[1][2][3]
-            //setting variables/props/elements in reverse order to match stack order
-            struct TypeArray* left_seq_type = make_type_array();
-            for (int i = 0; i < seq->left->count; i++) {
-                switch (seq->left->nodes[i]->type) {
-                    case NODE_GET_ELEMENT: {
-                        GetElement* ge = (GetElement*)(seq->left->nodes[i]);
-
-                        struct Type* left_type;
-                        COMPILE_NODE_OLD(ge->left, &left_type);
-                        struct Type* idx_type;
-                        COMPILE_NODE_OLD(ge->idx, &idx_type);
-
-                        int depth = seq->left->count - 1 - i;
-                        struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
-                        ResultCode result = compile_set_element(compiler, ge->name, left_type, idx_type, right_type, depth);
-                        if (result == RESULT_FAILED) return RESULT_FAILED;
-
-                        add_type(left_seq_type, right_type);
-
-                        break;
-                    }
-                    case NODE_GET_PROP: {
-                        GetProp* gp = (GetProp*)(seq->left->nodes[i]);
-                        struct Type* type_inst;
-                        COMPILE_NODE_OLD(gp->inst, &type_inst);
-                        struct Type* right_type = ((struct TypeArray*)right_seq_type)->types[i];
-
-                        int depth = seq->left->count - 1 - i;
-                        ResultCode result = compile_set_prop(compiler, gp->prop, type_inst, right_type, depth);
-                        if (result == RESULT_FAILED) return RESULT_FAILED;
-
-                        add_type(left_seq_type, right_type);
-                        break;
-                    }
-                    case NODE_GET_VAR: {
-                        Token var = ((GetVar*)(seq->left->nodes[i]))->name;
-                        struct Type* var_type = resolve_type(compiler, var);
-                        add_type(left_seq_type, var_type);
-                        set_var_to_stack_idx(compiler, var, seq->left->count - 1 - i);
-                        break;
-                    }
-                    case NODE_DECL_VAR: {
-                        Token var = ((DeclVar*)(seq->left->nodes[i]))->name;
-                        struct Type* var_type = resolve_type(compiler, var);
-                        add_type(left_seq_type, var_type);
-                        set_var_to_stack_idx(compiler, var, seq->left->count - 1 - i);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-            }
-
-            if (!same_type((struct Type*)left_seq_type, (struct Type*)right_seq_type)) {
-                add_error(compiler, seq->op, "All variable types and their assignment types must match.");
-                return RESULT_FAILED;
-            }
-            *node_type = (struct Type*)left_seq_type;
-            return RESULT_SUCCESS;
+            break;
         }
         case NODE_FUN: {
             DeclFun* df = (DeclFun*)node;
