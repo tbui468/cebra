@@ -15,7 +15,7 @@ static ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* s
     struct NodeList* final_ast;
     //passing globals and nodes in here feels messy - couldn't we have parse CREATE them?
     //Note: script_comp.nodes are ALL nodes, whereas nl only contains top statement nodes
-    printf("before parsing\n");
+//    printf("before parsing\n");
     ResultCode parse_result = parse(source, &final_ast, &script_comp->globals, &script_comp->nodes, script_comp->function->name);
 
     if (parse_result == RESULT_FAILED) {
@@ -26,7 +26,7 @@ static ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* s
     print_node(final_ast);
 #endif
 
-    printf("before compiling\n");
+//    printf("before compiling\n");
     ResultCode compile_result = compile_script(script_comp, final_ast);
 
     if (compile_result == RESULT_FAILED) {
@@ -43,7 +43,7 @@ static ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* s
     }
 #endif
 
-    printf("before running\n");
+//    printf("before running\n");
     ResultCode run_result = run(vm, script_comp->function);
 
 
