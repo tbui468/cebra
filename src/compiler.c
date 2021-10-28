@@ -668,83 +668,51 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 for (int i = 0; i < fun_type->params->count; i++) {
                     EMIT_ERROR_IF(fun_type->params->types[i]->type == TYPE_NIL, df->name, "Parameter identifier type invalid.");
                 }
+            }
 
-                //compile function using new compiler
-                struct Compiler func_comp;
-                init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count, df->name, df->type);
-                add_node(df->parameters, df->body);
-                struct TypeArray* inner_ret_types = NULL;
-                if (compile_function(&func_comp, df->parameters, &inner_ret_types) == RESULT_FAILED)
-                    result = RESULT_FAILED;
+            //compile function using new compiler
+            struct Compiler func_comp;
+            init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count, df->name, df->type);
+            add_node(df->parameters, df->body);
+            struct TypeArray* inner_ret_types = NULL;
+            if (compile_function(&func_comp, df->parameters, &inner_ret_types) == RESULT_FAILED)
+                result = RESULT_FAILED;
 
-                //check types
-                if (inner_ret_types != NULL) {
-                    struct TypeFun* typefun = (struct TypeFun*)df->type;
-                    EMIT_ERROR_IF(inner_ret_types->count == 0 &&
-                                  typefun->returns->count != 1 &&
-                                  typefun->returns->types[0]->type != TYPE_NIL, 
-                                  df->name, "A function with no return must declared with no return type.");
+            //check types
+            if (inner_ret_types != NULL) {
+                struct TypeFun* typefun = (struct TypeFun*)df->type;
+                EMIT_ERROR_IF(inner_ret_types->count == 0 &&
+                              typefun->returns->count != 1 &&
+                              typefun->returns->types[0]->type != TYPE_NIL, 
+                              df->name, "A function with no return must declared with no return type.");
 
-                    for (int i = 0; i < inner_ret_types->count; i++) {
-                        struct Type* inner_type = inner_ret_types->types[i];
-                        EMIT_ERROR_IF(!same_type((struct Type*)(typefun->returns), inner_type), 
-                                      df->name, "Return type must match type in anonymous function declaration.");
-                    }
+                for (int i = 0; i < inner_ret_types->count; i++) {
+                    struct Type* inner_type = inner_ret_types->types[i];
+                    EMIT_ERROR_IF(!same_type((struct Type*)(typefun->returns), inner_type), 
+                                  df->name, "Return type must match type in anonymous function declaration.");
                 }
+            }
 
-                emit_byte(compiler, OP_FUN);
-                emit_short(compiler, add_constant(compiler, to_function(func_comp.function)));
-                emit_byte(compiler, func_comp.upvalue_count);
+            emit_byte(compiler, OP_FUN);
+            emit_short(compiler, add_constant(compiler, to_function(func_comp.function)));
+            emit_byte(compiler, func_comp.upvalue_count);
 
+            if (df->anonymous) {
                 //only allow upvalues in anonymous functions
                 for (int i = 0; i < func_comp.upvalue_count; i++) {
                     emit_byte(compiler, func_comp.upvalues[i].is_local);
                     emit_byte(compiler, func_comp.upvalues[i].index);
                 }
-
-                free_compiler(&func_comp);
-
-                *node_type = df->type;
             } else {
-                //static function
-                struct Compiler func_comp;
-                init_compiler(&func_comp, df->name.start, df->name.length, df->parameters->count, df->name, df->type);
-                add_node(df->parameters, df->body);
-
-                struct TypeArray* inner_ret_types = NULL;
-                if (compile_function(&func_comp, df->parameters, &inner_ret_types) == RESULT_FAILED)
-                    result = RESULT_FAILED;
-
-                //type check
-                if (inner_ret_types != NULL) {
-                    struct TypeFun* typefun = (struct TypeFun*)df->type;
-                    EMIT_ERROR_IF(inner_ret_types->count == 0 &&
-                                  typefun->returns->count != 1 &&
-                                  typefun->returns->types[0]->type != TYPE_NIL, df->name, 
-                                  "A function with no return must be declared with no return type.");
-
-                    for (int i = 0; i < inner_ret_types->count; i++) {
-                        struct Type* inner_type = inner_ret_types->types[i];
-                        EMIT_ERROR_IF(!same_type((struct Type*)(typefun->returns), inner_type), df->name, 
-                                      "Return type must match type in function declaration.");
-                    }
-
-                }
-
-                emit_byte(compiler, OP_FUN);
-                emit_short(compiler, add_constant(compiler, to_function(func_comp.function)));
-                emit_byte(compiler, func_comp.upvalue_count);
-                emit_byte(compiler, OP_ADD_GLOBAL);
-
-                //don't allow upvalues in static functions
+                //don't allow upvalues in static functions. Add as global.
                 EMIT_ERROR_IF(func_comp.upvalue_count > 0, df->name,
                               "Functions cannot capture values.  To create closures, create an anonymous function.");
-
-                *node_type = df->type;
-
-                free_compiler(&func_comp);
+                emit_byte(compiler, OP_ADD_GLOBAL);
             }
-             
+
+            *node_type = df->type;
+            free_compiler(&func_comp);
+
             break;
         }
         case NODE_STRUCT: {
