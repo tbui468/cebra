@@ -1037,18 +1037,6 @@ static void quick_sort(struct Error* errors, int lo, int hi) {
     quick_sort(errors, p + 1, hi);
 }
 
-//TODO: this can be simplified to just passing in a struct Type** type, and casting to TypeIdentifer* and setting *type = resolved_type
-static ResultCode resolve_identifier(struct TypeIdentifier* ti, struct Table* globals, struct Type** type) {
-    ResultCode result = RESULT_SUCCESS;
-    struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
-    push_root(to_string(identifier));
-    Value val;
-    PARSE_ERROR_IF(!get_entry(globals, identifier, &val), ti->identifier, "Identifier for type not declared.");
-    if (result == RESULT_SUCCESS) *type = val.as.type_type;
-    pop_root();
-    return result;
-}
-
 static ResultCode check_global_circular_inheritance(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
         struct Entry* entry = &globals->entries[i];
@@ -1147,7 +1135,7 @@ static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
         //resolve properties
         for (int j = 0; j < tc->props.capacity; j++) {
             struct Entry* inner_entry = &tc->props.entries[j];
-            if (inner_entry->value.type != VAL_TYPE) continue; //shouldn't this always be true since this is types table?
+            if (inner_entry->value.type != VAL_TYPE) continue;
 
             if (resolve_type_identifiers(&inner_entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED;
             set_entry(&tc->props, inner_entry->key, inner_entry->value);
@@ -1193,7 +1181,7 @@ static ResultCode order_nodes_by_enums_structs_functions(struct NodeList* origin
 }
 
 //script compiler keeps a linked list of all AST nodes to delete when it's freed
-//we're using it here to resolve any identifiers for user defined types in the entire list
+//we're using it here to resolve any identifiers for user defined types in the entire list (non struct/function nodes)
 //TODO: change this to resolve_node_identifiers - can all nodes use this same function?  We'll
 //  just call it on the structs/functions/enums in globals table before hand (will
 //  need to pull out the while loop here though)
@@ -1228,8 +1216,11 @@ static ResultCode resolve_type_identifiers(struct Type** type, struct Table* glo
 
     switch((*type)->type) {
         case TYPE_IDENTIFIER: {
-            if (resolve_identifier((struct TypeIdentifier*)(*type), globals, type) == RESULT_FAILED)
-                result = RESULT_FAILED;
+            struct TypeIdentifier* ti = (struct TypeIdentifier*)(*type);
+            struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
+            Value val;
+            PARSE_ERROR_IF(!get_entry(globals, identifier, &val), ti->identifier, "Identifier for type not declared.");
+            if (result == RESULT_SUCCESS) *type = val.as.type_type;
             break;
         }
         case TYPE_FUN: {
