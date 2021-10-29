@@ -64,27 +64,19 @@ Stack overflow
 
 Implementation:
 
-    ERROR macro should be shared among all modules (parser, compiler, vm)
-        errors are confusing now because they may cascade from lower nodes into higher nodes (eg, == Right/left side mismatch errors
-        are showing up in when/is statement errors).  Instead of emitting errors directly to compiler, could pass them into a struct
-        up the ast tree - the parent could then choose to emit them to the compiler, pass them up the tree, or discard the error message
-        and replace it with its own message.
+    Clean up parser and unify error messages in parser, compiler, vm
+        PARSE_TYPE macro can just be a PARSE macro with the parse_type function ptr as the first argument
+        PARSE_WITHOUT_MSG is weird - how do we handle a bunch of low level noisy error messages?
+            there needs to be a way for higher nodes in the parser to silence/replace or pass on error messages below them
 
-        Also, consider adding horizontal position in error messages (in the tokens)
-
-    Rewrite resolve_identifier to take a struct Type** - this let's us pass only the pointer and not two things
-
-    Macro use is messy, and error message line info are all over the place.
-    ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
-        needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
-        manually return if necessary.  Or at least call it RETURN_ERROR for clarity.  Should be able to add
-        error without return too.
+        Macro use is messy, and error message line info are all over the place.
+        ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
+            needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
+            manually return if necessary.  Or at least call it RETURN_ERROR for clarity.  Should be able to add
+            error without return too.
 
     Structs and Enums can be defined at compile-time - no need to have all the props filled in a runtime
         AND the props at runtime should just be an array.  Compile time can compute the offset
-
-    Resolving identifers in parser can all be one function, surely?  Just use a switch to check between them
-        all.
 
     Currently not allow sequences for declaring struct fields - should allow it for consistency
 

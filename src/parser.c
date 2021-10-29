@@ -5,54 +5,32 @@
 
 #define PARSE(fun, node_ptr, token, ...) \
     if (fun(node_ptr) == RESULT_FAILED) { \
-        if (token.type != TOKEN_DUMMY) { \
-            ERROR(token, __VA_ARGS__); \
-        } \
-        return RESULT_FAILED; \
+        PARSE_ERROR_IF(token.type != TOKEN_DUMMY, token, __VA_ARGS__); \
     }
 
 #define PARSE_WITHOUT_MSG(fun, node_ptr) \
     PARSE(fun, node_ptr, make_dummy_token(), "")
 
 #define PARSE_TYPE(type_ptr, token, ...) \
-    if (parse_type(type_ptr) == RESULT_FAILED) { \
-        ERROR(token, __VA_ARGS__); \
-    }
+    PARSE_ERROR_IF(parse_type(type_ptr) == RESULT_FAILED, token, __VA_ARGS__)
 
 #define CONSUME(token_type, token, ...) \
-    if (!match(token_type)) { \
-        ERROR(token, __VA_ARGS__); \
-    }
-
-#define ERROR(tkn, ...) \
-{ \
-    if (parser.error_count < MAX_ERRORS) { \
-        char* buf = ALLOCATE_ARRAY(char); \
-        buf = GROW_ARRAY(buf, char, 100, 0); \
-        snprintf(buf, 99, __VA_ARGS__); \
-        struct Error error; \
-        error.message = buf; \
-        error.token = tkn; \
-        parser.errors[parser.error_count] = error; \
-        parser.error_count++; \
-    } \
-    return RESULT_FAILED; \
-}
+    PARSE_ERROR_IF(!match(token_type), token, __VA_ARGS__)
 
 #define PARSE_ERROR_IF(error_condition, tkn, ...) \
-            if (error_condition) { \
-                if (parser.error_count < MAX_ERRORS) { \
-                    char* buf = ALLOCATE_ARRAY(char); \
-                    buf = GROW_ARRAY(buf, char, 100, 0); \
-                    snprintf(buf, 99, __VA_ARGS__); \
-                    struct Error error; \
-                    error.message = buf; \
-                    error.token = tkn; \
-                    parser.errors[parser.error_count] = error; \
-                    parser.error_count++; \
-                } \
-                result = RESULT_FAILED; \
-            }
+    if (error_condition) { \
+        if (parser.error_count < MAX_ERRORS) { \
+            char* buf = ALLOCATE_ARRAY(char); \
+            buf = GROW_ARRAY(buf, char, 100, 0); \
+            snprintf(buf, 99, __VA_ARGS__); \
+            struct Error error; \
+            error.message = buf; \
+            error.token = tkn; \
+            parser.errors[parser.error_count] = error; \
+            parser.error_count++; \
+        } \
+        return RESULT_FAILED; \
+    }
 
 
 Parser parser;
@@ -145,11 +123,9 @@ static ResultCode parse_function_parameters_and_types(struct NodeList* params, s
         struct Node* var_decl;
         if (param_declaration(&var_decl) == RESULT_FAILED) return RESULT_FAILED;
 
-        if (match(TOKEN_EQUAL)) {
-            Token param_token = ((DeclVar*)var_decl)->name;
-            ERROR(param_token, "Trying to assign parameter '%.*s'.  Function parameters cannot be assigned.", 
-                    param_token.length, param_token.start);
-        }
+        Token param_token = ((DeclVar*)var_decl)->name;
+        PARSE_ERROR_IF(match(TOKEN_EQUAL), param_token, 
+                    "Trying to assign parameter '%.*s'.  Function parameters cannot be assigned.", param_token.length, param_token.start);
 
         DeclVar* vd = (DeclVar*)var_decl;
         add_type(param_types, vd->type);
@@ -199,7 +175,7 @@ static ResultCode parse_static_function(Token name, struct Node** node) {
     Value v;
     if (get_entry(parser.globals, fun_string, &v)) {
         pop_root();
-        ERROR(name, "The identifier for this function is already used.");
+        PARSE_ERROR_IF(true, name, "The identifier for this function is already used.");
     }
 
     //set globals in parser (which compiler uses)
@@ -209,9 +185,8 @@ static ResultCode parse_static_function(Token name, struct Node** node) {
     CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
     Token body_start = parser.previous;
     struct Node* body;
-    if (block(NULL, &body) == RESULT_FAILED) {
-        ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
-    }
+    PARSE_ERROR_IF(block(NULL, &body) == RESULT_FAILED, body_start, 
+                   "Expect '}' at end of function body starting at line %d.", body_start.line);
 
     //fun_type is only necessary for anonymous functions 
     bool anonymous = false;
@@ -236,9 +211,8 @@ static ResultCode parse_anonymous_function(struct Node** node) {
     CONSUME(TOKEN_LEFT_BRACE, parser.previous, "Expect '{' before function body.");
     Token body_start = parser.previous;
     struct Node* body;
-    if (block(NULL, &body) == RESULT_FAILED) {
-        ERROR(body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
-    }
+    PARSE_ERROR_IF(block(NULL, &body) == RESULT_FAILED, 
+                   body_start, "Expect '}' at end of function body starting at line %d.", body_start.line);
 
     //fun_type is only necessary for anonymous functions 
     bool anonymous = true;
@@ -286,9 +260,9 @@ static ResultCode primary(struct Node** node) {
         Token name = parser.previous;
 
         if (peek_two(TOKEN_IDENTIFIER, TOKEN_COLON) || peek_two(TOKEN_RIGHT_PAREN, TOKEN_RIGHT_ARROW)) {
-            if (parse_anonymous_function(node) == RESULT_FAILED) { 
-                ERROR(name, "Invalid anonymous function declaration."); 
-            }
+            PARSE_ERROR_IF(parse_anonymous_function(node) == RESULT_FAILED,
+                           name, "Invalid anonymous function declaration."); 
+
             return RESULT_SUCCESS;
         }
 
@@ -544,7 +518,7 @@ static ResultCode parse_expression(struct Node** node) {
                 GetVar* gv = (GetVar*)left;
                 left = make_decl_var(gv->name, make_infer_type(), right);
             } else if (left->type == NODE_DECL_VAR) {
-                ERROR(parser.previous, "Type inference using ':=' cannot be used if type is already explicitly declared.");
+                PARSE_ERROR_IF(true, parser.previous, "Type inference using ':=' cannot be used if type is already explicitly declared.");
             }
         }
     }
@@ -566,10 +540,9 @@ static ResultCode block(struct Node* prepend, struct Node** node) {
         if (peek_one(TOKEN_EOF)) {
             return RESULT_FAILED;
         }
-        if (peek_one(TOKEN_IMPORT)) {
-            ERROR(parser.previous, "'import' can only be used in top script level.");
-            return RESULT_FAILED;
-        }
+        PARSE_ERROR_IF(peek_one(TOKEN_IMPORT), 
+                       parser.previous, "'import' can only be used in top script level.");
+
         struct Node* decl;
         if (declaration(&decl) == RESULT_SUCCESS) {
             add_to_compile_pass(decl, parser.statics_nl, body);
@@ -686,7 +659,7 @@ static ResultCode add_prop_to_struct_type(struct TypeStruct* tc, DeclVar* dv) {
     Value v;
     if (get_entry(&tc->props, prop_string, &v)) {
         pop_root();
-        ERROR(prop_name, "Field name already used once in this struct.");
+        PARSE_ERROR_IF(true, prop_name, "Field name already used once in this struct.");
     }
 
     set_entry(&tc->props, prop_string, to_type(dv->type));
@@ -734,7 +707,7 @@ static ResultCode declaration(struct Node** node) {
         Value v;
         if (get_entry(parser.globals, enum_string, &v)) {
             pop_root();
-            ERROR(enum_name, "The identifier for this enum is already used.");
+            PARSE_ERROR_IF(true, enum_name, "The identifier for this enum is already used.");
         }
 
         //set globals in parser (which compiler uses for type checking)
@@ -753,7 +726,7 @@ static ResultCode declaration(struct Node** node) {
             Value v;
             if (get_entry(&type->props, prop_name, &v)) {
                 pop_root();
-                ERROR(dv_name, "Element name already used once in this enum.");
+                PARSE_ERROR_IF(true, dv_name, "Element name already used once in this enum.");
             }
 
             set_entry(&type->props, prop_name, to_type(make_int_type()));
@@ -787,7 +760,7 @@ static ResultCode declaration(struct Node** node) {
         Value v;
         if (get_entry(parser.globals, struct_string, &v)) {
             pop_root();
-            ERROR(struct_name, "The identifier for this struct is already used.");
+            PARSE_ERROR_IF(true, struct_name, "The identifier for this struct is already used.");
         }
 
         //set globals in parser (which compiler uses)
@@ -824,9 +797,9 @@ static ResultCode declaration(struct Node** node) {
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LEFT_BRACE)) {
         Token name = parser.previous;
-        if (block(NULL, node) == RESULT_FAILED) {
-            ERROR(name, "Block starting at line %d not closed with '}'.", name.line);
-        }
+        PARSE_ERROR_IF(block(NULL, node) == RESULT_FAILED, 
+                       name, "Block starting at line %d not closed with '}'.", name.line);
+
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IF)) {
         Token name = parser.previous;
@@ -835,18 +808,12 @@ static ResultCode declaration(struct Node** node) {
         PARSE(parse_expression, &condition, name, "Expect single boolean expression after 'if'.");
 
         struct Node* then_block;
-        if (declaration(&then_block) == RESULT_FAILED) {
-            ERROR(name, "Expected a body statement after for 'if' statement.");
-            return RESULT_FAILED;
-        }
+        PARSE(declaration, &then_block, name, "Expect a body statement after 'if' statement.");
 
         struct Node* else_block = NULL;
         if (match(TOKEN_ELSE)) {
             Token else_token = parser.previous;
-            if (declaration(&else_block) == RESULT_FAILED) {
-                ERROR(else_token, "Expected a body statement after for 'else' statement.");
-                return RESULT_FAILED;
-            }
+            PARSE(declaration, &else_block, else_token, "Expected a body statement after for 'else' statement.");
         }
 
         *node = make_if_else(name, condition, then_block, else_block);
@@ -868,9 +835,7 @@ static ResultCode declaration(struct Node** node) {
             struct Node* condition = make_logical(equal, left, right);
 
             struct Node* body = NULL;
-            if (declaration(&body) == RESULT_FAILED) {
-                ERROR(is, "Expect statment body after 'is'.");
-            }
+            PARSE(declaration, &body, is, "Expected statement body after 'is'.");
 
             struct Node* if_stmt = make_if_else(is, condition, body, NULL);
             add_node(cases, if_stmt);
@@ -883,9 +848,8 @@ static ResultCode declaration(struct Node** node) {
             struct Node* condition = make_literal(true_token);
 
             struct Node* body = NULL;
-            if (declaration(&body) == RESULT_FAILED) {
-                ERROR(else_token, "Expect statement body after 'else' in 'when' body.");
-            }
+            PARSE(declaration, &body, else_token, "Expect statement body after 'else' in 'when' body.");
+
             add_node(cases, make_if_else(else_token, condition, body, NULL));
         }
         CONSUME(TOKEN_RIGHT_BRACE, name, "Expected '}' to close 'when' body.");
@@ -898,9 +862,7 @@ static ResultCode declaration(struct Node** node) {
         PARSE(parse_expression, &condition, name, "Expect condition after 'while'.");
 
         struct Node* then_block;
-        if (declaration(&then_block) == RESULT_FAILED) {
-            ERROR(name, "Expected body statement for 'while' loop.");
-        }
+        PARSE(declaration, &then_block, name, "Expected body statement for 'while' loop.");
 
         *node = make_while(name, condition, then_block);
         return RESULT_SUCCESS;
@@ -925,9 +887,7 @@ static ResultCode declaration(struct Node** node) {
         }
 
         struct Node* then_block;
-        if (declaration(&then_block) == RESULT_FAILED) {
-            ERROR(name, "Expect body statement for 'for' loop.");
-        }
+        PARSE(declaration, &then_block, name, "Expect body statement for 'for' loop.");
 
         *node = make_for(name, initializer, condition, update, then_block);
         return RESULT_SUCCESS;
@@ -967,9 +927,7 @@ static ResultCode declaration(struct Node** node) {
         struct NodeList* body = (struct NodeList*)make_node_list();
         add_node(body, element);
         struct Node* remaining_body;
-        if (declaration(&remaining_body) == RESULT_FAILED) {
-            ERROR(name, "Expected body statement for 'foreach' loop.");
-        }
+        PARSE(declaration, &remaining_body, name, "Expected body statement for 'foreach' loop.");
         add_node(body, remaining_body);
         struct Node* then_block = make_block(name, body);
 
@@ -1050,15 +1008,18 @@ static ResultCode check_global_circular_inheritance(struct Table* globals) {
             struct TypeStruct* super = (struct TypeStruct*)current;
             Token super_name = super->name;
             if (same_token_literal(struct_name, super_name)) {
-                ERROR(make_dummy_token(), "A struct cannot have a circular inheritance.");
+                //need token data here for better error message
+                PARSE_ERROR_IF(true, make_dummy_token(), "A struct cannot have a circular inheritance.");
+                current = NULL;
+            } else {
+                current = super->super;
             }
-            current = super->super;
         }
     }
-    return RESULT_SUCCESS;
 }
 
 static ResultCode copy_global_inherited_props(struct Table* globals) {
+
     for (int i = 0; i < globals->capacity; i++) {
         struct Entry* entry = &globals->entries[i];
         if (entry->value.type != VAL_TYPE) continue;
@@ -1073,11 +1034,10 @@ static ResultCode copy_global_inherited_props(struct Table* globals) {
                 if (entry->key == NULL) continue;
                 Value val;
                 if (get_entry(&klass->props, entry->key, &val)) {
-                    if (val.as.type_type->type != TYPE_INFER && 
+                    PARSE_ERROR_IF(val.as.type_type->type != TYPE_INFER && 
                         entry->value.as.type_type->type != TYPE_INFER && 
-                        !same_type(val.as.type_type, entry->value.as.type_type)) {
-                        ERROR(make_dummy_token(), "Overwritten properties must share same type.");
-                    }
+                        !same_type(val.as.type_type, entry->value.as.type_type), 
+                        make_dummy_token(), "Overwritten properties must share same type."); //We don't have token data here so message will be wrong...
                 } else {
                     set_entry(&klass->props, entry->key, entry->value);
                 }
@@ -1085,7 +1045,6 @@ static ResultCode copy_global_inherited_props(struct Table* globals) {
             super_type = super->super;
         }
     }
-    return RESULT_SUCCESS;
 }
 
 static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, struct DeclStruct* dc, struct NodeList* statics_nl) {
@@ -1120,6 +1079,7 @@ static ResultCode resolve_global_function_identifiers(struct Table* globals) {
         struct Entry* entry = &globals->entries[i];
         if (entry->value.type != VAL_TYPE) continue;
         if (entry->value.as.type_type->type != TYPE_FUN) continue;
+
         struct TypeFun* fun_type = (struct TypeFun*)(entry->value.as.type_type);
         if (resolve_type_identifiers(&entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED;
     }
@@ -1130,8 +1090,8 @@ static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
         struct Entry* entry = &globals->entries[i];
         if (entry->value.type != VAL_TYPE || entry->value.as.type_type->type != TYPE_STRUCT) continue;
-        struct TypeStruct* tc = (struct TypeStruct*)(entry->value.as.type_type);
 
+        struct TypeStruct* tc = (struct TypeStruct*)(entry->value.as.type_type);
         if (resolve_type_identifiers(&entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED; 
     }
     return RESULT_SUCCESS;
@@ -1171,9 +1131,6 @@ static ResultCode order_nodes_by_enums_structs_functions(struct NodeList* origin
 
 //script compiler keeps a linked list of all AST nodes to delete when it's freed
 //we're using it here to resolve any identifiers for user defined types in the entire list (non struct/function nodes)
-//TODO: change this to resolve_node_identifiers - can all nodes use this same function?  We'll
-//  just call it on the structs/functions/enums in globals table before hand (will
-//  need to pull out the while loop here though)
 static ResultCode resolve_remaining_identifiers(struct Table* globals, struct Node* node) {
     while (node != NULL) {
         switch(node->type) {
@@ -1200,7 +1157,6 @@ static ResultCode resolve_remaining_identifiers(struct Table* globals, struct No
     return RESULT_SUCCESS;
 }
 
-//TODO: add TYPE_STRUCT and then pull corresponding code from resolve_globa_struct_identifiers into here
 static ResultCode resolve_type_identifiers(struct Type** type, struct Table* globals) {
     ResultCode result = RESULT_SUCCESS;
 
@@ -1335,6 +1291,7 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
     for (int i = 0; i < script_nl->count; i++) {
         add_node(ordered_nl, script_nl->nodes[i]);
     }
+
     *final_ast = ordered_nl;
 
     if (parser.error_count > 0) {
