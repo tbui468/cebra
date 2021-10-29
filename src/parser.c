@@ -1132,18 +1132,7 @@ static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
         if (entry->value.type != VAL_TYPE || entry->value.as.type_type->type != TYPE_STRUCT) continue;
         struct TypeStruct* tc = (struct TypeStruct*)(entry->value.as.type_type);
 
-        //resolve properties
-        for (int j = 0; j < tc->props.capacity; j++) {
-            struct Entry* inner_entry = &tc->props.entries[j];
-            if (inner_entry->value.type != VAL_TYPE) continue;
-
-            if (resolve_type_identifiers(&inner_entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED;
-            set_entry(&tc->props, inner_entry->key, inner_entry->value);
-        }
-
-        //resolve structs inherited from
-        if (tc->super == NULL) continue;
-        if (resolve_type_identifiers(&tc->super, globals) == RESULT_FAILED) return RESULT_FAILED;
+        if (resolve_type_identifiers(&entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED; 
     }
     return RESULT_SUCCESS;
 }
@@ -1211,6 +1200,7 @@ static ResultCode resolve_remaining_identifiers(struct Table* globals, struct No
     return RESULT_SUCCESS;
 }
 
+//TODO: add TYPE_STRUCT and then pull corresponding code from resolve_globa_struct_identifiers into here
 static ResultCode resolve_type_identifiers(struct Type** type, struct Table* globals) {
     ResultCode result = RESULT_SUCCESS;
 
@@ -1221,6 +1211,23 @@ static ResultCode resolve_type_identifiers(struct Type** type, struct Table* glo
             Value val;
             PARSE_ERROR_IF(!get_entry(globals, identifier, &val), ti->identifier, "Identifier for type not declared.");
             if (result == RESULT_SUCCESS) *type = val.as.type_type;
+            break;
+        }
+        case TYPE_STRUCT: {
+            struct TypeStruct* ts = (struct TypeStruct*)(*type);
+            //resolve properties
+            for (int j = 0; j < ts->props.capacity; j++) {
+                struct Entry* inner_entry = &ts->props.entries[j];
+                if (inner_entry->value.type != VAL_TYPE) continue;
+
+                if (resolve_type_identifiers(&inner_entry->value.as.type_type, globals) == RESULT_FAILED) result = RESULT_FAILED;
+                set_entry(&ts->props, inner_entry->key, inner_entry->value);
+            }
+
+            //resolve structs inherited from
+            if (ts->super != NULL) {
+                if (resolve_type_identifiers(&ts->super, globals) == RESULT_FAILED) result = RESULT_FAILED;
+            }
             break;
         }
         case TYPE_FUN: {
