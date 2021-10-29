@@ -72,9 +72,6 @@ Implementation:
 
         Also, consider adding horizontal position in error messages (in the tokens)
 
-    Use minGW to build executable for Windows - look up vscode tutorial
-        ask Cory, Sam or others with Windows to test it
-
     Macro use is messy, and error message line info are all over the place.
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then

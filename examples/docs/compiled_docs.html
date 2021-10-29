@@ -29,6 +29,10 @@
         </section>
         <section class="main">
 
+        <div class="container">
+            <div class="row">
+            </div>
+        </div>
 <div id="about" class="container">
     <div class="row">
         <section class="col-3-4">
@@ -127,11 +131,11 @@
         <code>
     ./Cebra
 
-    >>> print("Hello world")
+    >>> print("Hello world&#92;n")
     Hello world
     >>> a := 2
     >>> b := 3
-    >>> print(a + b)
+    >>> print(a + b) print("&#92;n")
     5
         </code>
         </pre>
@@ -144,8 +148,12 @@
             <p>Here's some example code to get you started on the syntax.  See 'interpreter.cbr' in the examples directory
             for a more extensive example.</p>
         </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
         <pre class="code-box col-3-4">
-    <code>
+            <code>
     //Define a function to compute the nth number in the fibonacci sequence
     fib :: (n: int) -> (int) {
         if n < 2 {
@@ -161,7 +169,7 @@
     print(a) //60
     b := 2.2  //declare a new variable and infer the type based on the assignment
     print(b) //2.20000
-    </code>
+            </code>
         </pre>
         <section class="col-1-4">
         </section>
@@ -316,8 +324,8 @@
 <div id="control-flow" class="container">
     <h2>Control Flow</h2>
     <div class="row">
-        <h3>If / Else</h3>
         <section class="col-3-4">
+        <h3>If / Else</h3>
             <p>All control flow statement bodies with more than one statement must be surrounding by {}.  {} are optional for 
             single statement bodies.</p>
         </section>
@@ -370,7 +378,13 @@
         </section>
     </div> 
     <div class="row">
-        <h3>While Loops</h3>
+        <section class="col-3-4">
+            <h3>While Loops</h3>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
         <pre class="code-box col-3-4">
         <code>
     i: int = 0
@@ -787,6 +801,8 @@
         </section>
         <section class="col-1-4">
         </section>
+    </div>
+    <div class="row">
         <pre class="code-box col-3-4">
             <code>
     import vec //do not include the .cbr extension

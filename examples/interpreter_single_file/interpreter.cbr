@@ -98,9 +98,9 @@ next_char :: (lexer: Lexer) -> (bool) {
 
 next_token :: (lexer: Lexer) -> (Token) {
 
-    while peek(lexer, is_whitespace) {
+    while peek(lexer, is_whitespace) 
         next_char(lexer)
-    }
+    
 
     if next_char(lexer) {
         token := Token()

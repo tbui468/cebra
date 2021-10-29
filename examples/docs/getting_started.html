@@ -83,11 +83,11 @@
         <code>
     ./Cebra
 
-    >>> print("Hello world")
+    >>> print("Hello world&#92;n")
     Hello world
     >>> a := 2
     >>> b := 3
-    >>> print(a + b)
+    >>> print(a + b) print("&#92;n")
     5
         </code>
         </pre>
@@ -100,8 +100,12 @@
             <p>Here's some example code to get you started on the syntax.  See 'interpreter.cbr' in the examples directory
             for a more extensive example.</p>
         </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+    <div class="row">
         <pre class="code-box col-3-4">
-    <code>
+            <code>
     //Define a function to compute the nth number in the fibonacci sequence
     fib :: (n: int) -> (int) {
         if n < 2 {
@@ -117,7 +121,7 @@
     print(a) //60
     b := 2.2  //declare a new variable and infer the type based on the assignment
     print(b) //2.20000
-    </code>
+            </code>
         </pre>
         <section class="col-1-4">
         </section>

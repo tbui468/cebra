@@ -39,6 +39,21 @@
     return RESULT_FAILED; \
 }
 
+#define PARSE_ERROR_IF(error_condition, tkn, ...) \
+            if (error_condition) { \
+                if (parser.error_count < MAX_ERRORS) { \
+                    char* buf = ALLOCATE_ARRAY(char); \
+                    buf = GROW_ARRAY(buf, char, 100, 0); \
+                    snprintf(buf, 99, __VA_ARGS__); \
+                    struct Error error; \
+                    error.message = buf; \
+                    error.token = tkn; \
+                    parser.errors[parser.error_count] = error; \
+                    parser.error_count++; \
+                } \
+                result = RESULT_FAILED; \
+            }
+
 
 Parser parser;
 
@@ -48,6 +63,7 @@ static ResultCode parse_type(struct Type** type);
 static ResultCode param_declaration(struct Node** node);
 static ResultCode assignment(struct Node** node, int expected);
 static ResultCode parse_expression(struct Node** node);
+static ResultCode resolve_type_identifiers(struct Type* type, struct Table* globals);
 
 static void print_all_tokens() {
     printf("******start**********\n");
@@ -1023,34 +1039,14 @@ static void quick_sort(struct Error* errors, int lo, int hi) {
 
 
 static ResultCode resolve_identifier(struct TypeIdentifier* ti, struct Table* globals, struct Type** type) {
+    ResultCode result = RESULT_SUCCESS;
     struct ObjString* identifier = make_string(ti->identifier.start, ti->identifier.length);
     push_root(to_string(identifier));
     Value val;
-    if (!get_entry(globals, identifier, &val)) {
-        pop_root();
-        ERROR(ti->identifier, "Identifier for type not declared.");
-    }
+    PARSE_ERROR_IF(!get_entry(globals, identifier, &val), ti->identifier, "Identifier for type not declared.");
+    if (result == RESULT_SUCCESS) *type = val.as.type_type;
     pop_root();
-    *type = val.as.type_type;
-    return RESULT_SUCCESS;
-}
-
-static ResultCode resolve_list_identifiers(struct TypeList* tl, struct Table* globals) {
-    if (tl->type->type == TYPE_IDENTIFIER) {
-        struct Type* result;
-        if (resolve_identifier((struct TypeIdentifier*)(tl->type), globals, &result) == RESULT_FAILED) return RESULT_FAILED;
-        tl->type = result;
-    }
-    return RESULT_SUCCESS;
-}
-
-static ResultCode resolve_map_identifiers(struct TypeMap* tm, struct Table* globals) {
-    if (tm->type->type == TYPE_IDENTIFIER) {
-        struct Type* result;
-        if (resolve_identifier((struct TypeIdentifier*)(tm->type), globals, &result) == RESULT_FAILED) return RESULT_FAILED;
-        tm->type = result;
-    }
-    return RESULT_SUCCESS;
+    return result;
 }
 
 static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals);
@@ -1153,12 +1149,8 @@ static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table*
             struct Type* result;
             if (resolve_identifier((struct TypeIdentifier*)ret, parser.globals, &result) == RESULT_FAILED) return RESULT_FAILED;
             ft->returns->types[i] = result;
-        } else if (ret->type == TYPE_FUN) {
-            if (resolve_function_identifiers((struct TypeFun*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
-        } else if (ret->type == TYPE_LIST) {
-            if (resolve_list_identifiers((struct TypeList*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
-        } else if (ret->type == TYPE_MAP) {
-            if (resolve_map_identifiers((struct TypeMap*)ret, globals) == RESULT_FAILED) return RESULT_FAILED;
+        } else {
+            if (resolve_type_identifiers(ret, globals) == RESULT_FAILED) return RESULT_FAILED;
         }
     }
 
@@ -1244,35 +1236,22 @@ static ResultCode resolve_remaining_identifiers(struct Table* globals, struct No
                 DeclVar* dv = (DeclVar*)node;
                 if (dv->type == NULL) break;
                 if (dv->type->type == TYPE_IDENTIFIER) {
-                    struct Type* result;
-                    if (resolve_identifier((struct TypeIdentifier*)(dv->type), globals, &result) == RESULT_FAILED) return RESULT_FAILED;
-                    dv->type = result;
-                }
-                if (dv->type->type == TYPE_LIST) {
-                    if (resolve_list_identifiers((struct TypeList*)(dv->type), globals) == RESULT_FAILED) return RESULT_FAILED;
-                }
-                if (dv->type->type == TYPE_MAP) {
-                    if (resolve_map_identifiers((struct TypeMap*)(dv->type), globals) == RESULT_FAILED) return RESULT_FAILED;
+                    if (resolve_identifier((struct TypeIdentifier*)(dv->type), globals, &dv->type) == RESULT_FAILED) return RESULT_FAILED;
+                } else {
+                    if (resolve_type_identifiers(dv->type, globals) == RESULT_FAILED) return RESULT_FAILED;
                 }
                 break;
             }
             case NODE_CONTAINER: {
                 struct DeclContainer* dc = (struct DeclContainer*)node;
-                if (dc->type->type == TYPE_LIST) {
-                    if (resolve_list_identifiers((struct TypeList*)(dc->type), globals) == RESULT_FAILED) return RESULT_FAILED;
-                }
-                if (dc->type->type == TYPE_MAP) {
-                    if (resolve_map_identifiers((struct TypeMap*)(dc->type), globals) == RESULT_FAILED) return RESULT_FAILED;
-                }
+                if (resolve_type_identifiers(dc->type, globals) == RESULT_FAILED) return RESULT_FAILED;
                 break;
             }
             case NODE_CAST: {
                 Cast* c = (Cast*)node;
                 if (c->type == NULL) break;
                 if (c->type->type == TYPE_IDENTIFIER) {
-                    struct Type* result;
-                    if (resolve_identifier((struct TypeIdentifier*)(c->type), globals, &result) == RESULT_FAILED) return RESULT_FAILED; 
-                    c->type = result;
+                    if (resolve_identifier((struct TypeIdentifier*)(c->type), globals, &c->type) == RESULT_FAILED) return RESULT_FAILED; 
                 }
                 break;
             }
@@ -1280,6 +1259,35 @@ static ResultCode resolve_remaining_identifiers(struct Table* globals, struct No
         node = node->next;
     }
     return RESULT_SUCCESS;
+}
+
+static ResultCode resolve_type_identifiers(struct Type* type, struct Table* globals) {
+    ResultCode result = RESULT_SUCCESS;
+    switch(type->type) {
+        case TYPE_FUN: {
+            struct TypeFun* tf = (struct TypeFun*)type;
+            if (resolve_function_identifiers(tf, globals) == RESULT_FAILED)
+                result = RESULT_FAILED;
+            break;
+        }
+        case TYPE_LIST: {
+            struct TypeList* tl = (struct TypeList*)type;
+            if (tl->type->type == TYPE_IDENTIFIER) {
+                if (resolve_identifier((struct TypeIdentifier*)(tl->type), globals, &tl->type) == RESULT_FAILED) 
+                    result = RESULT_FAILED;
+            }
+            break;
+        }
+        case TYPE_MAP: {
+           struct TypeMap* tm = (struct TypeMap*)type;
+           if (tm->type->type == TYPE_IDENTIFIER) {
+               if (resolve_identifier((struct TypeIdentifier*)(tm->type), globals, &tm->type) == RESULT_FAILED) 
+                   result = RESULT_FAILED;
+           }
+           break;
+        }
+    }
+    return result;
 }
 
 ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes, struct Table* globals) {
