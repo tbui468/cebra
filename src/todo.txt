@@ -72,6 +72,8 @@ Implementation:
 
         Also, consider adding horizontal position in error messages (in the tokens)
 
+    Rewrite resolve_identifier to take a struct Type** - this let's us pass only the pointer and not two things
+
     Macro use is messy, and error message line info are all over the place.
     ERROR() in parser automatically returns, which could be bad for allocated memory or other state that
         needs to be cleared.  Create an add_error() function or a macro that does NOT return, and then
