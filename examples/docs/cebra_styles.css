@@ -59,21 +59,50 @@ h1 {
 }
 
 h2 {
-    font-size: 30px;
-    font-weight: bold;
+    font-size: 26px;
     font-family: Helvetica, Arial, sans-serif;
     padding-bottom: 8px;
+}
+
+h2.alt {
+    color: white;
 }
 
 h3 {
     font-size: 18px;
     font-family: Helvetica, Arial, sans-serif;
     padding-bottom: 8px;
+    color: black;
+}
+
+h3.alt {
+    color: white;
+}
+
+a {
+    font-size: 14px;
+    font-family: Arial;
+    line-height: 1.6;
+    letter-spacing: 1px;
+    word-spacing: 1px;
+    color: black;
 }
 
 p {
-    font-size: 15px;
-    font-family: sans-serif;
+    font-size: 14px;
+    font-family: Arial;
+    line-height: 1.6;
+    letter-spacing: 1px;
+    word-spacing: 1px;
+    color: black;
+}
+
+p.alt {
+    color: white;
+}
+
+p.alt-2 {
+    color: #567;
 }
 
 span.type {
@@ -105,21 +134,22 @@ span.code {
     left: 0;
     background-color: #eed; /* Black */
     overflow-x: hidden; /* Disable horizontal scroll */
-    padding-top: 20px;
+    padding-top: 40px;
 }
 
 /* The navigation menu links */
 .sidenav a {
-    padding: 6px 16px 6px 16px;
+    padding: 16px 16px 6px 16px;
     text-decoration: none;
-    font-size: 18px;
-    color: #818181;
+    font-size: 16px;
+    line-height: 1;
+    color: #567;
     display: block;
 }
 
 /* When you mouse over the navigation links, change their color */
 .sidenav a:hover {
-    color: #f1f1f1;
+    color: white;
 }
 
 
@@ -144,8 +174,8 @@ span.code {
 }
 
 .logo {
-    height: 150px;
-    width: 150px;
+    height: 120px;
+    width: 120px;
 }
 
 /* Change background on mouse-over */
@@ -166,6 +196,7 @@ span.code {
     bottom: 0;
     width: 100%;
     background-color: #899;
+    background-color: #034;
     color: white;
     text-align: left;
     padding-top: 16px;
@@ -208,13 +239,12 @@ span.code {
     padding-left: 0px;
     padding-right: 0px;
     padding-top: 60px;
-    padding-bottom: 40px;
+    padding-bottom: 60px;
     margin: 0 auto;
     text-align: center;
 }
 
 .row {
-    padding-bottom: 0;
     display: flex;
 }
 
@@ -259,15 +289,36 @@ span.code {
 
 /* Style buttons */
 .btn {
+    background-color: white;
+    border: none;
+    padding: 12px 30px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 70%;
+    text-align: left;
+    border: 2px solid #899;
+    color: #567;
+}
+
+/* Darker background on mouse-over */
+.btn:hover {
+    background-color: #899;
+    color: white;
+}
+
+/* Style buttons */
+.btn-alt {
     background-color: #28d;
     border: none;
     color: white;
     padding: 12px 30px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 16px;
+    border: 2px solid white;
 }
 
 /* Darker background on mouse-over */
-.btn:hover {
-    background-color: #67c;
+.btn-alt:hover {
+    background-color: white;
+    color: #567;
 }
