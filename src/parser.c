@@ -1049,8 +1049,6 @@ static ResultCode resolve_identifier(struct TypeIdentifier* ti, struct Table* gl
     return result;
 }
 
-static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals);
-
 static ResultCode check_global_circular_inheritance(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
         struct Entry* entry = &globals->entries[i];
@@ -1128,22 +1126,6 @@ static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_
     return RESULT_SUCCESS;
 }
 
-static ResultCode resolve_function_identifiers(struct TypeFun* ft, struct Table* globals) {
-    //check parameters
-    struct TypeArray* params = (ft->params);
-    for (int i = 0; i < params->count; i++) {
-        struct Type** param_type = &params->types[i];
-        if (resolve_type_identifiers(param_type, globals) == RESULT_FAILED) return RESULT_FAILED;
-    }
-
-    //check return
-    for (int i = 0; i < ft->returns->count; i++) {
-        struct Type** ret = &ft->returns->types[i];
-        if (resolve_type_identifiers(ret, globals) == RESULT_FAILED) return RESULT_FAILED;
-    }
-
-    return RESULT_SUCCESS;
-}
 
 static ResultCode resolve_global_function_identifiers(struct Table* globals) {
     for (int i = 0; i < globals->capacity; i++) {
@@ -1151,7 +1133,7 @@ static ResultCode resolve_global_function_identifiers(struct Table* globals) {
         if (entry->value.type != VAL_TYPE) continue;
         if (entry->value.as.type_type->type != TYPE_FUN) continue;
         struct TypeFun* fun_type = (struct TypeFun*)(entry->value.as.type_type);
-        if (resolve_function_identifiers(fun_type, parser.globals) == RESULT_FAILED) return RESULT_FAILED;
+        if (resolve_type_identifiers(&entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED;
     }
     return RESULT_SUCCESS;
 }
@@ -1161,18 +1143,16 @@ static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
         struct Entry* entry = &globals->entries[i];
         if (entry->value.type != VAL_TYPE || entry->value.as.type_type->type != TYPE_STRUCT) continue;
         struct TypeStruct* tc = (struct TypeStruct*)(entry->value.as.type_type);
+
         //resolve properties
         for (int j = 0; j < tc->props.capacity; j++) {
             struct Entry* inner_entry = &tc->props.entries[j];
-            if (inner_entry->value.type != VAL_TYPE) continue;
-            if (inner_entry->value.as.type_type->type == TYPE_IDENTIFIER) {
-                struct Type* result;
-                if (resolve_identifier((struct TypeIdentifier*)(inner_entry->value.as.type_type), globals, &result) == RESULT_FAILED) return RESULT_FAILED;
-                set_entry(&tc->props, inner_entry->key, to_type(result));
-            } else if (inner_entry->value.as.type_type->type == TYPE_FUN) {
-                if (resolve_function_identifiers((struct TypeFun*)(inner_entry->value.as.type_type), globals) == RESULT_FAILED) return RESULT_FAILED;
-            }
+            if (inner_entry->value.type != VAL_TYPE) continue; //shouldn't this always be true since this is types table?
+
+            if (resolve_type_identifiers(&inner_entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED;
+            set_entry(&tc->props, inner_entry->key, inner_entry->value);
         }
+
         //resolve structs inherited from
         if (tc->super == NULL) continue;
         if (resolve_type_identifiers(&tc->super, globals) == RESULT_FAILED) return RESULT_FAILED;
@@ -1214,6 +1194,9 @@ static ResultCode order_nodes_by_enums_structs_functions(struct NodeList* origin
 
 //script compiler keeps a linked list of all AST nodes to delete when it's freed
 //we're using it here to resolve any identifiers for user defined types in the entire list
+//TODO: change this to resolve_node_identifiers - can all nodes use this same function?  We'll
+//  just call it on the structs/functions/enums in globals table before hand (will
+//  need to pull out the while loop here though)
 static ResultCode resolve_remaining_identifiers(struct Table* globals, struct Node* node) {
     while (node != NULL) {
         switch(node->type) {
@@ -1250,9 +1233,21 @@ static ResultCode resolve_type_identifiers(struct Type** type, struct Table* glo
             break;
         }
         case TYPE_FUN: {
-            struct TypeFun* tf = (struct TypeFun*)(*type);
-            if (resolve_function_identifiers(tf, globals) == RESULT_FAILED)
-                result = RESULT_FAILED;
+            struct TypeFun* ft = (struct TypeFun*)(*type);
+
+            struct TypeArray* params = (ft->params);
+            for (int i = 0; i < params->count; i++) {
+                struct Type** param_type = &params->types[i];
+                if (resolve_type_identifiers(param_type, globals) == RESULT_FAILED) 
+                    result = RESULT_FAILED;
+            }
+
+            for (int i = 0; i < ft->returns->count; i++) {
+                struct Type** ret = &ft->returns->types[i];
+                if (resolve_type_identifiers(ret, globals) == RESULT_FAILED) 
+                    result = RESULT_FAILED;
+            }
+
             break;
         }
         case TYPE_LIST: {
