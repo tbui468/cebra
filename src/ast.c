@@ -3,7 +3,7 @@
 
 //also init 'has_declarations'
 struct Node* insert_node(struct Node* node) {
-    node->has_decls = false;
+    node->has_decls = false; //what is this?
     node->next = current_compiler->nodes;
     current_compiler->nodes = node;    
 

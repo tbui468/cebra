@@ -1408,7 +1408,7 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
    
     //this part is mostly the same as compile_function, except
     //that return opcodes for functions is emitted 
-    ResultCode result;
+    ResultCode result = RESULT_SUCCESS;
     compiler->return_types = make_type_array();
 
     int start_locals_count = compiler->locals_count;
@@ -1435,11 +1435,9 @@ ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
         //reset errors/locals count
         compiler->locals_count = start_locals_count;
         compiler->error_count = 0;
-
-        return RESULT_FAILED;
     }
 
-    return RESULT_SUCCESS;
+    return result;
 }
 
 

@@ -67,6 +67,29 @@ Stack overflow
         Compiler - locals, upvalues
         VM - stack, callframes
 
+Valgrind memcheck errors:
+    Only in interpreter_using_modules.cbr
+        4,380 bytes in 2 blocks definitely lost
+        640 in 1 block still reachable
+
+        must be in the parser.  Need to clear the source files
+        main source file is cleared at end of 'run_script' in main, BUT
+        any loaded source file pointers are lost in parser.c.  Need to pass
+        open files back to main to free
+
+        run_source() takes in a a script and runs it, BUT
+        if 'import' is called in the source, then a NEW source
+        file is opened in the parser (which is then lost) - this needs 
+        a cleaner interface.  
+    
+        Is there a way to unify ALL opening of source files so that
+        imports and script lines (either as an argument or a line in the repl)
+        are done in the same place?
+
+Try using Visual Studio Debugger to debug problems in future
+    this will be good practice since the project is getting too big
+    to use printf() to debug everywhere
+
 Implementation:
 
     Run with current version in valgrind to check for memory problems

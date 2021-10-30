@@ -1268,7 +1268,7 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
         memcpy(path, script_path->chars, dir_len);
         memcpy(path + dir_len, import_name.start, import_name.length);
         memcpy(path + dir_len + import_name.length, ".cbr\0", 5);
-        const char* module_source;
+        const char* module_source; //TODO: this guy(s) needs to be freed after script/repl is done running
         if (read_file(path, &module_source) == RESULT_FAILED) {
             printf("[Cebra Error] Module not found.\n");
             result = RESULT_FAILED;
@@ -1314,6 +1314,7 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
 
 
     free_table(&copy);
+    free_parser();
     return result;
 }
 
