@@ -225,18 +225,25 @@ span.code {
     width: 1080px;
     padding-left: 0px;
     padding-right: 0px;
-    margin-bottom: 40px;
+    margin-bottom: 0px;
     background-color: #ffe;
     border: 2px solid #aaa;
 }
 
 .container {
-    width: 960px;
+    width: 1080px;
     padding-left: 0px;
     padding-right: 0px;
-    padding-top: 60px;
+    padding-top: 80px;
+}
+
+.section {
     padding-bottom: 40px;
-    margin: 0 auto;
+}
+
+.bottom-border {
+    margin-top: 80px;
+    border-bottom: 2px solid lightgray;
 }
 
 .container-centered {

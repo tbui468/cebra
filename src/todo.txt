@@ -4,6 +4,11 @@ Syntax highlighter:
     nothing at this time
 
 Documentation:
+    
+    Wrap sections in "section" class so that spaces between sections works
+
+    Add bottom-border section at end of each container so that separation line shows up
+   
     Fill in main page content sections and format them:
         contribute on github
         three pillars
@@ -63,6 +68,44 @@ Stack overflow
         VM - stack, callframes
 
 Implementation:
+
+    Run with current version in valgrind to check for memory problems
+
+    Should tag a version for release before working on List manipulation update
+
+    list := List<int>()
+    could make a bunch of functions to add values and make list.size read only
+
+        '++' operator works on two lists, or one element and one list
+        '=++'
+
+        OP_APPEND (look for pattern <id> = <id> ++ element where ids are the same) - this is a common pattern
+        OP_CONCAT (take the bigger capacity * 2 to find new capacity.  If one is an element, just add it to correct place in array)
+
+        list = list ++ element //append - can avoid making a new array IF this pattern is matched
+        list = element ++ list //prepend
+
+        //could also create one list of proper size before recursive call and fill in with dummy values
+        //to avoid making a bunch of lists (the snippet below would create two lists, but we could make it only 1)
+        list = list[0:5] ++ element ++ list[5:list.len] //insert at index 4
+        list = list[0:4] ++ list[4:9] //concat lists
+
+        list = list[0:4] ++ list[5:9] //delete at index 4
+
+        list[idx]  //get element
+        list[idx] = element //set element
+        list.length //get length
+
+
+
+        maximum(list) -> ([type])
+        minimum(list) -> ([type])
+        reverse(list) -> ()
+        filter(list, condition) -> (List<type>)
+        any(list, condition) -> (bool)
+        all(list, condition) -> (bool)
+        map(list, fun) -> ()
+        sort(list, cond) -> ()
 
     Clean up parser and unify error messages in parser, compiler, vm
         PARSE_TYPE macro can just be a PARSE macro with the parse_type function ptr as the first argument

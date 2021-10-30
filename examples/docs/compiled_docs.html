@@ -29,110 +29,129 @@
         </section>
         <section class="main">
 
-        <div id="about" class="container">
-            <div class="row">
-                <section class="col-3-4">
-                </section>
-                <section class="col-1-4">
+            <div id="about" class="container">
+                <section class="section">
+                    <div class="row">
+                        <section class="col-3-4">
+                        </section>
+                        <section class="col-1-4">
+                        </section>
+                    </div>
                 </section>
             </div>
-        </div>
 <div id="about" class="container">
-    <div class="row">
-        <section class="col-3-4">
-            <h2>About</h2>
-            <p>
-            Cebra is a strongly typed scripting language. Kind of like Python, but with non-optional strong/static/inferred typing.  
-            Cebra was used to compile the html in this documentation.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
+    <h2>About</h2>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <p>
+                Cebra is a strongly typed scripting language. Kind of like Python, but with non-optional strong/static/inferred typing.  
+                Cebra was used to compile the html and generate syntax highlights for the code snippets in this documentation.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="getting-started" class="container">
     <h2>Getting Started</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Building From Source</h3>
-            <p>The source code is available on Github at https://github.com/tbui468/cebra.  I'm not distributing executables at the time, so you'll
-            have to build it for your machine. 
-            You'll need a c compiler (such as gcc or clang), a build tool (make, ninja, etc), and a build system generator (we'll use CMake).</br></br>
+    <section class="section">
+        <h3>Building From Source</h3>
+        <div class="row">
+            <section class="col-3-4">
+                <p>The source code is available on Github at https://github.com/tbui468/cebra.  I'm not distributing executables at the time, so you'll
+                have to build it for your machine. 
+                You'll need a c compiler (such as gcc or clang), a build tool (make, ninja, etc), and a build system generator (we'll use CMake).</br></br>
 
-            If you're on any Linux distribution, I'll assume you already know what to do. </br></br>
+                If you're on any Linux distribution, I'll assume you already know what to do. </br></br>
 
-            On Windows, installing Visual Studio will include a compiler and build tool.  Then community edition is free to use.  
-            Then install CMake and be sure to include it in the command line path.</br></br>
+                On Windows, installing Visual Studio will include a compiler and build tool.  Then community edition is free to use.  
+                Then install CMake and be sure to include it in the command line path.</br></br>
 
-            On MacOS, CMake (and the compiler + build tool) can easily be installed using Homebrew.  For more detailed instructions, 
-            follow steps 1 and 2 here https://cse.engineering.nyu.edu/cs653/OpenGLCompilationMacLinux8.pdf to get CMake.
-            Homebrew should also recognize any missing dependencies required for CMake (c compiler and build tool) and tell 
-            you what you need to install.</br></br>
-            </p>
-            <p> The following commands will use the default configurations, build tool and compiler.  Consult the CMake docs for more build options.
-            Once built, the executable should be in cebra/build/src/Debug if using Windows and cebra/build/src on Linux/MacOS (probably).</p>
-        </section>
-        <section class="col-1-4 aside">
-            <p>
-                GCC is a C and C++ compiler, which can be called by Make.  Make is a build tool that helps the user configure compiling, 
-                linking and other configuration options when using a compiler.  And CMake is a build generator that can create 
-                configuration files for build tools like Make, so that it can call the compiler to create executables.  Yeah, I was confused at first too.
-            </p>
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                On MacOS, CMake (and the compiler + build tool) can easily be installed using Homebrew.  For more detailed instructions, 
+                follow steps 1 and 2 here https://cse.engineering.nyu.edu/cs653/OpenGLCompilationMacLinux8.pdf to get CMake.
+                Homebrew should also recognize any missing dependencies required for CMake (c compiler and build tool) and tell 
+                you what you need to install.</br></br>
+                </p>
+                <p> The following commands will use the default configurations, build tool and compiler.  Consult the CMake docs for more build options.
+                Once built, the executable should be in cebra/build/src/Debug if using Windows and cebra/build/src on Linux/MacOS (probably).</p>
+            </section>
+            <section class="col-1-4 aside">
+                <p>
+                    GCC is a C and C++ compiler, which can be called by Make.  Make is a build tool that helps the user configure compiling, 
+                    linking and other configuration options when using a compiler.  And CMake is a build generator that can create 
+                    configuration files for build tools like Make, so that it can call the compiler to create executables.  Yeah, I was confused at first too.
+                </p>
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     git clone https://github.com/tbui468/cebra
     cd cebra
     mkdir build
     cd build
     cmake ..
     cmake --build .
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
         <h3>Syntax Highlighter</h3>
-        <p>An VSCode extension that provides basic highlighting is avaiable for Cebra.  Search for 'Cebra' in the VSCode extension marketplace.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Running .cbr Files</h3>
-            <p>A script can be interpreted if used as the first argument. There is an example program writte in cebra called
-            'interpreter.cbr' in the 'examples' directory.  For example, if the executable is name 'Cebra' and is in cebra/build/src, then the
-            following will run the executable with the script in the examples directory.  The ./ in front of the executable 
-            can be omitted on Windows.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-    <code>
-    ./Cebra ../../examples/interpreter.cbr
-    </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>REPL</h3>
-            <p>Running the 'cebra' command without a script argument will open the repl.  Here's a sample Hello world and variable declarations.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
+        <div class="row">
+            <section class="col-3-4">
+            <p>An VSCode extension that provides basic highlighting is avaiable for Cebra.  Search for 'Cebra' in the VSCode extension marketplace.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <h3>Running .cbr Files</h3>
+        <div class="row">
+            <section class="col-3-4">
+                <p>A script can be interpreted if used as the first argument. There is an example program writte in cebra called
+                'interpreter.cbr' in the 'examples' directory.  For example, if the executable is name 'Cebra' and is in cebra/build/src, then the
+                following will run the executable with the script in the examples directory.  The ./ in front of the executable 
+                can be omitted on Windows.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
         <code>
+        ./Cebra ../../examples/interpreter.cbr
+        </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <h3>REPL</h3>
+        <div class="row">
+            <section class="col-3-4">
+                <p>Running the 'cebra' command without a script argument will open the repl.  Here's a sample Hello world and variable declarations.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+            <code>
     ./Cebra
 
     >>> print("Hello world&#92;n")
@@ -145,19 +164,21 @@
         </pre>
         <section class="col-1-4">
         </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Code Example</h3>
-            <p>Here's some example code to get you started on the syntax.  See 'interpreter.cbr' in the examples directory
-            for a more extensive example.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+        </div>
+    </section>
+    <section class="section">
+        <h3>Code Example</h3>
+        <div class="row">
+            <section class="col-3-4">
+                <p>Here's some example code to get you started on the syntax.  See 'interpreter.cbr' in the examples directory
+                for a more extensive example.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     //Define a function to compute the nth number in the fibonacci sequence
     fib :: (n: int) -> (int) {
         if n < 2 {
@@ -173,60 +194,78 @@
     print(a) //60
     b := 2.2  //declare a new variable and infer the type based on the assignment
     print(b) //2.20000
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="underneath-the-hood" class="container">
     <h2>The Parser, Compiler and VM</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <p>
-                Three main components make up Cebra - the parser, compiler and virtual machine.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>The Parser</h3>
-            <p>
-                The tokenized source code is parsed using vanilla recursive descent - see the source code for
-                implementation details.  One point of note is that the abstract syntax tree (AST) nodes are reordered
-                before being passed to the compiler.</br></br>
-                Enumerations, structs and statically defined functions are all reordered so that they are compiled
-                first.  Any circular dependencies are also resolved at this time.  The reordering of the AST nodes
-                was done in order to remove the need for header files or foward declarations that plague C and C++.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>The Compiler</h3>
-            <p>
-                The compiler has two main responsibilities: compiling the AST nodes into Cebra bytecode for the 
-                virtual machine, and to perform static type-checking.  
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>The Virtual Machine</h3>
-            <p>
-                Cebra uses a stack-based virtual machine during runtime, and has a tracing gargabe collector for automatic
-                memory management.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <p>
+                    Three main components make up Cebra - the parser, compiler and virtual machine.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>The Parser</h3>
+                <p>
+                    The tokenized source code is parsed using vanilla recursive descent - see the source code for
+                    implementation details.  One point of note is that the abstract syntax tree (AST) nodes are reordered
+                    before being passed to the compiler.<br><br>
+                    Enumerations, structs and statically defined functions are all reordered so that they are compiled
+                    first.  Any circular dependencies are also resolved at this time.  The reordering of the AST nodes
+                    was done in order to remove the need for header files or foward declarations that plague C and C++.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>The Compiler</h3>
+                <p>
+                    The compiler has two main responsibilities: compiling the AST nodes into Cebra bytecode for the 
+                    virtual machine, and to perform static type-checking.  
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>The Virtual Machine</h3>
+                <p>
+                    Cebra uses a stack-based virtual machine during runtime, and has a tracing gargabe collector for automatic
+                    memory management.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="built-in-types" class="container">
     <h2>Primitive Types</h2>
@@ -1042,6 +1081,7 @@
         <section class="col-1-4">
         </section>
     </div>
+
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
@@ -1054,6 +1094,7 @@
         <section class="col-1-4">
         </section>
     </div>
+
     <div class="row">
         <section class="col-3-4">
             <h3>append(f: File, s: string) &rarr; ()</h3>
@@ -1065,6 +1106,7 @@
         <section class="col-1-4">
         </section>
     </div>
+
     <div class="row">
         <pre class="code-box col-3-4">
             <code>
@@ -1078,6 +1120,37 @@
         <section class="col-1-4">
         </section>
     </div>
+
+    <div class="row">
+        <section class="col-3-4">
+            <h3>is_digit(s: string) &rarr; (bool)</h3>
+            <p>
+                Returns true if all characters in a string are digits, and false otherwise.
+            </p>
+        </section>
+        <section class="col-1-4">
+        </section>
+    </div>
+
+    <div class="row">
+        <pre class="code-box col-3-4">
+            <code>
+    num := "232"
+    mixed := "dog23"
+
+    if is_digit(num) {
+        print("This will print")
+    }
+
+    if is_digit(mixed) {
+        print("This will NOT print")
+    }    
+            </code>
+        </pre>
+        <section class="col-1-4">
+        </section>
+    </div>
+
 </div>
 
 <div id="extending-cebra" class="container">
