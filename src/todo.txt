@@ -4,28 +4,9 @@ Syntax highlighter:
     nothing at this time
 
 Documentation:
-    
-    Wrap sections in "section" class so that spaces between sections works
-
-    Add bottom-border section at end of each container so that separation line shows up
-   
-    Fill in main page content sections and format them:
-        contribute on github
-        three pillars
-        Cebra in use (used to generate syntax highlighting in docs)
-
-        will need to add more header types
-
-    Change main page gif to simple image (or shorter gif) so that the load
-        times are improved.  Consider making it use solarized light theme too.
 
     Fill in 'underneath the hood' section 
         base it on Lua paper - include instructions of vm
-
-    Add is_digit() and is_alpha() to docs
-
-    Footer (copyright is for the website)
-        c. 2021 Thomas Bui
            
     For syntax highlighter, 'end' should always be one position past where we want to highlight -
         currently it's the last index to highlight, BUT this doesn't work with 'when' statments
@@ -47,10 +28,6 @@ Documentation:
     Include language specification, eg:
         VarDecl     = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
         VarSpec     = IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList ) 
-
-    Clean up colors to make it more simple and clean.
-
-    Update sections titles to match current status
 
     Update section on how to download/build from source and VSCode syntax highlighter
 
