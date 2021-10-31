@@ -1244,9 +1244,29 @@ ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes, stru
     return result;
 }
 
+ResultCode resolve_types_and_sort_nodes(struct NodeList* dynamic_nodes, struct NodeList* static_nodes, 
+                                        struct Table* globals, struct Node* all_nodes, struct NodeList* final_ast) {
+    ResultCode result = RESULT_SUCCESS;
+
+    if (result != RESULT_FAILED) result = resolve_global_struct_identifiers(globals);
+    if (result != RESULT_FAILED) result = check_global_circular_inheritance(globals);
+    if (result != RESULT_FAILED) result = copy_global_inherited_props(globals);
+    if (result != RESULT_FAILED) result = resolve_global_function_identifiers(globals);
+    if (result != RESULT_FAILED) result = resolve_remaining_identifiers(globals, all_nodes);
+
+    if (result != RESULT_FAILED) result = order_nodes_by_enums_structs_functions(static_nodes, final_ast);
+
+    for (int i = 0; i < dynamic_nodes->count; i++) {
+        add_node(final_ast, dynamic_nodes->nodes[i]);
+    }
+
+    return result;
+}
+
 //this is in main.c
 ResultCode read_file(const char* path, const char** source);
 
+//TODO: all_nodes could just be a pointer to a Node (struct Node*), and not a pointer to a pointer
 ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* globals, struct Node** all_nodes, struct ObjString* script_path) {
     //copy globals table so it can be reset if error occurs in repl
     struct Table copy;
@@ -1257,6 +1277,16 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
 
     struct NodeList* script_nl = (struct NodeList*)make_node_list();
     ResultCode result = parse_module(source, script_nl, globals);
+
+
+    ///TODO: could handle errors and return all intermediate results here
+    //  and return script_nl (runtime code), parser.statics_nl, globals (already returned), and 
+    //  import list (Tokens).  
+    //
+    //  BUT we also want to run the imports in the order they're call in.  This means that imports
+    //      are recursive by nature...we need a way to pass the char* for the source files up
+    //      the recursive calls to the top function - would need to pass a pointer to a pointer down
+    //      ALL the parse calls (and pass a reference to a script count)
 
     //get path of script
     char* last_slash = strrchr(script_path->chars, DIR_SEPARATOR);
@@ -1279,19 +1309,9 @@ ResultCode parse(const char* source, struct NodeList** final_ast, struct Table* 
         free(path);
     }
 
-    if (result != RESULT_FAILED) result = resolve_global_struct_identifiers(parser.globals);
-    if (result != RESULT_FAILED) result = check_global_circular_inheritance(parser.globals);
-    if (result != RESULT_FAILED) result = copy_global_inherited_props(parser.globals);
-    if (result != RESULT_FAILED) result = resolve_global_function_identifiers(parser.globals);
-    if (result != RESULT_FAILED) result = resolve_remaining_identifiers(parser.globals, *all_nodes);
-
+    //TODO: move this up into run_source() in main
     struct NodeList* ordered_nl = (struct NodeList*)make_node_list();
-    if (result != RESULT_FAILED) result = order_nodes_by_enums_structs_functions(parser.statics_nl, ordered_nl);
-
-    for (int i = 0; i < script_nl->count; i++) {
-        add_node(ordered_nl, script_nl->nodes[i]);
-    }
-
+    if (result != RESULT_FAILED) result = resolve_types_and_sort_nodes(script_nl, parser.statics_nl, parser.globals, *all_nodes, ordered_nl);
     *final_ast = ordered_nl;
 
     if (parser.error_count > 0) {

@@ -53,6 +53,7 @@
             </section>
         </div>
     </section>
+    <!-- bottom border separating sections -->
     <section class="section">
         <div class="row">
             <section class="col-3-4 bottom-border">
@@ -201,6 +202,7 @@
         </div>
     </section>
 
+    <!-- bottom border separating sections -->
     <section class="section">
         <div class="row">
             <section class="col-3-4 bottom-border">
@@ -266,23 +268,34 @@
             </section>
         </div>
     </section>
+
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="built-in-types" class="container">
     <h2>Primitive Types</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Integers</h3>
-            <p>
-                Variable types must be explicitly declared, or inferred from the assignment.
-                Declarations and assignments can done in sequence on one line, separated by commas.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Integers</h3>
+                <p>
+                    Variable types must be explicitly declared, or inferred from the assignment.
+                    Declarations and assignments can done in sequence on one line, separated by commas.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    a: <span class="type">int</span> = <span class="constant">1</span></span>
 <span class="code">    a = <span class="constant">2</span></span>
 <span class="code">    b: <span class="type">int</span>, c: <span class="type">int</span> = <span class="constant">2</span>, <span class="constant">4</span></span>
@@ -291,93 +304,110 @@
 <span class="code">    e, f := <span class="constant">2</span>, <span class="constant">4</span></span>
 <span class="code">    h := g % <span class="constant">2</span></span>
 <span class="code">    x, y := compute_xy_coords()</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Floats</h3>
-            <p>
-                Floats in Cebra are represented in a double-precision floating-point format.  Including a decimal point
-                anywhere in a number will make it a Float.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Floats</h3>
+                <p>
+                    Floats in Cebra are represented in a double-precision floating-point format.  Including a decimal point
+                    anywhere in a number will make it a Float.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    a: <span class="type">float</span> = <span class="constant">1.12</span></span>
 <span class="code">    b := <span class="constant">23.232</span></span>
 <span class="code">    g := a + b</span>
 <span class="code">    k := a - b</span>
 <span class="code">    i, j := a * b, a / b</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Booleans</h3>
-            <p>
-                The unary operator ! can be used to negate booleans.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Booleans</h3>
+                <p>
+                    The unary operator ! can be used to negate booleans.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    a: <span class="type">bool</span> = <span class="constant">true</span></span>
 <span class="code">    b := <span class="constant">false</span></span>
 <span class="code">    c := !b</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Strings</h3>
-            <p>
-                Strings can be concatenated using the + operator.  There is no character data type.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Strings</h3>
+                <p>
+                    Strings can be concatenated using the + operator.  There is no character data type.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    a: <span class="type">string</span> = <span class="string">"Hello"</span></span>
 <span class="code">    b := <span class="string">"World"</span></span>
 <span class="code">    c := a + b</span>
 <span class="code">    c = c + c</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="control-flow" class="container">
     <h2>Control Flow</h2>
-    <div class="row">
-        <section class="col-3-4">
-        <h3>If / Else</h3>
-            <p>All control flow statement bodies with more than one statement must be surrounding by {}.  {} are optional for 
-            single statement bodies.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+            <h3>If / Else</h3>
+                <p>All control flow statement bodies with more than one statement must be surrounding by {}.  {} are optional for 
+                single statement bodies.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    a: <span class="type">bool</span> = <span class="constant">true</span></span>
 <span class="code">    <span class="keyword">if</span> a {</span>
 <span class="code">        <span class="keyword">print</span>(<span class="string">"This will print."</span>)</span>
@@ -389,23 +419,25 @@
 <span class="code">        <span class="keyword">print</span>(<span class="string">"This will not print"</span>)</span>
 <span class="code">    <span class="keyword">else</span> </span>
 <span class="code">        <span class="keyword">print</span>(<span class="string">"This will print"</span>)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div> 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>For Loops</h3>
-            <p>For loops take three parameters: initializer, condition and update.  The initializer and update statements can be omitted by using '_'.
-            The 'break' keyword is not implemented, so be careful with infinite loops.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div> 
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>For Loops</h3>
+                <p>For loops take three parameters: initializer, condition and update.  The initializer and update statements can be omitted by using '_'.
+                The 'break' keyword is not implemented, so be careful with infinite loops.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="keyword">for</span> i: <span class="type">int</span> = <span class="constant">0</span>, i < <span class="constant">3</span>, i = i + <span class="constant">1</span> </span>
 <span class="code">        <span class="keyword">print</span>(i)</span>
 <span class="code"></span>
@@ -415,21 +447,23 @@
 <span class="code">        <span class="keyword">print</span>(i)</span>
 <span class="code">        j = j - <span class="constant">2</span></span>
 <span class="code">    }</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div> 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>While Loops</h3>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">        <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div> 
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>While Loops</h3>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">            <code></span>
 <span class="code">    i: <span class="type">int</span> = <span class="constant">0</span></span>
 <span class="code">    <span class="keyword">while</span> i <= <span class="constant">5</span> {</span>
 <span class="code">        <span class="keyword">if</span> i % <span class="constant">2</span> == <span class="constant">1</span> {</span>
@@ -442,25 +476,27 @@
 <span class="code">    <span class="comment">//1</span></span>
 <span class="code">    <span class="comment">//3</span></span>
 <span class="code">    <span class="comment">//5</span></span>
-        </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div> 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>When / Is</h3>
-            <p>
-            When / Is statements are similar to switch statements in C.  When a single 'is' statement is run,
-            the remaining will be skipped over.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">        <code></span>
+            </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div> 
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>When / Is</h3>
+                <p>
+                When / Is statements are similar to switch statements in C.  When a single 'is' statement is run,
+                the remaining will be skipped over.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">            <code></span>
 <span class="code">    i: <span class="type">int</span> = <span class="constant">1</span></span>
 <span class="code"></span>
 <span class="code">    <span class="keyword">when</span> i {</span>
@@ -472,24 +508,26 @@
 <span class="code">    }</span>
 <span class="code"></span>
 <span class="code">    <span class="comment">//Will print "one"</span></span>
-        </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div> 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Foreach / In</h3>
-            <p>
-                The foreach loop iterates through every element in a given List.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+            </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div> 
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Foreach / In</h3>
+                <p>
+                    The foreach loop iterates through every element in a given List.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    my_list: <span class="type">List</span><<span class="type">string</span>> = <span class="type">List</span><<span class="type">string</span>>()</span>
 <span class="code">    my_list[<span class="constant">0</span>] = <span class="string">"first"</span></span>
 <span class="code">    my_list[<span class="constant">1</span>] = <span class="string">"second"</span></span>
@@ -502,29 +540,40 @@
 <span class="code">    <span class="comment">//first</span></span>
 <span class="code">    <span class="comment">//second</span></span>
 <span class="code">    <span class="comment">//third</span></span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="functions" class="container">
     <h2>Functions</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Declarations</h3>
-            <p>The following snippet declares a function called 'double'.  'double' has one integer paramter 'n'.
-            The return type is also an integer.  The function body returns 2 multiplied by n. <br><br>
-            Function 'print_double' has the same parameter, but does not return a value (indicated by leaving
-            the return type blank).  The return arrow inside the body of a function with no return is optional.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">        <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Declarations</h3>
+                <p>The following snippet declares a function called 'double'.  'double' has one integer paramter 'n'.
+                The return type is also an integer.  The function body returns 2 multiplied by n. <br><br>
+                Function 'print_double' has the same parameter, but does not return a value (indicated by leaving
+                the return type blank).  The return arrow inside the body of a function with no return is optional.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">            <code></span>
 <span class="code">    <span class="comment">//takes one integer as a parameters, and returns an integer</span></span>
 <span class="code">    double :: (n: <span class="type">int</span>) -> (<span class="type">int</span>) {</span>
 <span class="code">        -> <span class="constant">2</span> * n</span>
@@ -544,25 +593,27 @@
 <span class="code"></span>
 <span class="code">        <span class="keyword">print</span>(n * m)</span>
 <span class="code">    }</span>
-        </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Calls</h3>
-            <p>
-            Functions are called using the keyword followed by any arguments surrounded by parenthesese.  Functions
-            can return more than one value.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+            </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Calls</h3>
+                <p>
+                Functions are called using the keyword followed by any arguments surrounded by parenthesese.  Functions
+                can return more than one value.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    greeting :: (name: <span class="type">string</span>) -> (<span class="type">string</span>) {</span>
 <span class="code">        -> <span class="string">"Hello, "</span> + name + <span class="string">"."</span></span>
 <span class="code">    }</span>
@@ -577,53 +628,66 @@
 <span class="code">    x, y := returns_two()</span>
 <span class="code">    <span class="keyword">print</span>(x) <span class="comment">//1</span></span>
 <span class="code">    <span class="keyword">print</span>(y) <span class="comment">//5</span></span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Anonymous Functions</h3>
-            <p>
-            Functions can be declared and immediately passed in as parameters.  The function 'sum'
-            takes in an anonymous function as a third parameter and applies it to the first two parameters.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
-<span class="code">    op :: (a: <span class="type">int</span>, b: <span class="type">int</span>, fun: (<span class="type">int</span>, <span class="type">int</span>) -> (<span class="type">int</span>)) -> (<span class="type">int</span>) {</span>
-<span class="code">        -> fun(a, b)   </span>
-<span class="code">    }    </span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Anonymous Functions</h3>
+                <p>
+                Functions can be declared and immediately passed in as parameters.  The function 'sum'
+                takes in an anonymous function as a third parameter and applies it to the first two parameters.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
+<span class="code">        op :: (a: <span class="type">int</span>, b: <span class="type">int</span>, fun: (<span class="type">int</span>, <span class="type">int</span>) -> (<span class="type">int</span>)) -> (<span class="type">int</span>) {</span>
+<span class="code">            -> fun(a, b)   </span>
+<span class="code">        }    </span>
 <span class="code"></span>
-<span class="code">    result := op(<span class="constant">1</span>, <span class="constant">2</span>, (a: <span class="type">int</span>, b: <span class="type">int</span>) -> (<span class="type">int</span>) { -> a + b })</span>
-<span class="code">    <span class="keyword">print</span>(result) <span class="comment">//3</span></span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+<span class="code">        result := op(<span class="constant">1</span>, <span class="constant">2</span>, (a: <span class="type">int</span>, b: <span class="type">int</span>) -> (<span class="type">int</span>) { -> a + b })</span>
+<span class="code">        <span class="keyword">print</span>(result) <span class="comment">//3</span></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="structs" class="container">
     <h2>Structs</h2>
-    <div class="row">
-        <section class="col-3-4">
-        <h3>Declaration</h3>
-        </p>To declare a new struct, follow the name with double colons and 
-        then the body.  All fields must be set to a default value except for
-        fields using a custom struct type - those can be set to 'nil' and assigned
-        later.  Function pointers can also be set to 'nil'.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+            <h3>Declaration</h3>
+            </p>To declare a new struct, follow the name with double colons and 
+            then the body.  All fields must be set to a default value except for
+            fields using a custom struct type - those can be set to 'nil' and assigned
+            later.  Function pointers can also be set to 'nil'.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    Person :: <span class="keyword">struct</span> {</span>
 <span class="code">        name: <span class="type">string</span>        = <span class="string">"John"</span></span>
 <span class="code">        age: <span class="type">int</span>            = <span class="constant">35</span></span>
@@ -633,47 +697,51 @@
 <span class="code">        best_friend: Person = <span class="constant">nil</span></span>
 <span class="code">        talk: () -> (<span class="type">string</span>) = <span class="constant">nil</span></span>
 <span class="code">    }</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Instantiating and Assignment</h3>
-            <p>
-                A new struct of a given type can be instantiated using '()', similar to calling
-                a function.  
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Instantiating and Assignment</h3>
+                <p>
+                    A new struct of a given type can be instantiated using '()', similar to calling
+                    a function.  
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    Dog :: <span class="keyword">struct</span> {</span>
 <span class="code">        name: <span class="type">string</span> = <span class="string">"Mittens"</span></span>
 <span class="code">        age: <span class="type">int</span> = <span class="constant">3</span></span>
 <span class="code">    }</span>
 <span class="code"></span>
 <span class="code">    d: Dog = Dog()</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Accessing and Setting Fields</h3>
-            <p>Properties on structs can be accessed and set using dot notation.</p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Accessing and Setting Fields</h3>
+                <p>Properties on structs can be accessed and set using dot notation.</p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    Car :: <span class="keyword">struct</span> {</span>
 <span class="code">        color: <span class="type">string</span> = <span class="string">"red"</span></span>
 <span class="code">        age: <span class="type">int</span> = <span class="constant">20</span></span>
@@ -691,25 +759,27 @@
 <span class="code"></span>
 <span class="code">    my_car.color = <span class="string">"green"</span></span>
 <span class="code">    my_car.description(my_car) <span class="comment">//This 20 year-old car is green</span></span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Inheritance</h3>
-            <p>
-            Single inheritance is supported.  Base structs fields can be
-            overwritten by the derived struct.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Inheritance</h3>
+                <p>
+                Single inheritance is supported.  Base structs fields can be
+                overwritten by the derived struct.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    Animal :: <span class="keyword">struct</span> {</span>
 <span class="code">        classification: <span class="type">string</span> = <span class="string">"mammalia"</span> </span>
 <span class="code">    }</span>
@@ -726,25 +796,36 @@
 <span class="code"></span>
 <span class="code">    <span class="keyword">print</span>(my_deer.classification) <span class="comment">//"mammalia"</span></span>
 <span class="code">    <span class="keyword">print</span>(my_shark.classification) <span class="comment">//"chondrichthyes"</span></span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 
 <div id="enums" class="container">
     <h2>Enumerations</h2>
-    <div class="row">
-        <section class="col-3-4">
-            Enumerations can be created using the following syntax.  Assignment is done using dot notation.
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                Enumerations can be created using the following syntax.  Assignment is done using dot notation.
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    Token :: <span class="keyword">enum</span> {</span>
 <span class="code">        plus</span>
 <span class="code">        minus</span>
@@ -754,30 +835,41 @@
 <span class="code"></span>
 <span class="code">    token_1: Token = Token.plus</span>
 <span class="code">    token_2 := Token.star</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="lists-maps" class="container">
     <h2>Lists and Maps</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>List</h3>
-            <p>
-            Lists can contain data of the same type.  The type must be specified in < > when
-            creating the list. [] notation can be used to access and set the elements in a List.
-            Lists also have the 'size' property which can be used to 
-            Like struct instances and Maps, Lists are passed by reference.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>List</h3>
+                <p>
+                Lists can contain data of the same type.  The type must be specified in < > when
+                creating the list. [] notation can be used to access and set the elements in a List.
+                Lists also have the 'size' property which can be used to 
+                Like struct instances and Maps, Lists are passed by reference.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    my_list: <span class="type">List</span><<span class="type">int</span>> = <span class="type">List</span><<span class="type">int</span>>()</span>
 <span class="code"></span>
 <span class="code">    <span class="keyword">print</span>(my_list.size) <span class="comment">//0</span></span>
@@ -793,25 +885,27 @@
 <span class="code">    <span class="comment">//2</span></span>
 <span class="code">    <span class="comment">//11</span></span>
 <span class="code">    <span class="comment">//-9</span></span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Map</h3>
-            <p>
-            Each entry in a Map is a key-value pair.  The key is a string type
-            and the value type is specified at creation of the Map using < >.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    <section class="section">
+    </section>
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Map</h3>
+                <p>
+                Each entry in a Map is a key-value pair.  The key is a string type
+                and the value type is specified at creation of the Map using < >.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    my_map: <span class="type">Map</span><<span class="type">float</span>> = <span class="type">Map</span><<span class="type">float</span>>()</span>
 <span class="code"></span>
 <span class="code">    <span class="keyword">print</span>(my_map.size) <span class="comment">//0</span></span>
@@ -826,238 +920,287 @@
 <span class="code">    <span class="comment">//dog 32.2</span></span>
 <span class="code">    <span class="comment">//cat -2.6</span></span>
 <span class="code">    <span class="comment">//Note: order of key/value pairs may vary</span></span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="modules" class="container">
     <h2>Modules</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <p>
-            Modules can be imported into the current script using the 'import' keyword.  Cebra will look
-            for .cbr files in the same directory as the running script.  The following example imports a module
-            name vec.cbr and calls a function 'vec3'.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <p>
+                Modules can be imported into the current script using the 'import' keyword.  Cebra will look
+                for .cbr files in the same directory as the running script.  The following example imports a module
+                name vec.cbr and calls a function 'vec3'.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="keyword">import</span> vec <span class="comment">//do not include the .cbr extension</span></span>
 <span class="code"></span>
 <span class="code">    x, y, z := vec3() </span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="coroutines" class="container">
     <h2>Coroutines</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <p>
-                Coming soon.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <p>
+                    Coming soon.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 <div id="libraries" class="container">
     <h2>Standard Library</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>clock() &rarr; (float)</h3>
-            <p>
-            Returns the processor time consumed by the program in seconds.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>clock() &rarr; (float)</h3>
+                <p>
+                Returns the processor time consumed by the program in seconds.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="comment">//prints time elapsed during 'test_function' call</span></span>
 <span class="code">    start_time: <span class="type">float</span> = <span class="keyword">clock</span>()</span>
 <span class="code">    test_function()</span>
 <span class="code">    <span class="keyword">print</span>(<span class="keyword">clock</span>() - start_time)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>print(s: string) &rarr; ()</h3>
-            <p>
-                Print out string s to the screen and also appends a newline character.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>print(s: string) &rarr; ()</h3>
+                <p>
+                    Print out string s to the screen and also appends a newline character.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="keyword">print</span>(<span class="string">"Hello world"</span>)</span>
 <span class="code">    <span class="keyword">print</span>(<span class="string">"Hello"</span> + <span class="string">" world"</span>)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>input() &rarr; (string)</h3>
-            <p>
-                Reads input from the keyboard and returns it as a string.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>input() &rarr; (string)</h3>
+                <p>
+                    Reads input from the keyboard and returns it as a string.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="comment">//store keyboard input into string s, and then print it to the screen.</span></span>
 <span class="code">    s: <span class="type">string</span> = <span class="keyword">input</span>()</span>
 <span class="code">    <span class="keyword">print</span>(s)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>open(s: string) &rarr; (File)</h3>
-            <p>
-                Returns a File object for the given file path s.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>open(s: string) &rarr; (File)</h3>
+                <p>
+                    Returns a File object for the given file path s.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>close(f: File) &rarr; ()</h3>
-            <p>
-            Closes the File object f.  The Cebra garbage collector will eventually close f if it's no longer referenced in the script, but
-                    it's good practice to close any files when done with them rather than waiting for the garbage collector to do it.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>close(f: File) &rarr; ()</h3>
+                <p>
+                Closes the File object f.  The Cebra garbage collector will eventually close f if it's no longer referenced in the script, but
+                        it's good practice to close any files when done with them rather than waiting for the garbage collector to do it.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
 <span class="code">    <span class="keyword">close</span>(f)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>read_all(f: File) &rarr; (string)</h3>
-            <p>
-                Returns a string containing the contents of the entire file.  read_all(f) will automatically move the File read pointer back 
-                to the beginning of the file, so calling rewind(f) is not necessary.  After reading the entire contents, the File read pointer will be 
-                at the end of the file.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>read_all(f: File) &rarr; (string)</h3>
+                <p>
+                    Returns a string containing the contents of the entire file.  read_all(f) will automatically move the File read pointer back 
+                    to the beginning of the file, so calling rewind(f) is not necessary.  After reading the entire contents, the File read pointer will be 
+                    at the end of the file.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
 <span class="code">    <span class="keyword">print</span>(<span class="keyword">read_all</span>(f))</span>
 <span class="code">    <span class="keyword">close</span>(f)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>read_line(f: File) &rarr; (string)</h3>
-            <p>
-                Returns the next line in File f.  It will return an empty string if at the end of the file.  Use eof(f) to differentiate
-                between an end of file "" and simply an empty line in the file.  
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>read_line(f: File) &rarr; (string)</h3>
+                <p>
+                    Returns the next line in File f.  It will return an empty string if at the end of the file.  Use eof(f) to differentiate
+                    between an end of file "" and simply an empty line in the file.  
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
 <span class="code">    <span class="keyword">while</span> !<span class="keyword">eof</span>(f) {</span>
 <span class="code">        <span class="keyword">print</span>(<span class="keyword">read_line</span>(f))</span>
 <span class="code">    }</span>
 <span class="code">    <span class="keyword">close</span>(f)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>eof(f: File) &rarr; (bool)</h3>
-            <p>
-                Returns true if the at the end of file.  A read_line(f) call will return an empty string at this point.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>eof(f: File) &rarr; (bool)</h3>
+                <p>
+                    Returns true if the at the end of file.  A read_line(f) call will return an empty string at this point.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
 <span class="code">    <span class="keyword">while</span> !<span class="keyword">eof</span>(f) {</span>
 <span class="code">        <span class="keyword">print</span>(<span class="keyword">read_line</span>(f))</span>
 <span class="code">    }</span>
 <span class="code">    <span class="keyword">close</span>(f)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>rewind(f: File) &rarr; ()</h3>
-            <p>
-                Will return the File read pointer to the beginning of the file.  A call to read_line(f) will start back at the beginning of
-                the file.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>rewind(f: File) &rarr; ()</h3>
+                <p>
+                    Will return the File read pointer to the beginning of the file.  A call to read_line(f) will start back at the beginning of
+                    the file.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="comment">//prints the first line in the file 3 times</span></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
 <span class="code">    <span class="keyword">for</span> i := <span class="constant">1</span>, i < <span class="constant">3</span>, i = i + <span class="constant">1</span> {</span>
@@ -1065,76 +1208,79 @@
 <span class="code">        <span class="keyword">rewind</span>(f)</span>
 <span class="code">    }</span>
 <span class="code">    <span class="keyword">close</span>(f)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>clear(f: File) &rarr; ()</h3>
-            <p>
-                Clear the given file of any contents.  Any call to append(f) after calling clear(f) will add a new line to the beginning of
-                the file.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>clear(f: File) &rarr; ()</h3>
+                <p>
+                    Clear the given file of any contents.  Any call to append(f) after calling clear(f) will add a new line to the beginning of
+                    the file.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="comment">//clears the file of any contents</span></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
 <span class="code">    <span class="keyword">clear</span>(f)</span>
 <span class="code">    <span class="keyword">close</span>(f)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>append(f: File, s: string) &rarr; ()</h3>
+                <p>
+                    Append string s to the end of the file.  Note that if append(f, s) is called the read pointer will be
+                    moved to the end of the file - calling read_line(f) immedately aftewards will return an empty string, and eof(f) will return true.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>append(f: File, s: string) &rarr; ()</h3>
-            <p>
-                Append string s to the end of the file.  Note that if append(f, s) is called the read pointer will be
-                moved to the end of the file - calling read_line(f) immedately aftewards will return an empty string, and eof(f) will return true.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    <span class="comment">//clears the file of any contents, and appends a single line.</span></span>
 <span class="code">    f: <span class="type">File</span> = <span class="keyword">open</span>(<span class="string">"sample.txt"</span>)</span>
 <span class="code">    <span class="keyword">clear</span>(f)</span>
 <span class="code">    <span class="keyword">append</span>(f, <span class="string">"This is the first line"</span>)</span>
 <span class="code">    <span class="keyword">close</span>(f)</span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>is_digit(s: string) &rarr; (bool)</h3>
+                <p>
+                    Returns true if all characters in a string are digits, and false otherwise.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>is_digit(s: string) &rarr; (bool)</h3>
-            <p>
-                Returns true if all characters in a string are digits, and false otherwise.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-
-    <div class="row">
-        <pre class="code-box col-3-4">
-<span class="code">            <code></span>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
 <span class="code">    num := <span class="string">"232"</span></span>
 <span class="code">    mixed := <span class="string">"dog23"</span></span>
 <span class="code"></span>
@@ -1145,23 +1291,35 @@
 <span class="code">    <span class="keyword">if</span> is_digit(mixed) {</span>
 <span class="code">        <span class="keyword">print</span>(<span class="string">"This will NOT print"</span>)</span>
 <span class="code">    }    </span>
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 
 </div>
 
 <div id="extending-cebra" class="container">
     <h2>Extending Cebra with C or C++</h2>
-    <div class="row">
-        <section class="col-3-4">
-            Coming soon.<br><br><br><br><br>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                Coming soon.<br><br><br><br><br>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>
 
         </section>

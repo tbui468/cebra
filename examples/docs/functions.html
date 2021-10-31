@@ -1,20 +1,21 @@
 <div id="functions" class="container">
     <h2>Functions</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Declarations</h3>
-            <p>The following snippet declares a function called 'double'.  'double' has one integer paramter 'n'.
-            The return type is also an integer.  The function body returns 2 multiplied by n. <br><br>
-            Function 'print_double' has the same parameter, but does not return a value (indicated by leaving
-            the return type blank).  The return arrow inside the body of a function with no return is optional.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-        <code>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Declarations</h3>
+                <p>The following snippet declares a function called 'double'.  'double' has one integer paramter 'n'.
+                The return type is also an integer.  The function body returns 2 multiplied by n. <br><br>
+                Function 'print_double' has the same parameter, but does not return a value (indicated by leaving
+                the return type blank).  The return arrow inside the body of a function with no return is optional.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+            <code>
     //takes one integer as a parameters, and returns an integer
     double :: (n: int) -> (int) {
         -> 2 * n
@@ -34,25 +35,27 @@
 
         print(n * m)
     }
-        </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Calls</h3>
-            <p>
-            Functions are called using the keyword followed by any arguments surrounded by parenthesese.  Functions
-            can return more than one value.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+            </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Calls</h3>
+                <p>
+                Functions are called using the keyword followed by any arguments surrounded by parenthesese.  Functions
+                can return more than one value.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     greeting :: (name: string) -> (string) {
         -> "Hello, " + name + "."
     }
@@ -67,34 +70,46 @@
     x, y := returns_two()
     print(x) //1
     print(y) //5
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>Anonymous Functions</h3>
-            <p>
-            Functions can be declared and immediately passed in as parameters.  The function 'sum'
-            takes in an anonymous function as a third parameter and applies it to the first two parameters.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
-    op :: (a: int, b: int, fun: (int, int) -> (int)) -> (int) {
-        -> fun(a, b)   
-    }    
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>Anonymous Functions</h3>
+                <p>
+                Functions can be declared and immediately passed in as parameters.  The function 'sum'
+                takes in an anonymous function as a third parameter and applies it to the first two parameters.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
+        op :: (a: int, b: int, fun: (int, int) -> (int)) -> (int) {
+            -> fun(a, b)   
+        }    
 
-    result := op(1, 2, (a: int, b: int) -> (int) { -> a + b })
-    print(result) //3
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+        result := op(1, 2, (a: int, b: int) -> (int) { -> a + b })
+        print(result) //3
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 </div>

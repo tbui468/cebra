@@ -67,34 +67,48 @@ Stack overflow
         Compiler - locals, upvalues
         VM - stack, callframes
 
-Valgrind memcheck errors:
-    Only in interpreter_using_modules.cbr
-        4,380 bytes in 2 blocks definitely lost
-        640 in 1 block still reachable
-
-        must be in the parser.  Need to clear the source files
-        main source file is cleared at end of 'run_script' in main, BUT
-        any loaded source file pointers are lost in parser.c.  Need to pass
-        open files back to main to free
-
-        run_source() takes in a a script and runs it, BUT
-        if 'import' is called in the source, then a NEW source
-        file is opened in the parser (which is then lost) - this needs 
-        a cleaner interface.  
-    
-        Is there a way to unify ALL opening of source files so that
-        imports and script lines (either as an argument or a line in the repl)
-        are done in the same place?
-
 Try using Visual Studio Debugger to debug problems in future
     this will be good practice since the project is getting too big
     to use printf() to debug everywhere
 
 Implementation:
 
-    Run with current version in valgrind to check for memory problems
+    See parser.c for notes
+
+    Valgrind memcheck errors - source files for modules not being freed
+        Only in interpreter_using_modules.cbr
+            4,380 bytes in 2 blocks definitely lost
+            640 byte in 1 block still reachable
+
+            Problem is in the parser. Need to clear the import source files.
+            main source file is cleared at end of 'run_script' in main, BUT
+            any loaded source file pointers are lost in parser.c.  Need to pass
+            open files back to main to free
+
+            run_source() is called by run_script() and repl()
+            parse() is called by run_source()
+            parse() is calling read_file()
+            read_file() is allocating memory for the script, and then returning a pointer to it
+                this is not being freed bc read_file() is being called in a loop to 
+                parse the source 
+
+            Could parse script/line and have it return/set ALL intermeidate results (globals, dynamic nodes, 
+                static nodes, imports, etc).  Then parse the imports by reading in the source and add onto the intermediates.  
+                Finally perform the circular dependency/reordering for final AST for the compiler. 
+                This means we could have run_script() or repl() keep an array of script source codes to 
+                free after the interpreter is closed (either quiting the repl or the script finishing)
+
+                Essentially we have an extra step between parsing and compiling for
+                    processing compile-time values and taking care of any dependencies 
+                    for user defined types
+
+    Dynamically allocated 'import' array in parser.h/c to prevent stack from getting too large
 
     Should tag a version for release before working on List manipulation update
+
+    Why are primitive types lowercase?  It should be uppercase to conform with
+        the way types are defined anyway.
+        Bool, Float, Int, String, File, List<>, Map<>
 
     list := List<int>()
     could make a bunch of functions to add values and make list.size read only
@@ -119,8 +133,6 @@ Implementation:
         list[idx] = element //set element
         list.length //get length
 
-
-
         maximum(list) -> ([type])
         minimum(list) -> ([type])
         reverse(list) -> ()
@@ -141,18 +153,20 @@ Implementation:
             manually return if necessary.  Or at least call it RETURN_ERROR for clarity.  Should be able to add
             error without return too.
 
+    Function overloads for polymorphism - 
+        evaluate :: (expr: Expr) -> (float) //is there a way to make sure ALL structs that inherit from Expr have an evaluate function?
+        Expr :: struct {
+        }
+        Primary :: struct < Expr { //since Pimary inherits from Expr, it MUST have all fields
+        }
+        evaluate :: (expr: Primary) -> (float) {}
+        evaluate :: (expr: Binary) -> (float) {}
+
     Structs and Enums can be defined at compile-time - no need to have all the props filled in a runtime
-        AND the props at runtime should just be an array.  Compile time can compute the offset
+        AND the props at runtime should just be an array.  Compile time can compute the offset and pass it to the vm 
+        as an op code operand
 
     Currently not allow sequences for declaring struct fields - should allow it for consistency
-
-    Having List size auto-increment when setting a value is super confusing - should
-        not do it and force user to increment himself.
-
-        Or add an append(List, item) that automatically increments size.  Then we could
-        also make the list size read-only.
-
-    slicing arrays?  a[0:3][0:3] either return a new 2x2 matrix.  a[0:3][0:3] = b (will check if b is correct dimensions)
 
     Why does the script compiler keep a list of ALL AST nodes again?  It's passed into the parser since the parser
         resolves identifiers now, and I just wanted to resolve remaining identifiers in the same place.  

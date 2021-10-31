@@ -1,192 +1,209 @@
 <div id="libraries" class="container">
     <h2>Standard Library</h2>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>clock() &rarr; (float)</h3>
-            <p>
-            Returns the processor time consumed by the program in seconds.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>clock() &rarr; (float)</h3>
+                <p>
+                Returns the processor time consumed by the program in seconds.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     //prints time elapsed during 'test_function' call
     start_time: float = clock()
     test_function()
     print(clock() - start_time)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>print(s: string) &rarr; ()</h3>
-            <p>
-                Print out string s to the screen and also appends a newline character.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>print(s: string) &rarr; ()</h3>
+                <p>
+                    Print out string s to the screen and also appends a newline character.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     print("Hello world")
     print("Hello" + " world")
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>input() &rarr; (string)</h3>
-            <p>
-                Reads input from the keyboard and returns it as a string.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>input() &rarr; (string)</h3>
+                <p>
+                    Reads input from the keyboard and returns it as a string.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     //store keyboard input into string s, and then print it to the screen.
     s: string = input()
     print(s)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>open(s: string) &rarr; (File)</h3>
-            <p>
-                Returns a File object for the given file path s.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>open(s: string) &rarr; (File)</h3>
+                <p>
+                    Returns a File object for the given file path s.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     f: File = open("sample.txt")
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>close(f: File) &rarr; ()</h3>
-            <p>
-            Closes the File object f.  The Cebra garbage collector will eventually close f if it's no longer referenced in the script, but
-                    it's good practice to close any files when done with them rather than waiting for the garbage collector to do it.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>close(f: File) &rarr; ()</h3>
+                <p>
+                Closes the File object f.  The Cebra garbage collector will eventually close f if it's no longer referenced in the script, but
+                        it's good practice to close any files when done with them rather than waiting for the garbage collector to do it.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     f: File = open("sample.txt")
     close(f)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>read_all(f: File) &rarr; (string)</h3>
-            <p>
-                Returns a string containing the contents of the entire file.  read_all(f) will automatically move the File read pointer back 
-                to the beginning of the file, so calling rewind(f) is not necessary.  After reading the entire contents, the File read pointer will be 
-                at the end of the file.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>read_all(f: File) &rarr; (string)</h3>
+                <p>
+                    Returns a string containing the contents of the entire file.  read_all(f) will automatically move the File read pointer back 
+                    to the beginning of the file, so calling rewind(f) is not necessary.  After reading the entire contents, the File read pointer will be 
+                    at the end of the file.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     f: File = open("sample.txt")
     print(read_all(f))
     close(f)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>read_line(f: File) &rarr; (string)</h3>
-            <p>
-                Returns the next line in File f.  It will return an empty string if at the end of the file.  Use eof(f) to differentiate
-                between an end of file "" and simply an empty line in the file.  
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>read_line(f: File) &rarr; (string)</h3>
+                <p>
+                    Returns the next line in File f.  It will return an empty string if at the end of the file.  Use eof(f) to differentiate
+                    between an end of file "" and simply an empty line in the file.  
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     f: File = open("sample.txt")
     while !eof(f) {
         print(read_line(f))
     }
     close(f)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>eof(f: File) &rarr; (bool)</h3>
-            <p>
-                Returns true if the at the end of file.  A read_line(f) call will return an empty string at this point.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>eof(f: File) &rarr; (bool)</h3>
+                <p>
+                    Returns true if the at the end of file.  A read_line(f) call will return an empty string at this point.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     f: File = open("sample.txt")
     while !eof(f) {
         print(read_line(f))
     }
     close(f)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>rewind(f: File) &rarr; ()</h3>
-            <p>
-                Will return the File read pointer to the beginning of the file.  A call to read_line(f) will start back at the beginning of
-                the file.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>rewind(f: File) &rarr; ()</h3>
+                <p>
+                    Will return the File read pointer to the beginning of the file.  A call to read_line(f) will start back at the beginning of
+                    the file.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     //prints the first line in the file 3 times
     f: File = open("sample.txt")
     for i := 1, i < 3, i = i + 1 {
@@ -194,76 +211,79 @@
         rewind(f)
     }
     close(f)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
-    <div class="row">
-        <section class="col-3-4">
-            <h3>clear(f: File) &rarr; ()</h3>
-            <p>
-                Clear the given file of any contents.  Any call to append(f) after calling clear(f) will add a new line to the beginning of
-                the file.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>clear(f: File) &rarr; ()</h3>
+                <p>
+                    Clear the given file of any contents.  Any call to append(f) after calling clear(f) will add a new line to the beginning of
+                    the file.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     //clears the file of any contents
     f: File = open("sample.txt")
     clear(f)
     close(f)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>append(f: File, s: string) &rarr; ()</h3>
+                <p>
+                    Append string s to the end of the file.  Note that if append(f, s) is called the read pointer will be
+                    moved to the end of the file - calling read_line(f) immedately aftewards will return an empty string, and eof(f) will return true.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>append(f: File, s: string) &rarr; ()</h3>
-            <p>
-                Append string s to the end of the file.  Note that if append(f, s) is called the read pointer will be
-                moved to the end of the file - calling read_line(f) immedately aftewards will return an empty string, and eof(f) will return true.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     //clears the file of any contents, and appends a single line.
     f: File = open("sample.txt")
     clear(f)
     append(f, "This is the first line")
     close(f)
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>is_digit(s: string) &rarr; (bool)</h3>
+                <p>
+                    Returns true if all characters in a string are digits, and false otherwise.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
 
-    <div class="row">
-        <section class="col-3-4">
-            <h3>is_digit(s: string) &rarr; (bool)</h3>
-            <p>
-                Returns true if all characters in a string are digits, and false otherwise.
-            </p>
-        </section>
-        <section class="col-1-4">
-        </section>
-    </div>
-
-    <div class="row">
-        <pre class="code-box col-3-4">
-            <code>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
     num := "232"
     mixed := "dog23"
 
@@ -274,11 +294,21 @@
     if is_digit(mixed) {
         print("This will NOT print")
     }    
-            </code>
-        </pre>
-        <section class="col-1-4">
-        </section>
-    </div>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <!-- bottom border separating sections -->
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4 bottom-border">
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
 
 </div>
 
