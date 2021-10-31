@@ -1277,7 +1277,6 @@
             <section class="col-1-4">
             </section>
         </div>
-
         <div class="row">
             <pre class="code-box col-3-4">
 <span class="code">                <code></span>
@@ -1289,6 +1288,36 @@
 <span class="code">    }</span>
 <span class="code"></span>
 <span class="code">    <span class="keyword">if</span> is_digit(mixed) {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="string">"This will NOT print"</span>)</span>
+<span class="code">    }    </span>
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>is_alpha(s: string) &rarr; (bool)</h3>
+                <p>
+                    Returns true if all characters in a string are an alphabet, and false otherwise.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+<span class="code">                <code></span>
+<span class="code">    a := <span class="string">"dog"</span></span>
+<span class="code">    mixed := <span class="string">"dog23"</span></span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">if</span> is_alpha(a) {</span>
+<span class="code">        <span class="keyword">print</span>(<span class="string">"This will print"</span>)</span>
+<span class="code">    }</span>
+<span class="code"></span>
+<span class="code">    <span class="keyword">if</span> is_alpha(mixed) {</span>
 <span class="code">        <span class="keyword">print</span>(<span class="string">"This will NOT print"</span>)</span>
 <span class="code">    }    </span>
                 </code>

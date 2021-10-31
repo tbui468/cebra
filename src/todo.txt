@@ -50,6 +50,9 @@ Try using Visual Studio Debugger to debug problems in future
 
 Implementation:
 
+    Look at main - repl/run_script to see notes
+        Look in run_script to see replacement for parse with 'parse_new' and 'process_ast'
+
     See parser.c for notes
 
     Valgrind memcheck errors - source files for modules not being freed
@@ -78,6 +81,8 @@ Implementation:
                 Essentially we have an extra step between parsing and compiling for
                     processing compile-time values and taking care of any dependencies 
                     for user defined types
+
+    PARSE_TYPE isn't necessary - just use PARSE with parser_type as the function
 
     Dynamically allocated 'import' array in parser.h/c to prevent stack from getting too large
 

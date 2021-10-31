@@ -1277,7 +1277,6 @@
             <section class="col-1-4">
             </section>
         </div>
-
         <div class="row">
             <pre class="code-box col-3-4">
                 <code>
@@ -1289,6 +1288,36 @@
     }
 
     if is_digit(mixed) {
+        print("This will NOT print")
+    }    
+                </code>
+            </pre>
+            <section class="col-1-4">
+            </section>
+        </div>
+    </section>
+    <section class="section">
+        <div class="row">
+            <section class="col-3-4">
+                <h3>is_alpha(s: string) &rarr; (bool)</h3>
+                <p>
+                    Returns true if all characters in a string are an alphabet, and false otherwise.
+                </p>
+            </section>
+            <section class="col-1-4">
+            </section>
+        </div>
+        <div class="row">
+            <pre class="code-box col-3-4">
+                <code>
+    a := "dog"
+    mixed := "dog23"
+
+    if is_alpha(a) {
+        print("This will print")
+    }
+
+    if is_alpha(mixed) {
         print("This will NOT print")
     }    
                 </code>
