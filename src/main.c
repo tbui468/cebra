@@ -8,44 +8,10 @@
 #include "obj.h"
 #include "native.h"
 
-#define MAX_CHARS 256 * 256
-
-//parse and return updated intermediate results (including Tokens for imports)
-//  then all the read_file calls can happen here too
-//process all intermediate results (resolving identifiers, inheritance, and ordering of static/dynamic code)
-//compile
-//run
-
-/*
-static ResultCode run_source(VM* vm, struct Compiler* script_comp, const char* source) {
-
-    ResultCode result = RESULT_SUCCESS;
-
-    struct NodeList* final_ast = (struct NodeList*)make_node_list();
-    result = parse(source, final_ast, &script_comp->globals, &script_comp->nodes, script_comp->function->name);
-
-    //process AST nodes here??? - recall that the ultimate goal is to be able to free script char*
-
-#ifdef DEBUG_AST
-    print_node(final_ast);
-#endif
-
-    if (result != RESULT_FAILED) result = compile_script(script_comp, final_ast);
-
-#ifdef DEBUG_DISASSEMBLE
-    disassemble_chunk(script_comp->function);
-    int i = 0;
-    printf("-------------------\n");
-    while (i < script_comp->function->chunk.count) {
-       OpCode op = script_comp->function->chunk.codes[i++];
-       printf("[ %s ]\n", op_to_string(op));
-    }
-#endif
-
-    if (result != RESULT_FAILED) result = run(vm, script_comp->function);
-
-    return result;
-}*/
+#define MAX_IMPORTS 256
+#define MAX_SOURCES 1024
+#define MAX_CHARS_PER_LINE 512
+#define MODULE_DIR_PATH "C:\\dev\\cebra\\examples\\interpreter_using_modules\\"
 
 ResultCode read_file(const char* path, const char** source) {
     FILE* file = fopen(path, "rb");
@@ -63,69 +29,64 @@ ResultCode read_file(const char* path, const char** source) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode run_script(VM* vm, const char* path) {
+//sources and script counts won't match up since script count is reset
 
-    const char* source;
-    if (read_file(path, &source) == RESULT_FAILED) {
-        printf("[Cebra Error] File not found.\n");
-        return RESULT_FAILED;
-    }
-
-    //passing in NULL for struct Type* bc compiler needs to be initialized
-    //before Types can be created
-    struct Compiler script_comp;
-    init_compiler(&script_comp, path, strlen(path), 0, make_dummy_token(), NULL);
-    define_native_functions(&script_comp);
-
-    //run source would need to pass in 
-    /* ///////////////TODO: Old stuff///////////////////////////
+static ResultCode run_source(VM* vm, const char** sources, int* source_count, struct Compiler* script_comp, const char* modules_dir_path) {
     ResultCode result = RESULT_SUCCESS;
-    struct NodeList* final_ast = (struct NodeList*)make_node_list();
-    result = parse(source, final_ast, &script_comp.globals, &script_comp.nodes, script_comp.function->name);
-    if (result != RESULT_FAILED) result = compile_script(&script_comp, final_ast);
-    if (result != RESULT_FAILED) result = run(vm, script_comp.function);*/;
-    ///////////////////////////////////////////////////////////
 
-    /////////////new stuff//////////////////////////////
-    //parse root script
-    ResultCode result = RESULT_SUCCESS;
-    struct NodeList* final_ast = (struct NodeList*)make_node_list();
+    Token scripts[MAX_IMPORTS];
+    int script_count = 0;
     struct NodeList* static_nodes = (struct NodeList*)make_node_list();
     struct NodeList* dynamic_nodes = (struct NodeList*)make_node_list();
-    Token imports[64];
-    int import_count = 0; //same as sources
-    const char* sources[64];
-    result = parse_new(source, static_nodes, dynamic_nodes, &script_comp.globals, imports, &import_count);
+    if (result != RESULT_FAILED) result = parse(sources[*source_count - 1], static_nodes, dynamic_nodes, &script_comp->globals, scripts, &script_count);
 
-    //parse modules
-    //TODO: don't parse module if it has already been parsed once (to eliminate circular dependencies)
-    //TODO: free module source code (add it to a list of current sources, and free at the very end)
-    char* last_slash = strrchr(path, DIR_SEPARATOR);
-    int dir_len = last_slash == NULL ? 0 : last_slash - path + 1;
+    int modules_dir_len = strlen(modules_dir_path);
 
-    for (int i = 0; i < import_count; i++) {
-        Token import_name = imports[i];
-        char* module_path = (char*)malloc(dir_len + import_name.length + 5); //current script directory + module name + '.cbr' extension and null terminator
-        memcpy(module_path, path, dir_len);
-        memcpy(module_path + dir_len, import_name.start, import_name.length);
-        memcpy(module_path + dir_len + import_name.length, ".cbr\0", 5);
-        const char* module_source; //TODO: this guy(s) needs to be freed after script/repl is done running
-        //if (read_file(module_path, &module_source) == RESULT_FAILED) {
-        if (read_file(module_path, &sources[i]) == RESULT_FAILED) {
+    for (int i = 0; i < script_count; i++) {
+        Token script_name = scripts[i];
+        char* module_path = (char*)malloc(modules_dir_len + script_name.length + 5); //modules directory + module name + '.cbr' extension and null terminator
+        memcpy(module_path, modules_dir_path, modules_dir_len);
+        memcpy(module_path + modules_dir_len, script_name.start, script_name.length);
+        memcpy(module_path + modules_dir_len + script_name.length, ".cbr\0", 5);
+        if (read_file(module_path, &sources[*source_count]) == RESULT_FAILED) {
             printf("[Cebra Error] Module not found.\n");
             result = RESULT_FAILED;
-        }
+        } 
 
-        if (result != RESULT_FAILED) result = parse_new(sources[i], static_nodes, dynamic_nodes, &script_comp.globals, imports, &import_count);
+        if (result != RESULT_FAILED) result = parse(sources[*source_count], static_nodes, dynamic_nodes, &script_comp->globals, scripts, &script_count);
+        *source_count = *source_count + 1;
 
         free(module_path);
     }
 
     //process AST, compile, and run
-    if (result != RESULT_FAILED) result = process_ast(static_nodes, dynamic_nodes, &script_comp.globals, script_comp.nodes, final_ast);
-    if (result != RESULT_FAILED) result = compile_script(&script_comp, final_ast);
-    if (result != RESULT_FAILED) result = run(vm, script_comp.function);
-    ///////////////////////////////////////////////////
+    struct NodeList* final_ast = (struct NodeList*)make_node_list();
+    if (result != RESULT_FAILED) result = process_ast(static_nodes, dynamic_nodes, &script_comp->globals, script_comp->nodes, final_ast);
+    if (result != RESULT_FAILED) result = compile_script(script_comp, final_ast);
+    if (result != RESULT_FAILED) result = run(vm, script_comp->function);
+
+    return result;
+}
+
+static ResultCode run_script(VM* vm, const char* root_script_path) {
+    ResultCode result = RESULT_SUCCESS;
+
+    //passing in NULL for struct Type* bc compiler needs to be initialized
+    //before Types can be created
+    struct Compiler script_comp;
+    init_compiler(&script_comp, root_script_path, strlen(root_script_path), 0, make_dummy_token(), NULL);
+    define_native_functions(&script_comp);
+
+    int source_count = 1; //first source file will be the root script
+    const char* sources[64];
+
+    if (read_file(root_script_path, &sources[0]) == RESULT_FAILED) {
+        printf("[Cebra Error] Module not found.\n");
+        result = RESULT_FAILED;
+    }
+
+    //TODO: this won't work in the repl since we are looping through the sources from the beginning everytime
+    if (result != RESULT_FAILED) result = run_source(vm, sources, &source_count, &script_comp, MODULE_DIR_PATH);
 
     //free open_upvalues and stack so that GC can reclaim memory
     vm->open_upvalues = NULL;
@@ -133,8 +94,7 @@ static ResultCode run_script(VM* vm, const char* path) {
 
     free_compiler(&script_comp);
 
-    free((void*)source);
-    for (int i = 0; i < import_count; i++) {
+    for (int i = 0; i < source_count; i++) {
         free((void*)sources[i]);
     }
 
@@ -143,10 +103,6 @@ static ResultCode run_script(VM* vm, const char* path) {
 
 static ResultCode repl(VM* vm) {
     printf("Cebra 0.0.1\nType 'quit()' to exit the repl.\n");
-
-    char input_line[MAX_CHARS];
-
-    int current = 0;
 
     struct Compiler script_comp;
     init_compiler(&script_comp, "repl", 4, 0, make_dummy_token(), NULL);
@@ -159,25 +115,21 @@ static ResultCode repl(VM* vm) {
     run(vm, script_comp.function);
     script_comp.function->chunk.count = 0;
 
+    int source_count = 0;
+    char* sources[MAX_SOURCES];
+
     while(true) {
-        printf(">>> ");
-        fgets(&input_line[current], MAX_CHARS - current, stdin);
-        if (MAX_CHARS - current - (int)strlen(&input_line[current]) - 1 == 0) {
-            printf("Exceeding repl max buffer size.  Exiting Cebra repl...\n");
-            break;
-        }
-
-        if (memcmp(&input_line[current], "quit()", 6) == 0) {
-            break;
-        }
-
         ResultCode result = RESULT_SUCCESS;
-        struct NodeList* final_ast = (struct NodeList*)make_node_list();
-        result = parse(&input_line[current], final_ast, &script_comp.globals, &script_comp.nodes, script_comp.function->name);
-        if (result != RESULT_FAILED) result = compile_script(&script_comp, final_ast);
-        if (result != RESULT_FAILED) result = run(vm, script_comp.function);
+        printf(">>> ");
 
-        current += (int)strlen(&input_line[current]) + 1;
+        sources[source_count] = (char*)malloc(MAX_CHARS_PER_LINE); //max chars in line
+        fgets(sources[source_count], MAX_CHARS_PER_LINE, stdin);
+        if (memcmp(sources[source_count], "quit()", 6) == 0) {
+            break;
+        }
+        source_count++;
+
+        if (result != RESULT_FAILED) result = run_source(vm, sources, &source_count, &script_comp, MODULE_DIR_PATH);
 
         //this resets vm instructions chunk in compiler back to 0 for next read
         script_comp.function->chunk.count = 0;
@@ -187,6 +139,10 @@ static ResultCode repl(VM* vm) {
     pop_stack(vm);
 
     free_compiler(&script_comp);
+
+    for (int i = 0; i < source_count; i++) {
+        free((void*)sources[i]);
+    }
 
     return RESULT_SUCCESS;
 }

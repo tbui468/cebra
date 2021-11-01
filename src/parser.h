@@ -22,8 +22,7 @@ typedef struct {
     int import_count;
 } Parser;
 
-ResultCode parse(const char* source, struct NodeList* final_ast, struct Table* globals, struct Node** nodes, struct ObjString* script_path);
-ResultCode parse_new(const char* source, struct NodeList* static_nodes, struct NodeList* dynamic_nodes, struct Table* globals, Token* tokens, int* token_count);
+ResultCode parse(const char* source, struct NodeList* static_nodes, struct NodeList* dynamic_nodes, struct Table* globals, Token* tokens, int* token_count);
 ResultCode process_ast(struct NodeList* static_nodes, struct NodeList* dynamic_nodes, struct Table* globals, struct Node* all_nodes, struct NodeList* final_ast);
 void print_token(Token token);
 

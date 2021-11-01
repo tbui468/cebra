@@ -50,10 +50,20 @@ Try using Visual Studio Debugger to debug problems in future
 
 Implementation:
 
-    Look at main - repl/run_script to see notes
-        Look in run_script to see replacement for parse with 'parse_new' and 'process_ast'
+    Shouldn't generalize with the root script inside the modules list - the repl needs to process it separately anyway,
+        so let's do the same in run_script to keep it uniform.
 
-    See parser.c for notes
+    parse_new and process_nodes works as intended - refactor code, and then integrate it into the repl too
+        should create a function so that both run_script and repl can call it with a source file
+        will need to see what functionality is common - parse takes in source code, but
+        run_script right now includes the source code in the scripts array.  
+    
+    delete old parse and remove references to read_file (declaration) in parser
+
+    remove initialization of parser.statics_nl from init_parser since we pass it in as
+        a parameter now.
+
+    remove old run_source() function in main.c
 
     Valgrind memcheck errors - source files for modules not being freed
         Only in interpreter_using_modules.cbr
@@ -83,6 +93,9 @@ Implementation:
                     for user defined types
 
     PARSE_TYPE isn't necessary - just use PARSE with parser_type as the function
+
+    correctness.cbr doesn't print sometimes.  Is it an issue with printf or sprintf errors?
+        it happens often if correctness.cbr is run right after running compile_docs.cbr
 
     Dynamically allocated 'import' array in parser.h/c to prevent stack from getting too large
 

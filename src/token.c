@@ -58,6 +58,7 @@ void print_token(Token token) {
         default: printf("Unrecognized token"); break;
     }
     printf(" [%d]", token.line);
+    printf("[%.*s]", token.length, token.start);
 }
 
 //TODO: can probably eliminate/combine a lot of these Token creation functions
