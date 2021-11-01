@@ -50,56 +50,21 @@ Try using Visual Studio Debugger to debug problems in future
 
 Implementation:
 
-    Shouldn't generalize with the root script inside the modules list - the repl needs to process it separately anyway,
-        so let's do the same in run_script to keep it uniform.
+    MODULE_DIR_PATH is OS specific right now - it needs to work on *nix systems too
 
-    parse_new and process_nodes works as intended - refactor code, and then integrate it into the repl too
-        should create a function so that both run_script and repl can call it with a source file
-        will need to see what functionality is common - parse takes in source code, but
-        run_script right now includes the source code in the scripts array.  
-    
-    delete old parse and remove references to read_file (declaration) in parser
+    Make List.size NOT increase when user adds item.  Accessing a non-valid index will give
+    runtime error, and trying to set to an index more than List.size will also give a runtime error
 
-    remove initialization of parser.statics_nl from init_parser since we pass it in as
-        a parameter now.
+    Should tag a version for release before working on List manipulation update
 
-    remove old run_source() function in main.c
-
-    Valgrind memcheck errors - source files for modules not being freed
-        Only in interpreter_using_modules.cbr
-            4,380 bytes in 2 blocks definitely lost
-            640 byte in 1 block still reachable
-
-            Problem is in the parser. Need to clear the import source files.
-            main source file is cleared at end of 'run_script' in main, BUT
-            any loaded source file pointers are lost in parser.c.  Need to pass
-            open files back to main to free
-
-            run_source() is called by run_script() and repl()
-            parse() is called by run_source()
-            parse() is calling read_file()
-            read_file() is allocating memory for the script, and then returning a pointer to it
-                this is not being freed bc read_file() is being called in a loop to 
-                parse the source 
-
-            Could parse script/line and have it return/set ALL intermeidate results (globals, dynamic nodes, 
-                static nodes, imports, etc).  Then parse the imports by reading in the source and add onto the intermediates.  
-                Finally perform the circular dependency/reordering for final AST for the compiler. 
-                This means we could have run_script() or repl() keep an array of script source codes to 
-                free after the interpreter is closed (either quiting the repl or the script finishing)
-
-                Essentially we have an extra step between parsing and compiling for
-                    processing compile-time values and taking care of any dependencies 
-                    for user defined types
-
-    PARSE_TYPE isn't necessary - just use PARSE with parser_type as the function
-
-    correctness.cbr doesn't print sometimes.  Is it an issue with printf or sprintf errors?
-        it happens often if correctness.cbr is run right after running compile_docs.cbr
+    Compile and test a Linux version (use different vms to test)
 
     Dynamically allocated 'import' array in parser.h/c to prevent stack from getting too large
 
-    Should tag a version for release before working on List manipulation update
+    PARSE_TYPE isn't necessary - just use PARSE with parser_type as the function
+
+    Scripts don't print sometimes.  Is it an issue with printf or sprintf errors?
+        if happens when multiple scripts are run in succession.
 
     Why are primitive types lowercase?  It should be uppercase to conform with
         the way types are defined anyway.

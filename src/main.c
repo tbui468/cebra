@@ -85,14 +85,23 @@ static ResultCode run_script(VM* vm, const char* root_script_path) {
         result = RESULT_FAILED;
     }
 
+    //use script path as the module root path
+    char* last_slash = strrchr(root_script_path, DIR_SEPARATOR);
+    int dir_len = last_slash == NULL ? 0 : last_slash - root_script_path + 1;
+    char* module_dir_path = (char*)malloc(dir_len + 1);
+    memcpy(module_dir_path, root_script_path, dir_len);
+    module_dir_path[dir_len] = '\0';
+
     //TODO: this won't work in the repl since we are looping through the sources from the beginning everytime
-    if (result != RESULT_FAILED) result = run_source(vm, sources, &source_count, &script_comp, MODULE_DIR_PATH);
+    if (result != RESULT_FAILED) result = run_source(vm, sources, &source_count, &script_comp, module_dir_path);
 
     //free open_upvalues and stack so that GC can reclaim memory
     vm->open_upvalues = NULL;
     pop_stack(vm);
 
     free_compiler(&script_comp);
+
+    free(module_dir_path);
 
     for (int i = 0; i < source_count; i++) {
         free((void*)sources[i]);
@@ -124,12 +133,13 @@ static ResultCode repl(VM* vm) {
 
         sources[source_count] = (char*)malloc(MAX_CHARS_PER_LINE); //max chars in line
         fgets(sources[source_count], MAX_CHARS_PER_LINE, stdin);
-        if (memcmp(sources[source_count], "quit()", 6) == 0) {
+        source_count++;
+        if (memcmp(sources[source_count - 1], "quit()", 6) == 0) {
             break;
         }
-        source_count++;
 
-        if (result != RESULT_FAILED) result = run_source(vm, sources, &source_count, &script_comp, MODULE_DIR_PATH);
+        const char* module_dir_path = "";
+        if (result != RESULT_FAILED) result = run_source(vm, sources, &source_count, &script_comp, module_dir_path);
 
         //this resets vm instructions chunk in compiler back to 0 for next read
         script_comp.function->chunk.count = 0;

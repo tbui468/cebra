@@ -947,11 +947,11 @@ static ResultCode declaration(struct Node** node) {
     return RESULT_SUCCESS;
 }
 
-static void init_parser(struct Table* globals) {
+static void init_parser(struct Table* globals, struct NodeList* static_nodes) {
     parser.errors = (struct Error*)malloc(MAX_ERRORS * sizeof(struct Error));
     parser.error_count = 0;
     parser.globals = globals;
-    parser.statics_nl = (struct NodeList*)make_node_list();
+    parser.statics_nl = static_nodes;
     parser.import_count = 0;
 }
 
@@ -1275,8 +1275,7 @@ ResultCode parse(const char* source, struct NodeList* static_nodes, struct NodeL
     init_table(&copy);
     copy_table(&copy, globals);
 
-    init_parser(globals);
-    parser.statics_nl = static_nodes; //trying new stuff here
+    init_parser(globals, static_nodes);
 
     ResultCode result = parse_module(source, dynamic_nodes, globals);
 
