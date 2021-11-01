@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 
     free_memory_manager();
 
-    print_memory();
+//    print_memory();
 
     if (result == RESULT_FAILED) {
         return 1;
