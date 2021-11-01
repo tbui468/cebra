@@ -49,8 +49,6 @@ Try using Visual Studio Debugger to debug problems in future
     to use printf() to debug everywhere
 
 Implementation:
-    Should tag a version for release before working on List manipulation update
-
     ***********Compile and test a Linux version (use different vms to test)*******finished up to this today
 
     compile_docs.cbr is REALLY slow with valgrind on - what normally takes seconds becomes 15 to 20 minutes 

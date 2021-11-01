@@ -1016,6 +1016,8 @@ static ResultCode check_global_circular_inheritance(struct Table* globals) {
             }
         }
     }
+
+    return RESULT_SUCCESS;
 }
 
 static ResultCode copy_global_inherited_props(struct Table* globals) {
@@ -1045,6 +1047,8 @@ static ResultCode copy_global_inherited_props(struct Table* globals) {
             super_type = super->super;
         }
     }
+
+    return RESULT_SUCCESS;
 }
 
 static ResultCode add_struct_by_order(struct NodeList* nl, struct Table* struct_set, struct DeclStruct* dc, struct NodeList* statics_nl) {
