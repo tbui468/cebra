@@ -85,12 +85,26 @@ a {
     line-height: 1.6;
     letter-spacing: 1px;
     word-spacing: 1px;
-    color: white;
+    color: #567;
     text-decoration: none;
 }
 
 a:hover {
+    color: black;
+}
+
+a.alt {
+    font-size: 14px;
+    font-family: Arial;
+    line-height: 1.6;
+    letter-spacing: 1px;
+    word-spacing: 1px;
     color: #567;
+    text-decoration: none;
+}
+
+a.alt:hover {
+    color: #28d;
 }
 
 p {
@@ -154,7 +168,7 @@ span.code {
 
 /* When you mouse over the navigation links, change their color */
 .sidenav a:hover {
-    color: white;
+    color: #28d;
 }
 
 

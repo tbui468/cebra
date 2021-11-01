@@ -50,24 +50,13 @@ Try using Visual Studio Debugger to debug problems in future
 
 Implementation:
 
-    Add executable links/section inside docs as well.
-
-    Add links from github to docs so that we don't need to add details to the github right now
-        and people can still get info about it.
-
-    compile_docs.cbr is REALLY slow with valgrind on - what normally takes seconds becomes 15 to 20 minutes 
-        when valgrind is on - is this worth investigating?
-
-    Dynamically allocated 'import' array in parser.h/c to prevent stack from getting too large
-
     PARSE_TYPE isn't necessary - just use PARSE with parser_type as the function
-
-    Scripts don't print sometimes.  Is it an issue with printf or sprintf errors?
-        if happens when multiple scripts are run in succession.
 
     Why are primitive types lowercase?  It should be uppercase to conform with
         the way types are defined anyway.
         Bool, Float, Int, String, File, List<>, Map<>
+
+        will require changing a lot of the scripts + docs
 
     list := List<int>()
     could make a bunch of functions to add values and make list.size read only
@@ -102,6 +91,9 @@ Implementation:
         all(list, condition) -> (bool)
         map(list, fun) -> ()
         sort(list, cond) -> ()
+
+    Scripts don't print sometimes.  Is it an issue with printf or sprintf errors?
+        if happens when multiple scripts are run in succession.
 
     Clean up parser and unify error messages in parser, compiler, vm
         PARSE_TYPE macro can just be a PARSE macro with the parse_type function ptr as the first argument
