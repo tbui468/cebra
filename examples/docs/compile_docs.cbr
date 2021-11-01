@@ -2,7 +2,7 @@
 dir := "C:\\dev\\cebra\\examples\\docs\\"
 
 //*nix
-dir_nix := "/thomas/dev/cebra/examples/docs/"
+dir_nix := "/home/thomas/dev/cebra/examples/docs/"
 
 //combine html files
 

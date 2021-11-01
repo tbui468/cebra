@@ -49,18 +49,12 @@ Try using Visual Studio Debugger to debug problems in future
     to use printf() to debug everywhere
 
 Implementation:
-
-    Make List.size NOT increase when user adds item.  Accessing a non-valid index will give
-    runtime error, and trying to set to an index more than List.size will also give a runtime error
-
-    On unix, compiling html creates a '....html' file in side the build/src directory for some reason...
-        it's an issue with writing out files - we are using windows directory slashes in the .cbr file.
-        need to create a cross-platform way to dealing with this.  Could copy python's way of doing it
-        with a function, or create a global DIR_SEP
-
     Should tag a version for release before working on List manipulation update
 
     ***********Compile and test a Linux version (use different vms to test)*******finished up to this today
+
+    compile_docs.cbr is REALLY slow with valgrind on - what normally takes seconds becomes 15 to 20 minutes 
+        when valgrind is on - is this worth investigating?
 
     Dynamically allocated 'import' array in parser.h/c to prevent stack from getting too large
 
@@ -75,6 +69,8 @@ Implementation:
 
     list := List<int>()
     could make a bunch of functions to add values and make list.size read only
+        Make List.size NOT increase when user adds item.  Accessing a non-valid index will give
+        runtime error, and trying to set to an index more than List.size will also give a runtime error
 
         '++' operator works on two lists, or one element and one list
         '=++'

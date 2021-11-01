@@ -442,6 +442,7 @@ ResultCode run_program(VM* vm) {
                 Value value = peek(vm, 0);
                 int new_count = peek(vm, 1).as.integer_type;
                 if (value.type == VAL_LIST) {
+                    //TODO: should make list sizes read-only
                     struct ObjList* list = value.as.list_type;
                     if (new_count > list->values.capacity) {
                         int new_cap = list->values.capacity == 0 ? 8 : list->values.capacity * 2;
