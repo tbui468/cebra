@@ -51,10 +51,12 @@ static ResultCode run_source(VM* vm, const char** sources, int* source_count, st
         if (read_file(module_path, &sources[*source_count]) == RESULT_FAILED) {
             printf("[Cebra Error] Module not found.\n");
             result = RESULT_FAILED;
-        } 
+        }
 
-        if (result != RESULT_FAILED) result = parse(sources[*source_count], static_nodes, dynamic_nodes, &script_comp->globals, scripts, &script_count);
-        *source_count = *source_count + 1;
+        if (result != RESULT_FAILED) {
+            result = parse(sources[*source_count], static_nodes, dynamic_nodes, &script_comp->globals, scripts, &script_count);
+            *source_count = *source_count + 1;
+        }
 
         free(module_path);
     }

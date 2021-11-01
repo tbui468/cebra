@@ -1,4 +1,8 @@
+//this only works on Windows
 dir := "C:\\dev\\cebra\\examples\\docs\\"
+
+//*nix
+dir_nix := "/thomas/dev/cebra/examples/docs/"
 
 //combine html files
 
