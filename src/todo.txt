@@ -49,9 +49,11 @@ Try using Visual Studio Debugger to debug problems in future
     to use printf() to debug everywhere
 
 Implementation:
-    ***********Compile and test a Linux version (use different vms to test)*******finished up to this today
-        add to zip file and put executable on website - check by downloading zip in Xubuntu and Ubuntu and trying it
-        make a release folder, cmake -DCMAKE_BUILD_TYPE=Release .., then build as usual
+
+    Add executable links/section inside docs as well.
+
+    Add links from github to docs so that we don't need to add details to the github right now
+        and people can still get info about it.
 
     compile_docs.cbr is REALLY slow with valgrind on - what normally takes seconds becomes 15 to 20 minutes 
         when valgrind is on - is this worth investigating?

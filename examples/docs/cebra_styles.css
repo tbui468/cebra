@@ -314,6 +314,12 @@ span.code {
     color: #567;
 }
 
+.btn:disabled {
+    pointer-events: none;
+    border: 2px solid #cdd;
+    color: #cdd;
+}
+
 /* Darker background on mouse-over */
 .btn:hover {
     background-color: #899;
