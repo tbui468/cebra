@@ -1,6 +1,7 @@
 cmake --build . --config Release cl /O2 ...
 
 Resume:
+    Add section about current personal work: maintain/add features to Cebra.  Building Saola OS.
     Look at Pranav's CV descriptions and copy the format for my CV.
     Update linkedin CV to match new descriptions/dates on CV.
     Change CV so that image appears on website (need to modify how website accesses image)
@@ -19,19 +20,7 @@ Syntax highlighter:
 
 Documentation:
 
-    Update section on Lists to include ++ operator
-        mention that it's slower than list[list.size] = 2, but easier to read
-        Use list[list.size] = 3 if you REALLY need speed (but in that case you shouldn't be using a Cebra or any 'scripting' language anyway)
-        Add notes about slicing lists too
-
-        Also update section on maps - maps have 'keys' and 'values' property that will return a list of keys/values
-
-    Add notes to Modules about current path system to modules (same directory as executable for repl, and same directory as script argument if running script)
-
-    Add notes to docs about current status - inaccurate error messages, limited List support, unoptimized code
-        still evolving syntx.
-
-    Add notes about upcoming features for v0.0.3 - more comprehensive List (variable length array) support,
+    Add a 'News' section to main page to explain upcoming features for v0.0.3 - more comprehensive List (variable length array) support,
         along with more accurate error messages.
 
     Fill in 'underneath the hood' section 
@@ -77,7 +66,13 @@ Try using Visual Studio Debugger to debug problems in future
     this will be good practice since the project is getting too big
     to use printf() to debug everywhere
 
-Cebra Implementation:
+Cebra Features to Work On:
+
+    Element-wise operations on Lists
+        list3 = list1 + list2  //create a new list that is an element-wise sum of both lists
+
+    Error messages - this is a big one.  This should be the main goal now so that
+        we can release version 0.0.3 with better List support + better error messages
 
     Clear up warnings (that const char* / char* one is annoying, especially)
 
@@ -86,9 +81,9 @@ Cebra Implementation:
 
     Scripts don't print sometimes.  Is it an issue with printf or sprintf errors?
         if happens when multiple scripts are run in succession.
+        should put in checks for when 'printf' fails (returns a negative number)
 
     Clean up parser and unify error messages in parser, compiler, vm
-        PARSE_TYPE macro can just be a PARSE macro with the parse_type function ptr as the first argument
         PARSE_WITHOUT_MSG is weird - how do we handle a bunch of low level noisy error messages?
             there needs to be a way for higher nodes in the parser to silence/replace or pass on error messages below them
 
@@ -112,14 +107,6 @@ Cebra Implementation:
         as an op code operand
 
     Currently not allow sequences for declaring struct fields - should allow it for consistency
-
-    Why does the script compiler keep a list of ALL AST nodes again?  It's passed into the parser since the parser
-        resolves identifiers now, and I just wanted to resolve remaining identifiers in the same place.  
-        It's the compiler's job to track ALL AST nodes so they can be freed.  
-        This is a some coupling between the
-        parser and compiler - can we do without it?
-
-    parser.first_pass_nl should be renamed to parser.static_nodes, and then script_nl to dynamic_nl
 
     Need namespaces for modules so that there isn't any collision
         import math

@@ -5,10 +5,20 @@
             <section class="col-3-4">
                 <h3>List</h3>
                 <p>
-                Lists can contain data of the same type.  The type must be specified in < > when
+                Lists must contain data of the same type.  The type must be specified in < > when
                 creating the list. [] notation can be used to access and set the elements in a List.
                 Lists also have the 'size' property which can be used to 
-                Like struct instances and Maps, Lists are passed by reference.
+                Lists are passed by reference.
+                </p><br>
+                <p>
+                    Lists can be sliced to using [] notation with the starting and ending indices separated by ':'.  See
+                    the code snippet below for an example.
+                </p><br>
+                <p>
+                    The '++' operator will concatenate Lists and elements and return a new List object.  
+                    Note: Using '++' will create a new List and copy over any elements in the concatenated Lists. 
+                    This can be slow if the Lists are large.  If you just want to append to a List,
+                    using [] notation to set the next element in the List will be more efficient.
                 </p>
             </section>
             <section class="col-1-4">
@@ -25,13 +35,30 @@
     my_list[1] = 11
     my_list[2] = -9
 
-    for i: int in my_list {
-        print(my_list[i])
+    foreach i: int in my_list {
+        print(i)
     }
 
-    //2
-    //11
-    //-9
+    //211-19
+
+    //make a new list with the first two elements of 'my_list'
+    sliced_list = my_list[0:2]
+    foreach i: int in sliced_list {
+        print(i)
+    }
+
+    //211
+
+    other_list := 1 ++ 3 //concatenate two elements, creating a new List
+    other_list = other_list ++ 4 //append 4
+    other_list = 0 ++ other_list //prepend 0
+    other_list = other_list[0:2] ++ 2 ++ other_list[2:4] //insert 2 at index 2
+
+    foreach i: int in other_list {
+        print(i)
+    }
+
+    //01234
                 </code>
             </pre>
             <section class="col-1-4">
@@ -44,7 +71,9 @@
                 <h3>Map</h3>
                 <p>
                 Each entry in a Map is a key-value pair.  The key is a string type
-                and the value type is specified at creation of the Map using < >.
+                and the value type is specified at creation of the Map using < >.  Use
+                the properties 'keys' and 'values' to get a List of all keys and values, respectively,
+                in the Map.
                 </p>
             </section>
             <section class="col-1-4">
