@@ -2,14 +2,14 @@ cmake --build . --config Release cl /O2 ...
 
 Resume:
     Look at Pranav's CV descriptions and copy the format for my CV.
-    Update linkedin CV to match decriptions/numbers on CV.
+    Update linkedin CV to match new descriptions/dates on CV.
     Change CV so that image appears on website (need to modify how website accesses image)
     Create a PDF version using wkhtmltopdf (need to use the modified image access + --enable-local-file_access)
 
         Microsoft, Google, Amazon
         Apple, Netflix, Uber
 
-        Can apply to Google 3 times a month - should try to hit that limit everytime
+        Can apply to Google 3 times a month - apply 3 times a month until I get a job or interview there
             find 3 jobs and apply today
         Check Microsoft application limit
         Check Amazon application limit
@@ -18,6 +18,15 @@ Syntax highlighter:
     nothing at this time
 
 Documentation:
+
+    Update section on Lists to include ++ operator
+        mention that it's slower than list[list.size] = 2, but easier to read
+        Use list[list.size] = 3 if you REALLY need speed (but in that case you shouldn't be using a Cebra or any 'scripting' language anyway)
+        Add notes about slicing lists too
+
+        Also update section on maps - maps have 'keys' and 'values' property that will return a list of keys/values
+
+    Add notes to Modules about current path system to modules (same directory as executable for repl, and same directory as script argument if running script)
 
     Add notes to docs about current status - inaccurate error messages, limited List support, unoptimized code
         still evolving syntx.
@@ -68,50 +77,9 @@ Try using Visual Studio Debugger to debug problems in future
     this will be good practice since the project is getting too big
     to use printf() to debug everywhere
 
-Implementation:
+Cebra Implementation:
 
-    NODE_SLICE_STRING should be generalized to NODE_SLICE so that it works for Lists too
-        just change the compilation type checking to allow lists, and then the vm can
-        check for lists (along with strings) and slice accordingly (creating a new shallow copy of the List for now)
-
-    list := List<int>()
-    could make a bunch of functions to add values and make list.size read only
-        Make List.size NOT increase when user adds item.  Accessing a non-valid index will give
-        runtime error, and trying to set to an index more than List.size will also give a runtime error
-
-        '++' operator works on lists or elements.  Using ++ on two elements will create a new list with those two elements
-        '++='
-
-        OP_APPEND (look for pattern <id> = <id> ++ element where ids are the same) - this is a common pattern
-        OP_CONCAT (take the bigger capacity * 2 to find new capacity.  If one is an element, just add it to correct place in array)
-
-        list = list ++ element //append - can avoid making a new array IF this pattern is matched
-        list = element ++ list //prepend
-
-        //could also create one list of proper size before recursive call and fill in with dummy values
-        //to avoid making a bunch of lists (the snippet below would create two lists, but we could make it only 1)
-        list = list[0:5] ++ element ++ list[5:list.len] //insert at index 4
-        list = list[0:4] ++ list[4:9] //concat lists
-
-        list = list[0:4] ++ list[5:9] //delete at index 4
-
-        list[idx]  //get element
-        list[idx] = element //set element
-        list.length //get length
-
-        length(list)
-        append(list, element)
-        prepend(list, element)
-        maximum(list) -> ([type])
-        minimum(list) -> ([type])
-        reverse(list) -> ()
-        filter(list, condition) -> (List<type>)
-        any(list, condition) -> (bool)
-        all(list, condition) -> (bool)
-        map(list, fun) -> ()
-        sort(list, cond) -> ()
-
-    Clear up warnings
+    Clear up warnings (that const char* / char* one is annoying, especially)
 
     Generalize to tensors (multidimensional arrays)?
         Tensor<float>(1, 1, 1)

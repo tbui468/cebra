@@ -35,7 +35,7 @@ typedef enum {
     NODE_CONTAINER,
     NODE_WHEN,
     NODE_SEQUENCE,
-    NODE_SLICE_STRING,
+    NODE_SLICE
 } NodeType;
 
 struct Node {
@@ -215,7 +215,7 @@ typedef struct {
     struct Node* left;
     struct Node* start_idx;
     struct Node* end_idx;
-} SliceString;
+} Slice;
 
 typedef struct {
     struct Node base;
@@ -271,7 +271,7 @@ struct Node* make_decl_enum(Token name, struct NodeList* decls);
 struct Node* make_cast(Token name, struct Node* left, struct Type* type);
 struct Node* make_decl_container(Token name, struct Type* type);
 struct Node* make_sequence(Token name, struct NodeList* left, struct Node* right);
-struct Node* make_slice_string(Token name, struct Node* left, struct Node* start_idx, struct Node* end_idx);
+struct Node* make_slice(Token name, struct Node* left, struct Node* start_idx, struct Node* end_idx);
 
 void print_node(struct Node* node);
 void free_node(struct Node* node);

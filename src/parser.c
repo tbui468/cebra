@@ -316,7 +316,7 @@ static ResultCode call_dot(struct Node** node) {
                 if (match(TOKEN_COLON)) {
                     struct Node* end_idx;
                     PARSE(parse_expression, &end_idx, left_bracket, "Expect end index for array slicing.");
-                    left = make_slice_string(left_bracket, left, idx, end_idx);
+                    left = make_slice(left_bracket, left, idx, end_idx);
                 } else {
                     left = make_get_element(parser.previous, left, idx);
                 }

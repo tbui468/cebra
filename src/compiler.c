@@ -1175,8 +1175,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             break;
         }
-        case NODE_SLICE_STRING: {
-            SliceString* ss = (SliceString*)node;
+        case NODE_SLICE: {
+            Slice* ss = (Slice*)node;
             struct Type* left_type = NULL;
             COMPILE_NODE(ss->left, &left_type);
             struct Type* start_idx_type = NULL;
@@ -1184,7 +1184,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             struct Type* end_idx_type = NULL;
             COMPILE_NODE(ss->end_idx, &end_idx_type);
 
-            EMIT_ERROR_IF(left_type == NULL || left_type->type != TYPE_STRING, ss->name, "Slicing can only be used on strings.");
+            EMIT_ERROR_IF(left_type == NULL || (left_type->type != TYPE_STRING && left_type->type != TYPE_LIST), 
+                          ss->name, "Slicing can only be used on strings or Lists.");
             EMIT_ERROR_IF(start_idx_type == NULL || start_idx_type->type != TYPE_INT, ss->name, "Start index when slicing must be an integer.");
             EMIT_ERROR_IF(end_idx_type == NULL || end_idx_type->type != TYPE_INT, ss->name, "End index when slicing must be an integer.");
 

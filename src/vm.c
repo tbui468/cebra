@@ -477,15 +477,39 @@ ResultCode run_program(VM* vm) {
                 }
             }
             case OP_SLICE: {
-                //[string][start idx][end idx - exclusive]
+                //[string | List][start idx][end idx - exclusive]
                 int end_idx = pop(vm).as.integer_type;
                 int start_idx = pop(vm).as.integer_type;
-                struct ObjString* s = peek(vm, 0).as.string_type;
                 if (end_idx - start_idx < 0) {
                     add_error(vm, "End index must be greater or equal to the start index when slicing strings.");
                     return RESULT_FAILED;
                 }
 
+                Value v = peek(vm, 0);
+                if (v.type == VAL_STRING) {
+                    struct ObjString* s = v.as.string_type;
+                    struct ObjString* sub = make_string(s->chars + start_idx, end_idx - start_idx);
+                    pop(vm);
+                    push(vm, to_string(sub));
+                } else if (v.type == VAL_LIST) {
+                    struct ObjList* list = make_list();
+                    push(vm, to_list(list));
+                    struct ObjList* slice_list = v.as.list_type;
+                    //add elements
+                    if (end_idx > slice_list->values.count || start_idx < 0) {
+                        add_error(vm, "Slicing indices must be between 0 and List size (inclusive).");
+                        return RESULT_FAILED;
+                    }
+                    for (int i = start_idx; i < end_idx; i++) {
+                        add_value(&list->values, slice_list->values.values[i]); 
+                    }
+                    pop(vm); //pop new list so that we can remove the old list
+                    pop(vm);
+                    push(vm, to_list(list));
+                }
+
+                /*
+                struct ObjString* s = peek(vm, 0).as.string_type;
                 if (end_idx - start_idx == 0) {
                     struct ObjString* sub = make_string("", 0);
                     pop(vm);
@@ -494,7 +518,7 @@ ResultCode run_program(VM* vm) {
                     struct ObjString* sub = make_string(s->chars + start_idx, end_idx - start_idx);
                     pop(vm);
                     push(vm, to_string(sub));
-                }
+                }*/
                 break;
             }
             case OP_GET_ELEMENT: {

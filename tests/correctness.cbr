@@ -732,6 +732,26 @@ if lists {
         add_failed("Set List Element: Failed!")
     }
 
+    slice_front := a[0:2]
+    slice_mid := a[2:4]
+    slice_back := a[4:6]
+
+    if slice_front.size == 2 and slice_front[0] == 2 and slice_front[1] == 3 {
+        add_passed("Slice Front: Passed!")
+    } else {
+        add_failed("Slice Front: Failed!")
+    }
+    if slice_mid.size == 2 and slice_mid[0] == 4 and slice_mid[1] == 5 {
+        add_passed("Slice Middle: Passed!")
+    } else {
+        add_failed("Slice Middle: Failed!")
+    }
+    if slice_back.size == 2 and slice_back[0] == 6 and slice_back[1] == 7 {
+        add_passed("Slice Back: Passed!")
+    } else {
+        add_failed("Slice Back: Failed!")
+    }
+
     c: List<Dog> = List<Dog>()
     d: Dog = make_dog()
     d.name = "Bubbles"
