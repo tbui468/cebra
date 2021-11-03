@@ -225,23 +225,62 @@ static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, s
     COMPILE_NODE(binary->left, &type1);
     struct Type* type2 = NULL;
     COMPILE_NODE(binary->right, &type2);
-    EMIT_ERROR_IF(type1 != NULL && type2 != NULL && !same_type(type1, type2), binary->name, "Left and right types must match.");
-    switch(binary->name.type) {
-        case TOKEN_PLUS: {
-            //only checking type1 since an error should've been added if type1 != type2
-            EMIT_ERROR_IF(type1 != NULL && type1->type != TYPE_INT && type1->type != TYPE_FLOAT && type1->type != TYPE_STRING, 
-                          binary->name, "'+' can only be used on ints, floats and strings");
 
-            emit_byte(compiler, OP_ADD);
-            break;
+    if (binary->name.type == TOKEN_PLUS_PLUS) {
+        //check that both types are same OR one is a list of type element and other is type element
+        //if equal or if one wrapped in list is equal to other (need to check wrapping both)
+        //will need to emit whether list-list, element-element, list-element, or element_list so
+        //that vm knows how to concat them - either need to add
+        bool list_list = type1 != NULL && type2 != NULL && same_type(type1, type2) && type1->type == TYPE_LIST;
+        bool element_element = type1 != NULL && type2 != NULL && same_type(type1, type2) && type1->type != TYPE_LIST;
+        bool list_element = type1 != NULL && type2 != NULL && same_type(type1, make_list_type(type2));
+        bool element_list = type1 != NULL && type2 != NULL && same_type(make_list_type(type1), type2);
+
+        EMIT_ERROR_IF(!list_list && !element_element && !list_element && !element_list, binary->name, "Left and right types must be concatenable values.");
+
+        //need to emit operands - unwrap 0, unwrap 1, unwrap both, unwrap none
+
+        if (list_list || list_element) {
+            *node_type = type1;
+        } else {
+            *node_type = make_list_type(type1);
         }
-        case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT); break;
-        case TOKEN_STAR: emit_byte(compiler, OP_MULTIPLY); break;
-        case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE); break;
-        case TOKEN_MOD: emit_byte(compiler, OP_MOD); break;
+
+        emit_byte(compiler, OP_CONCAT);
+        //if 1, need to unwrap the elements in List before adding them to new list
+        if (list_list) {
+            emit_byte(compiler, 1);
+            emit_byte(compiler, 1);
+        } else if (element_element) {
+            emit_byte(compiler, 0);
+            emit_byte(compiler, 0);
+        } else if (list_element) {
+            emit_byte(compiler, 1);
+            emit_byte(compiler, 0);
+        } else { //element_list
+            emit_byte(compiler, 0);
+            emit_byte(compiler, 1);
+        }
+    } else {
+        EMIT_ERROR_IF(type1 != NULL && type2 != NULL && !same_type(type1, type2), binary->name, "Left and right types must match.");
+
+        *node_type = type1;
+        switch(binary->name.type) {
+            case TOKEN_PLUS: {
+                //only checking type1 since an error should've been added if type1 != type2
+                EMIT_ERROR_IF(type1 != NULL && type1->type != TYPE_INT && type1->type != TYPE_FLOAT && type1->type != TYPE_STRING, 
+                              binary->name, "'+' can only be used on ints, floats and strings");
+
+                emit_byte(compiler, OP_ADD);
+                break;
+            }
+            case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT); break;
+            case TOKEN_STAR: emit_byte(compiler, OP_MULTIPLY); break;
+            case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE); break;
+            case TOKEN_MOD: emit_byte(compiler, OP_MOD); break;
+        }
     }
 
-    *node_type = type1;
     return result;
 }
 
@@ -460,12 +499,13 @@ static ResultCode compile_set_element(struct Compiler* compiler, Token name, str
 static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct Type* inst_type, struct Type* right_type, int depth) {
     ResultCode result = RESULT_SUCCESS;
 
+    /*
     if (inst_type->type == TYPE_LIST) {
         EMIT_ERROR_IF(!same_token_literal(prop, make_token(TOKEN_DUMMY, 0, "size", 4)), 
                       prop, "Property doesn't exist on Lists.");
 
         emit_byte(compiler, OP_SET_SIZE);
-    } else if (inst_type->type == TYPE_STRUCT) {
+    } else*/ if (inst_type->type == TYPE_STRUCT) {
         struct ObjString* name = make_string(prop.start, prop.length);
         push_root(to_string(name));
         emit_byte(compiler, OP_SET_PROP);
@@ -481,7 +521,7 @@ static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct
                    prop, "Property and assignment types must match.");
 
     } else {
-        EMIT_ERROR_IF(true, prop, "Property can only be set on struct instances or Lists.");
+        EMIT_ERROR_IF(true, prop, "Property can only be set on struct instances.");
     }
 
     return result;

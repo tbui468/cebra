@@ -698,54 +698,56 @@ if lists {
         add_failed("Initialize List: Failed!")
     }
 
-    a[0] = 0
-    a[1] = 1
-    a[0] = 10
+    a = a ++ 4
+    a = a ++ 5
 
-    if a.size == 2 and a[0] == 10 and a[1] == 1 {
-        add_passed("Setting Value: Passed!")
+    if a.size == 2 and a[0] == 4 and a[1] == 5 {
+        add_passed("Append Value: Passed!")
     } else {
-        add_failed("Setting Value: Failed!")
+        add_failed("Append Value: Failed!")
     }
 
-    a.size = 0
-    if a.size == 0 {
-        add_passed("Setting size to Zero: Passed!")
+    a = 3 ++ a
+    if a.size == 3 and a[0] == 3 and a[1] == 4 and a[2] == 5 {
+        add_passed("Prepend Value: Passed!")
     } else {
-        add_failed("Setting size to Zero: Failed!")
+        add_failed("Prepend Value: Failed!")
     }
 
-    a.size = 2
-    if a.size == 2 {
-        add_passed("Set Higher Size / Fill with Default: Passed!")
+    b := List<int>()
+    b = b ++ 6
+    b = b ++ 7
+    a = a ++ b
+    if a.size == 5 and a[0] == 3 and a[1] == 4 and a[2] == 5 and a[3] == 6 and a[4] == 7 {
+        add_passed("Concat Lists: Passed!")
     } else {
-        add_failed("Set Higher Size / Fill with Default: Failed!")
+        add_failed("Concat Lists: Failed!")
     }
 
-    a[10] = 10
-    if a.size == 11 and a[10] == 10 {
-        add_passed("Set Higher Index / Fill with Default: Passed!")
+    a = 99 ++ a
+    a[0] = 2
+    if a.size == 6 and a[0] == 2 {
+        add_passed("Set List Element: Passed!")
     } else {
-        add_failed("Set Higher Index / Fill with Default: Failed!")
+        add_failed("Set List Element: Failed!")
     }
 
-    a[5] = 33
-    if a.size == 11 and a[10] == 10 and a[5] == 33 {
-        add_passed("Set Lower Index: Passed!")
-    } else {
-        add_failed("Set Lower Index: Failed!")
-    }
-
-    b: List<Dog> = List<Dog>()
+    c: List<Dog> = List<Dog>()
     d: Dog = make_dog()
     d.name = "Bubbles"
-    b[0] = d
-    b.size = 2
+    c[0] = d
 
-    if b[0].name == "Bubbles" {
+    if c[0].name == "Bubbles" {
         add_passed("Structs in List: Passed!")
     } else {
         add_failed("Structs in List: Failed!")
+    }
+
+    e := "Dog" ++ "Cat"
+    if e.size == 2 and e[0] == "Dog" and e[1] == "Cat" {
+        add_passed("Concat Two Elements into List: Passed!")
+    } else {
+        add_failed("Concat Two Elements into List: Failed!")
     }
 
 }

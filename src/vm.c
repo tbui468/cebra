@@ -552,13 +552,12 @@ ResultCode run_program(VM* vm) {
                 if (left.type == VAL_LIST) {
                     struct ObjList* list = left.as.list_type;
                     int idx = peek(vm, 0).as.integer_type;
-                    if (idx >= list->values.count) {
-                        while (list->values.count < idx) {
-                            add_value(&list->values, list->default_value);
-                        }
+                    if (idx == list->values.count) {
                         add_value(&list->values, value);
-                    } else {
+                    } else if (idx < list->values.count) {
                         list->values.values[idx] = value;
+                    } else {
+                        add_error(vm, "Can only set List elements using an index equal or less than List size.");
                     }
                 }
                 if (left.type == VAL_MAP) {
@@ -689,6 +688,35 @@ ResultCode run_program(VM* vm) {
             }
             case OP_HALT: {
                 return RESULT_SUCCESS;
+            }
+            case OP_CONCAT: {
+                int unwrap_left = READ_TYPE(frame, uint8_t);
+                int unwrap_right = READ_TYPE(frame, uint8_t);
+                Value right = peek(vm, 0);
+                Value left = peek(vm, 1);
+                struct ObjList* list = make_list();
+                push(vm, to_list(list));
+                if (unwrap_left) {
+                    struct ObjList* left_list = left.as.list_type;
+                    for (int i = 0; i < left_list->values.count; i++) {
+                        add_value(&list->values, left_list->values.values[i]);
+                    }
+                } else {
+                    add_value(&list->values, left);
+                }
+                if (unwrap_right) {
+                    struct ObjList* right_list = right.as.list_type;
+                    for (int i = 0; i < right_list->values.count; i++) {
+                        add_value(&list->values, right_list->values.values[i]);
+                    }
+                } else {
+                    add_value(&list->values, right);
+                }
+                pop(vm);
+                pop(vm);
+                pop(vm);
+                push(vm, to_list(list));
+                break;
             }
         } 
 

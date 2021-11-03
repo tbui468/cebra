@@ -35,7 +35,7 @@ typedef enum {
     NODE_CONTAINER,
     NODE_WHEN,
     NODE_SEQUENCE,
-    NODE_SLICE_STRING
+    NODE_SLICE_STRING,
 } NodeType;
 
 struct Node {

@@ -176,7 +176,12 @@ Token next_token() {
     }
 
     switch(c) { //current is now on next characters
-        case '+':   return new_token(TOKEN_PLUS);
+        case '+':   
+            if (peek_char() == '+') {
+                next_char();
+                return new_token(TOKEN_PLUS_PLUS);
+            }
+            return new_token(TOKEN_PLUS);
         case '-':   
             if (peek_char() == '>') {
                 next_char();

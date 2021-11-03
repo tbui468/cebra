@@ -1,9 +1,29 @@
 cmake --build . --config Release cl /O2 ...
 
+Resume:
+    Look at Pranav's CV descriptions and copy the format for my CV.
+    Update linkedin CV to match decriptions/numbers on CV.
+    Change CV so that image appears on website (need to modify how website accesses image)
+    Create a PDF version using wkhtmltopdf (need to use the modified image access + --enable-local-file_access)
+
+        Microsoft, Google, Amazon
+        Apple, Netflix, Uber
+
+        Can apply to Google 3 times a month - should try to hit that limit everytime
+            find 3 jobs and apply today
+        Check Microsoft application limit
+        Check Amazon application limit
+
 Syntax highlighter:
     nothing at this time
 
 Documentation:
+
+    Add notes to docs about current status - inaccurate error messages, limited List support, unoptimized code
+        still evolving syntx.
+
+    Add notes about upcoming features for v0.0.3 - more comprehensive List (variable length array) support,
+        along with more accurate error messages.
 
     Fill in 'underneath the hood' section 
         base it on Lua paper - include instructions of vm
@@ -50,21 +70,17 @@ Try using Visual Studio Debugger to debug problems in future
 
 Implementation:
 
-    PARSE_TYPE isn't necessary - just use PARSE with parser_type as the function
-
-    Why are primitive types lowercase?  It should be uppercase to conform with
-        the way types are defined anyway.
-        Bool, Float, Int, String, File, List<>, Map<>
-
-        will require changing a lot of the scripts + docs
+    NODE_SLICE_STRING should be generalized to NODE_SLICE so that it works for Lists too
+        just change the compilation type checking to allow lists, and then the vm can
+        check for lists (along with strings) and slice accordingly (creating a new shallow copy of the List for now)
 
     list := List<int>()
     could make a bunch of functions to add values and make list.size read only
         Make List.size NOT increase when user adds item.  Accessing a non-valid index will give
         runtime error, and trying to set to an index more than List.size will also give a runtime error
 
-        '++' operator works on two lists, or one element and one list
-        '=++'
+        '++' operator works on lists or elements.  Using ++ on two elements will create a new list with those two elements
+        '++='
 
         OP_APPEND (look for pattern <id> = <id> ++ element where ids are the same) - this is a common pattern
         OP_CONCAT (take the bigger capacity * 2 to find new capacity.  If one is an element, just add it to correct place in array)
@@ -83,6 +99,9 @@ Implementation:
         list[idx] = element //set element
         list.length //get length
 
+        length(list)
+        append(list, element)
+        prepend(list, element)
         maximum(list) -> ([type])
         minimum(list) -> ([type])
         reverse(list) -> ()
@@ -91,6 +110,11 @@ Implementation:
         all(list, condition) -> (bool)
         map(list, fun) -> ()
         sort(list, cond) -> ()
+
+    Clear up warnings
+
+    Generalize to tensors (multidimensional arrays)?
+        Tensor<float>(1, 1, 1)
 
     Scripts don't print sometimes.  Is it an issue with printf or sprintf errors?
         if happens when multiple scripts are run in succession.

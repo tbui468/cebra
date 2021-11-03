@@ -23,6 +23,7 @@ void print_token(Token token) {
         case TOKEN_GREATER_EQUAL: printf("TOKEN_GREATER_EQUAL"); break;
         case TOKEN_IDENTIFIER: printf("TOKEN_IDENTIFIER [%.*s]", token.length, token.start); break;
         case TOKEN_PLUS: printf("TOKEN_PLUS"); break;
+        case TOKEN_PLUS_PLUS: printf("TOKEN_PLUS_PLUS"); break;
         case TOKEN_MINUS: printf("TOKEN_MINUS"); break;
         case TOKEN_STAR: printf("TOKEN_STAR"); break;
         case TOKEN_SLASH: printf("TOKEN_SLASH"); break;

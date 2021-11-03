@@ -50,7 +50,8 @@ typedef enum {
     OP_ADD_GLOBAL,
     OP_GET_GLOBAL,
     OP_HALT,
-    OP_SLICE
+    OP_SLICE,
+    OP_CONCAT
 } OpCode;
 
 typedef struct {

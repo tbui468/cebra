@@ -1,4 +1,21 @@
-a := "hello"
+//a := List<int>()
+print("start of script\n")
+a := 24 ++ 12
 
-i := 0
-print(a[i:a.size])
+a = a ++ 3
+
+a = -42 ++ a
+
+b := 9 ++ 99
+
+a = a ++ b ++ a
+
+print("middle of script\n")
+
+print("Size: " + a.size as string + "\n")
+
+for i := 0, i < 4 * 2 + 2, i = i + 1 {
+    print(a[i]) print("\n") //should print 24
+}
+
+print("end of script\n")

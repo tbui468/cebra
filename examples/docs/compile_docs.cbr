@@ -121,7 +121,6 @@ highlight_line :: (s: string) -> (string) {
     dq := "\""[1:2]
 
     highlights := List<Highlight>()
-    highlights.size = 0
 
     i := 0
     while i < s.size {
