@@ -536,7 +536,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
     switch(node->type) {
         //declarations
         case NODE_DECL_VAR: {
-            ResultCode result = compile_decl_var_and_get_type(compiler, (DeclVar*)node, node_type);
+            result = compile_decl_var_and_get_type(compiler, (DeclVar*)node, node_type);
             //stripping type info away for regular declaration - the type info is need in sequence
             //  assignments/declarations so that's why we need this function
             *node_type = make_nil_type();
@@ -557,17 +557,14 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                         struct Type* type = NULL;
                         struct Node* decl_var = make_decl_var(dv->name, dv->type, make_nil(make_dummy_token()));
                         COMPILE_NODE(decl_var, &type);
-                        int idx = resolve_local(compiler, dv->name);
-                        decl_idx[decl_idx_count++] = -1;
+                        decl_idx[decl_idx_count++] = -1; //-1 means we don't need to update type later
                     } else if (seq->op.type == TOKEN_COLON_EQUAL && seq->left->nodes[i]->type == NODE_GET_VAR) {
                         Token name = ((GetVar*)(seq->left->nodes[i]))->name;
                         //Int Type is just a place holder and is replaced later
                         struct Node* decl_var = make_decl_var(name, make_int_type(), make_nil(make_dummy_token()));
-                        DeclVar* dv = (DeclVar*)decl_var;
                         struct Type* type = NULL;
                         COMPILE_NODE(decl_var, &type);
-                        int idx = resolve_local(compiler, name);
-                        decl_idx[decl_idx_count++] = idx;
+                        decl_idx[decl_idx_count++] = resolve_local(compiler, name);
                     } else {
                         decl_idx[decl_idx_count++] = -1;
                     }
@@ -779,8 +776,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 struct ObjString* prop_name = make_string(dv->name.start, dv->name.length);
 
                 push_root(to_string(prop_name));
-
-                struct TypeArray* class_ret_types = make_type_array();
 
                 start_scope(compiler);
                 struct Type* right_type = NULL;
@@ -1305,7 +1300,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             break;
         }
         case NODE_NIL: {
-            Nil* nil = (Nil*)node;
             emit_byte(compiler, OP_NIL);
             *node_type =  make_nil_type();
             break;
@@ -1330,7 +1324,6 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
                 bool cast_up = is_substruct(from, to);
                 bool cast_down = is_substruct(to, from);
-                bool valid_cast = cast_up || cast_down;
 
                 EMIT_ERROR_IF(!(cast_up || cast_down), cast->name, "Struct instances must be cast only to superstructs or substructs.");
 

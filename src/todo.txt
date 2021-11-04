@@ -86,6 +86,12 @@ Cebra Features to Work On:
         we can release version 0.0.3 with better List support + better error messages
         fix one thing each day
 
+    chunk.c 'disassemble_chunk' needs a major update to include all the new ops
+        added
+
+    NODE_LIST isn't really an AST node.  Should rename to NodeArray or something else
+        and restructure program to make that clear
+
     Write a simple neural network to read in and train using MNIST digits
         Need a byte datatype - and it should really be its own array type since
         otherwise we're wasting 4 bytes when we only need 1.
