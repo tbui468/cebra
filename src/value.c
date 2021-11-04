@@ -34,6 +34,13 @@ Value to_boolean(bool b) {
     return value;
 }
 
+Value to_byte(uint8_t byte) {
+    Value value;
+    value.type = VAL_BYTE;
+    value.as.byte_type = byte;
+    return value;
+}
+
 Value to_function(struct ObjFunction* obj) {
     Value value;
     value.type = VAL_FUNCTION;
@@ -103,36 +110,6 @@ Value to_native(struct ObjNative* obj) {
     return value;
 }
 
-Value negate_value(Value value) {
-    if (IS_INT(value)) {
-        return to_integer(-value.as.integer_type);
-    } else if (IS_FLOAT(value)) {
-        return to_float(-value.as.float_type);
-    } else if (IS_BOOL(value)) {
-        return to_boolean(!value.as.boolean_type);
-    }
-}
-
-Value add_values(Value a, Value b) {
-    if (IS_INT(b)) {
-        return to_integer(a.as.integer_type + b.as.integer_type);
-    } else if (IS_FLOAT(b)) {
-        return to_float(a.as.float_type + b.as.float_type);
-    } else if (IS_STRING(b)) {
-        struct ObjString* left = a.as.string_type;
-        struct ObjString* right = b.as.string_type;
-
-        int length =  left->length + right->length;
-        char* concat = ALLOCATE_ARRAY(char);
-        concat = GROW_ARRAY(concat, char, length + 1, 0);
-        memcpy(concat, left->chars, left->length);
-        memcpy(concat + left->length, right->chars, right->length);
-        concat[length] = '\0';
-
-        struct ObjString* obj = take_string(concat, length);
-        return to_string(obj);
-    }
-}
 Value subtract_values(Value a, Value b) {
     if (IS_INT(b)) {
         return to_integer(a.as.integer_type - b.as.integer_type);
@@ -140,6 +117,7 @@ Value subtract_values(Value a, Value b) {
         return to_float(a.as.float_type - b.as.float_type);
     }
 }
+
 Value multiply_values(Value a, Value b) {
     if (IS_INT(b)) {
         return to_integer(a.as.integer_type * b.as.integer_type);
@@ -184,16 +162,14 @@ Value equal_values(Value a, Value b) {
             return to_boolean(a.as.integer_type == b.as.integer_type);
         case VAL_FLOAT:
             return to_boolean(a.as.float_type == b.as.float_type);
-        case VAL_STRING: {
-            struct ObjString* s1 = a.as.string_type;
-            struct ObjString* s2 = b.as.string_type;
-            if (s1->length != s2->length) return to_boolean(false);
-            return to_boolean(memcmp(s1->chars, s2->chars, s1->length) == 0);
-        }
+        case VAL_STRING:
+            return to_boolean(a.as.string_type == b.as.string_type);
         case VAL_BOOL:
             return to_boolean(a.as.boolean_type == b.as.boolean_type);
         case VAL_NIL:
             return to_boolean(true);
+        default:
+            return to_boolean(false); //TODO: need to fill in other types here
     }
 }
 
@@ -309,6 +285,9 @@ void print_value(Value a) {
         case VAL_BOOL:
             printf("%s", a.as.boolean_type ? "true" : "false");
             break;
+        case VAL_BYTE:
+            printf("%d", a.as.byte_type);
+            break;
         case VAL_STRING:
             printf("<string %s >", a.as.string_type->chars);
             break;
@@ -358,6 +337,7 @@ const char* value_type_to_string(ValueType type) {
         case VAL_INT: return "VAL_INT";
         case VAL_FLOAT: return "VAL_FLOAT";
         case VAL_BOOL: return "VAL_BOOL";
+        case VAL_BYTE: return "VAL_BYTE";
         case VAL_STRING: return "VAL_STRING";
         case VAL_FUNCTION: return "VAL_FUNCTION";
         case VAL_STRUCT: return "VAL_STRUCT";
@@ -416,6 +396,7 @@ struct Obj* get_object(Value* value) {
         case VAL_INT:
         case VAL_FLOAT:
         case VAL_BOOL:
+        case VAL_BYTE:
         case VAL_NIL:
         case VAL_TYPE:
             return NULL;

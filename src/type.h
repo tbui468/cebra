@@ -8,6 +8,7 @@ typedef enum {
     TYPE_INT,
     TYPE_FLOAT,
     TYPE_BOOL,
+    TYPE_BYTE,
     TYPE_STRING,
     TYPE_NIL,
     TYPE_ARRAY,
@@ -57,6 +58,10 @@ struct TypeFloat {
 };
 
 struct TypeBool {
+    struct Type base;
+};
+
+struct TypeByte {
     struct Type base;
 };
 
@@ -110,6 +115,7 @@ void add_type(struct TypeArray* sl, struct Type* type);
 struct Type* make_int_type();
 struct Type* make_float_type();
 struct Type* make_bool_type();
+struct Type* make_byte_type();
 struct Type* make_string_type();
 struct Type* make_nil_type();
 struct Type* make_fun_type(struct TypeArray* params, struct TypeArray* returns);

@@ -68,6 +68,7 @@ struct Type* make_int_type() {
     insert_type((struct Type*)type);
     return (struct Type*)type;
 }
+
 struct Type* make_float_type() {
     struct TypeFloat* type = ALLOCATE(struct TypeFloat);
 
@@ -76,6 +77,7 @@ struct Type* make_float_type() {
     insert_type((struct Type*)type);
     return (struct Type*)type;
 }
+
 struct Type* make_bool_type() {
     struct TypeBool* type = ALLOCATE(struct TypeBool);
 
@@ -84,6 +86,16 @@ struct Type* make_bool_type() {
     insert_type((struct Type*)type);
     return (struct Type*)type;
 }
+
+struct Type* make_byte_type() {
+    struct TypeByte* type = ALLOCATE(struct TypeByte);
+
+    type->base.type = TYPE_BYTE;
+    
+    insert_type((struct Type*)type);
+    return (struct Type*)type;
+}
+
 struct Type* make_string_type() {
     struct TypeString* type = ALLOCATE(struct TypeString);
 
@@ -245,6 +257,7 @@ bool same_type(struct Type* type1, struct Type* type2) {
         case TYPE_INT:
         case TYPE_FLOAT:
         case TYPE_BOOL:
+        case TYPE_BYTE:
         case TYPE_STRING:
         case TYPE_INFER:
         case TYPE_NIL:
@@ -324,6 +337,10 @@ void print_type(struct Type* type) {
         }
         case TYPE_BOOL: {
             printf("TypeBool stub");
+            break;
+        }
+        case TYPE_BYTE: {
+            printf("TypeByte stub");
             break;
         }
         case TYPE_STRING: {
@@ -409,6 +426,11 @@ void free_type(struct Type* type) {
         case TYPE_BOOL: {
             struct TypeBool* type_bool = (struct TypeBool*)type;
             FREE(type_bool, struct TypeBool);
+            break;
+        }
+        case TYPE_BYTE: {
+            struct TypeByte* type_byte = (struct TypeByte*)type;
+            FREE(type_byte, struct TypeByte);
             break;
         }
         case TYPE_STRING: {

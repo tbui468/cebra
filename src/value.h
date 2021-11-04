@@ -30,6 +30,7 @@ typedef enum {
     VAL_INT,
     VAL_FLOAT,
     VAL_BOOL,
+    VAL_BYTE,
     VAL_STRING,
     VAL_FUNCTION,
     VAL_STRUCT,
@@ -49,6 +50,7 @@ typedef struct {
         int32_t integer_type;
         double float_type;
         bool boolean_type;
+        uint8_t byte_type;
         struct ObjString* string_type;
         struct ObjFunction* function_type;
         struct ObjStruct* class_type;
@@ -67,6 +69,7 @@ Value to_float(double num);
 Value to_integer(int32_t num);
 Value to_string(struct ObjString* obj);
 Value to_boolean(bool b);
+Value to_byte(uint8_t byte);
 Value to_function(struct ObjFunction* obj);
 Value to_struct(struct ObjStruct* obj);
 Value to_instance(struct ObjInstance* obj);
@@ -77,8 +80,6 @@ Value to_map(struct ObjMap* obj);
 Value to_enum(struct ObjEnum* obj);
 Value to_file(struct ObjFile* obj);
 Value to_nil();
-Value negate_value(Value value);
-Value add_values(Value a, Value b);
 Value subtract_values(Value a, Value b);
 Value multiply_values(Value a, Value b);
 Value divide_values(Value a, Value b);

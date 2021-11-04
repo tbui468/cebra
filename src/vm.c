@@ -209,13 +209,43 @@ ResultCode run_program(VM* vm) {
             }
             case OP_NEGATE: {
                 Value value = pop(vm);
-                push(vm, negate_value(value));
+                if (IS_INT(value)) {
+                    push(vm, to_integer(-value.as.integer_type));
+                } else if (IS_FLOAT(value)) {
+                    push(vm, to_float(-value.as.float_type));
+                } else if (IS_BOOL(value)) {
+                    push(vm, to_boolean(!value.as.boolean_type));
+                } else {
+                    add_error(vm, "Only ints, floats and booleans can be negated.");
+                    return RESULT_FAILED;
+                }
                 break;
             }
             case OP_ADD: {
                 Value b = peek(vm, 0);
                 Value a = peek(vm, 1);
-                Value result = add_values(a, b);
+                Value result;
+                if (IS_INT(b)) {
+                    result = to_integer(a.as.integer_type + b.as.integer_type);
+                } else if (IS_FLOAT(b)) {
+                    result = to_float(a.as.float_type + b.as.float_type);
+                } else if (IS_STRING(b)) {
+                    struct ObjString* left = a.as.string_type;
+                    struct ObjString* right = b.as.string_type;
+
+                    int length =  left->length + right->length;
+                    char* concat = ALLOCATE_ARRAY(char);
+                    concat = GROW_ARRAY(concat, char, length + 1, 0);
+                    memcpy(concat, left->chars, left->length);
+                    memcpy(concat + left->length, right->chars, right->length);
+                    concat[length] = '\0';
+
+                    struct ObjString* obj = take_string(concat, length);
+                    result = to_string(obj);
+                } else {
+                    add_error(vm, "Only ints, floats and strings can be used with the '+' operator.");
+                    return RESULT_FAILED;
+                }
                 pop(vm);
                 pop(vm);
                 push(vm, result);
@@ -788,9 +818,7 @@ ResultCode run(VM* vm, struct ObjFunction* script) {
         //reset
         vm->error_count = 0;
         pop_stack(vm);
-
-        return RESULT_FAILED;
     }
 
-    return RESULT_SUCCESS;
+    return result;
 }

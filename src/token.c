@@ -11,6 +11,7 @@ void print_token(Token token) {
         case TOKEN_FLOAT_TYPE: printf("TOKEN_FLOAT_TYPE"); break;
         case TOKEN_STRING_TYPE: printf("TOKEN_STRING_TYPE"); break;
         case TOKEN_BOOL_TYPE: printf("TOKEN_BOOL_TYPE"); break;
+        case TOKEN_BYTE_TYPE: printf("TOKEN_BYTE_TYPE"); break;
         case TOKEN_NIL_TYPE: printf("TOKEN_NIL_TYPE"); break;
         case TOKEN_TRUE: printf("TOKEN_TRUE"); break;
         case TOKEN_FALSE: printf("TOKEN_FALSE"); break;

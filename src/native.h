@@ -325,6 +325,7 @@ static ResultCode print_string_with_escape_sequences(char* s) {
     }
 
     printf("%s", start);
+    return RESULT_SUCCESS;
 }
 
 static ResultCode print_native(int arg_count, Value* args, struct ValueArray* returns) {

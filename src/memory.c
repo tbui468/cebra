@@ -273,6 +273,7 @@ static int sweep() {
     return bytes_freed;
 }
 
+#ifdef DEBUG_LOG_GC
 static void print_marks() {
     struct Obj* current = mm.objects;
     while (current != NULL) {
@@ -292,6 +293,7 @@ static void print_objects() {
     }
     printf("Object count: %d\n", count);
 }
+#endif 
 
 static void delete_unmarked_strings() {
     for (int i = 0; i < mm.vm->strings.capacity; i++) {

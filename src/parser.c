@@ -36,18 +36,8 @@ static ResultCode declaration(struct Node** node);
 static ResultCode block(struct Node* prepend, struct Node** node);
 static ResultCode parse_type(struct Type** type);
 static ResultCode param_declaration(struct Node** node);
-static ResultCode assignment(struct Node** node, int expected);
 static ResultCode parse_expression(struct Node** node);
 static ResultCode resolve_type_identifiers(struct Type** type, struct Table* globals);
-
-static void print_all_tokens() {
-    printf("******start**********\n");
-    printf("%d\n", parser.previous.type);
-    printf("%d\n", parser.current.type);
-    printf("%d\n", parser.next.type);
-    printf("%d\n", parser.next_next.type);
-    printf("******end**********\n");
-}
 
 void add_to_compile_pass(struct Node* decl, struct NodeList* first, struct NodeList* second) {
     switch(decl->type) {
@@ -1081,7 +1071,6 @@ static ResultCode resolve_global_function_identifiers(struct Table* globals) {
         if (entry->value.type != VAL_TYPE) continue;
         if (entry->value.as.type_type->type != TYPE_FUN) continue;
 
-        struct TypeFun* fun_type = (struct TypeFun*)(entry->value.as.type_type);
         if (resolve_type_identifiers(&entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED;
     }
     return RESULT_SUCCESS;
@@ -1092,7 +1081,6 @@ static ResultCode resolve_global_struct_identifiers(struct Table* globals) {
         struct Entry* entry = &globals->entries[i];
         if (entry->value.type != VAL_TYPE || entry->value.as.type_type->type != TYPE_STRUCT) continue;
 
-        struct TypeStruct* tc = (struct TypeStruct*)(entry->value.as.type_type);
         if (resolve_type_identifiers(&entry->value.as.type_type, globals) == RESULT_FAILED) return RESULT_FAILED; 
     }
     return RESULT_SUCCESS;
@@ -1221,7 +1209,7 @@ static ResultCode resolve_type_identifiers(struct Type** type, struct Table* glo
     return result;
 }
 
-ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes, struct Table* globals) {
+ResultCode parse_module(const char* source, struct NodeList* dynamic_nodes) {
     prime_lexer(source);
     ResultCode result = RESULT_SUCCESS;
 
@@ -1278,7 +1266,7 @@ ResultCode parse(const char* source, struct NodeList* static_nodes, struct NodeL
 
     init_parser(globals, static_nodes);
 
-    ResultCode result = parse_module(source, dynamic_nodes, globals);
+    ResultCode result = parse_module(source, dynamic_nodes);
 
     for (int i = 0; i < parser.import_count; i++) {
         imports[i + *import_count] = parser.imports[i]; 
@@ -1308,8 +1296,8 @@ ResultCode parse(const char* source, struct NodeList* static_nodes, struct NodeL
 
 ResultCode process_ast(struct NodeList* static_nodes, struct NodeList* dynamic_nodes, struct Table* globals, struct Node* all_nodes, struct NodeList* final_ast) {
     ResultCode result = RESULT_SUCCESS;
-    result = resolve_node_identifiers_and_inheritance(parser.globals, all_nodes);
-    if (result != RESULT_FAILED) result = order_nodes(dynamic_nodes, parser.statics_nl, final_ast);
+    result = resolve_node_identifiers_and_inheritance(globals, all_nodes);
+    if (result != RESULT_FAILED) result = order_nodes(dynamic_nodes, static_nodes, final_ast);
     return result;
 }
 

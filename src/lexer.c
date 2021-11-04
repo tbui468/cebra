@@ -67,6 +67,7 @@ static Token read_keyword(char c) {
             break;
         case 'b':
             if (match_string("ool")) return new_token(TOKEN_BOOL_TYPE);
+            if (match_string("yte")) return new_token(TOKEN_BYTE_TYPE);
             break;
         case 'e':
             if (match_string("lse")) return new_token(TOKEN_ELSE);

@@ -1,24 +1,36 @@
 cmake --build . --config Release cl /O2 ...
 
-Resume:
-    Add section about current personal work: maintain/add features to Cebra.  Building Saola OS.
-    Look at Pranav's CV descriptions and copy the format for my CV.
-    Update linkedin CV to match new descriptions/dates on CV.
-    Change CV so that image appears on website (need to modify how website accesses image)
-    Create a PDF version using wkhtmltopdf (need to use the modified image access + --enable-local-file_access)
+Applications:
+        Try the C online test on linked-in
+            note down the types of questions they ask so that I can study if necessary
+            Try the other skills tests too
 
-        Microsoft, Google, Amazon
+        Microsoft, Google, Amazon, IBM, NVidia, AMD, Intel, 
+        Hardware companies?  Lenovo, Dell, Qualcomm, Broadcom
+        There are smaller software/hardware companies I should research
         Apple, Netflix, Uber
+        Blue Origin , SpaceX
 
         Can apply to Google 3 times a month - apply 3 times a month until I get a job or interview there
             find 3 jobs and apply today
         Check Microsoft application limit
         Check Amazon application limit
 
+    Vietnam
+        Fossil (embedded?)
+        Bosch Engineering (embedded)
+        Samsung (embedded)
+    USA
+        Amazon (Junior Software Engineer) - check dashboard for updates
+        Microsoft (Firmware Development Engineer) - check Microsoft 'action center' for updates
+        Microsoft (Software Engineer I/II) - check Microsoft 'action center' for updates
+
 Syntax highlighter:
     nothing at this time
 
 Documentation:
+
+    Add info about static functions NOT able to capture state, and how anonymous functions can (closures)
 
     Add a 'News' section to main page to explain upcoming features for v0.0.3 - more comprehensive List (variable length array) support,
         along with more accurate error messages.
@@ -68,13 +80,23 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
-    Element-wise operations on Lists
-        list3 = list1 + list2  //create a new list that is an element-wise sum of both lists
+    Clear up warnings - find one to clear up each day.  (a lot are related to switch statements)
 
     Error messages - this is a big one.  This should be the main goal now so that
         we can release version 0.0.3 with better List support + better error messages
+        fix one thing each day
 
-    Clear up warnings (that const char* / char* one is annoying, especially)
+    Write a simple neural network to read in and train using MNIST digits
+        Need a byte datatype - and it should really be its own array type since
+        otherwise we're wasting 4 bytes when we only need 1.
+
+        Read in labels only for now and count up the number of each digit to
+        test byte array
+
+        Let's just use 0x as the prefix for now - can change it later
+            0xff
+        add TOKEN_BYTE using '0x' to recognize bytes
+        what happens if a use tries to add two bytes where the sum > 255 or < 0?
 
     Generalize to tensors (multidimensional arrays)?
         Tensor<float>(1, 1, 1)

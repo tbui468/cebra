@@ -354,17 +354,16 @@ void print_node(struct Node* node) {
         }
         case NODE_ENUM: {
             struct DeclEnum* de = (struct DeclEnum*)node;
-            printf("( DeclEnum ");
+            printf("( DeclEnum [%.*s])", de->name.length, de->name.start);
             break;
         }
         case NODE_CONTAINER: {
             struct DeclContainer* de = (struct DeclContainer*)node;
-            printf("( DeclContainer ");
+            printf("( DeclContainer [%.*s])", de->name.length, de->name.start);
             break;
         }
         //Statements
         case NODE_EXPR_STMT: {
-            ExprStmt* es = (ExprStmt*)node;
             printf("Expr Stmt");
             break;
         }
@@ -376,17 +375,8 @@ void print_node(struct Node* node) {
             break;
         }
         case NODE_IF_ELSE: {
-            IfElse* ie = (IfElse*)node;
-            printf("( If ");
-            /*
-            print_node(ie->condition);
-            printf(" then ");
-            print_node(ie->then_block);
-            if (ie->else_block != NULL) {
-                printf(" else ");
-                print_node(ie->else_block);
-            }*/
-            printf(" )");
+            IfElse* ie = (IfElse*)node; 
+            printf("( If [%.*s] )", ie->name.length, ie->name.start);
             break;
         }
         case NODE_WHEN: {
