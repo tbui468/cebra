@@ -209,8 +209,8 @@ static ResultCode parse_anonymous_function(struct Node** node) {
 
 static ResultCode primary(struct Node** node) {
     if (match(TOKEN_INT) || match(TOKEN_FLOAT) || 
-            match(TOKEN_STRING) || match(TOKEN_TRUE) ||
-            match(TOKEN_FALSE)) {
+        match(TOKEN_STRING) || match(TOKEN_TRUE) ||
+        match(TOKEN_FALSE) || match(TOKEN_BYTE)) {
         *node = make_literal(parser.previous);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_LIST)) {
@@ -572,6 +572,11 @@ static ResultCode parse_type(struct Type** type) {
 
     if (match(TOKEN_FILE_TYPE)) {
         *type = make_file_type();
+        return RESULT_SUCCESS;
+    }
+
+    if (match(TOKEN_BYTE_TYPE)) {
+        *type = make_byte_type();
         return RESULT_SUCCESS;
     }
 
@@ -1120,6 +1125,7 @@ static ResultCode order_nodes_by_enums_structs_functions(struct NodeList* origin
 
 //script compiler keeps a linked list of all AST nodes to delete when it's freed
 //we're using it here to resolve any identifiers for user defined types in the entire list (non struct/function nodes)
+//TODO: why only these three nodes???
 static ResultCode resolve_remaining_identifiers(struct Table* globals, struct Node* node) {
     while (node != NULL) {
         switch(node->type) {
@@ -1140,6 +1146,8 @@ static ResultCode resolve_remaining_identifiers(struct Table* globals, struct No
                 if (resolve_type_identifiers(&c->type, globals) == RESULT_FAILED) return RESULT_FAILED;
                 break;
             }
+            default:
+                break;
         }
         node = node->next;
     }
@@ -1205,6 +1213,8 @@ static ResultCode resolve_type_identifiers(struct Type** type, struct Table* glo
                result = RESULT_FAILED;
            break;
         }
+        default:
+           break;
     }
     return result;
 }

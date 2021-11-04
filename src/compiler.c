@@ -127,6 +127,34 @@ static ResultCode compile_literal(struct Compiler* compiler, struct Node* node, 
             *node_type = make_bool_type();
             break;
         }
+        case TOKEN_BYTE: {
+            emit_byte(compiler, OP_CONSTANT);
+            char hi = *(literal->name.start + 2);
+            char lo = *(literal->name.start + 3);
+
+            if (hi <= 'f' && hi >= 'a') {
+                hi -= 87;
+            } else if (hi <= '9' && hi >= '0') {
+                hi -= 48;
+            } else {
+                EMIT_ERROR_IF(true, literal->name, "Bytes must use only 0-9 and a-f.");
+            }
+            if (lo <= 'f' && lo >= 'a') {
+                lo -= 87;
+            } else if (lo <= '9' && lo >= '0') {
+                lo -= 48;
+            } else {
+                EMIT_ERROR_IF(true, literal->name, "Bytes must use only 0-9 and a-f.");
+            }
+            //get char and shift to make a = 10, b = 11, c = 12, d = 13, e = 14, f = 15
+            //shift '0'-'9' to make it 0-9
+            //emit compiler error if not 'a'-'f' or '0'-'9'
+            //multiply hi by 16 and then add to lo, then cast to uint8_t
+            uint8_t result = (uint8_t)hi * 16 + (uint8_t)lo;
+            emit_short(compiler, add_constant(compiler, to_byte(result)));
+            *node_type = make_byte_type();
+            break;
+        }
         default: {
             EMIT_ERROR_IF(true, literal->name, "Literal type undefined.");
             break;

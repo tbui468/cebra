@@ -92,12 +92,14 @@ void print_stack(VM* vm) {
     }
 }
 
+#ifdef DEBUG_TRACE
 static void print_trace(VM* vm, OpCode op) {
     //print opcodes - how can the compiler and this use the same code?
     printf("Op: %s\n", op_to_string(op));
     print_stack(vm);
     printf("\n*************************\n");
 }
+#endif
 
 static struct ObjUpvalue* capture_upvalue(VM* vm, Value* location) {
 

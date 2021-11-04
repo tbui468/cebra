@@ -5,6 +5,7 @@
 
 typedef enum {
     TOKEN_INT,
+    TOKEN_BYTE,
     TOKEN_FLOAT,
     TOKEN_STRING,
     TOKEN_INT_TYPE,

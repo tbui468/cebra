@@ -1,0 +1,12 @@
+
+bytes := List<byte>()
+bytes = bytes ++ 0x1f
+bytes = bytes ++ 0x2f
+bytes = bytes ++ 0x3f
+
+
+foreach b: byte in bytes {
+    print(b) print("\n")
+}
+
+//read in file, look at each char and convert to byte

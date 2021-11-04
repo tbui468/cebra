@@ -140,8 +140,16 @@ Token next_token() {
         return new_token(TOKEN_FLOAT);
     }
 
-    //int or float (with possible trailing .)
+    //byte, int or float (with possible trailing .)
     if (isdigit(c)) {
+
+        if (c == '0' && peek_char() == 'x') {
+            next_char(); //x
+            next_char(); //hi hex value
+            next_char(); //lo hex value
+            return new_token(TOKEN_BYTE);
+        }
+
         read_numbers();
         if (peek_char() == '.') {
             next_char();

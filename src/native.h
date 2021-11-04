@@ -339,12 +339,17 @@ static ResultCode print_native(int arg_count, Value* args, struct ValueArray* re
         case VAL_INT:
             printf("%d", value.as.integer_type);
             break;
+        case VAL_BYTE:
+            printf("%d", value.as.byte_type);
+            break;
         case VAL_FLOAT:
             printf("%f", value.as.float_type);
             break; 
         case VAL_NIL:
             printf("nil");
             break;
+        default:
+            return RESULT_FAILED;
     }
     add_value(returns, to_nil());
     return RESULT_SUCCESS;
@@ -353,13 +358,15 @@ static ResultCode print_native(int arg_count, Value* args, struct ValueArray* re
 static ResultCode define_print(struct Compiler* compiler) {
     struct Type* str_type = make_string_type();
     struct Type* int_type = make_int_type();
+    struct Type* byte_type = make_byte_type();
     struct Type* float_type = make_float_type();
     struct Type* nil_type = make_nil_type();
     //using dummy token with enum type to allow printing enums (as integer)
     //otherwise the typechecker sees it as an error
     struct Type* enum_type = make_enum_type(make_dummy_token());
     str_type->opt = int_type;
-    int_type->opt = float_type;
+    int_type->opt = byte_type;
+    byte_type->opt = float_type;
     float_type->opt = nil_type;
     nil_type->opt = enum_type;
     struct TypeArray* sl = make_type_array();

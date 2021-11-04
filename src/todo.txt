@@ -33,7 +33,7 @@ Documentation:
     Add info about static functions NOT able to capture state, and how anonymous functions can (closures)
 
     Add a 'News' section to main page to explain upcoming features for v0.0.3 - more comprehensive List (variable length array) support,
-        along with more accurate error messages.
+        along with more accurate error messages. And 'byte' data type
 
     Fill in 'underneath the hood' section 
         base it on Lua paper - include instructions of vm
@@ -80,17 +80,37 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
-    Clear up warnings - find one to clear up each day.  (a lot are related to switch statements)
+    Bytes can be declared - a: byte = 0xff.  But does this really help us?
+        read_all(f) will already return a string - we just need to convert each
+        character into a byte.  And then...?
+
+        The entire goal here is to train a neural network, so we need floats.  So
+        we need to go from a string -> byte -> float, and then scale it as needed.
+
+        Then we need to have a way to cast from a single string character to a byte
+        using 'as' keyword.  Get this working, then try to load the labels to see
+        if it looks right.
 
     Error messages - this is a big one.  This should be the main goal now so that
         we can release version 0.0.3 with better List support + better error messages
-        fix one thing each day
 
-    chunk.c 'disassemble_chunk' needs a major update to include all the new ops
-        added
+        Runtime error messages at runtime could be a lot better - it doesn't include line
+            info right now - it should be include.  It'll slow down the vm, BUT
+            it's such a useful thing for the programmer to know.
 
-    NODE_LIST isn't really an AST node.  Should rename to NodeArray or something else
-        and restructure program to make that clear
+        Compiler Errors need to include Token info - token.start and token.length so
+            that user knows which variables have the error (eg, using undeclared variables)
+
+    Warnings
+        chunk.c 'disassemble_chunk' needs a major update to include all the new ops
+            added
+
+        A lot of warnings from unused arg_count in native functions - is this necessary?
+
+        NODE_LIST isn't really an AST node.  Should rename to NodeArray or something else
+            and restructure program to make that clear
+
+        const char* and char* mismatch in main.c line 144
 
     Write a simple neural network to read in and train using MNIST digits
         Need a byte datatype - and it should really be its own array type since
