@@ -10,6 +10,9 @@ Applications:
         There are smaller software/hardware companies I should research
         Apple, Netflix, Uber
         Blue Origin , SpaceX
+        Viasat - embedded software engineer (for satellite internet!!!)
+        Raytheon - embedded software engineer (missles and defense)
+        Pivotal Commonware - Embedded Linux Software Engineer (modern 5g stuff)
 
         Can apply to Google 3 times a month - apply 3 times a month until I get a job or interview there
             find 3 jobs and apply today
@@ -17,13 +20,19 @@ Applications:
         Check Amazon application limit
 
     Vietnam
+        Nov. 4
         Fossil (embedded?)
         Bosch Engineering (embedded)
         Samsung (embedded)
     USA
+        Nov. 5
         Amazon (Junior Software Engineer) - check dashboard for updates
-        Microsoft (Firmware Development Engineer) - check Microsoft 'action center' for updates
-        Microsoft (Software Engineer I/II) - check Microsoft 'action center' for updates
+        Microsoft (Firmware Development Engineer) - application rejected
+        Microsoft (Software Engineer I/II) - application rejected
+        Nov. 6
+        Facebook (Embedded Software Engineer) - apply to up to three jobs every 90 days at Facebook
+        IBM (Entry level Firmware Developer)
+        Qualcomm (Embedded Platform Software Engineer)
 
 Syntax highlighter:
     nothing at this time
