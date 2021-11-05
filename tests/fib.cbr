@@ -2,8 +2,6 @@ time := clock()
 fib(35)
 print(clock() - time)
 
-
-
 fib :: (i: int) -> int {
     if i < 2 {
         -> i

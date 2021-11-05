@@ -510,7 +510,7 @@ static ResultCode compile_set_element(struct Compiler* compiler, Token name, str
 
     struct Type* template;
     if (left_type->type == TYPE_LIST) {
-        EMIT_ERROR_IF(idx_type->type != TYPE_INT, name, "Index must be integer type.");
+        EMIT_ERROR_IF(idx_type->type != TYPE_INT && idx_type->type != TYPE_BYTE, name, "Index must be integer or byte type.");
         template = ((struct TypeList*)left_type)->type;
         EMIT_ERROR_IF(!same_type(template, right_type), name, "List type and right side type must match.");
     } else if (left_type->type == TYPE_MAP) {
@@ -1226,12 +1226,12 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (left_type == NULL) {
                 EMIT_ERROR_IF(true, get_idx->name, "[] access must be used on a list or map type.");
             } else if (left_type->type == TYPE_STRING) {
-                EMIT_ERROR_IF(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
+                EMIT_ERROR_IF(idx_type->type != TYPE_INT && idx_type->type != TYPE_BYTE, get_idx->name, "Index must be integer or byte type.");
 
                 emit_byte(compiler, OP_GET_ELEMENT);
                 *node_type = left_type;
             } else if (left_type->type == TYPE_LIST) {
-                EMIT_ERROR_IF(idx_type->type != TYPE_INT, get_idx->name, "Index must be integer type.");
+                EMIT_ERROR_IF(idx_type->type != TYPE_INT && idx_type->type != TYPE_BYTE, get_idx->name, "Index must be integer or byte type.");
 
                 emit_byte(compiler, OP_GET_ELEMENT);
                 *node_type = ((struct TypeList*)left_type)->type;

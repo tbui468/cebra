@@ -2,3 +2,4 @@
 *.swp
 /build_wasm
 /build_clang
+/build

@@ -79,7 +79,7 @@ Documentation:
 
 Stack overflow
     big stack allocations:
-        OP_RETURN 256 Values - could try to NaN-box halve the Value size from 16 to 8 bytes
+        OP_RETURN 256 Values - could try to NaN-boxing halve the Value size from 16 to 8 bytes
         Compiler - locals, upvalues
         VM - stack, callframes
 
@@ -89,16 +89,10 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
-    Bytes can be declared - a: byte = 0xff.  But does this really help us?
-        read_all(f) will already return a string - we just need to convert each
-        character into a byte.  And then...?
+    cast byte to int, and cast int to float for training in network
 
-        The entire goal here is to train a neural network, so we need floats.  So
-        we need to go from a string -> byte -> float, and then scale it as needed.
-
-        Then we need to have a way to cast from a single string character to a byte
-        using 'as' keyword.  Get this working, then try to load the labels to see
-        if it looks right.
+    look at python script where I wrote that network from scratch to train MNIST 
+      network
 
     Error messages - this is a big one.  This should be the main goal now so that
         we can release version 0.0.3 with better List support + better error messages

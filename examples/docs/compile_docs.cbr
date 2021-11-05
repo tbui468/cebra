@@ -1,8 +1,8 @@
 //this only works on Windows
-dir := "C:\\dev\\cebra\\examples\\docs\\"
+//dir := "C:\\dev\\cebra\\examples\\docs\\"
 
 //*nix
-//dir_nix := "/home/thomas/dev/cebra/examples/docs/"
+dir := "/home/thomas/dev/cebra/examples/docs/"
 
 //combine html files
 

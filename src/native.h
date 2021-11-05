@@ -193,6 +193,45 @@ static ResultCode define_close(struct Compiler* compiler) {
     return define_native(compiler, "close", close_native, make_fun_type(params, returns));
 }
 
+static ResultCode read_all_bytes(int arg_count, Value* args, struct ValueArray* returns) {
+    FILE* fp = args[0].as.file_type->fp;
+    if (fp == NULL) {
+        add_value(returns, to_nil());
+        return RESULT_FAILED;
+    }
+
+    fseek(fp, 0L, SEEK_END);
+    size_t file_size = ftell(fp);
+    rewind(fp);
+    char* buffer = ALLOCATE_ARRAY(char);
+    buffer = GROW_ARRAY(buffer, char, file_size + 1, 0);
+    size_t bytes_read = fread(buffer, sizeof(char), file_size, fp);
+    buffer[bytes_read] = '\0';
+
+    //make a byte from each char, and add to List
+    struct ObjList* list = make_list();
+    push_root(to_list(list));
+    for (int i = 0; i < bytes_read; i++) {
+        add_value(&list->values, to_byte((uint8_t)buffer[i]));
+    }
+    add_value(returns, to_list(list));
+    pop_root(); 
+
+    FREE_ARRAY(buffer, char, file_size + 1);
+
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_read_bytes(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_file_type());
+    struct TypeArray* returns = make_type_array();
+    struct Type* byte_type = make_byte_type();
+    struct Type* list_type = make_list_type(byte_type);
+    add_type(returns, list_type);
+    return define_native(compiler, "read_bytes", read_all_bytes, make_fun_type(params, returns));
+}
+
 static ResultCode read_all_native(int arg_count, Value* args, struct ValueArray* returns) {
     FILE* fp = args[0].as.file_type->fp;
     if (fp == NULL) {
@@ -382,6 +421,7 @@ void define_native_functions(struct Compiler* compiler) {
     define_input(compiler);
     define_open(compiler);
     define_read_all(compiler);
+    define_read_bytes(compiler);
     define_close(compiler);
     define_read_line(compiler);
     define_eof(compiler);
