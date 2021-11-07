@@ -238,6 +238,9 @@ static ResultCode compile_logical(struct Compiler* compiler, struct Node* node, 
                 emit_byte(compiler, OP_EQUAL);
                 emit_byte(compiler, OP_NEGATE);
                 break;
+            default:
+                EMIT_ERROR_IF(true, logical->name, "Invalid logical operator.");
+                break;
         }
     }
 
@@ -306,6 +309,9 @@ static ResultCode compile_binary(struct Compiler* compiler, struct Node* node, s
             case TOKEN_STAR: emit_byte(compiler, OP_MULTIPLY); break;
             case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE); break;
             case TOKEN_MOD: emit_byte(compiler, OP_MOD); break;
+            default:
+                EMIT_ERROR_IF(true, binary->name, "Binary operand invalid.");
+                break;
         }
     }
 
@@ -710,10 +716,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
 
             if (df->anonymous) {
                 //assign to variable if assigned
-                int set_idx = 0;
                 if (df->name.length != 0) {
                     EMIT_ERROR_IF(declared_in_scope(compiler, df->name), df->name, "Identifier already defined.");
-                    set_idx = add_local(compiler, df->name, make_infer_type());
                 }
 
                 //check for invalid parameter types

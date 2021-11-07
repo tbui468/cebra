@@ -95,12 +95,12 @@ void disassemble_chunk(struct ObjFunction* function) {
                 break;
             }
             case OP_FUN: {
-                int fun_idx = read_short(chunk, i);
+                read_short(chunk, i);
                 i += 2;
                 int upvalue_count = read_byte(chunk, i++);
                 for (int j = 0; j < upvalue_count; j++) {
-                    int uv_local = read_byte(chunk, i++);
-                    int uv_idx = read_byte(chunk, i++);
+                    read_byte(chunk, i++);
+                    read_byte(chunk, i++);
                 }
                 printf("<fun>"); 
                 break;
@@ -182,10 +182,13 @@ void disassemble_chunk(struct ObjFunction* function) {
                 break;
             }
             case OP_STRUCT: {
-                int slot = read_short(chunk, i);
+                read_short(chunk, i);
                 i += 2;
                 break;
             }
+            default: 
+                printf("OP invalid or not implemented.");
+                break;
         }
         printf("\n");
     }

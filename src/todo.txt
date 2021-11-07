@@ -122,15 +122,15 @@ Cebra Features to Work On:
             that user knows which variables have the error (eg, using undeclared variables)
 
     Warnings
-        chunk.c 'disassemble_chunk' needs a major update to include all the new ops
-            added
+        parser.c has zero-length strings in PARSE_WITHOUT_MSG, which is causing warnings
 
-        A lot of warnings from unused arg_count in native functions - is this necessary?
-
-        NODE_LIST isn't really an AST node.  Should rename to NodeArray or something else
-            and restructure program to make that clear
+            PARSE_WITHOUT_MSG is a bit weird - let's just include a message for now (eg, replace with PARSE)
+            and we can deal with deleting unhelpful/duplicate errors some other way.
 
         const char* and char* mismatch in main.c line 144
+
+        Fill in disassemble chunk properly instead of using 'default' to catch unimplemented
+            ops.
 
     Write a simple neural network to read in and train using MNIST digits
         Need a byte datatype - and it should really be its own array type since

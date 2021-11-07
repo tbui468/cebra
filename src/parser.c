@@ -8,9 +8,6 @@
         PARSE_ERROR_IF(token.type != TOKEN_DUMMY, token, __VA_ARGS__); \
     }
 
-#define PARSE_WITHOUT_MSG(fun, node_ptr) \
-    PARSE(fun, node_ptr, make_dummy_token(), "")
-
 #define CONSUME(token_type, token, ...) \
     PARSE_ERROR_IF(!match(token_type), token, __VA_ARGS__)
 
@@ -275,8 +272,8 @@ static ResultCode primary(struct Node** node) {
 }
 
 static ResultCode call_dot(struct Node** node) {
-    struct Node* left;
-    PARSE_WITHOUT_MSG(primary, &left);
+    struct Node* left = NULL;
+    PARSE(primary, &left, parser.previous, "Invalid expression");
 
     while ((match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
         switch(parser.previous.type) {
@@ -337,7 +334,7 @@ static ResultCode unary(struct Node** node) {
 
 static ResultCode cast(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(unary, &left);
+    PARSE(unary, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_AS)) {
         Token name = parser.previous;
@@ -352,7 +349,7 @@ static ResultCode cast(struct Node** node) {
 
 static ResultCode factor(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(cast, &left);
+    PARSE(cast, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_STAR) || match(TOKEN_SLASH) || match(TOKEN_MOD)) {
         Token name = parser.previous;
@@ -367,7 +364,7 @@ static ResultCode factor(struct Node** node) {
 
 static ResultCode term(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(factor, &left);
+    PARSE(factor, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_PLUS) || match(TOKEN_MINUS) || match(TOKEN_PLUS_PLUS)) {
         Token name = parser.previous;
@@ -382,7 +379,7 @@ static ResultCode term(struct Node** node) {
 
 static ResultCode relation(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(term, &left);
+    PARSE(term, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_LESS) || match(TOKEN_LESS_EQUAL) ||
             match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
@@ -398,7 +395,7 @@ static ResultCode relation(struct Node** node) {
 
 static ResultCode equality(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(relation, &left);
+    PARSE(relation, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL) || match(TOKEN_IN)) {
         Token name = parser.previous;
@@ -417,7 +414,7 @@ static ResultCode equality(struct Node** node) {
 
 static ResultCode and(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(equality, &left);
+    PARSE(equality, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_AND)) {
         Token name = parser.previous;
@@ -432,7 +429,7 @@ static ResultCode and(struct Node** node) {
 
 static ResultCode or(struct Node** node) {
     struct Node* left;
-    PARSE_WITHOUT_MSG(and, &left);
+    PARSE(and, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_OR)) {
         Token name = parser.previous;
@@ -482,12 +479,12 @@ static ResultCode parse_sequence(struct Node** node) {
 }
 
 static ResultCode parse_expression(struct Node** node) {
-    struct Node* left;
-    PARSE_WITHOUT_MSG(or, &left);
+    struct Node* left = NULL;
+    PARSE(or, &left, parser.previous, "Invalid expression.");
 
     while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
         Token name = parser.previous;
-        struct Node* right;
+        struct Node* right = NULL;
         PARSE(parse_expression, &right, name, "Invalid expression.");
 
         if (name.type == TOKEN_EQUAL) {
