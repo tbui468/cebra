@@ -1,0 +1,81 @@
+w0 := mat_create(784, 64)
+b0 := mat_create(1, 64)
+w1 := mat_create(64, 10)
+b1 := mat_create(1, 10)
+inputs := mat_create(1, 784)
+
+m1 := mat_create(2, 2)
+m2 := mat_create(2, 2)
+m1.values[0] = 1.0
+m1.values[1] = 2.0
+m1.values[2] = 3.0
+m1.values[3] = 4.0
+m2.values[0] = 1.0
+m2.values[1] = 2.0
+m2.values[2] = 3.0
+m2.values[3] = 4.0
+
+sum := mat_mul(m1, m2)
+mat_map(sum, (f: float) -> (float) { -> 2.0 * f })
+
+for i := 0, i < 4, i = i + 1 {
+  print(sum.values[i]) print(" ")
+  if i == 1 print("\n")
+}
+print("\n")
+
+////////////////////////MATRICES///////////////////////
+
+Matrix :: struct {
+  values := List<float>()
+  rows := 0
+  cols := 0
+}
+
+mat_create :: (rows: int, cols: int) -> (Matrix) {
+  w := Matrix()
+  w.rows = rows
+  w.cols = cols
+  for i := 0, i < rows * cols, i = i + 1 {
+    w.values[w.values.size] = 0.0
+  }
+  -> w
+}
+
+mat_add :: (m1: Matrix, m2: Matrix) -> (Matrix) {
+  result := mat_create(m1.rows, m1.cols)
+  for i := 0, i < m1.rows * m1.cols, i = i + 1 {
+    result.values[i] = m1.values[i] + m2.values[i]
+  }
+  -> result
+}
+
+mat_mul :: (m1: Matrix, m2: Matrix) -> (Matrix) {
+  result := mat_create(m1.rows, m2.cols)
+  for row := 0, row < m1.rows, row = row + 1 {
+    for col := 0, col < m2.cols, col = col + 1 {
+      sum := 0.0
+      for len := 0, len < m1.cols, len = len + 1 {
+        a := m1.values[row * m1.cols + len]
+        b := m2.values[col + m2.cols * len]
+        sum = sum + a * b
+      } 
+      result.values[row * m1.cols + col] = sum
+    }
+  }
+  -> result
+}
+
+mat_copy :: (m: Matrix) -> (Matrix) {
+  copy := mat_create(m.rows, m.cols)
+  for i := 0, i < m.rows * m.cols, i = i + 1 {
+    copy.values[copy.values.size] = m.values[i]
+  }
+  -> copy
+}
+
+mat_map :: (m: Matrix, fun: (float) -> (float)) -> () {
+  for i := 0, i < m.rows * m.cols, i = i + 1 {
+    m.values[i] = fun(m.values[i])
+  } 
+}

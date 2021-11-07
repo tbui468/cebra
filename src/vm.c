@@ -310,9 +310,7 @@ ResultCode run_program(VM* vm) {
                     pop(vm);
                     push(vm, prop_val);
                     break;
-                }
-
-                if (peek(vm, 0).type == VAL_ENUM) {
+                } else if (peek(vm, 0).type == VAL_ENUM) {
                     struct ObjEnum* inst = peek(vm, 0).as.enum_type;
                     struct ObjString* prop_name = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;
                     Value prop_val = to_nil();
@@ -320,6 +318,9 @@ ResultCode run_program(VM* vm) {
                     pop(vm);
                     push(vm, prop_val);
                     break;
+                } else {
+                    add_error(vm, "Attempting to access property of invalid object.");
+                    return RESULT_FAILED;
                 }
             }
             case OP_SET_PROP: {
@@ -469,45 +470,6 @@ ResultCode run_program(VM* vm) {
                 }
                 break;
             }
-            case OP_SET_SIZE: {
-                //[new count][list | string]
-                Value value = peek(vm, 0);
-                int new_count = peek(vm, 1).as.integer_type;
-                if (value.type == VAL_LIST) {
-                    //TODO: should make list sizes read-only
-                    struct ObjList* list = value.as.list_type;
-                    if (new_count > list->values.capacity) {
-                        int new_cap = list->values.capacity == 0 ? 8 : list->values.capacity * 2;
-                        while (new_cap < new_count) {
-                            new_cap *= 2;
-                        }
-                        list->values.values = GROW_ARRAY(list->values.values, Value, new_cap, list->values.capacity);
-                        list->values.capacity = new_cap;
-                    }
-                    while (list->values.count < new_count) {
-                        list->values.values[list->values.count] = list->default_value;
-                        list->values.count++;
-                    }
-                    list->values.count = new_count;
-                    pop(vm);
-                    break;
-                }
-
-                if (value.type == VAL_STRING) {
-                    struct ObjString* str = value.as.string_type;
-                    str->chars = GROW_ARRAY(str->chars, char, new_count + 1, str->length + 1);
-                    if (str->length > new_count) {
-                        str->chars[new_count] = '\0';
-                    } else if (str->length < new_count) {
-                        memset(str->chars + str->length, ' ', new_count - str->length);
-                        str->chars[new_count] = '\0';
-                    }
-                    str->length = new_count;
-
-                    pop(vm);
-                    break;
-                }
-            }
             case OP_SLICE: {
                 //[string | List][start idx][end idx - exclusive]
                 int end_idx = pop(vm).as.integer_type;
@@ -567,8 +529,7 @@ ResultCode run_program(VM* vm) {
                     struct ObjString* c = make_string(str->chars + idx, 1);
                     push(vm, to_string(c));
                     break; 
-                }
-                if (left.type == VAL_LIST) {
+                } else if (left.type == VAL_LIST) {
                     int idx = pop(vm).as.integer_type;
                     struct ObjList* list = left.as.list_type;
                     if (idx >= list->values.count) {
@@ -578,8 +539,7 @@ ResultCode run_program(VM* vm) {
                     pop(vm);
                     push(vm, list->values.values[idx]);
                     break;
-                }
-                if (left.type == VAL_MAP) {
+                } else if (left.type == VAL_MAP) {
                     struct ObjString* key = pop(vm).as.string_type;
                     struct ObjMap* map = left.as.map_type;
                     Value value = to_nil();
@@ -590,6 +550,9 @@ ResultCode run_program(VM* vm) {
                     pop(vm);
                     push(vm, value);
                     break;
+                } else {
+                    add_error(vm, "Attemping element access on invalid object.");
+                    return RESULT_FAILED;
                 }
             }
             case OP_SET_ELEMENT: {

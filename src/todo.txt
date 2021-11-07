@@ -13,6 +13,9 @@ Applications:
         Viasat - embedded software engineer (for satellite internet!!!)
         Raytheon - embedded software engineer (missles and defense)
         Pivotal Commonware - Embedded Linux Software Engineer (modern 5g stuff)
+        Optello - firmware engineer
+        Blue Origin - Early Career Software Development Engineer
+        General Electric
 
         Can apply to Google 3 times a month - apply 3 times a month until I get a job or interview there
             find 3 jobs and apply today
@@ -89,10 +92,24 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
+    Get rid of warnings...
+
+    get matrix_multiplication module working by adding
+      random_uniform(start, end) function to make random numbers
+
     cast byte to int, and cast int to float for training in network
 
     look at python script where I wrote that network from scratch to train MNIST 
       network
+
+      nodes: 784 -> 64 -> 10
+        1x784 * 784x64 + 1 x 64
+        1x64 * 64x10 + 1x10
+
+      For each layer, multiply weights and add biases (tile the biases to match size of matrix)
+      Then apply an activation function to get rid of the linearity.  Save any intermediate results necessary.
+      Back prop using saved intermediate results - this will update the weights and biases of each layer.
+      Repeat with 
 
     Error messages - this is a big one.  This should be the main goal now so that
         we can release version 0.0.3 with better List support + better error messages

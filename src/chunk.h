@@ -38,7 +38,6 @@ typedef enum {
     OP_NATIVE,
     OP_LIST,
     OP_GET_SIZE,
-    OP_SET_SIZE,
     OP_GET_ELEMENT,
     OP_SET_ELEMENT,
     OP_IN_LIST,

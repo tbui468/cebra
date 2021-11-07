@@ -527,13 +527,7 @@ static ResultCode compile_set_element(struct Compiler* compiler, Token name, str
 static ResultCode compile_set_prop(struct Compiler* compiler, Token prop, struct Type* inst_type, struct Type* right_type, int depth) {
     ResultCode result = RESULT_SUCCESS;
 
-    /*
-    if (inst_type->type == TYPE_LIST) {
-        EMIT_ERROR_IF(!same_token_literal(prop, make_token(TOKEN_DUMMY, 0, "size", 4)), 
-                      prop, "Property doesn't exist on Lists.");
-
-        emit_byte(compiler, OP_SET_SIZE);
-    } else*/ if (inst_type->type == TYPE_STRUCT) {
+     if (inst_type->type == TYPE_STRUCT) {
         struct ObjString* name = make_string(prop.start, prop.length);
         push_root(to_string(name));
         emit_byte(compiler, OP_SET_PROP);
