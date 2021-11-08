@@ -22,11 +22,15 @@ Applications:
         Check Microsoft application limit
         Check Amazon application limit
 
+        AMD - firmware engineer
+        BAE - Entry leve/Junior Software Engineer
+
     Vietnam
         Nov. 4
         Fossil (embedded?)
         Bosch Engineering (embedded)
         Samsung (embedded)
+        Nov. 9
     USA
         Nov. 5
         Amazon (Junior Software Engineer) - check dashboard for updates
@@ -36,6 +40,10 @@ Applications:
         Facebook (Embedded Software Engineer) - apply to up to three jobs every 90 days at Facebook
         IBM (Entry level Firmware Developer)
         Qualcomm (Embedded Platform Software Engineer)
+        Nov. 8
+        Optello (Embedded Software Engineer)
+        Facebook (Embedded Software Engineer Intern) 2 job in 90 days at Facebook
+        Viasat (Embedded Software Engineer - Grad)
 
 Syntax highlighter:
     nothing at this time
@@ -92,6 +100,11 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
+    Make executable of Windows for version 0.0.2
+      clone this version from github onto windows
+      use mingw (include static flags) to create windows build
+      zip executable and post on website
+
     Get rid of warnings...
 
     get matrix_multiplication module working by adding
@@ -121,11 +134,11 @@ Cebra Features to Work On:
         Compiler Errors need to include Token info - token.start and token.length so
             that user knows which variables have the error (eg, using undeclared variables)
 
-    Warnings
-        parser.c has zero-length strings in PARSE_WITHOUT_MSG, which is causing warnings
+    OP_GET_SIZE should just be integrated into OP_GET_PROP - just have an if/else
+        to get sizes if a List or String
 
-            PARSE_WITHOUT_MSG is a bit weird - let's just include a message for now (eg, replace with PARSE)
-            and we can deal with deleting unhelpful/duplicate errors some other way.
+    Warnings
+        fgets return value is ignored in main.c
 
         const char* and char* mismatch in main.c line 144
 
