@@ -24,6 +24,8 @@ for i := 0, i < 4, i = i + 1 {
 }
 print("\n")
 
+print(random_uniform(-5.0, 0.0))
+
 ////////////////////////MATRICES///////////////////////
 
 Matrix :: struct {

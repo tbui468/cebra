@@ -100,16 +100,6 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
-    Make executable of Windows for version 0.0.2
-      clone this version from github onto windows
-      use mingw (include static flags) to create windows build
-      zip executable and post on website
-
-    Get rid of warnings...
-
-    get matrix_multiplication module working by adding
-      random_uniform(start, end) function to make random numbers
-
     cast byte to int, and cast int to float for training in network
 
     look at python script where I wrote that network from scratch to train MNIST 
@@ -138,10 +128,6 @@ Cebra Features to Work On:
         to get sizes if a List or String
 
     Warnings
-        fgets return value is ignored in main.c
-
-        const char* and char* mismatch in main.c line 144
-
         Fill in disassemble chunk properly instead of using 'default' to catch unimplemented
             ops.
 

@@ -134,7 +134,7 @@ static ResultCode repl(VM* vm) {
         printf(">>> ");
 
         sources[source_count] = (char*)malloc(MAX_CHARS_PER_LINE); //max chars in line
-        fgets(sources[source_count], MAX_CHARS_PER_LINE, stdin);
+        sources[source_count] = fgets(sources[source_count], MAX_CHARS_PER_LINE, stdin);
         source_count++;
         if (memcmp(sources[source_count - 1], "quit()", 6) == 0) {
             break;

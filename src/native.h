@@ -4,6 +4,24 @@
 #include <time.h>
 #include <ctype.h>
 
+static ResultCode random_uniform_native(int arg_count, Value* args, struct ValueArray* returns) {
+    double start = args[0].as.float_type;
+    double end = args[1].as.float_type;
+    srand(time(NULL)); 
+    double random_value = (double)rand()/RAND_MAX * (end - start) + start;
+    add_value(returns, to_float(random_value));
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_random_uniform(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    add_type(params, make_float_type());
+    add_type(params, make_float_type());
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_float_type());
+    return define_native(compiler, "random_uniform", random_uniform_native, make_fun_type(params, returns));
+}
+
 static ResultCode is_digit_native(int arg_count, Value* args, struct ValueArray* returns) {
     struct ObjString* s = args[0].as.string_type;
     for (int i = 0; i < s->length; i++) {
@@ -55,7 +73,6 @@ static ResultCode append_string_with_escape_sequences(FILE* fp, char* s) {
         switch(*(back_slash + 1)) {
             case 'a': fprintf(fp, "\a"); break;
             case 'b': fprintf(fp, "\b"); break;
-            case 'e': fprintf(fp, "\e"); break;
             case 'f': fprintf(fp, "\f"); break;
             case 'n': fprintf(fp, "\n"); break;
             case 'r': fprintf(fp, "\r"); break;
@@ -79,7 +96,6 @@ static ResultCode append_native(int arg_count, Value* args, struct ValueArray* r
     struct ObjFile* file = args[0].as.file_type;
     struct ObjString* s = args[1].as.string_type;
     fseek(file->fp, 0, SEEK_END);
-    //if (fprintf(file->fp, "%s\n", s->chars) < 0) return RESULT_FAILED;
     append_string_with_escape_sequences(file->fp, s->chars);
 
     fflush(file->fp);
@@ -314,8 +330,8 @@ static ResultCode define_open(struct Compiler* compiler) {
 
 
 static ResultCode input_native(int arg_count, Value* args, struct ValueArray* returns) {
-    char input[256];
-    fgets(input, 256, stdin);
+    char buffer[256];
+    char* input = fgets(buffer, 256, stdin);
     struct ObjString* s = make_string(input, strlen(input) - 1);
     push_root(to_string(s));
     add_value(returns, to_string(s));
@@ -348,7 +364,6 @@ static ResultCode print_string_with_escape_sequences(char* s) {
         switch(*(back_slash + 1)) {
             case 'a': printf("\a"); break;
             case 'b': printf("\b"); break;
-            case 'e': printf("\e"); break;
             case 'f': printf("\f"); break;
             case 'n': printf("\n"); break;
             case 'r': printf("\r"); break;
@@ -430,6 +445,7 @@ void define_native_functions(struct Compiler* compiler) {
     define_clear(compiler);
     define_is_alpha(compiler);
     define_is_digit(compiler);
+    define_random_uniform(compiler);
 }
 
 
