@@ -1,32 +1,25 @@
-w0 := mat_create(784, 64)
+//Maybe make the neural network train on something simplier
+//since CPU training is so slow with images...
+
+w0 := mat_create(64, 64) //should be 784x64, but making it smaller for faster iteration
 b0 := mat_create(1, 64)
 w1 := mat_create(64, 10)
 b1 := mat_create(1, 10)
-inputs := mat_create(1, 784)
+inputs := mat_create(1, 64) //should be 1x784
 
-m1 := mat_create(2, 2)
-m2 := mat_create(2, 2)
-m1.values[0] = 1.0
-m1.values[1] = 2.0
-m1.values[2] = 3.0
-m1.values[3] = 4.0
-m2.values[0] = 1.0
-m2.values[1] = 2.0
-m2.values[2] = 3.0
-m2.values[3] = 4.0
+z0 := mat_add(mat_mul(inputs, w0), b0)
+a0 := mat_map(z0, sigmoid)
+z1 := mat_add(mat_mul(a0, w1), b1)
+//apply loss function here, then backprop
 
-sum := mat_mul(m1, m2)
-mat_map(sum, (f: float) -> (float) { -> 2.0 * f })
+print("rows: " + z1.rows as string + "\n")
+print("cols: " + z1.cols as string + "\n")
 
-for i := 0, i < 4, i = i + 1 {
-  print(sum.values[i]) print(" ")
-  if i == 1 print("\n")
+for i := 0, i < 10, i = i + 1 {
+  print(z1.values[i]) print("\n")
 }
-print("\n")
 
-print(random_uniform(-5.0, 0.0))
-
-////////////////////////MATRICES///////////////////////
+////////////////MATRIX DATA STRUCT AND OPERATIONS//////////////////
 
 Matrix :: struct {
   values := List<float>()
@@ -39,7 +32,7 @@ mat_create :: (rows: int, cols: int) -> (Matrix) {
   w.rows = rows
   w.cols = cols
   for i := 0, i < rows * cols, i = i + 1 {
-    w.values[w.values.size] = 0.0
+    w.values[w.values.size] = random_uniform(-1.0, 1.0)
   }
   -> w
 }
@@ -76,8 +69,15 @@ mat_copy :: (m: Matrix) -> (Matrix) {
   -> copy
 }
 
-mat_map :: (m: Matrix, fun: (float) -> (float)) -> () {
+mat_map :: (m: Matrix, fun: (float) -> (float)) -> (Matrix) {
+  result := mat_create(m.rows, m.cols)
   for i := 0, i < m.rows * m.cols, i = i + 1 {
-    m.values[i] = fun(m.values[i])
+    result.values[i] = fun(m.values[i])
   } 
+  -> result
+}
+
+////////////////UTILITY///////////////////
+sigmoid :: (f: float) -> (float) {
+  -> 1.0 / (1.0 + exp(-f))
 }

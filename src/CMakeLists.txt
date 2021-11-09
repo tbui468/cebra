@@ -38,3 +38,5 @@ add_executable(
     ${Headers}
     ${Sources}
     )
+
+target_link_libraries(Cebra m) #libm (for math.h) requires explicitly linking for some reason

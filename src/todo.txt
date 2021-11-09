@@ -1,50 +1,5 @@
 cmake --build . --config Release cl /O2 ...
 
-Applications:
-        Try the C online test on linked-in
-            note down the types of questions they ask so that I can study if necessary
-            Try the other skills tests too
-
-        Microsoft, Google, Amazon, IBM, NVidia, AMD, Intel, 
-        Hardware companies?  Lenovo, Dell, Qualcomm, Broadcom
-        There are smaller software/hardware companies I should research
-        Apple, Netflix, Uber
-        Blue Origin , SpaceX
-        Viasat - embedded software engineer (for satellite internet!!!)
-        Raytheon - embedded software engineer (missles and defense)
-        Pivotal Commonware - Embedded Linux Software Engineer (modern 5g stuff)
-        Optello - firmware engineer
-        Blue Origin - Early Career Software Development Engineer
-        General Electric
-
-        Can apply to Google 3 times a month - apply 3 times a month until I get a job or interview there
-            find 3 jobs and apply today
-        Check Microsoft application limit
-        Check Amazon application limit
-
-        AMD - firmware engineer
-        BAE - Entry leve/Junior Software Engineer
-
-    Vietnam
-        Nov. 4
-        Fossil (embedded?)
-        Bosch Engineering (embedded)
-        Samsung (embedded)
-        Nov. 9
-    USA
-        Nov. 5
-        Amazon (Junior Software Engineer) - check dashboard for updates
-        Microsoft (Firmware Development Engineer) - application rejected
-        Microsoft (Software Engineer I/II) - application rejected
-        Nov. 6
-        Facebook (Embedded Software Engineer) - apply to up to three jobs every 90 days at Facebook
-        IBM (Entry level Firmware Developer)
-        Qualcomm (Embedded Platform Software Engineer)
-        Nov. 8
-        Optello (Embedded Software Engineer)
-        Facebook (Embedded Software Engineer Intern) 2 job in 90 days at Facebook
-        Viasat (Embedded Software Engineer - Grad)
-
 Syntax highlighter:
     nothing at this time
 

@@ -3,11 +3,41 @@
 
 #include <time.h>
 #include <ctype.h>
+#include <math.h>
+
+static ResultCode exp_native(int arg_count, Value* args, struct ValueArray* returns) {
+    double pow;
+    if (args[0].type == VAL_INT) {
+        pow = (double)(args[0].as.integer_type);
+    } else if (args[0].type == VAL_BYTE) {
+        pow = (double)(args[0].as.byte_type);
+    } else if (args[0].type == VAL_FLOAT) {
+        pow = (double)(args[0].as.float_type);
+    } else {
+        return RESULT_FAILED;
+    }
+
+    add_value(returns, to_float(exp(pow)));
+
+    return RESULT_SUCCESS;
+}
+
+static ResultCode define_exp(struct Compiler* compiler) {
+    struct TypeArray* params = make_type_array();
+    struct Type* f = make_float_type();
+    struct Type* i = make_int_type();
+    struct Type* b = make_byte_type();
+    f->opt = i;
+    i->opt = b;
+    add_type(params, f);
+    struct TypeArray* returns = make_type_array();
+    add_type(returns, make_float_type());
+    return define_native(compiler, "exp", exp_native, make_fun_type(params, returns));
+}
 
 static ResultCode random_uniform_native(int arg_count, Value* args, struct ValueArray* returns) {
     double start = args[0].as.float_type;
     double end = args[1].as.float_type;
-    srand(time(NULL)); 
     double random_value = (double)rand()/RAND_MAX * (end - start) + start;
     add_value(returns, to_float(random_value));
     return RESULT_SUCCESS;
@@ -446,6 +476,7 @@ void define_native_functions(struct Compiler* compiler) {
     define_is_alpha(compiler);
     define_is_digit(compiler);
     define_random_uniform(compiler);
+    define_exp(compiler);
 }
 
 

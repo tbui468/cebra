@@ -214,6 +214,8 @@ static Value cast_to_int(Value* value) {
             long i = strtol(value->as.string_type->chars, &end, 10);
             return to_integer(i);
         }
+        case VAL_BYTE:
+            return to_integer((int)(value->as.byte_type));
         case VAL_FLOAT:
             return to_integer((int)(value->as.float_type));
         case VAL_BOOL:
@@ -223,6 +225,24 @@ static Value cast_to_int(Value* value) {
             return to_nil();
     }
 }
+
+static Value cast_to_byte(Value* value) {
+    switch(value->type) {
+        case VAL_STRING: {
+            char* end;
+            uint8_t i = (uint8_t)strtol(value->as.string_type->chars, &end, 10);
+            return to_byte(i);
+        }
+        case VAL_FLOAT:
+            return to_byte((uint8_t)(value->as.float_type));
+        case VAL_BOOL:
+            if (value->as.boolean_type) return to_integer(1);
+            return to_byte(0);
+        default:
+            return to_nil();
+    }
+}
+
 static Value cast_to_float(Value* value) {
     switch(value->type) {
         case VAL_STRING: {
@@ -232,6 +252,8 @@ static Value cast_to_float(Value* value) {
         }
         case VAL_INT:
             return to_float((double)(value->as.integer_type));
+        case VAL_BYTE:
+            return to_float((double)(value->as.byte_type));
         case VAL_BOOL:
             if (value->as.boolean_type) return to_float(1.0);
             return to_float(0.0);
@@ -263,6 +285,8 @@ Value cast_primitive(ValueType to_type, Value* value) {
             return cast_to_string(value);
         case VAL_INT:
             return cast_to_int(value);
+        case VAL_BYTE:
+            return cast_to_byte(value);
         case VAL_FLOAT:
             return cast_to_float(value);
         case VAL_BOOL:

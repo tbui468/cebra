@@ -179,6 +179,7 @@ struct Type* make_enum_type(Token name) {
 
 bool is_primitive(struct Type* type) {
     return type->type == TYPE_INT ||
+           type->type == TYPE_BYTE ||
            type->type == TYPE_FLOAT ||
            type->type == TYPE_BOOL ||
            type->type == TYPE_STRING ||

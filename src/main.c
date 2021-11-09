@@ -161,6 +161,8 @@ static ResultCode repl(VM* vm) {
 
 int main(int argc, char** argv) {
 
+    srand(time(NULL));  //only used for 'random_uniform' native function for now
+
     //VM needs memory manager initialized before
     //vm.strings/vm.globals tables can be initialized
     init_memory_manager();
