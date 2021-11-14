@@ -55,19 +55,38 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
-    cast byte to int, and cast int to float for training in network
+    Change quick_sort functions to using qsort() function from stdlib.h
 
-    look at python script where I wrote that network from scratch to train MNIST 
-      network
+    Add basic socket support - see the python API for https for setting up a server
+      and create something similar.  This is also good practice for TCP/IP and UDP
+      for embedded systems stuff. This is a good primer on sockets.
+      https://beej.us/guide/bgnet/html/
 
-      nodes: 784 -> 64 -> 10
-        1x784 * 784x64 + 1 x 64
-        1x64 * 64x10 + 1x10
+      Read from part 3 - review part 2 if I want to
 
-      For each layer, multiply weights and add biases (tile the biases to match size of matrix)
-      Then apply an activation function to get rid of the linearity.  Save any intermediate results necessary.
-      Back prop using saved intermediate results - this will update the weights and biases of each layer.
-      Repeat with 
+      python sockets API:
+        socket()
+        bind()
+        listen()
+        accept()
+        connect()
+        connect_ex()
+        send()
+        recv()
+        close()
+
+    Write simple neural network to train MNIST on CPU
+
+      look at python script where I wrote that network from scratch to train MNIST 
+        network
+
+        nodes: 784 -> 64 -> 10
+          1x784 * 784x64 + 1 x 64
+          1x64 * 64x10 + 1x10
+
+        For each layer, multiply weights and add biases (tile the biases to match size of matrix)
+        Then apply an activation function to get rid of the linearity.  Save any intermediate results necessary.
+        Back prop using saved intermediate results - this will update the weights and biases of each layer.
 
     Error messages - this is a big one.  This should be the main goal now so that
         we can release version 0.0.3 with better List support + better error messages
@@ -85,18 +104,6 @@ Cebra Features to Work On:
     Warnings
         Fill in disassemble chunk properly instead of using 'default' to catch unimplemented
             ops.
-
-    Write a simple neural network to read in and train using MNIST digits
-        Need a byte datatype - and it should really be its own array type since
-        otherwise we're wasting 4 bytes when we only need 1.
-
-        Read in labels only for now and count up the number of each digit to
-        test byte array
-
-        Let's just use 0x as the prefix for now - can change it later
-            0xff
-        add TOKEN_BYTE using '0x' to recognize bytes
-        what happens if a use tries to add two bytes where the sum > 255 or < 0?
 
     Generalize to tensors (multidimensional arrays)?
         Tensor<float>(1, 1, 1)

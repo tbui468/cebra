@@ -958,30 +958,13 @@ static void prime_lexer(const char* source) {
     parser.next_next = next_token();
 }
 
-static int partition(struct Error* errors, int lo, int hi) {
-    struct Error pivot = errors[hi];
-    int i = lo - 1;
+int compare(const void* a, const void* b) {
+  struct Error* a_error = (struct Error*)a;
+  struct Error* b_error = (struct Error*)b;
 
-    for (int j = lo; j <= hi; j++) {
-        if (errors[j].token.line <= pivot.token.line) {
-            i++;
-            struct Error orig_i = errors[i];
-            errors[i] = errors[j];
-            errors[j] = orig_i;
-        }
-    }
-    return i;
-}
-
-static void quick_sort(struct Error* errors, int lo, int hi) {
-    int count = hi - lo + 1;
-    if (count <= 0) return;
-
-    //making pivot last element is potentially slow, but it's easier to implement
-    int p = partition(errors, lo, hi);
-
-    quick_sort(errors, lo, p - 1);
-    quick_sort(errors, p + 1, hi);
+  if (a_error->token.line == b_error->token.line) return 0;
+  else if (a_error->token.line < b_error->token.line) return -1;
+  else return 1;
 }
 
 static ResultCode check_global_circular_inheritance(struct Table* globals) {
@@ -1282,7 +1265,7 @@ ResultCode parse(const char* source, struct NodeList* static_nodes, struct NodeL
     *import_count += parser.import_count;
 
     if (parser.error_count > 0) {
-        quick_sort(parser.errors, 0, parser.error_count - 1);
+        qsort(parser.errors, parser.error_count, sizeof(struct Error), compare);
         for (int i = 0; i < parser.error_count; i++) {
             printf("Parse Error: [line %d] ", parser.errors[i].token.line);
             printf("%s\n", parser.errors[i].message);

@@ -1,20 +1,15 @@
-
 //images_f := open("./../../examples/neural_network/t10k-images.idx3-ubyte")
 //image_data := read_bytes(images_f)
 //close(images_f)
 
-f := open("./../../examples/neural_network/t10k-labels.idx1-ubyte")
-bytes := read_bytes(f)
-close(f)
 
-floats := List<float>()
-for i := 0, i < bytes.size, i = i + 1 {
-  floats[i] = bytes[i] as float
+for {
 }
 
-for i := 0, i < 16, i = i + 1 {
-  print(floats[i]) print("\n")
+for {
+
 }
 
-print("\n")
-print(exp(1))
+for {
+
+}

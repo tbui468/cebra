@@ -77,7 +77,17 @@ mat_map :: (m: Matrix, fun: (float) -> (float)) -> (Matrix) {
   -> result
 }
 
+mat_transpose :: (m: Matrix) -> (Matrix) {
+  result  := mat_create(m.rows, m.cols)
+  //flip rows and cols
+  -> result
+}
+
 ////////////////UTILITY///////////////////
 sigmoid :: (f: float) -> (float) {
   -> 1.0 / (1.0 + exp(-f))
+}
+
+sigmoid_prime :: (f: float) -> (float) {
+  -> sigmoid(f) * (1.0 - sigmoid(f))
 }
