@@ -55,7 +55,7 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
-    Change quick_sort functions to using qsort() function from stdlib.h
+    add error checks for systems calls/library function (system wrappers) using perror("");
 
     Add basic socket support - see the python API for https for setting up a server
       and create something similar.  This is also good practice for TCP/IP and UDP
@@ -74,6 +74,11 @@ Cebra Features to Work On:
         send()
         recv()
         close()
+  
+      make is a concrete simple TCP connection for now - can add option later
+        once it all works
+
+      add sockets/IP/TCP/UDP to cv after it works in Cebra
 
     Write simple neural network to train MNIST on CPU
 

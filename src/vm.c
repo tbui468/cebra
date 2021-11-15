@@ -211,11 +211,11 @@ ResultCode run_program(VM* vm) {
             }
             case OP_NEGATE: {
                 Value value = pop(vm);
-                if (IS_INT(value)) {
+                if (value.type == VAL_INT) {
                     push(vm, to_integer(-value.as.integer_type));
-                } else if (IS_FLOAT(value)) {
+                } else if (value.type == VAL_FLOAT) {
                     push(vm, to_float(-value.as.float_type));
-                } else if (IS_BOOL(value)) {
+                } else if (value.type == VAL_BOOL) {
                     push(vm, to_boolean(!value.as.boolean_type));
                 } else {
                     add_error(vm, "Only ints, floats and booleans can be negated.");
@@ -227,11 +227,11 @@ ResultCode run_program(VM* vm) {
                 Value b = peek(vm, 0);
                 Value a = peek(vm, 1);
                 Value result;
-                if (IS_INT(b)) {
+                if (b.type == VAL_INT) {
                     result = to_integer(a.as.integer_type + b.as.integer_type);
-                } else if (IS_FLOAT(b)) {
+                } else if (b.type == VAL_FLOAT) {
                     result = to_float(a.as.float_type + b.as.float_type);
-                } else if (IS_STRING(b)) {
+                } else if (b.type == VAL_STRING) {
                     struct ObjString* left = a.as.string_type;
                     struct ObjString* right = b.as.string_type;
 

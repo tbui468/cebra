@@ -111,7 +111,7 @@ Value to_native(struct ObjNative* obj) {
 }
 
 Value subtract_values(Value a, Value b) {
-    if (IS_INT(b)) {
+    if (b.type == VAL_INT) {
         return to_integer(a.as.integer_type - b.as.integer_type);
     } else {
         return to_float(a.as.float_type - b.as.float_type);
@@ -119,14 +119,14 @@ Value subtract_values(Value a, Value b) {
 }
 
 Value multiply_values(Value a, Value b) {
-    if (IS_INT(b)) {
+    if (b.type == VAL_INT) {
         return to_integer(a.as.integer_type * b.as.integer_type);
     } else {
         return to_float(a.as.float_type * b.as.float_type);
     }
 }
 Value divide_values(Value a, Value b) {
-    if (IS_INT(b)) {
+    if (b.type == VAL_INT) {
         return to_integer(a.as.integer_type / b.as.integer_type);
     } else {
         return to_float(a.as.float_type / b.as.float_type);
@@ -134,7 +134,7 @@ Value divide_values(Value a, Value b) {
 }
 
 Value less_values(Value a, Value b) {
-    if (IS_INT(b)) {
+    if (b.type == VAL_INT) {
         return to_boolean(a.as.integer_type < b.as.integer_type);
     } else {
         return to_boolean(a.as.float_type < b.as.float_type);
@@ -142,7 +142,7 @@ Value less_values(Value a, Value b) {
 }
 
 Value greater_values(Value a, Value b) {
-    if (IS_INT(b)) {
+    if (b.type == VAL_INT) {
         return to_boolean(a.as.integer_type > b.as.integer_type);
     } else {
         return to_boolean(a.as.float_type > b.as.float_type);

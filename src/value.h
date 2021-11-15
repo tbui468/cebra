@@ -5,17 +5,6 @@
 #include <stdbool.h>
 #include "token.h"
 
-#define IS_INT(value) (value.type == VAL_INT)
-#define IS_FLOAT(value) (value.type == VAL_FLOAT)
-#define IS_BOOL(value) (value.type == VAL_BOOL)
-#define IS_STRING(value) (value.type == VAL_STRING)
-#define IS_FUNCTION(value) (value.type == VAL_FUNCTION)
-#define IS_STRUCT(value) (value.type == VAL_STRUCT)
-#define IS_INSTANCE(value) (value.type == VAL_INSTANCE)
-#define IS_NIL(value) (value.type == VAL_NIL)
-#define IS_TYPE(value) (value.type == VAL_TYPE)
-#define IS_NATIVE(value) (value.type == VAL_NATIVE)
-
 struct ObjInstance;
 struct ObjFunction;
 struct ObjStruct;
