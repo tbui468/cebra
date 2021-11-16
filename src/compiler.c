@@ -576,6 +576,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
             if (seq->right != NULL) {
                 //tracking locals indices to update types if inferred
                 int* decl_idx = (int*)malloc(256 * sizeof(int));
+                if (decl_idx == NULL) {
+                    fprintf(stderr, "malloc");
+                    exit(1);
+                }
                 int decl_idx_count = 0;
 
                 //compile all variable declarations
@@ -931,6 +935,10 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         case NODE_WHEN: {
             struct When* when = (struct When*)node;
             int* jump_ends = (int*)malloc(MAX_IS_STATEMENTS * sizeof(int));
+            if (jump_ends == NULL) {
+                fprintf(stderr, "malloc");
+                exit(1);
+            }
             int je_count = 0;
 
             for (int i = 0; i < when->cases->count; i++) {
@@ -1379,6 +1387,10 @@ void init_compiler(struct Compiler* compiler, const char* start, int length, int
     compiler->locals_count = 0;
     add_local(compiler, name, type); //first slot is for function
     compiler->errors = (struct Error*)malloc(MAX_ERRORS * sizeof(struct Error));
+    if (compiler->errors == NULL) {
+        fprintf(stderr, "malloc");
+        exit(1);
+    }
     compiler->error_count = 0;
     compiler->function = make_function(fun_name, parameter_count);
     push_root(to_function(compiler->function));

@@ -938,6 +938,10 @@ static ResultCode declaration(struct Node** node) {
 
 static void init_parser(struct Table* globals, struct NodeList* static_nodes) {
     parser.errors = (struct Error*)malloc(MAX_ERRORS * sizeof(struct Error));
+    if (parser.errors == NULL) {
+        fprintf(stderr, "malloc");
+        exit(1);
+    }
     parser.error_count = 0;
     parser.globals = globals;
     parser.statics_nl = static_nodes;

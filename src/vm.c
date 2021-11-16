@@ -46,6 +46,10 @@ ResultCode init_vm(VM* vm) {
     vm->frame_count = 0;
     vm->open_upvalues = NULL;
     vm->errors = (struct Error*)malloc(MAX_ERRORS * sizeof(struct Error));
+    if (vm->errors == NULL) {
+        fprintf(stderr, "malloc");
+        exit(1);
+    }
     vm->error_count = 0;
     init_table(&vm->globals);
     init_table(&vm->strings);

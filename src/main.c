@@ -22,6 +22,10 @@ ResultCode read_file(const char* path, const char** source) {
     size_t file_size = ftell(file);
     rewind(file);
     char* buffer = (char*)malloc(file_size + 1);
+    if (buffer == NULL) {
+        fprintf(stderr, "malloc");
+        exit(1);
+    }
     size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
     buffer[bytes_read] = '\0';
     fclose(file);
@@ -45,6 +49,10 @@ static ResultCode run_source(VM* vm, const char** sources, int* source_count, st
     for (int i = 0; i < script_count; i++) {
         Token script_name = scripts[i];
         char* module_path = (char*)malloc(modules_dir_len + script_name.length + 5); //modules directory + module name + '.cbr' extension and null terminator
+        if (module_path == NULL) {
+            fprintf(stderr, "malloc");
+            exit(1);
+        }
         memcpy(module_path, modules_dir_path, modules_dir_len);
         memcpy(module_path + modules_dir_len, script_name.start, script_name.length);
         memcpy(module_path + modules_dir_len + script_name.length, ".cbr\0", 5);
@@ -91,6 +99,10 @@ static ResultCode run_script(VM* vm, const char* root_script_path) {
     char* last_slash = strrchr(root_script_path, DIR_SEPARATOR);
     int dir_len = last_slash == NULL ? 0 : last_slash - root_script_path + 1;
     char* module_dir_path = (char*)malloc(dir_len + 1);
+    if (module_dir_path == NULL) {
+        fprintf(stderr, "malloc");
+        exit(1);
+    }
     memcpy(module_dir_path, root_script_path, dir_len);
     module_dir_path[dir_len] = '\0';
 
@@ -134,6 +146,10 @@ static ResultCode repl(VM* vm) {
         printf(">>> ");
 
         sources[source_count] = (char*)malloc(MAX_CHARS_PER_LINE); //max chars in line
+        if (sources[source_count] == NULL) {
+            fprintf(stderr, "malloc");
+            exit(1);
+        }
         sources[source_count] = fgets(sources[source_count], MAX_CHARS_PER_LINE, stdin);
         source_count++;
         if (memcmp(sources[source_count - 1], "quit()", 6) == 0) {

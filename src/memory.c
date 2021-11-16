@@ -11,7 +11,10 @@ void push_gray(struct Obj* object) {
     if (mm.gray_count + 1 > mm.gray_capacity) {
         int new_capacity = mm.gray_capacity == 0 ? 8 : mm.gray_capacity * 2;
         mm.grays = (struct Obj**)realloc((void*)mm.grays, sizeof(struct Obj*) * new_capacity);
-        if (mm.grays == NULL) exit(1);
+        if (mm.grays == NULL) {
+            fprintf(stderr, "realloc");
+            exit(1);
+        }
 
         mm.gray_capacity = new_capacity;
     }
@@ -26,9 +29,6 @@ struct Obj* pop_gray() {
 }
 
 void push_root(Value value) {
-//    printf("pushing root ");
-//    print_value(value);
-//    printf("stack size: %d\n", (int)(mm.vm->stack_top - mm.vm->stack));
     push(mm.vm, value);
 }
 
@@ -50,7 +50,7 @@ void* realloc_mem(void* ptr, size_t new_size, size_t old_size) {
 
     void* result = realloc(ptr, new_size);
     if (result == NULL && new_size != 0) {
-        printf("[Error] Memory allocation failed. Attempting to allocate %zu bytes\n", new_size);
+        fprintf(stderr, "[Error] Memory allocation failed. Attempting to allocate %zu bytes\n", new_size);
         exit(1);
     }
     return result;
@@ -68,6 +68,10 @@ void init_memory_manager() {
     mm.objects = NULL;
     //NOTE: using system realloc since we don't want GC to collect within a GC collection
     mm.grays = (struct Obj**)realloc(NULL, 0);
+    if (mm.grays == NULL) {
+        fprintf(stderr, "realloc");
+        exit(1);
+    }
     mm.gray_capacity = 0;
     mm.gray_count = 0;
     mm.vm = NULL;

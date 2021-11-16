@@ -55,7 +55,10 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
+    Add error checks for malloc/realloc/free failures.
+
     add error checks for systems calls/library function (system wrappers) using perror("");
+      how about non-system calls???
 
     Add basic socket support - see the python API for https for setting up a server
       and create something similar.  This is also good practice for TCP/IP and UDP
@@ -63,6 +66,31 @@ Cebra Features to Work On:
       https://beej.us/guide/bgnet/html/
 
       Read from part 3 - review part 2 if I want to
+
+      //host name: "www.example.com" or "127.0.0.1"
+      //service: "http" or port number
+      //setting hostname to NULL makes it local host, it seems
+      //getaddrinfo(const char* hostname, const char* service, const struct addrinf* hints, struct addrinfo** result)
+
+      struct addrinfo* server_info;
+      struct addrinfo hints;
+      memset(&hints, 0, sizeof(struct addrinfo));
+      hints.ai_family = AF_UNSPEC; //either IPV4 or IPV6
+      hints.ai_socktype = SOCK_STREAM; //TCP socket
+      hints.flags = AI_PASSIVE; //fill in IP with default local host
+
+      int status;
+      //hostname can be NULL if using AI_PASSIVE flag
+      if ((status = getaddrinfo(NULL, "3333", &hints, &server_info)) != 0) {
+        fprintf(stderr, "server - getaddrinfo: %s\n", gai_strerror(status));
+        return 1;
+      }
+
+      //need to make the sockets here by going throught the server_info linked list
+      //and creating a socket from the first one that works
+      //how about binding?  We should only need to do that if listening...
+
+      f: Socket = socket("127.0.0.1", "3333")
 
       python sockets API:
         socket()
