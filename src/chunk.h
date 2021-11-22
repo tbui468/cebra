@@ -45,7 +45,6 @@ typedef enum {
     OP_GET_KEYS,
     OP_GET_VALUES,
     OP_CAST,
-    OP_ENUM,
     OP_ADD_GLOBAL,
     OP_GET_GLOBAL,
     OP_HALT,

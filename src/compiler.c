@@ -861,7 +861,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 pop_root();
             }
 
-            emit_byte(compiler, OP_ENUM);
+            emit_byte(compiler, OP_CONSTANT);
             emit_short(compiler, add_constant(compiler, to_enum(obj_enum)));
 
             //set globals in vm

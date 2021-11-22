@@ -192,11 +192,6 @@ ResultCode run_program(VM* vm) {
                 }
                 break;
             }
-            case OP_ENUM: {
-                Value val_enum = read_constant(frame, READ_TYPE(frame, uint16_t));
-                push(vm, val_enum);
-                break;
-            }
             case OP_ADD_PROP: {
                 //current stack: [script]...[class][value]
                 struct ObjString* prop = read_constant(frame, READ_TYPE(frame, uint16_t)).as.string_type;

@@ -62,19 +62,8 @@ Cebra Features to Work On:
     All struct fields and enums should be defined at compile time since we don't allow
         users to dynamically add fields anyway
 
-    For system calls (including wrapper calls), use perror(const char*) so that a message is displayed.
-        errno is set, so should use perror() to print out problem
-            ftell (-1L if error)
-
-        ferror is set
-            fread (byte count != count expected and feof(file) == 0 if error)
-            fseek (non-zero if error)
-            fprintf (neg if error)
-            printf (neg if error)
-            snprinf (neg if error)
-
-        fprintf(stderr, "msg") and exiting might be the best way to handle errors for the time being...
-            since some calls set errno, but others don't
+        struct fields shouldn't be tables anymore - use ValueArrays to hold values now
+        and use a table to associate field name with an index during compilation
 
     Could have the compiler take in a --verbose flag that also prints out arrow
     to show where the error occurred
