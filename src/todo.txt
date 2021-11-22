@@ -56,44 +56,46 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
+    OP_GET_SIZE should just be integrated into OP_GET_PROP - just have an if/else
+        to get sizes if a List or String - also check that "size" is the prop being accessed
+
+    All struct fields and enums should be defined at compile time since we don't allow
+        users to dynamically add fields anyway
+
+    For system calls (including wrapper calls), use perror(const char*) so that a message is displayed.
+        errno is set, so should use perror() to print out problem
+            ftell (-1L if error)
+
+        ferror is set
+            fread (byte count != count expected and feof(file) == 0 if error)
+            fseek (non-zero if error)
+            fprintf (neg if error)
+            printf (neg if error)
+            snprinf (neg if error)
+
+        fprintf(stderr, "msg") and exiting might be the best way to handle errors for the time being...
+            since some calls set errno, but others don't
+
     Could have the compiler take in a --verbose flag that also prints out arrow
     to show where the error occurred
         
         Parse Error: [line 34] 'if' condition has invalid token '<<' in boolean expression
             if a << b {
             -----^^----
-        Compiler Error: [line 53] Attempting to assigned 'a' (float) to value of different type (int).
+        Compiler Error: [line 53] Attempting to assign 'a' (float) to value of different type (int).
             a = 34
             ^---^^
 
-    Write script that is full of errors (parsing for now).  See what shows up.
-        One option: keep all errors at statement level - if an error shows up
-            in an expression 
+        Error messages - this is a big one.  This should be the main goal now so that
+            we can release version 0.0.3 with better List support + better error messages
 
-        One option is to have the lower level expression be a sub-section of the final
-        error message.  Then have the higher level statement append/prepend the more 
-        general message.  
+            Runtime error messages at runtime could be a lot better - it doesn't include line
+                info right now - it should be include.  It'll slow down the vm, BUT
+                it's such a useful thing for the programmer to know.  Could add Token data
+                for each Value pushed onto the stack...
 
-        Since '<<' is not a valid token in Cebra, an 'invalid boolean expression' error
-        should be added, THEN is should be prepended with the error for the 'if' statement, such as
-        ''if' condition has invalid boolean expression'
-            if a << b {
-
-            }
-
-        a: int = 3 + 5 + b
-        'Declaration of 'a' using undeclared variable 'b'.
-
-    Error messages - this is a big one.  This should be the main goal now so that
-        we can release version 0.0.3 with better List support + better error messages
-
-        Runtime error messages at runtime could be a lot better - it doesn't include line
-            info right now - it should be include.  It'll slow down the vm, BUT
-            it's such a useful thing for the programmer to know.  Could add Token data
-            for each Value pushed onto the stack...
-
-        Compiler Errors need to include Token info - token.start and token.length so
-            that user knows which variables have the error (eg, using undeclared variables)
+            Compiler Errors need to include Token info - token.start and token.length so
+                that user knows which variables have the error (eg, using undeclared variables)
 
     Add a _cbrcache_ directory and timestamp it
         whenever we try to run the script, check the time stamp of the last time the file
@@ -111,9 +113,6 @@ Cebra Features to Work On:
         For each layer, multiply weights and add biases (tile the biases to match size of matrix)
         Then apply an activation function to get rid of the linearity.  Save any intermediate results necessary.
         Back prop using saved intermediate results - this will update the weights and biases of each layer.
-
-    OP_GET_SIZE should just be integrated into OP_GET_PROP - just have an if/else
-        to get sizes if a List or String
 
     Warnings
         Fill in disassemble chunk properly instead of using 'default' to catch unimplemented

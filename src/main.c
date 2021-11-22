@@ -16,17 +16,30 @@
 ResultCode read_file(const char* path, const char** source) {
     FILE* file = fopen(path, "rb");
     if (file == NULL) {
-        return RESULT_FAILED;
+        fprintf(stderr, "fopen() failed.");
+        exit(1);
     }
-    fseek(file, 0L, SEEK_END);
-    size_t file_size = ftell(file);
+    if (fseek(file, 0L, SEEK_END) != 0) {
+        fprintf(stderr, "fseek() failed.");
+        exit(1);
+    }
+
+    size_t file_size;
+    if ((file_size = ftell(file)) == -1L) {
+        fprintf(stderr, "ftell() failed.");
+        exit(1);
+    }
     rewind(file);
     char* buffer = (char*)malloc(file_size + 1);
     if (buffer == NULL) {
-        fprintf(stderr, "malloc");
+        fprintf(stderr, "malloc() failed.");
         exit(1);
     }
     size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    if (bytes_read != file_size && feof(file) == 0) {
+        fprintf(stderr, "fread() failed.");
+        exit(1);
+    }
     buffer[bytes_read] = '\0';
     fclose(file);
     *source = buffer;
@@ -147,10 +160,14 @@ static ResultCode repl(VM* vm) {
 
         sources[source_count] = (char*)malloc(MAX_CHARS_PER_LINE); //max chars in line
         if (sources[source_count] == NULL) {
-            fprintf(stderr, "malloc");
+            fprintf(stderr, "malloc() failed.");
             exit(1);
         }
         sources[source_count] = fgets(sources[source_count], MAX_CHARS_PER_LINE, stdin);
+        if (sources[source_count] == NULL && feof(stdin) == 0) {
+            fprintf(stderr, "fgets() failed.");
+            exit(1);
+        }
         source_count++;
         if (memcmp(sources[source_count - 1], "quit()", 6) == 0) {
             break;

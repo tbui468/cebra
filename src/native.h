@@ -125,7 +125,10 @@ static ResultCode append_string_with_escape_sequences(FILE* fp, char* s) {
 static ResultCode append_native(int arg_count, Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     struct ObjString* s = args[1].as.string_type;
-    fseek(file->fp, 0, SEEK_END);
+    if (fseek(file->fp, 0, SEEK_END) != 0) {
+        fprintf(stderr, "fseek() failed.");
+        exit(1);
+    }
     append_string_with_escape_sequences(file->fp, s->chars);
 
     fflush(file->fp);
@@ -246,12 +249,27 @@ static ResultCode read_all_bytes(int arg_count, Value* args, struct ValueArray* 
         return RESULT_FAILED;
     }
 
-    fseek(fp, 0L, SEEK_END);
-    size_t file_size = ftell(fp);
+    if (fseek(fp, 0L, SEEK_END) != 0) {
+        fprintf(stderr, "fseek() failed.");
+        exit(1);
+    }
+
+    size_t file_size;
+    if ((file_size = ftell(fp)) == -1L) {
+        fprintf(stderr, "ftell() failed.");
+        exit(1);
+    }
+
     rewind(fp);
     char* buffer = ALLOCATE_ARRAY(char);
     buffer = GROW_ARRAY(buffer, char, file_size + 1, 0);
+
     size_t bytes_read = fread(buffer, sizeof(char), file_size, fp);
+    if (bytes_read != file_size && feof(fp) == 0) {
+        fprintf(stderr, "fread() failed.");
+        exit(1);
+    }
+
     buffer[bytes_read] = '\0';
 
     //make a byte from each char, and add to List
@@ -280,17 +298,30 @@ static ResultCode define_read_bytes(struct Compiler* compiler) {
 
 static ResultCode read_all_native(int arg_count, Value* args, struct ValueArray* returns) {
     FILE* fp = args[0].as.file_type->fp;
-    if (fp == NULL) {
-        add_value(returns, to_nil());
-        return RESULT_FAILED;
+    if (fp == NULL)
+        exit(1);
+
+    if (fseek(fp, 0L, SEEK_END) != 0) {
+        fprintf(stderr, "fseek() failed.");
+        exit(1);
     }
 
-    fseek(fp, 0L, SEEK_END);
-    size_t file_size = ftell(fp);
+    size_t file_size;
+    if ((file_size = ftell(fp)) == -1L) {
+        fprintf(stderr, "ftell() failed.");
+        exit(1);
+    }
+
     rewind(fp);
     char* buffer = ALLOCATE_ARRAY(char);
     buffer = GROW_ARRAY(buffer, char, file_size + 1, 0);
+
     size_t bytes_read = fread(buffer, sizeof(char), file_size, fp);
+    if (bytes_read != file_size && feof(fp) == 0) {
+        fprintf(stderr, "fread() failed.");
+        exit(1);
+    }
+
     buffer[bytes_read] = '\0';
    
     struct ObjString* s = take_string(buffer, file_size);
@@ -313,13 +344,21 @@ static ResultCode define_read_all(struct Compiler* compiler) {
 static ResultCode clear_native(int arg_count, Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     fclose(file->fp);
-    
+
+    //what the heck is going on here?    
     file->fp = fopen(file->file_path->chars, "w");
+    if (file->fp == NULL) {
+        fprintf(stderr, "fopen() failed.");
+        exit(1);
+    }
     fclose(file->fp);
+
     file->fp = fopen(file->file_path->chars, "a+");
     if (file->fp == NULL) {
-        return RESULT_FAILED;
+        fprintf(stderr, "fopen() failed.");
+        exit(1);
     }
+
     process_next_line(file);
     add_value(returns, to_nil());
     return RESULT_SUCCESS;
@@ -337,9 +376,8 @@ static ResultCode define_clear(struct Compiler* compiler) {
 static ResultCode open_native(int arg_count, Value* args, struct ValueArray* returns) {
     FILE* fp;
     fp = fopen(args[0].as.string_type->chars, "a+");
-    if (fp == NULL) {
-        return RESULT_FAILED;
-    }
+    if (fp == NULL)
+        exit(1);
 
     struct ObjFile* file = make_file(fp, args[0].as.string_type);
     push_root(to_file(file));
@@ -361,7 +399,11 @@ static ResultCode define_open(struct Compiler* compiler) {
 
 static ResultCode input_native(int arg_count, Value* args, struct ValueArray* returns) {
     char buffer[256];
-    char* input = fgets(buffer, 256, stdin);
+    char* input = fgets(buffer, 256, stdin); //if NULL and feof(file) == 0
+    if (input == NULL && feof(stdin) == 0) {
+        fprintf(stderr, "fgets() failed.");
+        exit(1);
+    }
     struct ObjString* s = make_string(input, strlen(input) - 1);
     push_root(to_string(s));
     add_value(returns, to_string(s));
