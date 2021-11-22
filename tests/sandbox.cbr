@@ -1,15 +1,11 @@
-//images_f := open("./../../examples/neural_network/t10k-images.idx3-ubyte")
-//image_data := read_bytes(images_f)
-//close(images_f)
+a := 24
 
-
-for {
+if a < {
+    p()
+    //print("Hello world")
 }
 
-for {
 
-}
-
-for {
-
+p :: () -> () {
+    
 }

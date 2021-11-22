@@ -48,6 +48,7 @@ Stack overflow
         OP_RETURN 256 Values - could try to NaN-boxing halve the Value size from 16 to 8 bytes
         Compiler - locals, upvalues
         VM - stack, callframes
+        ObjFunction has a stack of upvalue pointers that is statically allocated (256 total)
 
 Try using Visual Studio Debugger to debug problems in future
     this will be good practice since the project is getting too big
@@ -55,58 +56,48 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
-    Add error checks for malloc/realloc/free failures.
+    Could have the compiler take in a --verbose flag that also prints out arrow
+    to show where the error occurred
+        
+        Parse Error: [line 34] 'if' condition has invalid token '<<' in boolean expression
+            if a << b {
+            -----^^----
+        Compiler Error: [line 53] Attempting to assigned 'a' (float) to value of different type (int).
+            a = 34
+            ^---^^
 
-    add error checks for systems calls/library function (system wrappers) using perror("");
-      how about non-system calls???
+    Write script that is full of errors (parsing for now).  See what shows up.
+        One option: keep all errors at statement level - if an error shows up
+            in an expression 
 
-    Add basic socket support - see the python API for https for setting up a server
-      and create something similar.  This is also good practice for TCP/IP and UDP
-      for embedded systems stuff. This is a good primer on sockets.
-      https://beej.us/guide/bgnet/html/
+        One option is to have the lower level expression be a sub-section of the final
+        error message.  Then have the higher level statement append/prepend the more 
+        general message.  
 
-      Read from part 3 - review part 2 if I want to
+        Since '<<' is not a valid token in Cebra, an 'invalid boolean expression' error
+        should be added, THEN is should be prepended with the error for the 'if' statement, such as
+        ''if' condition has invalid boolean expression'
+            if a << b {
 
-      //host name: "www.example.com" or "127.0.0.1"
-      //service: "http" or port number
-      //setting hostname to NULL makes it local host, it seems
-      //getaddrinfo(const char* hostname, const char* service, const struct addrinf* hints, struct addrinfo** result)
+            }
 
-      struct addrinfo* server_info;
-      struct addrinfo hints;
-      memset(&hints, 0, sizeof(struct addrinfo));
-      hints.ai_family = AF_UNSPEC; //either IPV4 or IPV6
-      hints.ai_socktype = SOCK_STREAM; //TCP socket
-      hints.flags = AI_PASSIVE; //fill in IP with default local host
+        a: int = 3 + 5 + b
+        'Declaration of 'a' using undeclared variable 'b'.
 
-      int status;
-      //hostname can be NULL if using AI_PASSIVE flag
-      if ((status = getaddrinfo(NULL, "3333", &hints, &server_info)) != 0) {
-        fprintf(stderr, "server - getaddrinfo: %s\n", gai_strerror(status));
-        return 1;
-      }
+    Error messages - this is a big one.  This should be the main goal now so that
+        we can release version 0.0.3 with better List support + better error messages
 
-      //need to make the sockets here by going throught the server_info linked list
-      //and creating a socket from the first one that works
-      //how about binding?  We should only need to do that if listening...
+        Runtime error messages at runtime could be a lot better - it doesn't include line
+            info right now - it should be include.  It'll slow down the vm, BUT
+            it's such a useful thing for the programmer to know.  Could add Token data
+            for each Value pushed onto the stack...
 
-      f: Socket = socket("127.0.0.1", "3333")
+        Compiler Errors need to include Token info - token.start and token.length so
+            that user knows which variables have the error (eg, using undeclared variables)
 
-      python sockets API:
-        socket()
-        bind()
-        listen()
-        accept()
-        connect()
-        connect_ex()
-        send()
-        recv()
-        close()
-  
-      make is a concrete simple TCP connection for now - can add option later
-        once it all works
-
-      add sockets/IP/TCP/UDP to cv after it works in Cebra
+    Add a _cbrcache_ directory and timestamp it
+        whenever we try to run the script, check the time stamp of the last time the file
+        was changed, and if its before the _cbrcache_, just run the compiled bytecode
 
     Write simple neural network to train MNIST on CPU
 
@@ -120,16 +111,6 @@ Cebra Features to Work On:
         For each layer, multiply weights and add biases (tile the biases to match size of matrix)
         Then apply an activation function to get rid of the linearity.  Save any intermediate results necessary.
         Back prop using saved intermediate results - this will update the weights and biases of each layer.
-
-    Error messages - this is a big one.  This should be the main goal now so that
-        we can release version 0.0.3 with better List support + better error messages
-
-        Runtime error messages at runtime could be a lot better - it doesn't include line
-            info right now - it should be include.  It'll slow down the vm, BUT
-            it's such a useful thing for the programmer to know.
-
-        Compiler Errors need to include Token info - token.start and token.length so
-            that user knows which variables have the error (eg, using undeclared variables)
 
     OP_GET_SIZE should just be integrated into OP_GET_PROP - just have an if/else
         to get sizes if a List or String

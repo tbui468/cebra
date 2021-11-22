@@ -1,11 +1,16 @@
-//Maybe make the neural network train on something simplier
-//since CPU training is so slow with images...
+//simple feedfoward network to test Cebra capabilities
 
-w0 := mat_create(64, 64) //should be 784x64, but making it smaller for faster iteration
+images_f := open("./../../examples/neural_network/t10k-images.idx3-ubyte")
+image_data := read_bytes(images_f)
+close(images_f)
+
+t := clock()
+
+w0 := mat_create(784, 64)
 b0 := mat_create(1, 64)
 w1 := mat_create(64, 10)
 b1 := mat_create(1, 10)
-inputs := mat_create(1, 64) //should be 1x784
+inputs := mat_create(1, 784)
 
 z0 := mat_add(mat_mul(inputs, w0), b0)
 a0 := mat_map(z0, sigmoid)
@@ -16,78 +21,102 @@ print("rows: " + z1.rows as string + "\n")
 print("cols: " + z1.cols as string + "\n")
 
 for i := 0, i < 10, i = i + 1 {
-  print(z1.values[i]) print("\n")
+    print(z1.values[i]) print("\n")
 }
+
+print("time: " + (clock() - t) as string)
 
 ////////////////MATRIX DATA STRUCT AND OPERATIONS//////////////////
 
 Matrix :: struct {
-  values := List<float>()
-  rows := 0
-  cols := 0
+    values := List<float>()
+    rows := 0
+    cols := 0
 }
 
 mat_create :: (rows: int, cols: int) -> (Matrix) {
-  w := Matrix()
-  w.rows = rows
-  w.cols = cols
-  for i := 0, i < rows * cols, i = i + 1 {
-    w.values[w.values.size] = random_uniform(-1.0, 1.0)
-  }
-  -> w
+    w := Matrix()
+    w.rows = rows
+    w.cols = cols
+    for i := 0, i < rows * cols, i = i + 1 {
+        w.values[w.values.size] = random_uniform(-1.0, 1.0)
+    }
+    -> w
+}
+
+mat_sub :: (m1: Matrix, m2: Matrix) -> (Matrix) {
+    result := mat_create(m1.rows, m1.cols)
+    for i := 0, i < m1.rows * m1.cols, i = i + 1 {
+        result.values[i] = m1.values[i] - m2.values[i]
+    }
+    -> result
 }
 
 mat_add :: (m1: Matrix, m2: Matrix) -> (Matrix) {
-  result := mat_create(m1.rows, m1.cols)
-  for i := 0, i < m1.rows * m1.cols, i = i + 1 {
-    result.values[i] = m1.values[i] + m2.values[i]
-  }
-  -> result
+    result := mat_create(m1.rows, m1.cols)
+    for i := 0, i < m1.rows * m1.cols, i = i + 1 {
+        result.values[i] = m1.values[i] + m2.values[i]
+    }
+    -> result
 }
 
 mat_mul :: (m1: Matrix, m2: Matrix) -> (Matrix) {
-  result := mat_create(m1.rows, m2.cols)
-  for row := 0, row < m1.rows, row = row + 1 {
-    for col := 0, col < m2.cols, col = col + 1 {
-      sum := 0.0
-      for len := 0, len < m1.cols, len = len + 1 {
-        a := m1.values[row * m1.cols + len]
-        b := m2.values[col + m2.cols * len]
-        sum = sum + a * b
-      } 
-      result.values[row * m1.cols + col] = sum
+    result := mat_create(m1.rows, m2.cols)
+    for row := 0, row < m1.rows, row = row + 1 {
+        for col := 0, col < m2.cols, col = col + 1 {
+            sum := 0.0
+            for len := 0, len < m1.cols, len = len + 1 {
+                a := m1.values[row * m1.cols + len]
+                b := m2.values[col + m2.cols * len]
+                sum = sum + a * b
+            } 
+            result.values[row * m1.cols + col] = sum
+        }
     }
-  }
-  -> result
+    -> result
+}
+
+ele_mul :: (m1: Matrix, m2: Matrix) -> (Matrix) {
+    result := mat_create(m1.rows, m2.cols)
+    for i := 0, i < m1.rows * m1.cols, i = i + 1 {
+        result.values[i] = m1.values[i] * m2.values[i]
+    }
+    -> result
 }
 
 mat_copy :: (m: Matrix) -> (Matrix) {
-  copy := mat_create(m.rows, m.cols)
-  for i := 0, i < m.rows * m.cols, i = i + 1 {
-    copy.values[copy.values.size] = m.values[i]
-  }
-  -> copy
+    copy := mat_create(m.rows, m.cols)
+    for i := 0, i < m.rows * m.cols, i = i + 1 {
+        copy.values[copy.values.size] = m.values[i]
+    }
+    -> copy
 }
 
 mat_map :: (m: Matrix, fun: (float) -> (float)) -> (Matrix) {
-  result := mat_create(m.rows, m.cols)
-  for i := 0, i < m.rows * m.cols, i = i + 1 {
-    result.values[i] = fun(m.values[i])
-  } 
-  -> result
+    result := mat_create(m.rows, m.cols)
+    for i := 0, i < m.rows * m.cols, i = i + 1 {
+        result.values[i] = fun(m.values[i])
+    } 
+    -> result
 }
 
 mat_transpose :: (m: Matrix) -> (Matrix) {
-  result  := mat_create(m.rows, m.cols)
-  //flip rows and cols
-  -> result
+    result := mat_create(m.cols, m.rows)
+    //flip rows and cols
+    -> result
 }
 
 ////////////////UTILITY///////////////////
 sigmoid :: (f: float) -> (float) {
-  -> 1.0 / (1.0 + exp(-f))
+    -> 1.0 / (1.0 + exp(-f))
 }
 
 sigmoid_prime :: (f: float) -> (float) {
-  -> sigmoid(f) * (1.0 - sigmoid(f))
+    -> sigmoid(f) * (1.0 - sigmoid(f))
+}
+
+mse_grad :: (pred: Matrix, truth: Matrix, z: Matrix) -> (Matrix) {
+    result := mat_sub(pred, truth)
+    result = ele_mul(result, z)
+    -> result
 }

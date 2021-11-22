@@ -8,6 +8,11 @@
         PARSE_ERROR_IF(token.type != TOKEN_DUMMY, token, __VA_ARGS__); \
     }
 
+#define PARSE_NO_MSG(fun, node_ptr) \
+    if (fun(node_ptr) == RESULT_FAILED) { \
+        return RESULT_FAILED; \
+    }
+
 #define CONSUME(token_type, token, ...) \
     PARSE_ERROR_IF(!match(token_type), token, __VA_ARGS__)
 
@@ -231,8 +236,8 @@ static ResultCode primary(struct Node** node) {
         *node = make_decl_container(identifier, make_map_type(template_type)); 
         return RESULT_SUCCESS;
     } else if (match(TOKEN_IDENTIFIER)) {
-        Token id = parser.previous;
         //checking for TOKEN_IDENTIFIER + TOKEN_COLON before getting to this function
+        Token id = parser.previous;
         *node = make_get_var(id);
         return RESULT_SUCCESS;
     } else if (match(TOKEN_STRING_TYPE)) {
@@ -273,7 +278,7 @@ static ResultCode primary(struct Node** node) {
 
 static ResultCode call_dot(struct Node** node) {
     struct Node* left = NULL;
-    PARSE(primary, &left, parser.previous, "Invalid expression");
+    PARSE_NO_MSG(primary, &left);
 
     while ((match(TOKEN_DOT) || match(TOKEN_LEFT_PAREN) || match(TOKEN_LEFT_BRACKET))) {
         switch(parser.previous.type) {
@@ -307,7 +312,6 @@ static ResultCode call_dot(struct Node** node) {
                 } else {
                     left = make_get_element(parser.previous, left, idx);
                 }
-                //left = make_get_element(parser.previous, left, idx); //TODO: delete this when addin string slicing
                 CONSUME(TOKEN_RIGHT_BRACKET, left_bracket, "Expect ']' after index.");
                 break;
             }
@@ -334,7 +338,7 @@ static ResultCode unary(struct Node** node) {
 
 static ResultCode cast(struct Node** node) {
     struct Node* left;
-    PARSE(unary, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(unary, &left);
 
     while (match(TOKEN_AS)) {
         Token name = parser.previous;
@@ -349,7 +353,7 @@ static ResultCode cast(struct Node** node) {
 
 static ResultCode factor(struct Node** node) {
     struct Node* left;
-    PARSE(cast, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(cast, &left);
 
     while (match(TOKEN_STAR) || match(TOKEN_SLASH) || match(TOKEN_MOD)) {
         Token name = parser.previous;
@@ -364,7 +368,7 @@ static ResultCode factor(struct Node** node) {
 
 static ResultCode term(struct Node** node) {
     struct Node* left;
-    PARSE(factor, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(factor, &left);
 
     while (match(TOKEN_PLUS) || match(TOKEN_MINUS) || match(TOKEN_PLUS_PLUS)) {
         Token name = parser.previous;
@@ -379,7 +383,7 @@ static ResultCode term(struct Node** node) {
 
 static ResultCode relation(struct Node** node) {
     struct Node* left;
-    PARSE(term, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(term, &left);
 
     while (match(TOKEN_LESS) || match(TOKEN_LESS_EQUAL) ||
             match(TOKEN_GREATER) || match(TOKEN_GREATER_EQUAL)) {
@@ -395,7 +399,7 @@ static ResultCode relation(struct Node** node) {
 
 static ResultCode equality(struct Node** node) {
     struct Node* left;
-    PARSE(relation, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(relation, &left);
 
     while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_BANG_EQUAL) || match(TOKEN_IN)) {
         Token name = parser.previous;
@@ -414,7 +418,7 @@ static ResultCode equality(struct Node** node) {
 
 static ResultCode and(struct Node** node) {
     struct Node* left;
-    PARSE(equality, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(equality, &left);
 
     while (match(TOKEN_AND)) {
         Token name = parser.previous;
@@ -429,7 +433,7 @@ static ResultCode and(struct Node** node) {
 
 static ResultCode or(struct Node** node) {
     struct Node* left;
-    PARSE(and, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(and, &left);
 
     while (match(TOKEN_OR)) {
         Token name = parser.previous;
@@ -458,7 +462,7 @@ static ResultCode parse_sequence(struct Node** node) {
             add_node(left, make_decl_var(name, type, NULL));
         } else {
             struct Node* expr;
-            PARSE(or, &expr, parser.previous, "Invalid expression.");
+            PARSE_NO_MSG(or, &expr);
             name = parser.previous;
             add_node(left, expr);
         }
@@ -468,9 +472,7 @@ static ResultCode parse_sequence(struct Node** node) {
     if (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) {
         name = parser.previous;
         struct Node* right;
-        if (parse_sequence(&right) == RESULT_FAILED) {
-            return RESULT_FAILED;
-        }
+        PARSE_NO_MSG(parse_sequence, &right);
         *node = make_sequence(name, left, right);
     } else {
         *node = make_sequence(name, left, NULL);
@@ -480,12 +482,12 @@ static ResultCode parse_sequence(struct Node** node) {
 
 static ResultCode parse_expression(struct Node** node) {
     struct Node* left = NULL;
-    PARSE(or, &left, parser.previous, "Invalid expression.");
+    PARSE_NO_MSG(or, &left);
 
     while (match(TOKEN_EQUAL) || match(TOKEN_COLON_EQUAL)) { 
         Token name = parser.previous;
         struct Node* right = NULL;
-        PARSE(parse_expression, &right, name, "Invalid expression.");
+        PARSE_NO_MSG(parse_expression, &right);
 
         if (name.type == TOKEN_EQUAL) {
             if (left->type == NODE_GET_ELEMENT) {
@@ -794,7 +796,7 @@ static ResultCode declaration(struct Node** node) {
         Token name = parser.previous;
 
         struct Node* condition;
-        PARSE(parse_expression, &condition, name, "Expect single boolean expression after 'if'.");
+        PARSE(parse_expression, &condition, name, "Expected valid boolean expression after 'if'.");
 
         struct Node* then_block;
         PARSE(declaration, &then_block, name, "Expect a body statement after 'if' statement.");
@@ -931,7 +933,7 @@ static ResultCode declaration(struct Node** node) {
     }
 
     struct Node* seq;
-    PARSE(parse_sequence, &seq, parser.previous, "Invalid statement.");
+    PARSE_NO_MSG(parse_sequence, &seq);
     *node = make_expr_stmt(seq);
     return RESULT_SUCCESS;
 }
