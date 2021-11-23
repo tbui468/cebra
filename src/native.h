@@ -254,7 +254,7 @@ static ResultCode read_all_bytes(int arg_count, Value* args, struct ValueArray* 
         exit(1);
     }
 
-    size_t file_size;
+    long file_size;
     if ((file_size = ftell(fp)) == -1L) {
         fprintf(stderr, "ftell() failed.");
         exit(1);
@@ -264,7 +264,7 @@ static ResultCode read_all_bytes(int arg_count, Value* args, struct ValueArray* 
     char* buffer = ALLOCATE_ARRAY(char);
     buffer = GROW_ARRAY(buffer, char, file_size + 1, 0);
 
-    size_t bytes_read = fread(buffer, sizeof(char), file_size, fp);
+    long bytes_read = fread(buffer, sizeof(char), file_size, fp);
     if (bytes_read != file_size && feof(fp) == 0) {
         fprintf(stderr, "fread() failed.");
         exit(1);

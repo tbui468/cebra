@@ -24,7 +24,7 @@ ResultCode read_file(const char* path, const char** source) {
         exit(1);
     }
 
-    size_t file_size;
+    long file_size;
     if ((file_size = ftell(file)) == -1L) {
         fprintf(stderr, "ftell() failed.");
         exit(1);
@@ -35,7 +35,7 @@ ResultCode read_file(const char* path, const char** source) {
         fprintf(stderr, "malloc() failed.");
         exit(1);
     }
-    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    long bytes_read = fread(buffer, sizeof(char), file_size, file);
     if (bytes_read != file_size && feof(file) == 0) {
         fprintf(stderr, "fread() failed.");
         exit(1);

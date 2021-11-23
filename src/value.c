@@ -90,7 +90,7 @@ Value to_file(struct ObjFile* obj) {
     return value;
 }
 
-Value to_nil() {
+Value to_nil(void) {
     Value value;
     value.type = VAL_NIL;
     return value;

@@ -65,7 +65,7 @@ void print_token(Token token) {
 
 //TODO: can probably eliminate/combine a lot of these Token creation functions
 
-Token make_dummy_token() {
+Token make_dummy_token(void) {
     Token dummy;
     dummy.type = TOKEN_DUMMY;
     dummy.line = 0;

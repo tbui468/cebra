@@ -23,6 +23,7 @@ struct Compiler* script_compiler = NULL;
 static ResultCode compile_node(struct Compiler* compiler, struct Node* node, struct Type** node_type);
 static ResultCode compile_function(struct Compiler* compiler, struct NodeList* nl, struct TypeArray** type_array);
 
+//Only structs and function pointers can be assigned to 'nil' - using this function to check that
 static bool struct_or_function_to_nil(struct Type* var_type, struct Type* right_type) {
     if (right_type->type != TYPE_NIL) return false;
     if (var_type->type != TYPE_FUN && var_type->type != TYPE_STRUCT) return false;
@@ -443,6 +444,9 @@ static void end_scope(struct Compiler* compiler) {
     compiler->scope_depth--;
 }
 
+//compiling declarations SHOULD return a 'nil' type, but we need the type data for Sequences.  This function
+//is used for compiling NODE_SEQUENCE and NODE_DECL_VAR - the type info for NODE_DECL_VAR is just
+//replaced with a 'nil' type before returning.
 static ResultCode compile_decl_var_and_get_type(struct Compiler* compiler, DeclVar* dv, struct Type** node_type) {
     ResultCode result = RESULT_SUCCESS;
     struct Type* type = NULL;
@@ -487,6 +491,8 @@ static ResultCode compile_decl_var_and_get_type(struct Compiler* compiler, DeclV
     return result;
 }
 
+//Need to use 'depth' parameter for NODE_SEQUENCE assignment since the values are in reverse order
+//on the vm stack
 static ResultCode set_var_to_stack_idx(struct Compiler* compiler, Token var, int depth) {
     ResultCode result = RESULT_SUCCESS;
     int idx = resolve_local(compiler, var);
@@ -514,15 +520,14 @@ static ResultCode compile_set_element(struct Compiler* compiler, Token name, str
 
     EMIT_ERROR_IF(left_type->type != TYPE_LIST && left_type->type != TYPE_MAP, name, "[] access must be used on a list or map type.");
 
-    struct Type* template;
     if (left_type->type == TYPE_LIST) {
         EMIT_ERROR_IF(idx_type->type != TYPE_INT && idx_type->type != TYPE_BYTE, name, "Index must be integer or byte type.");
-        template = ((struct TypeList*)left_type)->type;
-        EMIT_ERROR_IF(!same_type(template, right_type), name, "List type and right side type must match.");
+        struct Type* element_type = ((struct TypeList*)left_type)->type;
+        EMIT_ERROR_IF(!same_type(element_type, right_type), name, "List type and right side type must match.");
     } else if (left_type->type == TYPE_MAP) {
         EMIT_ERROR_IF(idx_type->type != TYPE_STRING, name, "Key must be string type.");
-        template = ((struct TypeMap*)left_type)->type;
-        EMIT_ERROR_IF(!same_type(template, right_type), name, "Map type and right side type must match.");
+        struct Type* element_type = ((struct TypeMap*)left_type)->type;
+        EMIT_ERROR_IF(!same_type(element_type, right_type), name, "Map type and right side type must match.");
     }
 
     emit_byte(compiler, OP_SET_ELEMENT);
@@ -577,7 +582,7 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
                 //tracking locals indices to update types if inferred
                 int* decl_idx = (int*)malloc(256 * sizeof(int));
                 if (decl_idx == NULL) {
-                    fprintf(stderr, "malloc");
+                    fprintf(stderr, "malloc() failed.");
                     exit(1);
                 }
                 int decl_idx_count = 0;
@@ -1274,6 +1279,8 @@ static ResultCode compile_node(struct Compiler* compiler, struct Node* node, str
         }
         case NODE_CONTAINER: {
             struct DeclContainer* dc = (struct DeclContainer*)node;
+            //these can't be constants since Lists/Maps need to be unique
+            //for each field in a struct instance
             if (dc->type->type == TYPE_LIST) {
                 emit_byte(compiler, OP_LIST);
                 *node_type = dc->type;
@@ -1475,7 +1482,8 @@ ResultCode define_native(struct Compiler* compiler, const char* name, ResultCode
 
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl) {
     //TODO:'script_compiler' is a global currently used to get access to top compiler globals table
-    //  this is kind of messy
+    //  this is kind of messy since ALL compilers hold 'globals' table, but only the top level
+    //  one is actually being used...
     script_compiler = compiler;
    
     //this part is mostly the same as compile_function, except

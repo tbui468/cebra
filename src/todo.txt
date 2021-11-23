@@ -56,6 +56,10 @@ Try using Visual Studio Debugger to debug problems in future
 
 Cebra Features to Work On:
 
+    int arg_count in native functions isn't being used since we're checking argument counts
+        in the compiler...right?  Should just be rid of it if that's the case
+        can add them later if we really need variable number of parameters
+
     OP_GET_SIZE should just be integrated into OP_GET_PROP - just have an if/else
         to get sizes if a List or String - also check that "size" is the prop being accessed
 

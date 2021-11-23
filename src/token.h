@@ -76,7 +76,7 @@ typedef struct {
 
 
 void print_token(Token token);
-Token make_dummy_token();
+Token make_dummy_token(void);
 Token make_artificial_token(const char* name);
 Token make_token(TokenType type, int line, const char* start, int length);
 Token copy_token(Token token);

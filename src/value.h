@@ -68,7 +68,7 @@ Value to_list(struct ObjList* obj);
 Value to_map(struct ObjMap* obj);
 Value to_enum(struct ObjEnum* obj);
 Value to_file(struct ObjFile* obj);
-Value to_nil();
+Value to_nil(void);
 Value subtract_values(Value a, Value b);
 Value multiply_values(Value a, Value b);
 Value divide_values(Value a, Value b);
