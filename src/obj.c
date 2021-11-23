@@ -238,7 +238,7 @@ struct ObjUpvalue* make_upvalue(Value* location) {
     return obj;
 }
 
-struct ObjNative* make_native(struct ObjString* name, ResultCode (*function)(int, Value*, struct ValueArray*)) {
+struct ObjNative* make_native(struct ObjString* name, ResultCode (*function)(Value*, struct ValueArray*)) {
     struct ObjNative* obj = ALLOCATE(struct ObjNative);
     push_root(to_native(obj));
     obj->base.type = OBJ_NATIVE;

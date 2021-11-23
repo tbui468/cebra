@@ -407,12 +407,12 @@ ResultCode run_program(VM* vm) {
                     call(vm, value.as.function_type);
                     frame = &vm->frames[vm->frame_count - 1];
                 } else if (value.type == VAL_NATIVE) {
-                    ResultCode (*native)(int, Value*, struct ValueArray*) = value.as.native_type->function;
+                    ResultCode (*native)(Value*, struct ValueArray*) = value.as.native_type->function;
 
                     //setting size to before calling native function so that 
                     struct ValueArray va;
                     init_value_array(&va);
-                    ResultCode result = native(arity, vm->stack_top - arity, &va);
+                    ResultCode result = native(vm->stack_top - arity, &va);
                     if (result == RESULT_FAILED) {
                         add_error(vm, "Native function failed.");
                         return RESULT_FAILED;

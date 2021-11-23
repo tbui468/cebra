@@ -81,7 +81,7 @@ struct ObjFunction {
 struct ObjNative {
     struct Obj base;
     struct ObjString* name;
-    ResultCode (*function)(int, Value*, struct ValueArray*);
+    ResultCode (*function)(Value*, struct ValueArray*);
 };
 
 struct ObjList {
@@ -105,7 +105,7 @@ struct ObjInstance* make_instance(struct Table table, struct ObjStruct* klass);
 struct ObjStruct* make_struct(struct ObjString* name, struct ObjStruct* super);
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
-struct ObjNative* make_native(struct ObjString* name, ResultCode (*function)(int, Value*, struct ValueArray*));
+struct ObjNative* make_native(struct ObjString* name, ResultCode (*function)(Value*, struct ValueArray*));
 struct ObjList* make_list(void);
 struct ObjList* copy_list(struct ObjList* l);
 struct ObjMap* make_map(void);

@@ -43,6 +43,6 @@ void free_compiler(struct Compiler* compiler);
 ResultCode compile_script(struct Compiler* compiler, struct NodeList* nl);
 const char* op_to_string(OpCode op);
 void print_locals(struct Compiler* compiler);
-ResultCode define_native(struct Compiler* compiler, const char* name, ResultCode (*function)(int, Value*, struct ValueArray*), struct Type* type);
+ResultCode define_native(struct Compiler* compiler, const char* name, ResultCode (*function)(Value*, struct ValueArray*), struct Type* type);
 
 #endif// CEBRA_COMPILER_H

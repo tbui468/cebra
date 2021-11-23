@@ -1457,7 +1457,7 @@ static ResultCode compile_function(struct Compiler* compiler, struct NodeList* n
 }
 
 
-ResultCode define_native(struct Compiler* compiler, const char* name, ResultCode (*function)(int, Value*, struct ValueArray*), struct Type* type) {
+ResultCode define_native(struct Compiler* compiler, const char* name, ResultCode (*function)(Value*, struct ValueArray*), struct Type* type) {
     //set globals in compiler for checks
     struct ObjString* native_string = make_string(name, strlen(name));
     push_root(to_string(native_string));

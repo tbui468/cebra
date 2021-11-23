@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <math.h>
 
-static ResultCode exp_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode exp_native(Value* args, struct ValueArray* returns) {
     double pow;
     if (args[0].type == VAL_INT) {
         pow = (double)(args[0].as.integer_type);
@@ -35,7 +35,7 @@ static ResultCode define_exp(struct Compiler* compiler) {
     return define_native(compiler, "exp", exp_native, make_fun_type(params, returns));
 }
 
-static ResultCode random_uniform_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode random_uniform_native(Value* args, struct ValueArray* returns) {
     double start = args[0].as.float_type;
     double end = args[1].as.float_type;
     double random_value = (double)rand()/RAND_MAX * (end - start) + start;
@@ -52,7 +52,7 @@ static ResultCode define_random_uniform(struct Compiler* compiler) {
     return define_native(compiler, "random_uniform", random_uniform_native, make_fun_type(params, returns));
 }
 
-static ResultCode is_digit_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode is_digit_native(Value* args, struct ValueArray* returns) {
     struct ObjString* s = args[0].as.string_type;
     for (int i = 0; i < s->length; i++) {
         if (!isdigit(s->chars[i])) {
@@ -73,7 +73,7 @@ static ResultCode define_is_digit(struct Compiler* compiler) {
     return define_native(compiler, "is_digit", is_digit_native, make_fun_type(params, returns));
 }
 
-static ResultCode is_alpha_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode is_alpha_native(Value* args, struct ValueArray* returns) {
     struct ObjString* s = args[0].as.string_type;
     for (int i = 0; i < s->length; i++) {
         if (!isalpha(s->chars[i])) {
@@ -122,7 +122,7 @@ static ResultCode append_string_with_escape_sequences(FILE* fp, char* s) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode append_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode append_native(Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     struct ObjString* s = args[1].as.string_type;
     if (fseek(file->fp, 0, SEEK_END) != 0) {
@@ -162,7 +162,7 @@ static ResultCode process_next_line(struct ObjFile* file) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode rewind_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode rewind_native(Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     rewind(file->fp);
     file->is_eof = false;
@@ -179,7 +179,7 @@ static ResultCode define_rewind(struct Compiler* compiler) {
     return define_native(compiler, "rewind", rewind_native, make_fun_type(params, returns));
 }
 
-static ResultCode eof_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode eof_native(Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     add_value(returns, to_boolean(file->is_eof)); 
     return RESULT_SUCCESS;
@@ -194,7 +194,7 @@ static ResultCode define_eof(struct Compiler* compiler) {
 }
 
 
-static ResultCode read_line_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode read_line_native(Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     if (file->fp == NULL) {
         add_value(returns, to_nil());
@@ -222,7 +222,7 @@ static ResultCode define_read_line(struct Compiler* compiler) {
 }
 
 
-static ResultCode close_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode close_native(Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     add_value(returns, to_nil());
     if (file->fp != NULL) {
@@ -242,7 +242,7 @@ static ResultCode define_close(struct Compiler* compiler) {
     return define_native(compiler, "close", close_native, make_fun_type(params, returns));
 }
 
-static ResultCode read_all_bytes(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode read_all_bytes(Value* args, struct ValueArray* returns) {
     FILE* fp = args[0].as.file_type->fp;
     if (fp == NULL) {
         add_value(returns, to_nil());
@@ -296,7 +296,7 @@ static ResultCode define_read_bytes(struct Compiler* compiler) {
     return define_native(compiler, "read_bytes", read_all_bytes, make_fun_type(params, returns));
 }
 
-static ResultCode read_all_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode read_all_native(Value* args, struct ValueArray* returns) {
     FILE* fp = args[0].as.file_type->fp;
     if (fp == NULL)
         exit(1);
@@ -306,7 +306,7 @@ static ResultCode read_all_native(int arg_count, Value* args, struct ValueArray*
         exit(1);
     }
 
-    size_t file_size;
+    long file_size;
     if ((file_size = ftell(fp)) == -1L) {
         fprintf(stderr, "ftell() failed.");
         exit(1);
@@ -316,7 +316,7 @@ static ResultCode read_all_native(int arg_count, Value* args, struct ValueArray*
     char* buffer = ALLOCATE_ARRAY(char);
     buffer = GROW_ARRAY(buffer, char, file_size + 1, 0);
 
-    size_t bytes_read = fread(buffer, sizeof(char), file_size, fp);
+    long bytes_read = fread(buffer, sizeof(char), file_size, fp);
     if (bytes_read != file_size && feof(fp) == 0) {
         fprintf(stderr, "fread() failed.");
         exit(1);
@@ -341,7 +341,7 @@ static ResultCode define_read_all(struct Compiler* compiler) {
     return define_native(compiler, "read_all", read_all_native, make_fun_type(params, returns));
 }
 
-static ResultCode clear_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode clear_native(Value* args, struct ValueArray* returns) {
     struct ObjFile* file = args[0].as.file_type;
     fclose(file->fp);
 
@@ -373,7 +373,7 @@ static ResultCode define_clear(struct Compiler* compiler) {
 }
 
 
-static ResultCode open_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode open_native(Value* args, struct ValueArray* returns) {
     FILE* fp;
     fp = fopen(args[0].as.string_type->chars, "a+");
     if (fp == NULL)
@@ -397,7 +397,7 @@ static ResultCode define_open(struct Compiler* compiler) {
 }
 
 
-static ResultCode input_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode input_native(Value* args, struct ValueArray* returns) {
     char buffer[256];
     char* input = fgets(buffer, 256, stdin); //if NULL and feof(file) == 0
     if (input == NULL && feof(stdin) == 0) {
@@ -417,7 +417,7 @@ static ResultCode define_input(struct Compiler* compiler) {
     return define_native(compiler, "input", input_native, make_fun_type(make_type_array(), returns));
 }
 
-static ResultCode clock_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode clock_native(Value* args, struct ValueArray* returns) {
     add_value(returns, to_float((double)clock() / CLOCKS_PER_SEC));
     return RESULT_SUCCESS;
 }
@@ -454,7 +454,7 @@ static ResultCode print_string_with_escape_sequences(char* s) {
     return RESULT_SUCCESS;
 }
 
-static ResultCode print_native(int arg_count, Value* args, struct ValueArray* returns) {
+static ResultCode print_native(Value* args, struct ValueArray* returns) {
     Value value = args[0];
     switch(value.type) {
         case VAL_STRING: {
