@@ -543,9 +543,6 @@ ResultCode run_program(VM* vm) {
                     struct ObjMap* map = left.as.map_type;
                     Value value = to_nil();
                     get_entry(&map->table, key, &value);
-                    if (value.type == VAL_NIL) {
-                        value = map->default_value;
-                    }
                     pop(vm);
                     push(vm, value);
                     break;
@@ -605,8 +602,7 @@ ResultCode run_program(VM* vm) {
             }
             case OP_GET_KEYS: {
                 struct ObjMap* map = pop(vm).as.map_type;
-                struct ObjString* default_string = make_string("Invalid key", 11);
-                struct ObjList* list = make_list(to_string(default_string));
+                struct ObjList* list = make_list();
                 push(vm, to_list(list));
                 for (int i = 0; i < map->table.capacity; i++) {
                     struct Entry* entry = &map->table.entries[i];
@@ -618,8 +614,7 @@ ResultCode run_program(VM* vm) {
             }
             case OP_GET_VALUES: {
                 struct ObjMap* map = pop(vm).as.map_type;
-                struct ObjString* default_string = make_string("Invalid key", 11);
-                struct ObjList* list = make_list(to_string(default_string));
+                struct ObjList* list = make_list();
                 push(vm, to_list(list));
                 for (int i = 0; i < map->table.capacity; i++) {
                     struct Entry* entry = &map->table.entries[i];

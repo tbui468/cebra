@@ -226,8 +226,8 @@ static void trace_references() {
                     mark_and_push(val_obj);
                 }
                 //mark default_value
-                struct Obj* val_obj = get_object(&list->default_value);
-                mark_and_push(val_obj);
+                //struct Obj* val_obj = get_object(&list->default_value);
+                //mark_and_push(val_obj);
                 break;
             }
             case OBJ_MAP: {
@@ -235,8 +235,8 @@ static void trace_references() {
                 //table
                 mark_table(&om->table);
                 //default value
-                struct Obj* val_obj = get_object(&om->default_value);
-                mark_and_push(val_obj);
+                //struct Obj* val_obj = get_object(&om->default_value);
+                //mark_and_push(val_obj);
                 break;
             }
             case OBJ_FILE: {
@@ -325,8 +325,9 @@ void collect_garbage() {
     }
 #ifdef DEBUG_LOG_GC
     print_objects();
+    int bytes_freed = 
 #endif 
-    int bytes_freed = sweep();
+    sweep();
 #ifdef DEBUG_LOG_GC
     printf("Bytes freed: %d\n", bytes_freed);
     printf("- End GC\n\n");

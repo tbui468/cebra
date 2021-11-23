@@ -87,13 +87,11 @@ struct ObjNative {
 struct ObjList {
     struct Obj base;
     struct ValueArray values;
-    Value default_value;
 };
 
 struct ObjMap {
     struct Obj base;
     struct Table table;
-    Value default_value;
 };
 
 void insert_object(struct Obj* ptr);
@@ -108,9 +106,9 @@ struct ObjStruct* make_struct(struct ObjString* name, struct ObjStruct* super);
 struct ObjFunction* make_function(struct ObjString* name, int arity);
 struct ObjUpvalue* make_upvalue(Value* location);
 struct ObjNative* make_native(struct ObjString* name, ResultCode (*function)(int, Value*, struct ValueArray*));
-struct ObjList* make_list();
+struct ObjList* make_list(void);
 struct ObjList* copy_list(struct ObjList* l);
-struct ObjMap* make_map();
+struct ObjMap* make_map(void);
 struct ObjEnum* make_enum(Token name);
 struct ObjFile* make_file(FILE* fp, struct ObjString* file_path);
 
