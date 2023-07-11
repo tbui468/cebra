@@ -398,6 +398,7 @@ static ResultCode define_open(struct Compiler* compiler) {
 
 
 static ResultCode input_native(Value* args, struct ValueArray* returns) {
+    args = args; //silence warning
     char buffer[256];
     char* input = fgets(buffer, 256, stdin); //if NULL and feof(file) == 0
     if (input == NULL && feof(stdin) == 0) {
@@ -418,6 +419,7 @@ static ResultCode define_input(struct Compiler* compiler) {
 }
 
 static ResultCode clock_native(Value* args, struct ValueArray* returns) {
+    args = args; //silence warnings
     add_value(returns, to_float((double)clock() / CLOCKS_PER_SEC));
     return RESULT_SUCCESS;
 }

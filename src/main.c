@@ -13,7 +13,7 @@
 #define MAX_CHARS_PER_LINE 512
 #define MODULE_DIR_PATH "C:\\dev\\cebra\\examples\\interpreter_using_modules\\"
 
-ResultCode read_file(const char* path, const char** source) {
+ResultCode read_file(const char* path, char** source) {
     FILE* file = fopen(path, "rb");
     if (file == NULL) {
         fprintf(stderr, "fopen() failed.");
@@ -48,7 +48,7 @@ ResultCode read_file(const char* path, const char** source) {
 
 //sources and script counts won't match up since script count is reset
 
-static ResultCode run_source(VM* vm, const char** sources, int* source_count, struct Compiler* script_comp, const char* modules_dir_path) {
+static ResultCode run_source(VM* vm, char** sources, int* source_count, struct Compiler* script_comp, const char* modules_dir_path) {
     ResultCode result = RESULT_SUCCESS;
 
     Token scripts[MAX_IMPORTS];
@@ -101,7 +101,7 @@ static ResultCode run_script(VM* vm, const char* root_script_path) {
     define_native_functions(&script_comp);
 
     int source_count = 1; //first source file will be the root script
-    const char* sources[64];
+    char* sources[64];
 
     if (read_file(root_script_path, &sources[0]) == RESULT_FAILED) {
         printf("[Cebra Error] Module not found.\n");
@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
 
     free_memory_manager();
 
-    print_memory();
+//    print_memory();
 
     if (result == RESULT_FAILED) {
         return 1;

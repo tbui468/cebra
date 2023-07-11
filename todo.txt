@@ -1,0 +1,2 @@
+Rewrite tests
+remove executables - user should be able to figure that out themselves
