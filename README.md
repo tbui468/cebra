@@ -176,13 +176,15 @@ a := add(1, 2)
 print(a)
 ```
 
-### Examples
+### More Examples
 See /examples for more examples
 
 ## Architecture
 
+![architecture diagram](diagram.png)
+
 ## Future Work
-Rework List interface
-Classes
-Expand Standard Library
-Improved Error Messages
+Rework List interface<br>
+Classes<br>
+Expand Standard Library<br>
+Improved Error Messages<br>

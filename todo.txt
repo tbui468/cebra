@@ -6,9 +6,10 @@ Rewrite tests
         have python each test using the interpreter and output
         colored results
 
-Make README
-    build instructions
-    examples
-    supported features
-    architecture
-    todo 
+Architecture
+    lex source
+    parser into AST
+    process AST (reorder to make depenency order not matter)
+    compile
+    vm
+    memory manager
