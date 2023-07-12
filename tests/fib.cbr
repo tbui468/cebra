@@ -1,8 +1,9 @@
 time := clock()
-fib(35)
-print(clock() - time)
+result := fib(20)
+print("Time: " + (clock() - time) as string + "\n")
+print("Result: " + result as string + "\n")
 
-fib :: (i: int) -> int {
+fib :: (i: int) -> (int) {
     if i < 2 {
         -> i
     }

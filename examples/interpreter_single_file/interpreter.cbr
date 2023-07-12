@@ -1,5 +1,5 @@
 //Mini interpreter for evaluating mathematical expressions
-//input expression can include intgers, +, -, *, / and parentheses
+//input expression can include integers, +, -, *, / and parentheses
 //output is a double precision floating point.  
 //Mini-interpreter
 //  written in Cebra
@@ -31,7 +31,7 @@ while (continue) {
         if result   print("Answer: " + answer as string)
         else        print("Invalid input")
 
-        print("")
+        print("\n")
     } else {
         continue = false
     }

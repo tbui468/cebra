@@ -1,19 +1,25 @@
-stack: List<string> = List<string>("default")
-
-push: (List<string>, string) -> = (l: List<string>, n: string) -> {
-    l[l.size] = n
+Stack :: struct {
+    values: List<string> = List<string>()
+    count: int = 0
 }
 
-pop: (List<string>) -> string = (l: List<string>) -> string {
-    i: string = l[l.size - 1]
-    l.size = l.size - 1
-    -> i
+push :: (s: Stack, n: string) -> () {
+    s.values[s.count] = n
+    s.count = s.count + 1
 }
+
+pop :: (s: Stack) -> (string) {
+    ret: string = s.values[s.count - 1]
+    s.count = s.count - 1
+    -> ret
+}
+
+stack := Stack()
 
 push(stack, "one")
 push(stack, "two")
 push(stack, "three")
 
-while stack.size > 0 {
-    print(pop(stack))
+while stack.count > 0 {
+    print(pop(stack) + "\n")
 }

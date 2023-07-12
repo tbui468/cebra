@@ -1,2 +1,14 @@
 Rewrite tests
-remove executables - user should be able to figure that out themselves
+    make it more like in vaquita
+        each test is a separate file (eg, test.cbr)
+        each expected output is separate file (eg, text.exp)
+
+        have python each test using the interpreter and output
+        colored results
+
+Make README
+    build instructions
+    examples
+    supported features
+    architecture
+    todo 
