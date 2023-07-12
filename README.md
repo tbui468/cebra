@@ -63,9 +63,11 @@ while stack.count > 0 {
 }
 ```
 
-## Features
+## Features by Example
 
 ### Primitive Data Types
+
+```
 //int
 //float
 //string
@@ -73,8 +75,11 @@ while stack.count > 0 {
 
 a: int = 1 //explicitly declare type
 b := 2  //type is deduced
+```
 
 ### Structs
+
+```
 Coord :: struct {
     x: int = 1
     y: int = 2
@@ -84,8 +89,11 @@ c := Coord()
 c.x = 25
 
 d: Coord = nil //type cannot be deduced if value is nil
+```
 
 ### Flow Control
+
+```
 a := 10
 b := 20
 if a < b {
@@ -122,9 +130,11 @@ when d {
         print("not this")
     }
 }
+```
 
 ### Functions
 
+```
 add1 :: (a: int, b: int) -> () {
     print(a + b)
 }
@@ -146,6 +156,7 @@ a, b := sum_and_diff(1, 2)
 print(a)
 print("\n")
 print(b)
+```
 
 ### Modules
 my_module.cbr
